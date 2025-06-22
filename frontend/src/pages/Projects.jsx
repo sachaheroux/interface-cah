@@ -15,18 +15,13 @@ export default function Projects() {
     try {
       setLoading(true)
       setError(null)
-      console.log('🔍 Fetching projects...')
       const response = await projectsService.getProjects()
-      console.log('📦 Response received:', response)
-      console.log('📊 Response data:', response.data)
       setProjects(response.data || [])
-      console.log('✅ Projects set successfully')
     } catch (err) {
-      console.error('❌ Projects error:', err)
-      setError(`Erreur lors du chargement des projets: ${err.message}`)
+      console.error('Projects error:', err)
+      setError('Erreur lors du chargement des projets')
     } finally {
       setLoading(false)
-      console.log('🏁 Loading finished')
     }
   }
 
@@ -64,15 +59,8 @@ export default function Projects() {
     )
   }
 
-  console.log('🎯 Current state:', { projects, loading, error, projectsLength: projects.length })
-
   return (
     <div className="space-y-6">
-      {/* Debug Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-        <p><strong>Debug:</strong> Projects: {projects.length}, Loading: {loading.toString()}, Error: {error || 'none'}</p>
-      </div>
-
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">

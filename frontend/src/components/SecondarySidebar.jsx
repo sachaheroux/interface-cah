@@ -77,7 +77,7 @@ const getSecondaryNavigation = (pathname) => {
       return [
         { name: 'Tous les projets', icon: Hammer, active: true },
         { name: 'En planification', icon: Calendar },
-        { name: 'En cours', icon: Settings },
+        { name: 'En cours', icon: SettingsIcon },
         { name: 'Terminés', icon: List },
         { name: 'Nouveau projet', icon: Plus },
         { name: 'Budget', icon: DollarSign },
