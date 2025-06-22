@@ -118,7 +118,7 @@ export default function SecondarySidebar() {
   }
 
   return (
-    <div className="w-48 lg:w-64 bg-white border-r border-gray-200 fixed left-0 top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
+    <div className="w-48 lg:w-64 bg-white border-r border-gray-200 fixed left-0 top-20 sm:top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
       <div className="p-3 lg:p-4">
         <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
           {location.pathname === '/buildings' && 'Gestion Immeubles'}

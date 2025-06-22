@@ -23,7 +23,7 @@ function AppContent() {
       <TopNavigation />
       
       {/* Contenu principal */}
-      <div className="flex pt-16">
+      <div className="flex pt-20 sm:pt-16">
         {/* Sidebar secondaire conditionnelle */}
         <SecondarySidebar />
         

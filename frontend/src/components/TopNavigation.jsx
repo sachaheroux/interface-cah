@@ -32,7 +32,7 @@ export default function TopNavigation() {
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between h-16 px-3 lg:px-6">
+      <div className="flex items-center justify-between h-20 sm:h-16 px-3 lg:px-6">
         {/* Logo */}
         <div className="flex items-center flex-shrink-0">
           <Building2 className="h-6 w-6 lg:h-8 lg:w-8 text-primary-600 mr-2 lg:mr-3" />
@@ -41,7 +41,7 @@ export default function TopNavigation() {
         </div>
         
         {/* Navigation horizontale */}
-        <nav className="flex space-x-0.5 lg:space-x-1 flex-1 justify-center max-w-4xl mx-4 overflow-x-auto">
+        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4">
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href
@@ -50,14 +50,14 @@ export default function TopNavigation() {
                 key={item.name}
                 to={item.href}
                 className={clsx(
-                  'flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0',
+                  'flex flex-col sm:flex-row items-center px-1 sm:px-2 lg:px-4 py-1 sm:py-2 text-xs sm:text-sm lg:text-base font-medium rounded-lg transition-colors duration-200',
                   isActive 
                     ? 'bg-primary-100 text-primary-700' 
                     : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                 )}
               >
-                <Icon className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
-                <span className="hidden sm:inline lg:inline">{item.name}</span>
+                <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 sm:mr-2" />
+                <span className="text-xs sm:text-sm lg:text-base">{item.name}</span>
               </Link>
             )
           })}
