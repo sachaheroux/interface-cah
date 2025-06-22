@@ -6,12 +6,7 @@ export const BuildingTypes = {
   INDUSTRIAL: 'industrial'
 }
 
-export const BuildingStatus = {
-  ACTIVE: 'active',
-  CONSTRUCTION: 'construction',
-  MAINTENANCE: 'maintenance',
-  INACTIVE: 'inactive'
-}
+// Statut supprimé selon la demande
 
 export const defaultBuilding = {
   id: null,
@@ -24,7 +19,6 @@ export const defaultBuilding = {
     country: 'Canada'
   },
   type: BuildingTypes.RESIDENTIAL,
-  status: BuildingStatus.ACTIVE,
   units: 0,
   floors: 1,
   yearBuilt: new Date().getFullYear(),
@@ -42,16 +36,14 @@ export const defaultBuilding = {
   },
   financials: {
     purchasePrice: 0,
-    currentValue: 0,
-    monthlyRevenue: 0,
-    monthlyExpenses: 0,
-    taxes: 0,
-    insurance: 0
+    downPayment: 0,
+    interestRate: 0,
+    currentValue: 0
   },
   contacts: {
-    manager: '',
-    contractor: '',
-    insurance: ''
+    owner: '',
+    bank: '',
+    contractor: ''
   },
   notes: '',
   images: [],
@@ -70,12 +62,4 @@ export const getBuildingTypeLabel = (type) => {
   return labels[type] || type
 }
 
-export const getBuildingStatusLabel = (status) => {
-  const labels = {
-    [BuildingStatus.ACTIVE]: 'Actif',
-    [BuildingStatus.CONSTRUCTION]: 'En construction',
-    [BuildingStatus.MAINTENANCE]: 'Maintenance',
-    [BuildingStatus.INACTIVE]: 'Inactif'
-  }
-  return labels[status] || status
-} 
+// Fonction getBuildingStatusLabel supprimée car statut supprimé 

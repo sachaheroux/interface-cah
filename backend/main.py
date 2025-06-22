@@ -58,7 +58,6 @@ async def get_buildings():
                 "country": "Canada"
             },
             "type": "residential",
-            "status": "active",
             "units": 12,
             "floors": 3,
             "yearBuilt": 2018,
@@ -76,16 +75,14 @@ async def get_buildings():
             },
             "financials": {
                 "purchasePrice": 850000,
-                "currentValue": 950000,
-                "monthlyRevenue": 8500,
-                "monthlyExpenses": 2200,
-                "taxes": 12000,
-                "insurance": 3500
+                "downPayment": 170000,
+                "interestRate": 4.25,
+                "currentValue": 950000
             },
             "contacts": {
-                "manager": "Jean Dupont - 514-555-0123",
-                "contractor": "Construction CAH - 514-555-0456",
-                "insurance": "Assurance Desjardins - 1-800-555-0789"
+                "owner": "Jean Dupont - 514-555-0123",
+                "bank": "Banque Nationale - Prêt #BN-2018-4567",
+                "contractor": "Construction CAH - 514-555-0456"
             },
             "notes": "Immeuble récent en excellent état. Proche du métro."
         },
@@ -100,7 +97,6 @@ async def get_buildings():
                 "country": "Canada"
             },
             "type": "residential",
-            "status": "active",
             "units": 8,
             "floors": 2,
             "yearBuilt": 2015,
@@ -118,16 +114,14 @@ async def get_buildings():
             },
             "financials": {
                 "purchasePrice": 620000,
-                "currentValue": 720000,
-                "monthlyRevenue": 6400,
-                "monthlyExpenses": 1800,
-                "taxes": 8500,
-                "insurance": 2800
+                "downPayment": 124000,
+                "interestRate": 3.95,
+                "currentValue": 720000
             },
             "contacts": {
-                "manager": "Marie Martin - 450-555-0234",
-                "contractor": "Réno Plus - 450-555-0567",
-                "insurance": "Intact Assurance - 1-800-555-0890"
+                "owner": "Marie Martin - 450-555-0234",
+                "bank": "Caisse Desjardins - Prêt #CD-2015-8901",
+                "contractor": "Réno Plus - 450-555-0567"
             },
             "notes": "Bon potentiel d'amélioration. Rénovations prévues."
         },
@@ -142,7 +136,6 @@ async def get_buildings():
                 "country": "Canada"
             },
             "type": "residential",
-            "status": "construction",
             "units": 15,
             "floors": 4,
             "yearBuilt": 2024,
@@ -159,17 +152,15 @@ async def get_buildings():
                 "security": True
             },
             "financials": {
-                "purchasePrice": 0,
-                "currentValue": 1200000,
-                "monthlyRevenue": 0,
-                "monthlyExpenses": 0,
-                "taxes": 0,
-                "insurance": 0
+                "purchasePrice": 1200000,
+                "downPayment": 300000,
+                "interestRate": 4.75,
+                "currentValue": 1200000
             },
             "contacts": {
-                "manager": "",
-                "contractor": "Construction CAH - 514-555-0456",
-                "insurance": ""
+                "owner": "Sacha Héroux - 514-555-0789",
+                "bank": "RBC - Prêt construction #RBC-2024-1234",
+                "contractor": "Construction CAH - 514-555-0456"
             },
             "notes": "Nouvelle construction. Livraison prévue été 2024."
         }

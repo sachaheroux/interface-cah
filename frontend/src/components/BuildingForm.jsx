@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, MapPin, DollarSign, Home, Users, FileText } from 'lucide-react'
-import { defaultBuilding, BuildingTypes, BuildingStatus, getBuildingTypeLabel, getBuildingStatusLabel } from '../types/building'
+import { defaultBuilding, BuildingTypes, getBuildingTypeLabel } from '../types/building'
 
 export default function BuildingForm({ building = null, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState(defaultBuilding)
@@ -162,22 +162,7 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Statut
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      {Object.values(BuildingStatus).map(status => (
-                        <option key={status} value={status}>
-                          {getBuildingStatusLabel(status)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -431,68 +416,41 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mise de fond ($)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.financials.downPayment}
+                      onChange={(e) => handleInputChange('downPayment', parseFloat(e.target.value) || 0, 'financials')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Taux d'intérêt actuel (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.financials.interestRate}
+                      onChange={(e) => handleInputChange('interestRate', parseFloat(e.target.value) || 0, 'financials')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Valeur actuelle ($)
                     </label>
                     <input
                       type="number"
                       value={formData.financials.currentValue}
                       onChange={(e) => handleInputChange('currentValue', parseFloat(e.target.value) || 0, 'financials')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Revenus mensuels ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.financials.monthlyRevenue}
-                      onChange={(e) => handleInputChange('monthlyRevenue', parseFloat(e.target.value) || 0, 'financials')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dépenses mensuelles ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.financials.monthlyExpenses}
-                      onChange={(e) => handleInputChange('monthlyExpenses', parseFloat(e.target.value) || 0, 'financials')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Taxes annuelles ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.financials.taxes}
-                      onChange={(e) => handleInputChange('taxes', parseFloat(e.target.value) || 0, 'financials')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Assurance annuelle ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.financials.insurance}
-                      onChange={(e) => handleInputChange('insurance', parseFloat(e.target.value) || 0, 'financials')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="0"
                       step="0.01"
@@ -507,14 +465,27 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gestionnaire
+                    Propriétaire
                   </label>
                   <input
                     type="text"
-                    value={formData.contacts.manager}
-                    onChange={(e) => handleInputChange('manager', e.target.value, 'contacts')}
+                    value={formData.contacts.owner}
+                    onChange={(e) => handleInputChange('owner', e.target.value, 'contacts')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Nom et coordonnées du gestionnaire"
+                    placeholder="Nom et coordonnées du propriétaire"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Banque (prêt hypothécaire)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contacts.bank}
+                    onChange={(e) => handleInputChange('bank', e.target.value, 'contacts')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Nom de la banque et détails du prêt"
                   />
                 </div>
 
@@ -528,19 +499,6 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     onChange={(e) => handleInputChange('contractor', e.target.value, 'contacts')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Nom et coordonnées de l'entrepreneur"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Assurance
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contacts.insurance}
-                    onChange={(e) => handleInputChange('insurance', e.target.value, 'contacts')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Compagnie d'assurance et coordonnées"
                   />
                 </div>
               </div>

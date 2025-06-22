@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react'
 import { buildingsService } from '../services/api'
 import BuildingForm from '../components/BuildingForm'
-import { getBuildingTypeLabel, getBuildingStatusLabel } from '../types/building'
+import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
@@ -84,7 +84,6 @@ export default function Buildings() {
 
   // Statistiques pour le tableau de bord des immeubles
   const totalBuildings = buildings.length
-  const activeBuildings = buildings.filter(b => b.status === 'active').length
   const totalUnits = buildings.reduce((sum, b) => sum + b.units, 0)
   const occupancyRate = 85 // Mock data
 
@@ -100,8 +99,8 @@ export default function Buildings() {
         
         <div className="card text-center">
           <BarChart3 className="h-6 w-6 lg:h-8 lg:w-8 text-green-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Actifs</h3>
-          <p className="text-xl lg:text-2xl font-bold text-green-600">{activeBuildings}</p>
+          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Valeur Portfolio</h3>
+          <p className="text-xl lg:text-2xl font-bold text-green-600">2.5M$</p>
         </div>
         
         <div className="card text-center">
@@ -167,9 +166,7 @@ export default function Buildings() {
                   </div>
                   <div className="ml-3">
                     <h4 className="text-lg font-semibold text-gray-900">{building.name}</h4>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(building.status)}`}>
-                      {getBuildingStatusLabel(building.status)}
-                    </span>
+                    <p className="text-sm text-gray-600">{getBuildingTypeLabel(building.type)}</p>
                   </div>
                 </div>
               </div>
