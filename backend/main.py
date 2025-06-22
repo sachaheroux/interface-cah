@@ -47,9 +47,132 @@ async def get_dashboard_data():
 async def get_buildings():
     """Liste des immeubles"""
     return [
-        {"id": 1, "name": "Immeuble A", "address": "123 Rue Example", "units": 12, "status": "active"},
-        {"id": 2, "name": "Immeuble B", "address": "456 Ave Test", "units": 8, "status": "active"},
-        {"id": 3, "name": "Immeuble C", "address": "789 Blvd Demo", "units": 15, "status": "construction"}
+        {
+            "id": 1, 
+            "name": "Immeuble Maple", 
+            "address": {
+                "street": "123 Rue Maple",
+                "city": "Montréal",
+                "province": "QC",
+                "postalCode": "H1A 1A1",
+                "country": "Canada"
+            },
+            "type": "residential",
+            "status": "active",
+            "units": 12,
+            "floors": 3,
+            "yearBuilt": 2018,
+            "totalArea": 8500,
+            "characteristics": {
+                "parking": 15,
+                "elevator": True,
+                "balconies": 8,
+                "storage": True,
+                "laundry": True,
+                "airConditioning": False,
+                "heating": "electric",
+                "internet": True,
+                "security": True
+            },
+            "financials": {
+                "purchasePrice": 850000,
+                "currentValue": 950000,
+                "monthlyRevenue": 8500,
+                "monthlyExpenses": 2200,
+                "taxes": 12000,
+                "insurance": 3500
+            },
+            "contacts": {
+                "manager": "Jean Dupont - 514-555-0123",
+                "contractor": "Construction CAH - 514-555-0456",
+                "insurance": "Assurance Desjardins - 1-800-555-0789"
+            },
+            "notes": "Immeuble récent en excellent état. Proche du métro."
+        },
+        {
+            "id": 2, 
+            "name": "Complexe Oak", 
+            "address": {
+                "street": "456 Avenue Oak",
+                "city": "Laval",
+                "province": "QC", 
+                "postalCode": "H7T 2B2",
+                "country": "Canada"
+            },
+            "type": "residential",
+            "status": "active",
+            "units": 8,
+            "floors": 2,
+            "yearBuilt": 2015,
+            "totalArea": 6200,
+            "characteristics": {
+                "parking": 10,
+                "elevator": False,
+                "balconies": 6,
+                "storage": True,
+                "laundry": True,
+                "airConditioning": True,
+                "heating": "gas",
+                "internet": False,
+                "security": False
+            },
+            "financials": {
+                "purchasePrice": 620000,
+                "currentValue": 720000,
+                "monthlyRevenue": 6400,
+                "monthlyExpenses": 1800,
+                "taxes": 8500,
+                "insurance": 2800
+            },
+            "contacts": {
+                "manager": "Marie Martin - 450-555-0234",
+                "contractor": "Réno Plus - 450-555-0567",
+                "insurance": "Intact Assurance - 1-800-555-0890"
+            },
+            "notes": "Bon potentiel d'amélioration. Rénovations prévues."
+        },
+        {
+            "id": 3, 
+            "name": "Tour Pine", 
+            "address": {
+                "street": "789 Boulevard Pine",
+                "city": "Longueuil",
+                "province": "QC",
+                "postalCode": "J4K 3C3", 
+                "country": "Canada"
+            },
+            "type": "residential",
+            "status": "construction",
+            "units": 15,
+            "floors": 4,
+            "yearBuilt": 2024,
+            "totalArea": 12000,
+            "characteristics": {
+                "parking": 20,
+                "elevator": True,
+                "balconies": 12,
+                "storage": True,
+                "laundry": True,
+                "airConditioning": True,
+                "heating": "heat_pump",
+                "internet": True,
+                "security": True
+            },
+            "financials": {
+                "purchasePrice": 0,
+                "currentValue": 1200000,
+                "monthlyRevenue": 0,
+                "monthlyExpenses": 0,
+                "taxes": 0,
+                "insurance": 0
+            },
+            "contacts": {
+                "manager": "",
+                "contractor": "Construction CAH - 514-555-0456",
+                "insurance": ""
+            },
+            "notes": "Nouvelle construction. Livraison prévue été 2024."
+        }
     ]
 
 @app.get("/api/tenants")

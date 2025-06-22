@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react'
 import { buildingsService } from '../services/api'
+import BuildingForm from '../components/BuildingForm'
+import { getBuildingTypeLabel, getBuildingStatusLabel } from '../types/building'
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [selectedBuilding, setSelectedBuilding] = useState(null)
 
   useEffect(() => {
     fetchBuildings()
@@ -37,17 +41,37 @@ export default function Buildings() {
     }
   }
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'active':
-        return 'Actif'
-      case 'construction':
-        return 'En construction'
-      case 'maintenance':
-        return 'Maintenance'
-      default:
-        return status
+  const handleAddBuilding = () => {
+    setSelectedBuilding(null)
+    setShowForm(true)
+  }
+
+  const handleEditBuilding = (building) => {
+    setSelectedBuilding(building)
+    setShowForm(true)
+  }
+
+  const handleSaveBuilding = async (buildingData) => {
+    try {
+      if (selectedBuilding) {
+        // Update existing building
+        const updatedBuilding = { ...buildingData, id: selectedBuilding.id }
+        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? updatedBuilding : b))
+      } else {
+        // Add new building
+        const newBuilding = { ...buildingData, id: Date.now() }
+        setBuildings(prev => [...prev, newBuilding])
+      }
+      setShowForm(false)
+      setSelectedBuilding(null)
+    } catch (error) {
+      console.error('Error saving building:', error)
     }
+  }
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setSelectedBuilding(null)
   }
 
   if (loading) {
@@ -97,7 +121,7 @@ export default function Buildings() {
       <div className="card">
         <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Actions Rapides</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
-          <button className="btn-primary text-center py-2 lg:py-3">
+          <button onClick={handleAddBuilding} className="btn-primary text-center py-2 lg:py-3">
             <Plus className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
             <span className="text-xs lg:text-sm">Nouvel Immeuble</span>
           </button>
@@ -127,7 +151,7 @@ export default function Buildings() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Liste des Immeubles</h3>
-          <button className="btn-primary flex items-center text-sm">
+          <button onClick={handleAddBuilding} className="btn-primary flex items-center text-sm">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter
           </button>
@@ -144,7 +168,7 @@ export default function Buildings() {
                   <div className="ml-3">
                     <h4 className="text-lg font-semibold text-gray-900">{building.name}</h4>
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(building.status)}`}>
-                      {getStatusText(building.status)}
+                      {getBuildingStatusLabel(building.status)}
                     </span>
                   </div>
                 </div>
@@ -153,7 +177,12 @@ export default function Buildings() {
               <div className="space-y-3">
                 <div className="flex items-center text-gray-600">
                   <MapPin className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{building.address}</span>
+                  <span className="text-sm">
+                    {typeof building.address === 'string' 
+                      ? building.address 
+                      : `${building.address.street}, ${building.address.city}`
+                    }
+                  </span>
                 </div>
                 
                 <div className="flex items-center text-gray-600">
@@ -167,7 +196,7 @@ export default function Buildings() {
                   <Eye className="h-4 w-4 mr-1" />
                   Détails
                 </button>
-                <button className="flex-1 btn-secondary text-sm py-2">
+                <button onClick={() => handleEditBuilding(building)} className="flex-1 btn-secondary text-sm py-2">
                   <Edit className="h-4 w-4 mr-1" />
                   Modifier
                 </button>
@@ -183,12 +212,20 @@ export default function Buildings() {
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun immeuble</h3>
           <p className="text-gray-600 mb-4">Commencez par ajouter votre premier immeuble.</p>
-          <button className="btn-primary">
+          <button onClick={handleAddBuilding} className="btn-primary">
             <Plus className="h-5 w-5 mr-2" />
             Ajouter un Immeuble
           </button>
         </div>
       )}
+
+      {/* Building Form Modal */}
+      <BuildingForm
+        building={selectedBuilding}
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        onSave={handleSaveBuilding}
+      />
     </div>
   )
 } 
