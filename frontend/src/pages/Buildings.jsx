@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Building2, MapPin, Users, Plus, Edit, Eye } from 'lucide-react'
+import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react'
 import { buildingsService } from '../services/api'
 
 export default function Buildings() {
@@ -58,18 +58,62 @@ export default function Buildings() {
     )
   }
 
+  // Statistiques pour le tableau de bord des immeubles
+  const totalBuildings = buildings.length
+  const activeBuildings = buildings.filter(b => b.status === 'active').length
+  const totalUnits = buildings.reduce((sum, b) => sum + b.units, 0)
+  const occupancyRate = 85 // Mock data
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Immeubles</h1>
-          <p className="text-gray-600 mt-1">Gérez vos propriétés et leurs informations</p>
+      {/* Tableau de bord spécifique aux immeubles */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="card text-center">
+          <Building2 className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Total Immeubles</h3>
+          <p className="text-2xl font-bold text-primary-600">{totalBuildings}</p>
         </div>
-        <button className="btn-primary flex items-center">
-          <Plus className="h-5 w-5 mr-2" />
-          Nouvel Immeuble
-        </button>
+        
+        <div className="card text-center">
+          <BarChart3 className="h-8 w-8 text-green-600 mx-auto mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Actifs</h3>
+          <p className="text-2xl font-bold text-green-600">{activeBuildings}</p>
+        </div>
+        
+        <div className="card text-center">
+          <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Total Unités</h3>
+          <p className="text-2xl font-bold text-blue-600">{totalUnits}</p>
+        </div>
+        
+        <div className="card text-center">
+          <TrendingUp className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Taux Occupation</h3>
+          <p className="text-2xl font-bold text-yellow-600">{occupancyRate}%</p>
+        </div>
+      </div>
+
+      {/* Actions rapides */}
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button className="btn-primary text-center py-3">
+            <Plus className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-sm">Nouvel Immeuble</span>
+          </button>
+          <button className="btn-secondary text-center py-3">
+            <MapPin className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-sm">Vue Carte</span>
+          </button>
+          <button className="btn-secondary text-center py-3">
+            <BarChart3 className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-sm">Rapport</span>
+          </button>
+          <button className="btn-secondary text-center py-3">
+            <AlertTriangle className="h-5 w-5 mx-auto mb-1" />
+            <span className="text-sm">Maintenance</span>
+          </button>
+        </div>
       </div>
 
       {/* Error Display */}
@@ -79,48 +123,58 @@ export default function Buildings() {
         </div>
       )}
 
-      {/* Buildings Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {buildings.map((building) => (
-          <div key={building.id} className="card hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-primary-100 rounded-lg">
-                  <Building2 className="h-6 w-6 text-primary-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-semibold text-gray-900">{building.name}</h3>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(building.status)}`}>
-                    {getStatusText(building.status)}
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* Liste des immeubles */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Liste des Immeubles</h3>
+          <button className="btn-primary flex items-center text-sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter
+          </button>
+        </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center text-gray-600">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span className="text-sm">{building.address}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {buildings.map((building) => (
+            <div key={building.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <Building2 className="h-6 w-6 text-primary-600" />
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-lg font-semibold text-gray-900">{building.name}</h4>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(building.status)}`}>
+                      {getStatusText(building.status)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              
-              <div className="flex items-center text-gray-600">
-                <Users className="h-4 w-4 mr-2" />
-                <span className="text-sm">{building.units} unités</span>
-              </div>
-            </div>
 
-            <div className="mt-6 flex space-x-2">
-              <button className="flex-1 btn-primary text-sm py-2">
-                <Eye className="h-4 w-4 mr-1" />
-                Voir Détails
-              </button>
-              <button className="flex-1 btn-secondary text-sm py-2">
-                <Edit className="h-4 w-4 mr-1" />
-                Modifier
-              </button>
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-600">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{building.address}</span>
+                </div>
+                
+                <div className="flex items-center text-gray-600">
+                  <Users className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{building.units} unités</span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex space-x-2">
+                <button className="flex-1 btn-primary text-sm py-2">
+                  <Eye className="h-4 w-4 mr-1" />
+                  Détails
+                </button>
+                <button className="flex-1 btn-secondary text-sm py-2">
+                  <Edit className="h-4 w-4 mr-1" />
+                  Modifier
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Empty State */}
