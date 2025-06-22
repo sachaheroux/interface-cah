@@ -65,53 +65,53 @@ export default function Buildings() {
   const occupancyRate = 85 // Mock data
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Tableau de bord spécifique aux immeubles */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-6 lg:mb-8">
         <div className="card text-center">
-          <Building2 className="h-8 w-8 text-primary-600 mx-auto mb-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Total Immeubles</h3>
-          <p className="text-2xl font-bold text-primary-600">{totalBuildings}</p>
+          <Building2 className="h-6 w-6 lg:h-8 lg:w-8 text-primary-600 mx-auto mb-2" />
+          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Total Immeubles</h3>
+          <p className="text-xl lg:text-2xl font-bold text-primary-600">{totalBuildings}</p>
         </div>
         
         <div className="card text-center">
-          <BarChart3 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Actifs</h3>
-          <p className="text-2xl font-bold text-green-600">{activeBuildings}</p>
+          <BarChart3 className="h-6 w-6 lg:h-8 lg:w-8 text-green-600 mx-auto mb-2" />
+          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Actifs</h3>
+          <p className="text-xl lg:text-2xl font-bold text-green-600">{activeBuildings}</p>
         </div>
         
         <div className="card text-center">
-          <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Total Unités</h3>
-          <p className="text-2xl font-bold text-blue-600">{totalUnits}</p>
+          <Users className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600 mx-auto mb-2" />
+          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Total Unités</h3>
+          <p className="text-xl lg:text-2xl font-bold text-blue-600">{totalUnits}</p>
         </div>
         
         <div className="card text-center">
-          <TrendingUp className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Taux Occupation</h3>
-          <p className="text-2xl font-bold text-yellow-600">{occupancyRate}%</p>
+          <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8 text-yellow-600 mx-auto mb-2" />
+          <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Taux Occupation</h3>
+          <p className="text-xl lg:text-2xl font-bold text-yellow-600">{occupancyRate}%</p>
         </div>
       </div>
 
       {/* Actions rapides */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button className="btn-primary text-center py-3">
-            <Plus className="h-5 w-5 mx-auto mb-1" />
-            <span className="text-sm">Nouvel Immeuble</span>
+        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">Actions Rapides</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
+          <button className="btn-primary text-center py-2 lg:py-3">
+            <Plus className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
+            <span className="text-xs lg:text-sm">Nouvel Immeuble</span>
           </button>
-          <button className="btn-secondary text-center py-3">
-            <MapPin className="h-5 w-5 mx-auto mb-1" />
-            <span className="text-sm">Vue Carte</span>
+          <button className="btn-secondary text-center py-2 lg:py-3">
+            <MapPin className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
+            <span className="text-xs lg:text-sm">Vue Carte</span>
           </button>
-          <button className="btn-secondary text-center py-3">
-            <BarChart3 className="h-5 w-5 mx-auto mb-1" />
-            <span className="text-sm">Rapport</span>
+          <button className="btn-secondary text-center py-2 lg:py-3">
+            <BarChart3 className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
+            <span className="text-xs lg:text-sm">Rapport</span>
           </button>
-          <button className="btn-secondary text-center py-3">
-            <AlertTriangle className="h-5 w-5 mx-auto mb-1" />
-            <span className="text-sm">Maintenance</span>
+          <button className="btn-secondary text-center py-2 lg:py-3">
+            <AlertTriangle className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
+            <span className="text-xs lg:text-sm">Maintenance</span>
           </button>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function Buildings() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {buildings.map((building) => (
             <div key={building.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">

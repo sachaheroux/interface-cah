@@ -22,15 +22,7 @@ import {
 } from 'lucide-react'
 
 const getSecondaryNavigation = (pathname) => {
-  switch (pathname) {
-    case '/dashboard':
-      return [
-        { name: 'Vue d\'ensemble', icon: BarChart3, active: true },
-        { name: 'Statistiques', icon: BarChart3 },
-        { name: 'Rapports', icon: FileText },
-        { name: 'Alertes', icon: Calendar },
-      ]
-    
+  switch (pathname) {    
     case '/buildings':
       return [
         { name: 'Tous les immeubles', icon: List, active: true },
@@ -49,16 +41,6 @@ const getSecondaryNavigation = (pathname) => {
         { name: 'Ajouter locataire', icon: Plus },
         { name: 'Contrats', icon: FileText },
         { name: 'Paiements', icon: DollarSign },
-      ]
-    
-    case '/maintenance':
-      return [
-        { name: 'Toutes interventions', icon: Wrench, active: true },
-        { name: 'En attente', icon: Clock },
-        { name: 'En cours', icon: Settings },
-        { name: 'Terminées', icon: List },
-        { name: 'Nouvelle demande', icon: Plus },
-        { name: 'Planification', icon: Calendar },
       ]
     
     case '/billing':
@@ -130,18 +112,17 @@ export default function SecondarySidebar() {
   const location = useLocation()
   const secondaryNav = getSecondaryNavigation(location.pathname)
 
-  // Ne pas afficher la sidebar sur le tableau de bord principal
-  if (location.pathname === '/dashboard' || location.pathname === '/') {
+  // Ne pas afficher la sidebar sur la page d'accueil
+  if (location.pathname === '/') {
     return null
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 fixed left-0 top-16 bottom-0 z-40 overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="w-48 lg:w-64 bg-white border-r border-gray-200 fixed left-0 top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
+      <div className="p-3 lg:p-4">
+        <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
           {location.pathname === '/buildings' && 'Gestion Immeubles'}
           {location.pathname === '/tenants' && 'Gestion Locataires'}
-          {location.pathname === '/maintenance' && 'Entretien & Réparations'}
           {location.pathname === '/billing' && 'Facturation & Dépenses'}
           {location.pathname === '/employees' && 'Employés & Temps'}
           {location.pathname === '/contractors' && 'Sous-traitants'}
@@ -156,14 +137,14 @@ export default function SecondarySidebar() {
             return (
               <button
                 key={index}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                className={`w-full flex items-center px-2 lg:px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors duration-200 ${
                   item.active 
                     ? 'bg-primary-100 text-primary-700' 
                     : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                 }`}
               >
-                <Icon className="h-4 w-4 mr-3" />
-                {item.name}
+                <Icon className="h-3 w-3 lg:h-4 lg:w-4 mr-2 lg:mr-3" />
+                <span className="truncate">{item.name}</span>
               </button>
             )
           })}

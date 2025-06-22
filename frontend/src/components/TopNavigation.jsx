@@ -17,10 +17,8 @@ import {
 import clsx from 'clsx'
 
 const navigation = [
-  { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Immeubles', href: '/buildings', icon: Building2 },
   { name: 'Locataires', href: '/tenants', icon: Users },
-  { name: 'Entretien', href: '/maintenance', icon: Wrench },
   { name: 'Facturation', href: '/billing', icon: Receipt },
   { name: 'Employés', href: '/employees', icon: UserCheck },
   { name: 'Sous-traitants', href: '/contractors', icon: Truck },
@@ -34,15 +32,16 @@ export default function TopNavigation() {
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between h-16 px-6">
+      <div className="flex items-center justify-between h-16 px-3 lg:px-6">
         {/* Logo */}
-        <div className="flex items-center">
-          <Building2 className="h-8 w-8 text-primary-600 mr-3" />
-          <h1 className="text-xl font-bold text-gray-900">Interface CAH</h1>
+        <div className="flex items-center flex-shrink-0">
+          <Building2 className="h-6 w-6 lg:h-8 lg:w-8 text-primary-600 mr-2 lg:mr-3" />
+          <h1 className="text-lg lg:text-xl font-bold text-gray-900 hidden sm:block">Interface CAH</h1>
+          <h1 className="text-lg font-bold text-gray-900 sm:hidden">CAH</h1>
         </div>
         
         {/* Navigation horizontale */}
-        <nav className="flex space-x-1">
+        <nav className="flex space-x-0.5 lg:space-x-1 flex-1 justify-center max-w-4xl mx-4 overflow-x-auto">
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href
@@ -51,35 +50,35 @@ export default function TopNavigation() {
                 key={item.name}
                 to={item.href}
                 className={clsx(
-                  'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200',
+                  'flex items-center px-2 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0',
                   isActive 
                     ? 'bg-primary-100 text-primary-700' 
                     : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                 )}
               >
-                <Icon className="h-4 w-4 mr-2" />
-                {item.name}
+                <Icon className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                <span className="hidden sm:inline lg:inline">{item.name}</span>
               </Link>
             )
           })}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
           {/* Notifications */}
           <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 relative">
-            <Bell className="h-6 w-6" />
+            <Bell className="h-5 w-5 lg:h-6 lg:w-6" />
             <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
           </button>
 
           {/* User menu */}
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
+          <div className="flex items-center space-x-2 lg:space-x-3">
+            <div className="text-right hidden lg:block">
               <div className="text-sm font-medium text-gray-900">Administrateur</div>
               <div className="text-xs text-gray-500">admin@interfacecah.com</div>
             </div>
             <button className="flex items-center p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100">
-              <User className="h-8 w-8" />
+              <User className="h-6 w-6 lg:h-8 lg:w-8" />
             </button>
           </div>
         </div>

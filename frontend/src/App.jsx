@@ -15,7 +15,7 @@ import Settings from './pages/Settings'
 
 function AppContent() {
   const location = useLocation()
-  const showSecondarySidebar = location.pathname !== '/dashboard' && location.pathname !== '/'
+  const showSecondarySidebar = location.pathname !== '/'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -28,15 +28,13 @@ function AppContent() {
         <SecondarySidebar />
         
         {/* Zone de contenu principal */}
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 ${
-          showSecondarySidebar ? 'ml-64' : ''
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-3 lg:p-6 ${
+          showSecondarySidebar ? 'md:ml-48 lg:ml-64' : ''
         }`}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/buildings" element={<Buildings />} />
             <Route path="/tenants" element={<Tenants />} />
-            <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/contractors" element={<Contractors />} />
