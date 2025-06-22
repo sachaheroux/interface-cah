@@ -20,14 +20,13 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true)
-      setError(null) // Réinitialiser l'erreur au début
+      setError(null)
       
-      // Récupérer toutes les données du backend (défaut + sauvegardées)
       const response = await buildingsService.getBuildings()
       setBuildings(response.data)
     } catch (err) {
-      setError('Erreur lors du chargement des immeubles')
       console.error('Buildings error:', err)
+      setError(`Erreur lors du chargement: ${err.response?.data?.detail || err.message}`)
     } finally {
       setLoading(false)
     }
@@ -65,15 +64,38 @@ export default function Buildings() {
     try {
       setError(null) // Réinitialiser l'erreur lors de la sauvegarde
       
+      // Nettoyer les données pour éviter les erreurs de validation
+      const cleanedData = {
+        ...buildingData,
+        units: Number(buildingData.units) || 1,
+        floors: Number(buildingData.floors) || 1,
+        yearBuilt: Number(buildingData.yearBuilt) || new Date().getFullYear(),
+        totalArea: Number(buildingData.totalArea) || null,
+        characteristics: {
+          ...buildingData.characteristics,
+          parking: Number(buildingData.characteristics?.parking) || 0,
+          balconies: Number(buildingData.characteristics?.balconies) || 0
+        },
+        financials: {
+          ...buildingData.financials,
+          purchasePrice: Number(buildingData.financials?.purchasePrice) || 0,
+          downPayment: Number(buildingData.financials?.downPayment) || 0,
+          interestRate: Number(buildingData.financials?.interestRate) || 0,
+          currentValue: Number(buildingData.financials?.currentValue) || 0
+        }
+      }
+      
+      console.log('Sending building data:', JSON.stringify(cleanedData, null, 2))
+      
       if (selectedBuilding) {
         // Update existing building via API
-        const response = await buildingsService.updateBuilding(selectedBuilding.id, buildingData)
+        const response = await buildingsService.updateBuilding(selectedBuilding.id, cleanedData)
         
         // Mettre à jour l'état local
         setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? response.data : b))
       } else {
         // Create new building via API
-        const response = await buildingsService.createBuilding(buildingData)
+        const response = await buildingsService.createBuilding(cleanedData)
         
         // Ajouter à l'état local
         setBuildings(prev => [...prev, response.data])
@@ -83,7 +105,8 @@ export default function Buildings() {
       setSelectedBuilding(null)
     } catch (error) {
       console.error('Error saving building:', error)
-      setError('Erreur lors de la sauvegarde de l\'immeuble')
+      console.error('API Error Response:', error.response?.data)
+      setError(`Erreur lors de la sauvegarde: ${error.response?.data?.detail || error.message}`)
     }
   }
 
@@ -110,11 +133,12 @@ export default function Buildings() {
       setShowDetails(false)
       setSelectedBuilding(null)
     } catch (error) {
-      console.error('Error deleting building:', error)
+      console.error('Delete error:', error)
+      
       if (error.response?.status === 403) {
         setError('Impossible de supprimer un immeuble du système de base')
       } else {
-        setError('Erreur lors de la suppression de l\'immeuble')
+        setError(`Erreur lors de la suppression: ${error.response?.data?.detail || error.message}`)
       }
     }
   }
@@ -186,12 +210,29 @@ export default function Buildings() {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className={`border rounded-lg p-4 ${
+          error.includes('Mode hors ligne') || error.includes('locale') 
+            ? 'bg-yellow-50 border-yellow-200' 
+            : 'bg-red-50 border-red-200'
+        }`}>
           <div className="flex items-center justify-between">
-            <p className="text-red-700">{error}</p>
+            <div className="flex items-center">
+              {error.includes('Mode hors ligne') || error.includes('locale') ? (
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
+                  <p className="text-yellow-700">{error}</p>
+                </div>
+              ) : (
+                <p className="text-red-700">{error}</p>
+              )}
+            </div>
             <button 
               onClick={() => setError(null)}
-              className="text-red-500 hover:text-red-700 ml-4"
+              className={`ml-4 ${
+                error.includes('Mode hors ligne') || error.includes('locale')
+                  ? 'text-yellow-500 hover:text-yellow-700'
+                  : 'text-red-500 hover:text-red-700'
+              }`}
             >
               ×
             </button>
