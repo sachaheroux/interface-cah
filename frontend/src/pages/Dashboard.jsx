@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { dashboardService } from '../services/api'
 
+// Dashboard avec données dynamiques - Version déployée 2025-06-22 23:30
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
