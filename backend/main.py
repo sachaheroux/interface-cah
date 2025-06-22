@@ -21,7 +21,7 @@ app.add_middleware(
         "http://localhost:5174",
         "http://localhost:5175",
         "http://localhost:3000",
-        "https://*.vercel.app"
+        "https://interface-cahs.vercel.app"
     ],  # Frontend local (différents ports) et Vercel
     allow_credentials=True,
     allow_methods=["*"],
