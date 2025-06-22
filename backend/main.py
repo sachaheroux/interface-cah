@@ -110,8 +110,8 @@ def load_buildings_data():
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
-            return {"buildings": [], "next_id": 4}
-    return {"buildings": [], "next_id": 4}
+            return {"buildings": [], "next_id": 1}
+    return {"buildings": [], "next_id": 1}
 
 def save_buildings_data(data):
     """Sauvegarder les données des immeubles dans le fichier JSON"""
@@ -124,132 +124,8 @@ def save_buildings_data(data):
         return False
 
 def get_default_buildings():
-    """Retourner les immeubles par défaut du système"""
-    return [
-        {
-            "id": 1, 
-            "name": "Immeuble Maple", 
-            "address": {
-                "street": "123 Rue Maple",
-                "city": "Montréal",
-                "province": "QC",
-                "postalCode": "H1A 1A1",
-                "country": "Canada"
-            },
-            "type": "residential",
-            "units": 12,
-            "floors": 3,
-            "yearBuilt": 2018,
-            "totalArea": 8500,
-            "characteristics": {
-                "parking": 15,
-                "elevator": True,
-                "balconies": 8,
-                "storage": True,
-                "laundry": True,
-                "airConditioning": False,
-                "heating": "electric",
-                "internet": True,
-                "security": True
-            },
-            "financials": {
-                "purchasePrice": 850000,
-                "downPayment": 170000,
-                "interestRate": 4.25,
-                "currentValue": 950000
-            },
-            "contacts": {
-                "owner": "Jean Dupont - 514-555-0123",
-                "bank": "Banque Nationale - Prêt #BN-2018-4567",
-                "contractor": "Construction CAH - 514-555-0456"
-            },
-            "notes": "Immeuble récent en excellent état. Proche du métro.",
-            "createdAt": "2018-01-15T00:00:00Z",
-            "updatedAt": "2018-01-15T00:00:00Z"
-        },
-        {
-            "id": 2, 
-            "name": "Complexe Oak", 
-            "address": {
-                "street": "456 Avenue Oak",
-                "city": "Laval",
-                "province": "QC", 
-                "postalCode": "H7T 2B2",
-                "country": "Canada"
-            },
-            "type": "residential",
-            "units": 8,
-            "floors": 2,
-            "yearBuilt": 2015,
-            "totalArea": 6200,
-            "characteristics": {
-                "parking": 10,
-                "elevator": False,
-                "balconies": 6,
-                "storage": True,
-                "laundry": True,
-                "airConditioning": True,
-                "heating": "gas",
-                "internet": False,
-                "security": False
-            },
-            "financials": {
-                "purchasePrice": 620000,
-                "downPayment": 124000,
-                "interestRate": 3.95,
-                "currentValue": 720000
-            },
-            "contacts": {
-                "owner": "Marie Martin - 450-555-0234",
-                "bank": "Caisse Desjardins - Prêt #CD-2015-8901",
-                "contractor": "Réno Plus - 450-555-0567"
-            },
-            "notes": "Bon potentiel d'amélioration. Rénovations prévues.",
-            "createdAt": "2015-03-20T00:00:00Z",
-            "updatedAt": "2015-03-20T00:00:00Z"
-        },
-        {
-            "id": 3, 
-            "name": "Tour Pine", 
-            "address": {
-                "street": "789 Boulevard Pine",
-                "city": "Longueuil",
-                "province": "QC",
-                "postalCode": "J4K 3C3", 
-                "country": "Canada"
-            },
-            "type": "residential",
-            "units": 15,
-            "floors": 4,
-            "yearBuilt": 2024,
-            "totalArea": 12000,
-            "characteristics": {
-                "parking": 20,
-                "elevator": True,
-                "balconies": 12,
-                "storage": True,
-                "laundry": True,
-                "airConditioning": True,
-                "heating": "heat_pump",
-                "internet": True,
-                "security": True
-            },
-            "financials": {
-                "purchasePrice": 1200000,
-                "downPayment": 300000,
-                "interestRate": 4.75,
-                "currentValue": 1200000
-            },
-            "contacts": {
-                "owner": "Sacha Héroux - 514-555-0789",
-                "bank": "RBC - Prêt construction #RBC-2024-1234",
-                "contractor": "Construction CAH - 514-555-0456"
-            },
-            "notes": "Nouvelle construction. Livraison prévue été 2024.",
-            "createdAt": "2024-01-10T00:00:00Z",
-            "updatedAt": "2024-01-10T00:00:00Z"
-        }
-    ]
+    """Retourner une liste vide - plus d'immeubles par défaut"""
+    return []
 
 # Route de test de base
 @app.get("/")
@@ -264,17 +140,58 @@ async def health_check():
 # Routes temporaires pour les modules (à développer plus tard)
 @app.get("/api/dashboard")
 async def get_dashboard_data():
-    """Données du tableau de bord"""
-    return {
-        "total_buildings": 20,
-        "total_tenants": 150,
-        "pending_maintenance": 5,
-        "monthly_revenue": 85000,
-        "alerts": [
-            {"type": "maintenance", "message": "Entretien programmé - Immeuble A"},
-            {"type": "payment", "message": "3 loyers en retard"}
-        ]
-    }
+    """Retourner les données du tableau de bord calculées à partir des vrais immeubles"""
+    try:
+        # Charger les données des immeubles
+        data = load_buildings_data()
+        buildings = data.get("buildings", [])
+        
+        # Calculer les statistiques réelles
+        total_buildings = len(buildings)
+        total_units = sum(building.get("units", 0) for building in buildings)
+        total_portfolio_value = sum(building.get("financials", {}).get("currentValue", 0) for building in buildings)
+        
+        # Calculer le revenu mensuel estimé (estimation basée sur la valeur)
+        # Estimation : 0.5% de la valeur du portfolio par mois
+        monthly_revenue = total_portfolio_value * 0.005
+        
+        return {
+            "totalBuildings": total_buildings,
+            "totalUnits": total_units,
+            "portfolioValue": total_portfolio_value,
+            "monthlyRevenue": monthly_revenue,
+            "recentActivity": [
+                {
+                    "type": "info",
+                    "message": f"Portfolio actuel : {total_buildings} immeubles",
+                    "timestamp": "2025-06-22T23:00:00Z"
+                },
+                {
+                    "type": "success", 
+                    "message": f"Total unités : {total_units}",
+                    "timestamp": "2025-06-22T22:30:00Z"
+                },
+                {
+                    "type": "info",
+                    "message": f"Valeur portfolio : {total_portfolio_value:,.0f} $",
+                    "timestamp": "2025-06-22T22:00:00Z"
+                }
+            ]
+        }
+    except Exception as e:
+        return {
+            "totalBuildings": 0,
+            "totalUnits": 0, 
+            "portfolioValue": 0,
+            "monthlyRevenue": 0,
+            "recentActivity": [
+                {
+                    "type": "info",
+                    "message": "Aucun immeuble dans le portfolio",
+                    "timestamp": "2025-06-22T23:00:00Z"
+                }
+            ]
+        }
 
 # Routes CRUD pour les immeubles avec persistance
 @app.get("/api/buildings")
@@ -382,21 +299,22 @@ async def update_building(building_id: int, building_data: BuildingUpdate):
 async def delete_building(building_id: int):
     """Supprimer un immeuble"""
     try:
-        # Vérifier si c'est un immeuble par défaut (non supprimable)
-        default_buildings = get_default_buildings()
-        for building in default_buildings:
-            if building["id"] == building_id:
-                raise HTTPException(status_code=403, detail="Les immeubles par défaut ne peuvent pas être supprimés")
-        
-        # Charger les données sauvegardées
+        # Charger les données
         data = load_buildings_data()
+        buildings = data.get("buildings", [])
         
-        # Trouver et supprimer l'immeuble
-        original_length = len(data["buildings"])
-        data["buildings"] = [b for b in data["buildings"] if b["id"] != building_id]
+        # Trouver l'immeuble à supprimer
+        building_to_delete = None
+        for building in buildings:
+            if building["id"] == building_id:
+                building_to_delete = building
+                break
         
-        if len(data["buildings"]) == original_length:
+        if not building_to_delete:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
+        
+        # Supprimer l'immeuble
+        data["buildings"] = [b for b in buildings if b["id"] != building_id]
         
         # Sauvegarder
         if not save_buildings_data(data):
@@ -407,7 +325,7 @@ async def delete_building(building_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de l'immeuble: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/tenants")
 async def get_tenants():

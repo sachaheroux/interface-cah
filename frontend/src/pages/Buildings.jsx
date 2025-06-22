@@ -85,8 +85,6 @@ export default function Buildings() {
         }
       }
       
-      console.log('Sending building data:', JSON.stringify(cleanedData, null, 2))
-      
       if (selectedBuilding) {
         // Update existing building via API
         const response = await buildingsService.updateBuilding(selectedBuilding.id, cleanedData)
