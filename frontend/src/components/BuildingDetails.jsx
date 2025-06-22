@@ -20,7 +20,12 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
 
   const isUserCreatedBuilding = () => {
     // Les immeubles créés par l'utilisateur ont un ID >= 4 (les 3 premiers sont les immeubles par défaut)
-    return building.id >= 4
+    // Ou bien ils sont dans localStorage (mode fallback)
+    if (building.id >= 4) return true
+    
+    // Vérifier aussi dans localStorage pour le mode fallback
+    const localBuildings = JSON.parse(localStorage.getItem('localBuildings') || '[]')
+    return localBuildings.some(b => b.id === building.id)
   }
 
   return (
