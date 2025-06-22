@@ -18,6 +18,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData()
+    
+    // Rafraîchir les données quand on revient sur la page
+    const handleFocus = () => {
+      fetchDashboardData()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const fetchDashboardData = async () => {
@@ -58,35 +66,35 @@ export default function Dashboard() {
   const stats = [
     {
       name: 'Total Immeubles',
-      value: dashboardData?.total_buildings || 0,
+      value: dashboardData?.totalBuildings || 0,
       icon: Building2,
       color: 'bg-blue-500',
-      change: '+2 ce mois',
-      changeType: 'positive'
+      change: dashboardData?.totalBuildings > 0 ? `${dashboardData.totalBuildings} actifs` : 'Aucun immeuble',
+      changeType: 'neutral'
     },
     {
-      name: 'Total Locataires',
-      value: dashboardData?.total_tenants || 0,
+      name: 'Total Unités',
+      value: dashboardData?.totalUnits || 0,
       icon: Users,
       color: 'bg-green-500',
-      change: '+5 ce mois',
-      changeType: 'positive'
+      change: dashboardData?.totalUnits > 0 ? `${dashboardData.totalUnits} unités` : 'Aucune unité',
+      changeType: 'neutral'
     },
     {
-      name: 'Entretiens en Attente',
-      value: dashboardData?.pending_maintenance || 0,
-      icon: Wrench,
-      color: 'bg-yellow-500',
-      change: '-2 cette semaine',
-      changeType: 'positive'
+      name: 'Valeur Portfolio',
+      value: dashboardData?.portfolioValue ? `${dashboardData.portfolioValue.toLocaleString('fr-CA')}$` : '0$',
+      icon: TrendingUp,
+      color: 'bg-purple-500',
+      change: dashboardData?.portfolioValue > 0 ? 'Valeur totale' : 'Aucune valeur',
+      changeType: 'neutral'
     },
     {
-      name: 'Revenus Mensuels',
-      value: `${dashboardData?.monthly_revenue?.toLocaleString('fr-CA')}$` || '0$',
+      name: 'Revenus Mensuels Estimés',
+      value: dashboardData?.monthlyRevenue ? `${Math.round(dashboardData.monthlyRevenue).toLocaleString('fr-CA')}$` : '0$',
       icon: DollarSign,
       color: 'bg-primary-500',
-      change: '+12% vs mois dernier',
-      changeType: 'positive'
+      change: dashboardData?.monthlyRevenue > 0 ? 'Estimation 0.5%/mois' : 'Aucun revenu',
+      changeType: 'neutral'
     }
   ]
 
@@ -116,7 +124,10 @@ export default function Dashboard() {
                 <div className="ml-4 flex-1">
                   <p className="text-sm font-medium text-gray-600">{stat.name}</p>
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className={`text-xs ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-xs ${
+                    stat.changeType === 'positive' ? 'text-green-600' : 
+                    stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+                  }`}>
                     {stat.change}
                   </p>
                 </div>
@@ -126,32 +137,34 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Alerts Section */}
-      {dashboardData?.alerts && dashboardData.alerts.length > 0 && (
+      {/* Recent Activity Section */}
+      {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 && (
         <div className="card">
           <div className="flex items-center mb-4">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Alertes et Notifications</h2>
+            <TrendingUp className="h-5 w-5 text-blue-500 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Activité Récente</h2>
           </div>
           <div className="space-y-3">
-            {dashboardData.alerts.map((alert, index) => (
-              <div key={index} className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            {dashboardData.recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className={`p-2 rounded-full ${
-                  alert.type === 'maintenance' ? 'bg-yellow-100' : 'bg-red-100'
+                  activity.type === 'success' ? 'bg-green-100' : 
+                  activity.type === 'info' ? 'bg-blue-100' : 'bg-gray-100'
                 }`}>
-                  {alert.type === 'maintenance' ? (
-                    <Wrench className="h-4 w-4 text-yellow-600" />
+                  {activity.type === 'success' ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : activity.type === 'info' ? (
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
                   ) : (
-                    <DollarSign className="h-4 w-4 text-red-600" />
+                    <Building2 className="h-4 w-4 text-gray-600" />
                   )}
                 </div>
                 <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">{alert.message}</p>
-                  <p className="text-xs text-gray-500">Il y a 2 heures</p>
+                  <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(activity.timestamp).toLocaleString('fr-CA')}
+                  </p>
                 </div>
-                <button className="text-gray-400 hover:text-gray-600">
-                  <CheckCircle className="h-5 w-5" />
-                </button>
               </div>
             ))}
           </div>
