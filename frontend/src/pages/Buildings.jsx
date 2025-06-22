@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react'
 import { buildingsService } from '../services/api'
 import BuildingForm from '../components/BuildingForm'
+import BuildingDetails from '../components/BuildingDetails'
 import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
@@ -9,6 +10,7 @@ export default function Buildings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const [selectedBuilding, setSelectedBuilding] = useState(null)
 
   useEffect(() => {
@@ -19,6 +21,8 @@ export default function Buildings() {
     try {
       setLoading(true)
       setError(null) // Réinitialiser l'erreur au début
+      
+      // Récupérer toutes les données du backend (défaut + sauvegardées)
       const response = await buildingsService.getBuildings()
       setBuildings(response.data)
     } catch (err) {
@@ -52,18 +56,29 @@ export default function Buildings() {
     setShowForm(true)
   }
 
+  const handleViewBuilding = (building) => {
+    setSelectedBuilding(building)
+    setShowDetails(true)
+  }
+
   const handleSaveBuilding = async (buildingData) => {
     try {
       setError(null) // Réinitialiser l'erreur lors de la sauvegarde
+      
       if (selectedBuilding) {
-        // Update existing building
-        const updatedBuilding = { ...buildingData, id: selectedBuilding.id }
-        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? updatedBuilding : b))
+        // Update existing building via API
+        const response = await buildingsService.updateBuilding(selectedBuilding.id, buildingData)
+        
+        // Mettre à jour l'état local
+        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? response.data : b))
       } else {
-        // Add new building
-        const newBuilding = { ...buildingData, id: Date.now() }
-        setBuildings(prev => [...prev, newBuilding])
+        // Create new building via API
+        const response = await buildingsService.createBuilding(buildingData)
+        
+        // Ajouter à l'état local
+        setBuildings(prev => [...prev, response.data])
       }
+      
       setShowForm(false)
       setSelectedBuilding(null)
     } catch (error) {
@@ -75,6 +90,33 @@ export default function Buildings() {
   const handleCloseForm = () => {
     setShowForm(false)
     setSelectedBuilding(null)
+  }
+
+  const handleCloseDetails = () => {
+    setShowDetails(false)
+    setSelectedBuilding(null)
+  }
+
+  const handleDeleteBuilding = async (buildingId) => {
+    try {
+      setError(null)
+      
+      // Supprimer via API
+      await buildingsService.deleteBuilding(buildingId)
+      
+      // Supprimer de l'état local
+      setBuildings(prev => prev.filter(b => b.id !== buildingId))
+      
+      setShowDetails(false)
+      setSelectedBuilding(null)
+    } catch (error) {
+      console.error('Error deleting building:', error)
+      if (error.response?.status === 403) {
+        setError('Impossible de supprimer un immeuble du système de base')
+      } else {
+        setError('Erreur lors de la suppression de l\'immeuble')
+      }
+    }
   }
 
   if (loading) {
@@ -200,7 +242,7 @@ export default function Buildings() {
               </div>
 
               <div className="mt-6 flex space-x-2">
-                <button className="flex-1 btn-primary text-sm py-2">
+                <button onClick={() => handleViewBuilding(building)} className="flex-1 btn-primary text-sm py-2">
                   <Eye className="h-4 w-4 mr-1" />
                   Détails
                 </button>
@@ -233,6 +275,14 @@ export default function Buildings() {
         isOpen={showForm}
         onClose={handleCloseForm}
         onSave={handleSaveBuilding}
+      />
+
+      {/* Building Details Modal */}
+      <BuildingDetails
+        building={selectedBuilding}
+        isOpen={showDetails}
+        onClose={handleCloseDetails}
+        onDelete={handleDeleteBuilding}
       />
     </div>
   )
