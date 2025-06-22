@@ -18,6 +18,7 @@ export default function Buildings() {
   const fetchBuildings = async () => {
     try {
       setLoading(true)
+      setError(null) // Réinitialiser l'erreur au début
       const response = await buildingsService.getBuildings()
       setBuildings(response.data)
     } catch (err) {
@@ -53,6 +54,7 @@ export default function Buildings() {
 
   const handleSaveBuilding = async (buildingData) => {
     try {
+      setError(null) // Réinitialiser l'erreur lors de la sauvegarde
       if (selectedBuilding) {
         // Update existing building
         const updatedBuilding = { ...buildingData, id: selectedBuilding.id }
@@ -66,6 +68,7 @@ export default function Buildings() {
       setSelectedBuilding(null)
     } catch (error) {
       console.error('Error saving building:', error)
+      setError('Erreur lors de la sauvegarde de l\'immeuble')
     }
   }
 
@@ -142,7 +145,15 @@ export default function Buildings() {
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">{error}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-red-700">{error}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700 ml-4"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
 
