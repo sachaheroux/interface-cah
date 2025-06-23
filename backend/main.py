@@ -100,10 +100,71 @@ class BuildingUpdate(BaseModel):
     contacts: Optional[Contacts] = None
     notes: Optional[str] = None
 
+# Modèles pour les locataires
+class PersonalAddress(BaseModel):
+    street: str = ""
+    city: str = ""
+    province: str = "QC"
+    postalCode: str = ""
+    country: str = "Canada"
+
+class EmergencyContact(BaseModel):
+    name: str = ""
+    phone: str = ""
+    email: str = ""
+    relationship: str = ""
+
+class TenantFinancial(BaseModel):
+    monthlyIncome: int = 0
+    creditScore: int = 0
+    bankAccount: str = ""
+    employer: str = ""
+    employerPhone: str = ""
+
+class Tenant(BaseModel):
+    id: Optional[int] = None
+    name: str
+    email: str = ""
+    phone: str = ""
+    status: str = "active"  # active, pending, inactive, former
+    personalAddress: Optional[PersonalAddress] = None
+    emergencyContact: Optional[EmergencyContact] = None
+    financial: Optional[TenantFinancial] = None
+    building: str = ""
+    unit: str = ""
+    notes: str = ""
+    createdAt: Optional[str] = None
+    updatedAt: Optional[str] = None
+
+class TenantCreate(BaseModel):
+    name: str
+    email: str = ""
+    phone: str = ""
+    status: str = "active"
+    personalAddress: Optional[PersonalAddress] = None
+    emergencyContact: Optional[EmergencyContact] = None
+    financial: Optional[TenantFinancial] = None
+    building: str = ""
+    unit: str = ""
+    notes: str = ""
+
+class TenantUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    status: Optional[str] = None
+    personalAddress: Optional[PersonalAddress] = None
+    emergencyContact: Optional[EmergencyContact] = None
+    financial: Optional[TenantFinancial] = None
+    building: Optional[str] = None
+    unit: Optional[str] = None
+    notes: Optional[str] = None
+
 # Système de persistance avec fichier JSON
 # Utilisation du répertoire recommandé par Render : /opt/render/project/src/data
 DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
 BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
+TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -114,9 +175,11 @@ print("🔧 DIAGNOSTIC DISQUE PERSISTANT")
 print("=" * 60)
 print(f"📂 DATA_DIR (env): {os.environ.get('DATA_DIR', 'NON DÉFINIE')}")
 print(f"📂 DATA_DIR (utilisé): {DATA_DIR}")
-print(f"📄 Fichier de données: {BUILDINGS_DATA_FILE}")
+print(f"📄 Fichier immeubles: {BUILDINGS_DATA_FILE}")
+print(f"📄 Fichier locataires: {TENANTS_DATA_FILE}")
 print(f"📁 Répertoire existe: {os.path.exists(DATA_DIR)}")
-print(f"📝 Fichier existe: {os.path.exists(BUILDINGS_DATA_FILE)}")
+print(f"📝 Fichier immeubles existe: {os.path.exists(BUILDINGS_DATA_FILE)}")
+print(f"📝 Fichier locataires existe: {os.path.exists(TENANTS_DATA_FILE)}")
 print(f"🔒 Permissions lecture: {os.access(DATA_DIR, os.R_OK)}")
 print(f"🔒 Permissions écriture: {os.access(DATA_DIR, os.W_OK)}")
 print(f"💾 Répertoire de travail: {os.getcwd()}")
@@ -129,10 +192,10 @@ def load_buildings_data():
         if os.path.exists(BUILDINGS_DATA_FILE):
             with open(BUILDINGS_DATA_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                print(f"Données chargées: {len(data.get('buildings', []))} immeubles")
+                print(f"Données immeubles chargées: {len(data.get('buildings', []))} immeubles")
                 return data
     except Exception as e:
-        print(f"Erreur chargement données depuis fichier: {e}")
+        print(f"Erreur chargement données immeubles depuis fichier: {e}")
     
     # Retourner structure vide si pas de fichier ou erreur
     return {"buildings": [], "next_id": 1}
@@ -142,27 +205,107 @@ def save_buildings_data(data):
     try:
         with open(BUILDINGS_DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données sauvegardées: {len(data.get('buildings', []))} immeubles")
+        print(f"Données immeubles sauvegardées: {len(data.get('buildings', []))} immeubles")
         return True
     except Exception as e:
-        print(f"Erreur sauvegarde: {e}")
+        print(f"Erreur sauvegarde immeubles: {e}")
+        return False
+
+def load_tenants_data():
+    """Charger les données des locataires depuis le fichier JSON"""
+    try:
+        if os.path.exists(TENANTS_DATA_FILE):
+            with open(TENANTS_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données locataires chargées: {len(data.get('tenants', []))} locataires")
+                return data
+    except Exception as e:
+        print(f"Erreur chargement données locataires depuis fichier: {e}")
+    
+    # Retourner structure vide avec quelques locataires fictifs pour commencer
+    default_data = {
+        "tenants": [
+            {
+                "id": 1,
+                "name": "Jean Dupont",
+                "email": "jean.dupont@email.com",
+                "phone": "(514) 555-0123",
+                "status": "active",
+                "building": "Immeuble A",
+                "unit": "A-101",
+                "createdAt": "2024-01-15T10:00:00Z",
+                "updatedAt": "2024-01-15T10:00:00Z"
+            },
+            {
+                "id": 2,
+                "name": "Marie Martin",
+                "email": "marie.martin@email.com",
+                "phone": "(514) 555-0124",
+                "status": "active",
+                "building": "Immeuble A",
+                "unit": "A-102",
+                "createdAt": "2024-01-20T14:30:00Z",
+                "updatedAt": "2024-01-20T14:30:00Z"
+            },
+            {
+                "id": 3,
+                "name": "Pierre Durand",
+                "email": "pierre.durand@email.com",
+                "phone": "(514) 555-0125",
+                "status": "pending",
+                "building": "Immeuble B",
+                "unit": "B-201",
+                "createdAt": "2024-02-01T09:15:00Z",
+                "updatedAt": "2024-02-01T09:15:00Z"
+            }
+        ],
+        "next_id": 4
+    }
+    
+    # Sauvegarder les données par défaut
+    save_tenants_data(default_data)
+    return default_data
+
+def save_tenants_data(data):
+    """Sauvegarder les données des locataires dans le fichier JSON"""
+    try:
+        with open(TENANTS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données locataires sauvegardées: {len(data.get('tenants', []))} locataires")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde locataires: {e}")
         return False
 
 # Cache en mémoire pour cette session
-_memory_cache = None
+_buildings_cache = None
+_tenants_cache = None
 
 def get_buildings_cache():
     """Obtenir les données depuis le cache mémoire"""
-    global _memory_cache
-    if _memory_cache is None:
-        _memory_cache = load_buildings_data()
-    return _memory_cache
+    global _buildings_cache
+    if _buildings_cache is None:
+        _buildings_cache = load_buildings_data()
+    return _buildings_cache
 
 def update_buildings_cache(data):
     """Mettre à jour le cache mémoire"""
-    global _memory_cache
-    _memory_cache = data
+    global _buildings_cache
+    _buildings_cache = data
     save_buildings_data(data)
+
+def get_tenants_cache():
+    """Obtenir les données des locataires depuis le cache mémoire"""
+    global _tenants_cache
+    if _tenants_cache is None:
+        _tenants_cache = load_tenants_data()
+    return _tenants_cache
+
+def update_tenants_cache(data):
+    """Mettre à jour le cache mémoire des locataires"""
+    global _tenants_cache
+    _tenants_cache = data
+    save_tenants_data(data)
 
 # Route de test de base
 @app.get("/")
@@ -365,14 +508,120 @@ async def delete_building(building_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
+# Routes CRUD pour les locataires avec persistance
 @app.get("/api/tenants")
 async def get_tenants():
-    """Liste des locataires"""
-    return [
-        {"id": 1, "name": "Jean Dupont", "building": "Immeuble A", "unit": "A-101", "status": "active"},
-        {"id": 2, "name": "Marie Martin", "building": "Immeuble A", "unit": "A-102", "status": "active"},
-        {"id": 3, "name": "Pierre Durand", "building": "Immeuble B", "unit": "B-201", "status": "pending"}
-    ]
+    """Récupérer tous les locataires"""
+    try:
+        data = get_tenants_cache()
+        tenants = data.get("tenants", [])
+        return {"data": tenants}
+    except Exception as e:
+        print(f"Erreur lors du chargement des locataires: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des locataires: {str(e)}")
+
+@app.get("/api/tenants/{tenant_id}")
+async def get_tenant(tenant_id: int):
+    """Récupérer un locataire spécifique par ID"""
+    try:
+        data = get_tenants_cache()
+        tenants = data.get("tenants", [])
+        
+        for tenant in tenants:
+            if tenant.get("id") == tenant_id:
+                return {"data": tenant}
+        
+        raise HTTPException(status_code=404, detail="Locataire non trouvé")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du locataire: {str(e)}")
+
+@app.post("/api/tenants")
+async def create_tenant(tenant_data: TenantCreate):
+    """Créer un nouveau locataire"""
+    try:
+        data = get_tenants_cache()
+        
+        # Créer le nouveau locataire avec un ID unique
+        new_tenant = tenant_data.dict()
+        new_tenant["id"] = data["next_id"]
+        new_tenant["createdAt"] = datetime.now().isoformat() + "Z"
+        new_tenant["updatedAt"] = datetime.now().isoformat() + "Z"
+        
+        # Ajouter aux données
+        data["tenants"].append(new_tenant)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_tenants_cache(data)
+        
+        return {"data": new_tenant}
+    except Exception as e:
+        print(f"Erreur lors de la création du locataire: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création du locataire: {str(e)}")
+
+@app.put("/api/tenants/{tenant_id}")
+async def update_tenant(tenant_id: int, tenant_data: TenantUpdate):
+    """Mettre à jour un locataire existant"""
+    try:
+        data = get_tenants_cache()
+        tenants = data.get("tenants", [])
+        
+        # Trouver et mettre à jour le locataire
+        tenant_found = False
+        for i, tenant in enumerate(tenants):
+            if tenant.get("id") == tenant_id:
+                # Mettre à jour seulement les champs fournis
+                update_data = tenant_data.dict(exclude_unset=True)
+                tenants[i].update(update_data)
+                tenants[i]["updatedAt"] = datetime.now().isoformat() + "Z"
+                tenant_found = True
+                
+                # Mettre à jour le cache
+                update_tenants_cache(data)
+                
+                return {"data": tenants[i]}
+        
+        if not tenant_found:
+            raise HTTPException(status_code=404, detail="Locataire non trouvé")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du locataire: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du locataire: {str(e)}")
+
+@app.delete("/api/tenants/{tenant_id}")
+async def delete_tenant(tenant_id: int):
+    """Supprimer un locataire"""
+    try:
+        data = get_tenants_cache()
+        tenants = data.get("tenants", [])
+        
+        # Trouver le locataire à supprimer
+        tenant_to_delete = None
+        for tenant in tenants:
+            if tenant.get("id") == tenant_id:
+                tenant_to_delete = tenant
+                break
+        
+        if not tenant_to_delete:
+            raise HTTPException(status_code=404, detail="Locataire non trouvé")
+        
+        # Supprimer le locataire
+        data["tenants"] = [t for t in tenants if t.get("id") != tenant_id]
+        
+        # Mettre à jour le cache
+        update_tenants_cache(data)
+        
+        return {"message": "Locataire supprimé avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression du locataire: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/maintenance")
 async def get_maintenance():
