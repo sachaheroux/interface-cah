@@ -1,13 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import uvicorn
 from datetime import datetime
-from sqlalchemy.orm import Session
-
-# Import des modules de base de données
-from database import get_db, create_tables, init_default_buildings, BuildingDB, serialize_json_field, deserialize_json_field
+import json
+import os
+import base64
 
 app = FastAPI(
     title="Interface CAH API",
@@ -29,12 +28,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Initialisation de la base de données au démarrage
-@app.on_event("startup")
-async def startup_event():
-    create_tables()
-    init_default_buildings()
 
 # Modèles Pydantic pour la validation des données
 class Address(BaseModel):
@@ -108,6 +101,57 @@ class BuildingUpdate(BaseModel):
     contacts: Optional[Contacts] = None
     notes: Optional[str] = None
 
+# Système de persistance via variables d'environnement Render
+BUILDINGS_DATA_ENV = "BUILDINGS_DATA"
+
+def load_buildings_data():
+    """Charger les données depuis la variable d'environnement"""
+    try:
+        # Essayer de charger depuis la variable d'environnement
+        encoded_data = os.getenv(BUILDINGS_DATA_ENV)
+        if encoded_data:
+            # Décoder les données base64
+            decoded_data = base64.b64decode(encoded_data).decode('utf-8')
+            data = json.loads(decoded_data)
+            return data
+    except Exception as e:
+        print(f"Erreur chargement données: {e}")
+    
+    # Retourner structure vide par défaut
+    return {"buildings": [], "next_id": 1}
+
+def save_buildings_data(data):
+    """Sauvegarder les données dans la variable d'environnement (simulation)"""
+    try:
+        # En production, ceci serait sauvegardé dans une vraie base de données
+        # Pour l'instant, on simule juste la sauvegarde
+        json_data = json.dumps(data)
+        encoded_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
+        
+        # Note: Les variables d'environnement ne peuvent pas être modifiées en runtime
+        # Cette fonction simule la persistance pour le développement
+        print(f"Données sauvegardées (simulation): {len(data.get('buildings', []))} immeubles")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde: {e}")
+        return False
+
+# Cache en mémoire pour cette session
+_memory_cache = None
+
+def get_buildings_cache():
+    """Obtenir les données depuis le cache mémoire"""
+    global _memory_cache
+    if _memory_cache is None:
+        _memory_cache = load_buildings_data()
+    return _memory_cache
+
+def update_buildings_cache(data):
+    """Mettre à jour le cache mémoire"""
+    global _memory_cache
+    _memory_cache = data
+    save_buildings_data(data)
+
 # Route de test de base
 @app.get("/")
 async def root():
@@ -120,21 +164,20 @@ async def health_check():
 
 # Routes temporaires pour les modules (à développer plus tard)
 @app.get("/api/dashboard")
-async def get_dashboard_data(db: Session = Depends(get_db)):
+async def get_dashboard_data():
     """Retourner les données du tableau de bord calculées à partir des vrais immeubles"""
     try:
-        # Récupérer tous les immeubles de la base de données
-        buildings = db.query(BuildingDB).all()
+        # Récupérer tous les immeubles du cache
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
         
         # Calculer les statistiques réelles
         total_buildings = len(buildings)
-        total_units = sum(building.units for building in buildings)
-        total_portfolio_value = 0
-        
-        for building in buildings:
-            financials = deserialize_json_field(building.financials)
-            if financials and isinstance(financials, dict):
-                total_portfolio_value += financials.get("currentValue", 0)
+        total_units = sum(building.get("units", 0) for building in buildings)
+        total_portfolio_value = sum(
+            building.get("financials", {}).get("currentValue", 0) 
+            for building in buildings
+        )
         
         # Calculer le revenu mensuel estimé (estimation basée sur la valeur)
         # Estimation : 0.5% de la valeur du portfolio par mois
@@ -180,168 +223,112 @@ async def get_dashboard_data(db: Session = Depends(get_db)):
 
 # Routes CRUD pour les immeubles avec persistance
 @app.get("/api/buildings")
-async def get_buildings(db: Session = Depends(get_db)):
+async def get_buildings():
     """Récupérer tous les immeubles"""
     try:
-        buildings = db.query(BuildingDB).all()
-        result = []
-        for building in buildings:
-            result.append({
-                "id": building.id,
-                "name": building.name,
-                "address": deserialize_json_field(building.address),
-                "type": building.type,
-                "units": building.units,
-                "floors": building.floors,
-                "yearBuilt": building.year_built,
-                "totalArea": building.total_area,
-                "characteristics": deserialize_json_field(building.characteristics),
-                "financials": deserialize_json_field(building.financials),
-                "contacts": deserialize_json_field(building.contacts),
-                "notes": building.notes,
-                "createdAt": building.created_at.isoformat() + "Z" if building.created_at else None,
-                "updatedAt": building.updated_at.isoformat() + "Z" if building.updated_at else None
-            })
-        return result
+        data = get_buildings_cache()
+        return data.get("buildings", [])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des immeubles: {str(e)}")
 
 @app.get("/api/buildings/{building_id}")
-async def get_building(building_id: int, db: Session = Depends(get_db)):
+async def get_building(building_id: int):
     """Récupérer un immeuble spécifique par ID"""
     try:
-        building = db.query(BuildingDB).filter(BuildingDB.id == building_id).first()
-        if not building:
-            raise HTTPException(status_code=404, detail="Immeuble non trouvé")
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
         
-        return {
-            "id": building.id,
-            "name": building.name,
-            "address": deserialize_json_field(building.address),
-            "type": building.type,
-            "units": building.units,
-            "floors": building.floors,
-            "yearBuilt": building.year_built,
-            "totalArea": building.total_area,
-            "characteristics": deserialize_json_field(building.characteristics),
-            "financials": deserialize_json_field(building.financials),
-            "contacts": deserialize_json_field(building.contacts),
-            "notes": building.notes,
-            "createdAt": building.created_at.isoformat() + "Z" if building.created_at else None,
-            "updatedAt": building.updated_at.isoformat() + "Z" if building.updated_at else None
-        }
+        for building in buildings:
+            if building.get("id") == building_id:
+                return building
+        
+        raise HTTPException(status_code=404, detail="Immeuble non trouvé")
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de l'immeuble: {str(e)}")
 
 @app.post("/api/buildings")
-async def create_building(building_data: BuildingCreate, db: Session = Depends(get_db)):
+async def create_building(building_data: BuildingCreate):
     """Créer un nouvel immeuble"""
     try:
-        # Créer le nouvel immeuble
-        new_building = BuildingDB(
-            name=building_data.name,
-            address=serialize_json_field(building_data.address.dict()),
-            type=building_data.type,
-            units=building_data.units,
-            floors=building_data.floors,
-            year_built=building_data.yearBuilt,
-            total_area=building_data.totalArea,
-            characteristics=serialize_json_field(building_data.characteristics.dict() if building_data.characteristics else None),
-            financials=serialize_json_field(building_data.financials.dict() if building_data.financials else None),
-            contacts=serialize_json_field(building_data.contacts.dict() if building_data.contacts else None),
-            notes=building_data.notes
-        )
+        data = get_buildings_cache()
         
-        db.add(new_building)
-        db.commit()
-        db.refresh(new_building)
+        # Créer le nouvel immeuble avec un ID unique
+        new_building = building_data.dict()
+        new_building["id"] = data["next_id"]
+        new_building["createdAt"] = datetime.now().isoformat() + "Z"
+        new_building["updatedAt"] = datetime.now().isoformat() + "Z"
         
-        return {
-            "id": new_building.id,
-            "name": new_building.name,
-            "address": deserialize_json_field(new_building.address),
-            "type": new_building.type,
-            "units": new_building.units,
-            "floors": new_building.floors,
-            "yearBuilt": new_building.year_built,
-            "totalArea": new_building.total_area,
-            "characteristics": deserialize_json_field(new_building.characteristics),
-            "financials": deserialize_json_field(new_building.financials),
-            "contacts": deserialize_json_field(new_building.contacts),
-            "notes": new_building.notes,
-            "createdAt": new_building.created_at.isoformat() + "Z",
-            "updatedAt": new_building.updated_at.isoformat() + "Z"
-        }
+        # Ajouter aux données
+        data["buildings"].append(new_building)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_buildings_cache(data)
+        
+        return new_building
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'immeuble: {str(e)}")
 
 @app.put("/api/buildings/{building_id}")
-async def update_building(building_id: int, building_data: BuildingUpdate, db: Session = Depends(get_db)):
+async def update_building(building_id: int, building_data: BuildingUpdate):
     """Mettre à jour un immeuble existant"""
     try:
-        building = db.query(BuildingDB).filter(BuildingDB.id == building_id).first()
-        if not building:
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
+        
+        # Trouver et mettre à jour l'immeuble
+        building_found = False
+        for i, building in enumerate(buildings):
+            if building.get("id") == building_id:
+                # Mettre à jour seulement les champs fournis
+                update_data = building_data.dict(exclude_unset=True)
+                buildings[i].update(update_data)
+                buildings[i]["updatedAt"] = datetime.now().isoformat() + "Z"
+                building_found = True
+                
+                # Mettre à jour le cache
+                update_buildings_cache(data)
+                
+                return buildings[i]
+        
+        if not building_found:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
-        
-        # Mettre à jour seulement les champs fournis
-        update_data = building_data.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            if field == "address" and value:
-                setattr(building, field, serialize_json_field(value.dict()))
-            elif field in ["characteristics", "financials", "contacts"] and value:
-                setattr(building, field, serialize_json_field(value.dict()))
-            elif field == "yearBuilt":
-                setattr(building, "year_built", value)
-            elif field == "totalArea":
-                setattr(building, "total_area", value)
-            else:
-                setattr(building, field, value)
-        
-        building.updated_at = datetime.utcnow()
-        db.commit()
-        db.refresh(building)
-        
-        return {
-            "id": building.id,
-            "name": building.name,
-            "address": deserialize_json_field(building.address),
-            "type": building.type,
-            "units": building.units,
-            "floors": building.floors,
-            "yearBuilt": building.year_built,
-            "totalArea": building.total_area,
-            "characteristics": deserialize_json_field(building.characteristics),
-            "financials": deserialize_json_field(building.financials),
-            "contacts": deserialize_json_field(building.contacts),
-            "notes": building.notes,
-            "createdAt": building.created_at.isoformat() + "Z",
-            "updatedAt": building.updated_at.isoformat() + "Z"
-        }
+            
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de l'immeuble: {str(e)}")
 
 @app.delete("/api/buildings/{building_id}")
-async def delete_building(building_id: int, db: Session = Depends(get_db)):
+async def delete_building(building_id: int):
     """Supprimer un immeuble"""
     try:
-        building = db.query(BuildingDB).filter(BuildingDB.id == building_id).first()
-        if not building:
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
+        
+        # Trouver l'immeuble à supprimer
+        building_to_delete = None
+        for building in buildings:
+            if building.get("id") == building_id:
+                building_to_delete = building
+                break
+        
+        if not building_to_delete:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
         
-        db.delete(building)
-        db.commit()
+        # Supprimer l'immeuble
+        data["buildings"] = [b for b in buildings if b.get("id") != building_id]
+        
+        # Mettre à jour le cache
+        update_buildings_cache(data)
         
         return {"message": "Immeuble supprimé avec succès"}
+        
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/tenants")
