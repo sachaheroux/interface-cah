@@ -135,19 +135,8 @@ export const parseAddressAndGenerateUnits = (building) => {
   const postalCode = typeof building.address === 'string' ? '' : building.address?.postalCode || ''
   const country = typeof building.address === 'string' ? '' : building.address?.country || ''
   
-  // Format 1: 4932-4934-4936 Route Des Vétérans (adresses séparées par des tirets)
-  if (address.includes('-') && !address.includes('#')) {
-    const parts = address.split(' ')
-    const numbers = parts[0].split('-')
-    const streetName = parts.slice(1).join(' ')
-    
-    numbers.forEach((number, index) => {
-      const unitAddress = `${number.trim()} ${streetName}`
-      units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
-    })
-  }
   // Format 2: 4490, 1-2-3-4-5-6, Rue Denault (numéro de base + unités numérotées)
-  else if (address.includes(',')) {
+  if (address.includes(',')) {
     const parts = address.split(',').map(part => part.trim())
     if (parts.length >= 2) {
       const baseNumber = parts[0]
@@ -161,6 +150,17 @@ export const parseAddressAndGenerateUnits = (building) => {
         units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
       })
     }
+  }
+  // Format 1: 4932-4934-4936 Route Des Vétérans (adresses séparées par des tirets)
+  else if (address.includes('-') && !address.includes('#')) {
+    const parts = address.split(' ')
+    const numbers = parts[0].split('-')
+    const streetName = parts.slice(1).join(' ')
+    
+    numbers.forEach((number, index) => {
+      const unitAddress = `${number.trim()} ${streetName}`
+      units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
+    })
   }
   // Format standard: créer des unités numérotées basées sur le nombre d'unités
   else {
