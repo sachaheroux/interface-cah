@@ -6,6 +6,7 @@ import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import MapView from '../components/MapView'
 import BuildingFilters from '../components/BuildingFilters'
+import UnitsView from '../components/UnitsView'
 import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
@@ -19,7 +20,7 @@ export default function Buildings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [viewMode, setViewMode] = useState('list') // 'list' ou 'map'
+  const [viewMode, setViewMode] = useState('list') // 'list', 'map', ou 'units'
 
   useEffect(() => {
     fetchBuildings()
@@ -218,7 +219,29 @@ export default function Buildings() {
 
     // Filtre par année de construction
     if (filters.yearBuilt) {
-      filtered = filtered.filter(building => building.yearBuilt === parseInt(filters.yearBuilt))
+      filtered = filtered.filter(building => {
+        const year = building.yearBuilt
+        switch (filters.yearBuilt) {
+          case '2020+':
+            return year >= 2020
+          case '2010-2019':
+            return year >= 2010 && year <= 2019
+          case '2000-2009':
+            return year >= 2000 && year <= 2009
+          case '1990-1999':
+            return year >= 1990 && year <= 1999
+          case '1980-1989':
+            return year >= 1980 && year <= 1989
+          case '1970-1979':
+            return year >= 1970 && year <= 1979
+          case '1960-1969':
+            return year >= 1960 && year <= 1969
+          case 'before-1960':
+            return year < 1960
+          default:
+            return true
+        }
+      })
     }
 
     // Filtre par propriétaire
@@ -338,12 +361,15 @@ export default function Buildings() {
         </div>
       )}
 
-      {/* Contenu principal - Vue Liste ou Carte */}
+      {/* Contenu principal - Vue Liste, Carte ou Unités */}
       {viewMode === 'map' ? (
         // Vue carte en plein écran (sans card wrapper)
         <div className="h-[600px] lg:h-[700px]">
           <MapView />
         </div>
+      ) : viewMode === 'units' ? (
+        // Vue unités avec toutes les unités générées
+        <UnitsView buildings={buildings} />
       ) : (
         // Vue liste avec bouton "Nouvel immeuble" intégré
         <div className="card">

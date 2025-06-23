@@ -26,6 +26,7 @@ const getSecondaryNavigation = (pathname, viewMode = 'list') => {
     case '/buildings':
       return [
         { name: 'Tous les immeubles', icon: List, active: viewMode === 'list' },
+        { name: 'Toutes les unités', icon: Users, active: viewMode === 'units' },
         { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
         { name: 'Rapports', icon: FileText },
         { name: 'Maintenance', icon: Wrench },
@@ -155,6 +156,8 @@ export default function SecondarySidebar() {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'map' }))
                 } else if (item.name === 'Tous les immeubles') {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
+                } else if (item.name === 'Toutes les unités') {
+                  window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'units' }))
                 }
               }
             }

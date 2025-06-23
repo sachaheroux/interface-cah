@@ -16,8 +16,6 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
       typeof b.address === 'string' ? '' : b.address?.city
     ).filter(Boolean))].sort()
     
-    const years = [...new Set(buildings.map(b => b.yearBuilt).filter(Boolean))].sort((a, b) => b - a)
-    
     const owners = [...new Set(buildings.map(b => 
       b.contacts?.owner
     ).filter(Boolean))].sort()
@@ -26,10 +24,10 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
       b.contacts?.bank
     ).filter(Boolean))].sort()
 
-    return { cities, years, owners, banks }
+    return { cities, owners, banks }
   }
 
-  const { cities, years, owners, banks } = getUniqueOptions()
+  const { cities, owners, banks } = getUniqueOptions()
 
   const handleFilterChange = (field, value) => {
     const newFilters = { ...filters, [field]: value }
@@ -98,9 +96,14 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
           >
             <option value="">Toutes les années</option>
-            {years.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
+            <option value="2020+">2020 ou plus récent</option>
+            <option value="2010-2019">2010 - 2019</option>
+            <option value="2000-2009">2000 - 2009</option>
+            <option value="1990-1999">1990 - 1999</option>
+            <option value="1980-1989">1980 - 1989</option>
+            <option value="1970-1979">1970 - 1979</option>
+            <option value="1960-1969">1960 - 1969</option>
+            <option value="before-1960">Avant 1960</option>
           </select>
         </div>
 
