@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react'
-import { buildingService } from '../services/api'
+import { buildingsService } from '../services/api'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
@@ -28,8 +28,8 @@ export default function Buildings() {
       setLoading(true)
       setError(null)
       
-      const response = await buildingService.getAll()
-      setBuildings(response)
+      const response = await buildingsService.getBuildings()
+      setBuildings(response.data || [])
     } catch (err) {
       console.error('Buildings error:', err)
       setError(`Erreur lors du chargement: ${err.response?.data?.detail || err.message}`)
@@ -93,16 +93,16 @@ export default function Buildings() {
       
       if (selectedBuilding) {
         // Update existing building via API
-        const response = await buildingService.update(selectedBuilding.id, cleanedData)
+        const response = await buildingsService.updateBuilding(selectedBuilding.id, cleanedData)
         
         // Mettre à jour l'état local
-        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? response : b))
+        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? response.data : b))
       } else {
         // Create new building via API
-        const response = await buildingService.create(cleanedData)
+        const response = await buildingsService.createBuilding(cleanedData)
         
         // Ajouter à l'état local
-        setBuildings(prev => [...prev, response])
+        setBuildings(prev => [...prev, response.data])
       }
       
       // Déclencher un événement personnalisé pour notifier le dashboard
@@ -142,7 +142,7 @@ export default function Buildings() {
       setError(null)
       
       // Supprimer via API
-      await buildingService.delete(buildingToDelete.id)
+      await buildingsService.deleteBuilding(buildingToDelete.id)
       
       // Supprimer de l'état local
       setBuildings(prev => prev.filter(b => b.id !== buildingToDelete.id))

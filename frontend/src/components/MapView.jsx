@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { geocodeBuildings, calculateBounds } from '../services/geocoding'
-import { buildingService } from '../services/api'
+import { buildingsService } from '../services/api'
 import { Building2, MapPin, DollarSign, Users, X, Eye, Edit } from 'lucide-react'
 import { getBuildingTypeLabel } from '../types/building'
 
@@ -42,12 +42,13 @@ const MapView = () => {
       setError(null)
       
       console.log('🔄 Chargement des immeubles depuis l\'API...')
-      const response = await buildingService.getAll()
+      const response = await buildingsService.getBuildings()
+      const buildings = response.data || []
       
-      console.log(`📊 ${response.length} immeubles récupérés:`, response)
-      setBuildings(response)
+      console.log(`📊 ${buildings.length} immeubles récupérés:`, buildings)
+      setBuildings(buildings)
       
-      if (response.length === 0) {
+      if (buildings.length === 0) {
         setError('Aucun immeuble trouvé. Créez des immeubles pour les voir sur la carte.')
         setLoading(false)
         return
@@ -55,7 +56,7 @@ const MapView = () => {
       
       // Géocoder les immeubles
       console.log('🗺️ Géocodage des immeubles...')
-      const geocodedBuildings = await geocodeBuildings(response)
+      const geocodedBuildings = await geocodeBuildings(buildings)
       
       if (geocodedBuildings.length === 0) {
         setError('Impossible de localiser les immeubles. Vérifiez les adresses.')
