@@ -6,7 +6,6 @@ import uvicorn
 from datetime import datetime
 import json
 import os
-import base64
 
 app = FastAPI(
     title="Interface CAH API",
@@ -101,36 +100,29 @@ class BuildingUpdate(BaseModel):
     contacts: Optional[Contacts] = None
     notes: Optional[str] = None
 
-# Système de persistance via variables d'environnement Render
-BUILDINGS_DATA_ENV = "BUILDINGS_DATA"
+# Système de persistance avec fichier JSON
+BUILDINGS_DATA_FILE = "buildings_data.json"
 
 def load_buildings_data():
-    """Charger les données depuis la variable d'environnement"""
+    """Charger les données depuis le fichier JSON"""
     try:
-        # Essayer de charger depuis la variable d'environnement
-        encoded_data = os.getenv(BUILDINGS_DATA_ENV)
-        if encoded_data:
-            # Décoder les données base64
-            decoded_data = base64.b64decode(encoded_data).decode('utf-8')
-            data = json.loads(decoded_data)
-            return data
+        if os.path.exists(BUILDINGS_DATA_FILE):
+            with open(BUILDINGS_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données chargées: {len(data.get('buildings', []))} immeubles")
+                return data
     except Exception as e:
-        print(f"Erreur chargement données: {e}")
+        print(f"Erreur chargement données depuis fichier: {e}")
     
-    # Retourner structure vide - les vraies données seront ajoutées par l'utilisateur
+    # Retourner structure vide si pas de fichier ou erreur
     return {"buildings": [], "next_id": 1}
 
 def save_buildings_data(data):
-    """Sauvegarder les données dans la variable d'environnement (simulation)"""
+    """Sauvegarder les données dans le fichier JSON"""
     try:
-        # En production, ceci serait sauvegardé dans une vraie base de données
-        # Pour l'instant, on simule juste la sauvegarde
-        json_data = json.dumps(data)
-        encoded_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
-        
-        # Note: Les variables d'environnement ne peuvent pas être modifiées en runtime
-        # Cette fonction simule la persistance pour le développement
-        print(f"Données sauvegardées (simulation): {len(data.get('buildings', []))} immeubles")
+        with open(BUILDINGS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données sauvegardées: {len(data.get('buildings', []))} immeubles")
         return True
     except Exception as e:
         print(f"Erreur sauvegarde: {e}")

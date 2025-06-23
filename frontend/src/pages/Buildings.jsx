@@ -184,6 +184,7 @@ export default function Buildings() {
   // Statistiques pour le tableau de bord des immeubles
   const totalBuildings = buildings.length
   const totalUnits = buildings.reduce((sum, b) => sum + b.units, 0)
+  const totalValue = buildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
   const occupancyRate = 85 // Mock data
 
   return (
@@ -199,7 +200,9 @@ export default function Buildings() {
         <div className="card text-center">
           <BarChart3 className="h-6 w-6 lg:h-8 lg:w-8 text-green-600 mx-auto mb-2" />
           <h3 className="text-sm lg:text-lg font-semibold text-gray-900">Valeur Portfolio</h3>
-          <p className="text-xl lg:text-2xl font-bold text-green-600">2.5M$</p>
+          <p className="text-xl lg:text-2xl font-bold text-green-600">
+            {totalValue > 0 ? `${(totalValue / 1000000).toFixed(1)}M$` : '0$'}
+          </p>
         </div>
         
         <div className="card text-center">
