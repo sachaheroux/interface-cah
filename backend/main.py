@@ -108,6 +108,21 @@ BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# DEBUGGING - Afficher les informations de persistance
+print("=" * 60)
+print("🔧 DIAGNOSTIC DISQUE PERSISTANT")
+print("=" * 60)
+print(f"📂 DATA_DIR (env): {os.environ.get('DATA_DIR', 'NON DÉFINIE')}")
+print(f"📂 DATA_DIR (utilisé): {DATA_DIR}")
+print(f"📄 Fichier de données: {BUILDINGS_DATA_FILE}")
+print(f"📁 Répertoire existe: {os.path.exists(DATA_DIR)}")
+print(f"📝 Fichier existe: {os.path.exists(BUILDINGS_DATA_FILE)}")
+print(f"🔒 Permissions lecture: {os.access(DATA_DIR, os.R_OK)}")
+print(f"🔒 Permissions écriture: {os.access(DATA_DIR, os.W_OK)}")
+print(f"💾 Répertoire de travail: {os.getcwd()}")
+print(f"🗂️  Contenu DATA_DIR: {os.listdir(DATA_DIR) if os.path.exists(DATA_DIR) else 'N/A'}")
+print("=" * 60)
+
 def load_buildings_data():
     """Charger les données depuis le fichier JSON"""
     try:

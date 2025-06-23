@@ -110,8 +110,43 @@ python -m uvicorn main:app --reload
 2. Vérifiez les logs pour voir si le disque est monté
 3. Redéployez après ajout du disque
 
+### 🚨 **PROBLÈME COURANT : Chemin de montage incorrect**
+
+**Symptôme** : Les données sont encore perdues après configuration du disque
+
+**Cause** : Le chemin `/var/data` ne fonctionne pas toujours. Basé sur la communauté Render, le chemin correct est souvent différent.
+
+**Solution** : Essayez ces chemins dans l'ordre :
+
+1. **Chemin recommandé par la communauté** (cas de succès confirmé) :
+   - **Mount Path** : `/opt/render/project/src/data`
+   - **Variable** : `DATA_DIR=/opt/render/project/src/data`
+
+2. **Chemin alternatif simple** :
+   - **Mount Path** : `/data`
+   - **Variable** : `DATA_DIR=/data`
+
+3. **Chemin original** (si les autres ne marchent pas) :
+   - **Mount Path** : `/var/data`
+   - **Variable** : `DATA_DIR=/var/data`
+
+### 🔧 **Script de Diagnostic**
+
+Utilisez le script `backend/debug_disk.py` pour identifier le bon chemin :
+
+1. Déployez le code avec le script
+2. Allez dans Shell de votre service Render
+3. Exécutez : `python debug_disk.py`
+4. Utilisez le chemin recommandé dans les résultats
+
 ### Problème : "No space left on device"
 **Solution** : Augmentez la taille du disque dans l'onglet "Disks"
+
+### Problème : Variable d'environnement ignorée
+**Solution** :
+1. Vérifiez que `DATA_DIR` est bien définie dans l'onglet Environment
+2. Redéployez après avoir ajouté la variable
+3. Vérifiez les logs de démarrage pour voir la valeur utilisée
 
 ## Migration Future vers PostgreSQL
 
