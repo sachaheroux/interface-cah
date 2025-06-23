@@ -183,24 +183,141 @@ export const buildingsService = {
 
 // Données de fallback pour les locataires
 const fallbackTenants = [
-  { id: 1, name: "Jean Dupont", building: "Immeuble A", unit: "A-101", status: "active" },
-  { id: 2, name: "Marie Martin", building: "Immeuble A", unit: "A-102", status: "active" },
-  { id: 3, name: "Pierre Durand", building: "Immeuble B", unit: "B-201", status: "pending" }
+  { 
+    id: 1, 
+    name: "Jean Dupont", 
+    email: "jean.dupont@email.com",
+    phone: "(514) 555-0123",
+    building: "Immeuble A", 
+    unit: "A-101", 
+    status: "active",
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-15T10:00:00Z"
+  },
+  { 
+    id: 2, 
+    name: "Marie Martin", 
+    email: "marie.martin@email.com",
+    phone: "(514) 555-0124",
+    building: "Immeuble A", 
+    unit: "A-102", 
+    status: "active",
+    createdAt: "2024-01-20T14:30:00Z",
+    updatedAt: "2024-01-20T14:30:00Z"
+  },
+  { 
+    id: 3, 
+    name: "Pierre Durand", 
+    email: "pierre.durand@email.com",
+    phone: "(514) 555-0125",
+    building: "Immeuble B", 
+    unit: "B-201", 
+    status: "pending",
+    createdAt: "2024-02-01T09:15:00Z",
+    updatedAt: "2024-02-01T09:15:00Z"
+  }
 ]
 
 export const tenantsService = {
   getTenants: async () => {
     try {
-      return await api.get('/api/tenants')
+      const response = await api.get('/api/tenants')
+      console.log('API tenants response:', response.data)
+      return response
     } catch (error) {
-      console.warn('API tenants failed, using fallback data')
-      return { data: fallbackTenants }
+      console.warn('API tenants failed, using fallback data:', error.message)
+      // Retourner les données du localStorage en cas d'échec API
+      const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
+      return { data: localTenants }
     }
   },
-  getTenant: (id) => api.get(`/api/tenants/${id}`),
-  createTenant: (data) => api.post('/api/tenants', data),
-  updateTenant: (id, data) => api.put(`/api/tenants/${id}`, data),
-  deleteTenant: (id) => api.delete(`/api/tenants/${id}`),
+  
+  getTenant: async (id) => {
+    try {
+      return await api.get(`/api/tenants/${id}`)
+    } catch (error) {
+      console.warn('API get tenant failed, searching locally')
+      const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
+      const tenant = localTenants.find(t => t.id === id)
+      if (tenant) {
+        return { data: tenant }
+      }
+      throw error
+    }
+  },
+  
+  createTenant: async (data) => {
+    try {
+      console.log('Creating tenant with data:', data)
+      const response = await api.post('/api/tenants', data)
+      console.log('API create tenant response:', response.data)
+      return response
+    } catch (error) {
+      console.warn('API create tenant failed, saving locally:', error.message)
+      console.log('Tenant data to save locally:', data)
+      
+      // Fallback vers localStorage
+      const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
+      const newTenant = {
+        ...data,
+        id: Date.now(), // ID temporaire basé sur timestamp
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
+      localTenants.push(newTenant)
+      localStorage.setItem('localTenants', JSON.stringify(localTenants))
+      console.log('Tenant saved locally:', newTenant)
+      
+      return { data: newTenant }
+    }
+  },
+  
+  updateTenant: async (id, data) => {
+    try {
+      console.log('Updating tenant with ID:', id, 'Data:', data)
+      const response = await api.put(`/api/tenants/${id}`, data)
+      console.log('API update tenant response:', response.data)
+      return response
+    } catch (error) {
+      console.warn('API update tenant failed, updating locally:', error.message)
+      
+      // Fallback vers localStorage
+      const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
+      const index = localTenants.findIndex(t => t.id === id)
+      
+      if (index !== -1) {
+        localTenants[index] = { 
+          ...localTenants[index], 
+          ...data, 
+          updatedAt: new Date().toISOString() 
+        }
+        localStorage.setItem('localTenants', JSON.stringify(localTenants))
+        console.log('Tenant updated locally:', localTenants[index])
+        return { data: localTenants[index] }
+      }
+      
+      throw error
+    }
+  },
+  
+  deleteTenant: async (id) => {
+    try {
+      const response = await api.delete(`/api/tenants/${id}`)
+      console.log('API delete tenant response:', response.data)
+      return response
+    } catch (error) {
+      console.warn('API delete tenant failed, deleting locally:', error.message)
+      
+      // Fallback vers localStorage
+      const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
+      const filteredTenants = localTenants.filter(t => t.id !== id)
+      localStorage.setItem('localTenants', JSON.stringify(filteredTenants))
+      console.log('Tenant deleted locally, remaining:', filteredTenants.length)
+      
+      return { data: { message: 'Locataire supprimé localement' } }
+    }
+  },
 }
 
 export const maintenanceService = {
