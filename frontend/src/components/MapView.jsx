@@ -1,286 +1,289 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import L from 'leaflet'
+import React, { useState, useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { Icon } from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { geocodeBuildings, calculateBounds } from '../services/geocoding'
+import { buildingService } from '../services/api'
 import { Building2, MapPin, DollarSign, Users, X, Eye, Edit } from 'lucide-react'
-import { geocodeAddress, getApproximateCoordinates } from '../services/geocoding'
 import { getBuildingTypeLabel } from '../types/building'
 
-// Fix pour les icônes Leaflet avec React
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
+// Corriger l'icône par défaut de Leaflet
+delete Icon.Default.prototype._getIconUrl
+Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
 
 // Icône personnalisée pour les immeubles
-const buildingIcon = new L.DivIcon({
-  html: `
-    <div style="
-      background: #2563eb;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    ">
-      <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
-        <path d="M12 2L2 7v10c0 5.55 3.84 10 9 11 1.92-.3 4-1.79 6-4.5V7l-10-5z"/>
-      </svg>
-    </div>
-  `,
-  className: 'custom-building-marker',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32]
+const buildingIcon = new Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 })
 
-// Composant pour ajuster la vue de la carte
-function MapViewAdjuster({ buildings, coordinates }) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (coordinates && coordinates.length > 0) {
-      // Créer un groupe de marqueurs pour ajuster la vue
-      const validCoords = coordinates.filter(coord => coord.coords)
-      
-      if (validCoords.length === 1) {
-        // Un seul point, centrer dessus
-        map.setView([validCoords[0].coords.lat, validCoords[0].coords.lng], 13)
-      } else if (validCoords.length > 1) {
-        // Plusieurs points, ajuster pour tous les voir
-        const bounds = L.latLngBounds(validCoords.map(coord => [coord.coords.lat, coord.coords.lng]))
-        map.fitBounds(bounds, { padding: [20, 20] })
-      }
-    }
-  }, [map, coordinates])
-
-  return null
-}
-
-export default function MapView({ 
-  buildings, 
-  isOpen, 
-  onClose, 
-  onViewBuilding, 
-  onEditBuilding 
-}) {
-  const [coordinates, setCoordinates] = useState([])
+const MapView = () => {
+  const [buildings, setBuildings] = useState([])
+  const [buildingsWithCoords, setBuildingsWithCoords] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [mapCenter, setMapCenter] = useState([46.8139, -71.2080]) // Québec par défaut
+  const [mapZoom, setMapZoom] = useState(8)
   const mapRef = useRef()
 
-  useEffect(() => {
-    if (isOpen && buildings.length > 0) {
-      geocodeBuildings()
-    }
-  }, [isOpen, buildings])
-
-  const geocodeBuildings = async () => {
-    setLoading(true)
-    setError(null)
-    
+  // Charger les immeubles depuis l'API
+  const fetchBuildings = async () => {
     try {
-      const coordsPromises = buildings.map(async (building) => {
-        let coords = null
+      setLoading(true)
+      setError(null)
+      
+      console.log('🔄 Chargement des immeubles depuis l\'API...')
+      const response = await buildingService.getAll()
+      
+      console.log(`📊 ${response.length} immeubles récupérés:`, response)
+      setBuildings(response)
+      
+      if (response.length === 0) {
+        setError('Aucun immeuble trouvé. Créez des immeubles pour les voir sur la carte.')
+        setLoading(false)
+        return
+      }
+      
+      // Géocoder les immeubles
+      console.log('🗺️ Géocodage des immeubles...')
+      const geocodedBuildings = await geocodeBuildings(response)
+      
+      if (geocodedBuildings.length === 0) {
+        setError('Impossible de localiser les immeubles. Vérifiez les adresses.')
+        setLoading(false)
+        return
+      }
+      
+      setBuildingsWithCoords(geocodedBuildings)
+      
+      // Calculer les limites et ajuster la vue
+      const bounds = calculateBounds(geocodedBuildings)
+      if (bounds) {
+        // Centrer la carte sur le milieu des immeubles
+        const centerLat = (bounds.north + bounds.south) / 2
+        const centerLng = (bounds.east + bounds.west) / 2
+        setMapCenter([centerLat, centerLng])
         
-        try {
-          // Essayer le géocodage précis d'abord
-          coords = await geocodeAddress(building.address)
-          
-          // Si échec, utiliser les coordonnées approximatives
-          if (!coords) {
-            const city = typeof building.address === 'string' 
-              ? building.address.split(',')[1]?.trim() 
-              : building.address.city
-            coords = getApproximateCoordinates(city)
-          }
-        } catch (err) {
-          console.warn(`Erreur géocodage pour ${building.name}:`, err)
-          // Utiliser coordonnées par défaut
-          coords = getApproximateCoordinates('montreal')
-        }
+        // Calculer un zoom approprié basé sur la distance
+        const latDiff = bounds.north - bounds.south
+        const lngDiff = bounds.east - bounds.west
+        const maxDiff = Math.max(latDiff, lngDiff)
         
-        return {
-          building,
-          coords,
-          id: building.id
-        }
-      })
-
-      const results = await Promise.all(coordsPromises)
-      setCoordinates(results)
+        let zoom = 10 // Zoom par défaut
+        if (maxDiff < 0.01) zoom = 15 // Très proche
+        else if (maxDiff < 0.05) zoom = 13 // Proche
+        else if (maxDiff < 0.1) zoom = 11 // Moyen
+        else if (maxDiff < 0.5) zoom = 9 // Éloigné
+        else zoom = 7 // Très éloigné
+        
+        setMapZoom(zoom)
+        
+        console.log(`🎯 Carte centrée sur: ${centerLat}, ${centerLng} (zoom: ${zoom})`)
+      }
+      
     } catch (err) {
-      setError('Erreur lors du chargement des coordonnées')
-      console.error('Erreur géocodage:', err)
+      console.error('❌ Erreur lors du chargement:', err)
+      setError(`Erreur lors du chargement des immeubles: ${err.message}`)
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount) => {
+  useEffect(() => {
+    fetchBuildings()
+  }, [])
+
+  // Formater la valeur financière
+  const formatCurrency = (value) => {
+    if (!value) return 'N/A'
     return new Intl.NumberFormat('fr-CA', {
       style: 'currency',
       currency: 'CAD',
-      minimumFractionDigits: 0
-    }).format(amount)
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value)
   }
 
+  // Formater l'adresse complète
   const formatAddress = (address) => {
-    if (typeof address === 'string') return address
-    return `${address.street}, ${address.city}, ${address.province}`
+    if (!address) return 'Adresse non disponible'
+    
+    const parts = []
+    if (address.street) parts.push(address.street)
+    if (address.city) parts.push(address.city)
+    if (address.province) parts.push(address.province)
+    if (address.postalCode) parts.push(address.postalCode)
+    
+    return parts.join(', ')
   }
 
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full h-full max-w-7xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center">
-            <MapPin className="h-6 w-6 text-primary-600 mr-2" />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Vue Carte des Immeubles</h2>
-              <p className="text-sm text-gray-600">
-                {buildings.length} immeuble{buildings.length > 1 ? 's' : ''} • Cliquez sur les marqueurs pour plus d'infos
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Map Container */}
-        <div className="flex-1 relative">
-          {loading && (
-            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Chargement des emplacements...</p>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="absolute top-4 left-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 z-10">
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
-
-          <MapContainer
-            center={[45.5017, -73.5673]} // Montréal par défaut
-            zoom={10}
-            style={{ height: '100%', width: '100%' }}
-            ref={mapRef}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            {/* Ajusteur de vue */}
-            <MapViewAdjuster buildings={buildings} coordinates={coordinates} />
-            
-            {/* Marqueurs pour chaque immeuble */}
-            {coordinates.map(({ building, coords }) => {
-              if (!coords) return null
-              
-              return (
-                <Marker
-                  key={building.id}
-                  position={[coords.lat, coords.lng]}
-                  icon={buildingIcon}
-                >
-                  <Popup className="custom-popup" minWidth={300}>
-                    <div className="p-2">
-                      {/* En-tête */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-primary-100 rounded-lg mr-3">
-                            <Building2 className="h-5 w-5 text-primary-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{building.name}</h3>
-                            <p className="text-sm text-gray-600">{getBuildingTypeLabel(building.type)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Informations */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          <span>{formatAddress(building.address)}</span>
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Users className="h-4 w-4 mr-2" />
-                          <span>{building.units} unités • {building.floors} étage{building.floors > 1 ? 's' : ''}</span>
-                        </div>
-
-                        {building.financials?.currentValue && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            <span className="font-medium text-green-600">
-                              {formatCurrency(building.financials.currentValue)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            onViewBuilding(building)
-                            onClose()
-                          }}
-                          className="flex-1 btn-primary text-sm py-2 flex items-center justify-center"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Détails
-                        </button>
-                        <button
-                          onClick={() => {
-                            onEditBuilding(building)
-                            onClose()
-                          }}
-                          className="flex-1 btn-secondary text-sm py-2 flex items-center justify-center"
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Modifier
-                        </button>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              )
-            })}
-          </MapContainer>
-        </div>
-
-        {/* Footer avec statistiques */}
-        <div className="border-t p-4 bg-gray-50">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center space-x-6">
-              <span>📍 {coordinates.filter(c => c.coords).length} emplacements trouvés</span>
-              <span>🏢 {buildings.length} immeubles au total</span>
-              <span>🏠 {buildings.reduce((sum, b) => sum + b.units, 0)} unités totales</span>
-            </div>
-            <div className="text-xs text-gray-500">
-              Utilisez la molette pour zoomer • Glissez pour déplacer la carte
-            </div>
-          </div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de la carte...</p>
+          <p className="text-sm text-gray-500 mt-2">Géolocalisation des immeubles en cours...</p>
         </div>
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <div className="text-red-600 mb-4">
+          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="text-lg font-semibold">Erreur de chargement</h3>
+        </div>
+        <p className="text-red-700 mb-4">{error}</p>
+        <button
+          onClick={fetchBuildings}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Réessayer
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full w-full">
+      {/* Informations sur la carte */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-blue-800">
+              Carte des Immeubles - Portfolio CAH
+            </h3>
+            <p className="text-blue-600">
+              {buildingsWithCoords.length} immeuble{buildingsWithCoords.length > 1 ? 's' : ''} géolocalisé{buildingsWithCoords.length > 1 ? 's' : ''}
+              {buildings.length > buildingsWithCoords.length && (
+                <span className="text-orange-600 ml-2">
+                  ({buildings.length - buildingsWithCoords.length} non localisé{buildings.length - buildingsWithCoords.length > 1 ? 's' : ''})
+                </span>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={fetchBuildings}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualiser
+          </button>
+        </div>
+      </div>
+
+      {/* Carte */}
+      <div className="rounded-lg overflow-hidden shadow-lg" style={{ height: '600px' }}>
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
+          style={{ height: '100%', width: '100%' }}
+          ref={mapRef}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          {buildingsWithCoords.map((building) => (
+            <Marker
+              key={building.id}
+              position={[building.coordinates.lat, building.coordinates.lng]}
+              icon={buildingIcon}
+            >
+              <Popup className="building-popup">
+                <div className="p-2 min-w-64">
+                  <h3 className="font-bold text-lg text-blue-800 mb-2">
+                    {building.name}
+                  </h3>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold text-gray-700">📍 Adresse:</span>
+                      <br />
+                      <span className="text-gray-600">{formatAddress(building.address)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <div>
+                        <span className="font-semibold text-gray-700">🏠 Unités:</span>
+                        <span className="ml-1 text-gray-600">{building.units || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">🏢 Étages:</span>
+                        <span className="ml-1 text-gray-600">{building.floors || 'N/A'}</span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-700">💰 Valeur:</span>
+                      <span className="ml-1 text-green-600 font-semibold">
+                        {formatCurrency(building.financials?.currentValue)}
+                      </span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-700">📅 Année:</span>
+                      <span className="ml-1 text-gray-600">{building.yearBuilt || 'N/A'}</span>
+                    </div>
+                    
+                    <div>
+                      <span className="font-semibold text-gray-700">🏷️ Type:</span>
+                      <span className="ml-1 text-gray-600 capitalize">{building.type || 'N/A'}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-500">
+                      Coordonnées: {building.coordinates.lat.toFixed(6)}, {building.coordinates.lng.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+      
+      {/* Statistiques */}
+      {buildingsWithCoords.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-semibold text-green-800">Immeubles Localisés</h4>
+            <p className="text-2xl font-bold text-green-600">{buildingsWithCoords.length}</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-800">Total Unités</h4>
+            <p className="text-2xl font-bold text-blue-600">
+              {buildingsWithCoords.reduce((sum, b) => sum + (b.units || 0), 0)}
+            </p>
+          </div>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h4 className="font-semibold text-purple-800">Valeur Portfolio</h4>
+            <p className="text-2xl font-bold text-purple-600">
+              {formatCurrency(buildingsWithCoords.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0))}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
-} 
+}
+
+export default MapView 

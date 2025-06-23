@@ -7,63 +7,126 @@ const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search'
 const geocodeCache = new Map()
 
 /**
- * Géocoder une adresse en coordonnées lat/lng
- * @param {Object|string} address - Adresse à géocoder
- * @returns {Promise<{lat: number, lng: number}|null>}
+ * Convertit une adresse en coordonnées latitude/longitude
+ * @param {Object} address - Objet adresse avec street, city, province, country
+ * @returns {Promise<Object>} - Coordonnées {lat, lng} ou null si non trouvé
  */
-export async function geocodeAddress(address) {
+export const geocodeAddress = async (address) => {
   try {
-    // Construire la chaîne d'adresse
-    let addressString
-    if (typeof address === 'string') {
-      addressString = address
-    } else {
-      // Construire l'adresse à partir de l'objet
-      const parts = []
-      if (address.street) parts.push(address.street)
-      if (address.city) parts.push(address.city)
-      if (address.province) parts.push(address.province)
-      if (address.country) parts.push(address.country)
-      addressString = parts.join(', ')
-    }
-
-    // Vérifier le cache
-    if (geocodeCache.has(addressString)) {
-      return geocodeCache.get(addressString)
-    }
-
-    // Construire l'URL de requête
+    // Construire l'adresse complète pour la recherche
+    const addressParts = [];
+    if (address.street) addressParts.push(address.street);
+    if (address.city) addressParts.push(address.city);
+    if (address.province) addressParts.push(address.province);
+    if (address.country) addressParts.push(address.country);
+    
+    const fullAddress = addressParts.join(', ');
+    
+    console.log(`🔍 Géocodage de: "${fullAddress}"`);
+    
     const params = new URLSearchParams({
-      q: addressString,
+      q: fullAddress,
       format: 'json',
       limit: '1',
-      countrycodes: 'ca', // Limiter au Canada
+      countrycodes: address.country === 'Canada' ? 'ca' : '',
       addressdetails: '1'
-    })
+    });
 
-    const response = await fetch(`${NOMINATIM_BASE_URL}?${params}`)
-    const data = await response.json()
-
-    if (data && data.length > 0) {
-      const result = {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
+    const response = await fetch(`${NOMINATIM_BASE_URL}?${params}`, {
+      headers: {
+        'User-Agent': 'Interface-CAH/1.0 (contact@interface-cah.com)'
       }
-      
-      // Mettre en cache
-      geocodeCache.set(addressString, result)
-      return result
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
     }
 
-    // Si pas de résultat, mettre null en cache pour éviter de réessayer
-    geocodeCache.set(addressString, null)
-    return null
-
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      const result = data[0];
+      const coordinates = {
+        lat: parseFloat(result.lat),
+        lng: parseFloat(result.lon)
+      };
+      
+      console.log(`✅ Coordonnées trouvées: ${coordinates.lat}, ${coordinates.lng}`);
+      return coordinates;
+    } else {
+      console.warn(`⚠️ Aucune coordonnée trouvée pour: ${fullAddress}`);
+      return null;
+    }
   } catch (error) {
-    console.error('Erreur géocodage:', error)
-    return null
+    console.error('❌ Erreur de géocodage:', error);
+    return null;
   }
-}
+};
+
+/**
+ * Géocode tous les immeubles et retourne ceux avec des coordonnées valides
+ * @param {Array} buildings - Liste des immeubles
+ * @returns {Promise<Array>} - Immeubles avec coordonnées
+ */
+export const geocodeBuildings = async (buildings) => {
+  console.log(`🗺️ Géocodage de ${buildings.length} immeubles...`);
+  
+  const buildingsWithCoords = [];
+  
+  for (const building of buildings) {
+    if (!building.address) {
+      console.warn(`⚠️ Immeuble "${building.name}" sans adresse`);
+      continue;
+    }
+    
+    // Attendre un peu entre les requêtes pour respecter les limites de l'API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const coordinates = await geocodeAddress(building.address);
+    
+    if (coordinates) {
+      buildingsWithCoords.push({
+        ...building,
+        coordinates
+      });
+    }
+  }
+  
+  console.log(`✅ ${buildingsWithCoords.length}/${buildings.length} immeubles géocodés avec succès`);
+  return buildingsWithCoords;
+};
+
+/**
+ * Calcule les limites géographiques pour englober tous les immeubles
+ * @param {Array} buildingsWithCoords - Immeubles avec coordonnées
+ * @returns {Object} - Limites {north, south, east, west} ou null
+ */
+export const calculateBounds = (buildingsWithCoords) => {
+  if (!buildingsWithCoords || buildingsWithCoords.length === 0) {
+    return null;
+  }
+  
+  const coords = buildingsWithCoords.map(b => b.coordinates);
+  
+  const bounds = {
+    north: Math.max(...coords.map(c => c.lat)),
+    south: Math.min(...coords.map(c => c.lat)),
+    east: Math.max(...coords.map(c => c.lng)),
+    west: Math.min(...coords.map(c => c.lng))
+  };
+  
+  // Ajouter une marge de 10% pour éviter que les marqueurs soient collés aux bords
+  const latMargin = (bounds.north - bounds.south) * 0.1;
+  const lngMargin = (bounds.east - bounds.west) * 0.1;
+  
+  bounds.north += latMargin;
+  bounds.south -= latMargin;
+  bounds.east += lngMargin;
+  bounds.west -= lngMargin;
+  
+  console.log(`📏 Limites calculées:`, bounds);
+  return bounds;
+};
 
 /**
  * Géocoder plusieurs adresses en parallèle
