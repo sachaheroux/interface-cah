@@ -149,13 +149,15 @@ export const parseAddressAndGenerateUnits = (building) => {
   // Format 2: 4490, 1-2-3-4-5-6, Rue Denault (numéro de base + unités numérotées)
   else if (address.includes(',')) {
     const parts = address.split(',').map(part => part.trim())
-    if (parts.length >= 3) {
+    if (parts.length >= 2) {
       const baseNumber = parts[0]
       const unitNumbers = parts[1].split('-')
-      const streetName = parts.slice(2).join(', ')
+      const streetName = parts.length > 2 ? parts.slice(2).join(', ') : ''
       
       unitNumbers.forEach((unitNum, index) => {
-        const unitAddress = `${baseNumber} #${unitNum.trim()} ${streetName}`
+        const unitAddress = streetName 
+          ? `${baseNumber} #${unitNum.trim()} ${streetName}`
+          : `${baseNumber} #${unitNum.trim()}`
         units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
       })
     }

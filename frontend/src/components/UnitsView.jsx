@@ -115,39 +115,6 @@ export default function UnitsView({ buildings }) {
 
   return (
     <div className="space-y-6">
-      {/* Statistiques des unités */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="card text-center">
-          <Home className="h-6 w-6 lg:h-8 lg:w-8 text-primary-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-base font-semibold text-gray-900">Total Unités</h3>
-          <p className="text-xl lg:text-2xl font-bold text-primary-600">{totalUnits}</p>
-        </div>
-        
-        <div className="card text-center">
-          <Users className="h-6 w-6 lg:h-8 lg:w-8 text-green-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-base font-semibold text-gray-900">Occupées</h3>
-          <p className="text-xl lg:text-2xl font-bold text-green-600">{occupiedUnits}</p>
-        </div>
-        
-        <div className="card text-center">
-          <Home className="h-6 w-6 lg:h-8 lg:w-8 text-red-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-base font-semibold text-gray-900">Libres</h3>
-          <p className="text-xl lg:text-2xl font-bold text-red-600">{vacantUnits}</p>
-        </div>
-        
-        <div className="card text-center">
-          <DollarSign className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-base font-semibold text-gray-900">Revenus Totaux</h3>
-          <p className="text-lg lg:text-xl font-bold text-blue-600">{formatCurrency(totalRent)}</p>
-        </div>
-        
-        <div className="card text-center">
-          <Calendar className="h-6 w-6 lg:h-8 lg:w-8 text-yellow-600 mx-auto mb-2" />
-          <h3 className="text-sm lg:text-base font-semibold text-gray-900">Taux Occupation</h3>
-          <p className="text-xl lg:text-2xl font-bold text-yellow-600">{occupancyRate}%</p>
-        </div>
-      </div>
-
       {/* Filtres et recherche */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">

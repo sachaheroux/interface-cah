@@ -8,6 +8,7 @@ import MapView from '../components/MapView'
 import BuildingFilters from '../components/BuildingFilters'
 import UnitsView from '../components/UnitsView'
 import { getBuildingTypeLabel } from '../types/building'
+import { parseAddressAndGenerateUnits } from '../types/unit'
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
@@ -288,7 +289,22 @@ export default function Buildings() {
   const totalBuildings = filteredBuildings.length
   const totalUnits = filteredBuildings.reduce((sum, b) => sum + b.units, 0)
   const totalValue = filteredBuildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
-  const occupancyRate = 85 // Mock data
+  
+  // Calculer le vrai taux d'occupation basé sur les unités générées
+  const calculateOccupancyRate = () => {
+    const allUnits = []
+    filteredBuildings.forEach(building => {
+      const buildingUnits = parseAddressAndGenerateUnits(building)
+      allUnits.push(...buildingUnits)
+    })
+    
+    if (allUnits.length === 0) return 0
+    
+    const occupiedUnits = allUnits.filter(unit => unit.status === 'occupied').length
+    return Math.round((occupiedUnits / allUnits.length) * 100)
+  }
+  
+  const occupancyRate = calculateOccupancyRate()
 
   return (
     <div className="space-y-4 lg:space-y-6">
