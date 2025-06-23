@@ -52,7 +52,10 @@ export const defaultUnit = {
     washerDryer: false,   // laveuse-sécheuse
   },
   
-  // Informations du locataire
+  // Référence au locataire (ID du système de gestion des locataires)
+  tenantId: null,
+  
+  // Informations du locataire (copiées pour affichage, source de vérité dans le système locataires)
   tenant: {
     name: '',
     email: '',

@@ -21,6 +21,8 @@ import {
   Search
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
+import UnitForm from './UnitForm'
+import UnitDetails from './UnitDetails'
 
 export default function UnitsView({ buildings }) {
   const [units, setUnits] = useState([])
@@ -28,6 +30,11 @@ export default function UnitsView({ buildings }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [buildingFilter, setBuildingFilter] = useState('')
+  
+  // États pour les modales
+  const [selectedUnit, setSelectedUnit] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
 
   // Générer toutes les unités à partir des immeubles
   useEffect(() => {
@@ -66,6 +73,61 @@ export default function UnitsView({ buildings }) {
 
     setFilteredUnits(filtered)
   }, [units, searchTerm, statusFilter, buildingFilter])
+
+  // Gestionnaires d'événements
+  const handleViewUnit = (unit) => {
+    setSelectedUnit(unit)
+    setShowDetails(true)
+  }
+
+  const handleEditUnit = (unit) => {
+    setSelectedUnit(unit)
+    setShowForm(true)
+  }
+
+  const handleSaveUnit = async (updatedUnit) => {
+    try {
+      // Mettre à jour l'unité dans la liste
+      const updatedUnits = units.map(unit => 
+        unit.id === updatedUnit.id ? updatedUnit : unit
+      )
+      setUnits(updatedUnits)
+      
+      // Ici, vous pourriez ajouter la logique pour sauvegarder dans une API
+      console.log('Unité sauvegardée:', updatedUnit)
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
+      throw error
+    }
+  }
+
+  const handleDeleteUnit = async (unit) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'unité #${unit.unitNumber} ?`)) {
+      try {
+        // Supprimer l'unité de la liste
+        const updatedUnits = units.filter(u => u.id !== unit.id)
+        setUnits(updatedUnits)
+        setShowDetails(false)
+        
+        // Ici, vous pourriez ajouter la logique pour supprimer de l'API
+        console.log('Unité supprimée:', unit)
+        
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+      }
+    }
+  }
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setSelectedUnit(null)
+  }
+
+  const handleCloseDetails = () => {
+    setShowDetails(false)
+    setSelectedUnit(null)
+  }
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CA', {
@@ -270,11 +332,11 @@ export default function UnitsView({ buildings }) {
 
               {/* Actions */}
               <div className="flex space-x-2">
-                <button className="flex-1 btn-primary text-sm py-2">
+                <button className="flex-1 btn-primary text-sm py-2" onClick={() => handleViewUnit(unit)}>
                   <Eye className="h-4 w-4 mr-1" />
                   Détails
                 </button>
-                <button className="flex-1 btn-secondary text-sm py-2">
+                <button className="flex-1 btn-secondary text-sm py-2" onClick={() => handleEditUnit(unit)}>
                   <Edit className="h-4 w-4 mr-1" />
                   Modifier
                 </button>
@@ -299,6 +361,25 @@ export default function UnitsView({ buildings }) {
           </div>
         )}
       </div>
+
+      {/* Modales */}
+      {showForm && (
+        <UnitForm
+          unit={selectedUnit}
+          isOpen={showForm}
+          onSave={handleSaveUnit}
+          onClose={handleCloseForm}
+        />
+      )}
+      {showDetails && (
+        <UnitDetails
+          unit={selectedUnit}
+          isOpen={showDetails}
+          onClose={handleCloseDetails}
+          onEdit={handleEditUnit}
+          onDelete={handleDeleteUnit}
+        />
+      )}
     </div>
   )
 } 
