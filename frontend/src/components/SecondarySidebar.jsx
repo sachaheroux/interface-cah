@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { 
   Plus, 
@@ -21,14 +21,12 @@ import {
   Download
 } from 'lucide-react'
 
-const getSecondaryNavigation = (pathname) => {
+const getSecondaryNavigation = (pathname, viewMode = 'list') => {
   switch (pathname) {    
     case '/buildings':
       return [
-        { name: 'Tous les immeubles', icon: List, active: true },
-        { name: 'Vue carte', icon: MapPin },
-        { name: 'Ajouter immeuble', icon: Plus },
-        { name: 'Filtres', icon: Filter },
+        { name: 'Tous les immeubles', icon: List, active: viewMode === 'list' },
+        { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
         { name: 'Rapports', icon: FileText },
         { name: 'Maintenance', icon: Wrench },
       ]
@@ -110,7 +108,22 @@ const getSecondaryNavigation = (pathname) => {
 
 export default function SecondarySidebar() {
   const location = useLocation()
-  const secondaryNav = getSecondaryNavigation(location.pathname)
+  const [viewMode, setViewMode] = useState('list')
+  
+  // Écouter les changements de vue pour mettre à jour l'état actif
+  useEffect(() => {
+    const handleViewChange = (event) => {
+      setViewMode(event.detail)
+    }
+    
+    window.addEventListener('buildingsViewChange', handleViewChange)
+    
+    return () => {
+      window.removeEventListener('buildingsViewChange', handleViewChange)
+    }
+  }, [])
+  
+  const secondaryNav = getSecondaryNavigation(location.pathname, viewMode)
 
   // Ne pas afficher la sidebar sur la page d'accueil
   if (location.pathname === '/') {
@@ -134,9 +147,22 @@ export default function SecondarySidebar() {
         <nav className="space-y-1">
           {secondaryNav.map((item, index) => {
             const Icon = item.icon
+            
+            const handleClick = () => {
+              // Gestion spéciale pour la page Buildings
+              if (location.pathname === '/buildings') {
+                if (item.name === 'Vue carte') {
+                  window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'map' }))
+                } else if (item.name === 'Tous les immeubles') {
+                  window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
+                }
+              }
+            }
+            
             return (
               <button
                 key={index}
+                onClick={handleClick}
                 className={`w-full flex items-center px-2 lg:px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors duration-200 ${
                   item.active 
                     ? 'bg-primary-100 text-primary-700' 

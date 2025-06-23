@@ -5,10 +5,12 @@ import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import MapView from '../components/MapView'
+import BuildingFilters from '../components/BuildingFilters'
 import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
+  const [filteredBuildings, setFilteredBuildings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -21,6 +23,20 @@ export default function Buildings() {
 
   useEffect(() => {
     fetchBuildings()
+    
+    // Écouter les changements de vue depuis le sidebar
+    const handleViewChange = (event) => {
+      setViewMode(event.detail)
+    }
+    
+    window.addEventListener('buildingsViewChange', handleViewChange)
+    
+    // Émettre l'événement initial pour synchroniser le sidebar
+    window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
+    
+    return () => {
+      window.removeEventListener('buildingsViewChange', handleViewChange)
+    }
   }, [])
 
   const fetchBuildings = async () => {
@@ -29,7 +45,9 @@ export default function Buildings() {
       setError(null)
       
       const response = await buildingsService.getBuildings()
-      setBuildings(response.data || [])
+      const buildingsData = response.data || []
+      setBuildings(buildingsData)
+      setFilteredBuildings(buildingsData)
     } catch (err) {
       console.error('Buildings error:', err)
       setError(`Erreur lors du chargement: ${err.response?.data?.detail || err.message}`)
@@ -96,13 +114,17 @@ export default function Buildings() {
         const response = await buildingsService.updateBuilding(selectedBuilding.id, cleanedData)
         
         // Mettre à jour l'état local
-        setBuildings(prev => prev.map(b => b.id === selectedBuilding.id ? response.data : b))
+        const updatedBuildings = buildings.map(b => b.id === selectedBuilding.id ? response.data : b)
+        setBuildings(updatedBuildings)
+        setFilteredBuildings(updatedBuildings)
       } else {
         // Create new building via API
         const response = await buildingsService.createBuilding(cleanedData)
         
         // Ajouter à l'état local
-        setBuildings(prev => [...prev, response.data])
+        const newBuildings = [...buildings, response.data]
+        setBuildings(newBuildings)
+        setFilteredBuildings(newBuildings)
       }
       
       // Déclencher un événement personnalisé pour notifier le dashboard
@@ -145,7 +167,9 @@ export default function Buildings() {
       await buildingsService.deleteBuilding(buildingToDelete.id)
       
       // Supprimer de l'état local
-      setBuildings(prev => prev.filter(b => b.id !== buildingToDelete.id))
+      const updatedBuildings = buildings.filter(b => b.id !== buildingToDelete.id)
+      setBuildings(updatedBuildings)
+      setFilteredBuildings(updatedBuildings)
       
       // Déclencher un événement personnalisé pour notifier le dashboard
       window.dispatchEvent(new CustomEvent('buildingsUpdated', { 
@@ -177,6 +201,56 @@ export default function Buildings() {
 
   const handleToggleView = (mode) => {
     setViewMode(mode)
+    // Émettre l'événement pour synchroniser le sidebar
+    window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: mode }))
+  }
+
+  const handleFilterChange = (filters) => {
+    let filtered = [...buildings]
+
+    // Filtre par ville
+    if (filters.city) {
+      filtered = filtered.filter(building => {
+        const city = typeof building.address === 'string' ? '' : building.address?.city
+        return city === filters.city
+      })
+    }
+
+    // Filtre par année de construction
+    if (filters.yearBuilt) {
+      filtered = filtered.filter(building => building.yearBuilt === parseInt(filters.yearBuilt))
+    }
+
+    // Filtre par propriétaire
+    if (filters.owner) {
+      filtered = filtered.filter(building => building.contacts?.owner === filters.owner)
+    }
+
+    // Filtre par valeur actuelle
+    if (filters.currentValue) {
+      filtered = filtered.filter(building => {
+        const value = building.financials?.currentValue || 0
+        switch (filters.currentValue) {
+          case '0-500000':
+            return value < 500000
+          case '500000-1000000':
+            return value >= 500000 && value < 1000000
+          case '1000000-2000000':
+            return value >= 1000000 && value < 2000000
+          case '2000000+':
+            return value >= 2000000
+          default:
+            return true
+        }
+      })
+    }
+
+    // Filtre par banque
+    if (filters.bank) {
+      filtered = filtered.filter(building => building.contacts?.bank === filters.bank)
+    }
+
+    setFilteredBuildings(filtered)
   }
 
   if (loading) {
@@ -187,10 +261,10 @@ export default function Buildings() {
     )
   }
 
-  // Statistiques pour le tableau de bord des immeubles
-  const totalBuildings = buildings.length
-  const totalUnits = buildings.reduce((sum, b) => sum + b.units, 0)
-  const totalValue = buildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
+  // Statistiques pour le tableau de bord des immeubles (basées sur les immeubles filtrés)
+  const totalBuildings = filteredBuildings.length
+  const totalUnits = filteredBuildings.reduce((sum, b) => sum + b.units, 0)
+  const totalValue = filteredBuildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
   const occupancyRate = 85 // Mock data
 
   return (
@@ -224,64 +298,13 @@ export default function Buildings() {
         </div>
       </div>
 
-      {/* Sélecteur de vue et actions */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-semibold text-gray-900">Gestion des Immeubles</h3>
-            {/* Sélecteur de vue */}
-            <div className="flex bg-gray-100 rounded-lg p-1 ml-4">
-              <button
-                onClick={() => handleToggleView('list')}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Liste
-              </button>
-              <button
-                onClick={() => handleToggleView('map')}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'map' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Carte
-              </button>
-            </div>
-          </div>
-          
-          <button onClick={handleAddBuilding} className="btn-primary flex items-center text-sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </button>
-        </div>
-
-        {/* Actions rapides (seulement en mode liste) */}
-        {viewMode === 'list' && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-6">
-            <button onClick={handleAddBuilding} className="btn-primary text-center py-2 lg:py-3">
-              <Plus className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
-              <span className="text-xs lg:text-sm">Nouvel Immeuble</span>
-            </button>
-            <button onClick={() => handleToggleView('map')} className="btn-secondary text-center py-2 lg:py-3">
-              <MapPin className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
-              <span className="text-xs lg:text-sm">Vue Carte</span>
-            </button>
-            <button className="btn-secondary text-center py-2 lg:py-3">
-              <BarChart3 className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
-              <span className="text-xs lg:text-sm">Rapport</span>
-            </button>
-            <button className="btn-secondary text-center py-2 lg:py-3">
-              <AlertTriangle className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
-              <span className="text-xs lg:text-sm">Maintenance</span>
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Filtres (remplacent le cadre "Gestion des immeubles") */}
+      {viewMode === 'list' && (
+        <BuildingFilters 
+          buildings={buildings} 
+          onFilterChange={handleFilterChange} 
+        />
+      )}
 
       {/* Error Display */}
       {error && (
@@ -317,17 +340,25 @@ export default function Buildings() {
 
       {/* Contenu principal - Vue Liste ou Carte */}
       {viewMode === 'map' ? (
-        <div className="card">
+        // Vue carte en plein écran (sans card wrapper)
+        <div className="h-[600px] lg:h-[700px]">
           <MapView />
         </div>
       ) : (
+        // Vue liste avec bouton "Nouvel immeuble" intégré
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Liste des Immeubles</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Liste des Immeubles ({filteredBuildings.length})
+            </h3>
+            <button onClick={handleAddBuilding} className="btn-primary flex items-center">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvel Immeuble
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-            {buildings.map((building) => (
+            {filteredBuildings.map((building) => (
               <div key={building.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center">
@@ -380,11 +411,18 @@ export default function Buildings() {
           </div>
 
           {/* Empty State */}
-          {buildings.length === 0 && !loading && !error && (
+          {filteredBuildings.length === 0 && !loading && !error && (
             <div className="text-center py-12">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun immeuble</h3>
-              <p className="text-gray-600 mb-4">Commencez par ajouter votre premier immeuble.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {buildings.length === 0 ? 'Aucun immeuble' : 'Aucun immeuble correspondant aux filtres'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {buildings.length === 0 
+                  ? 'Commencez par ajouter votre premier immeuble.'
+                  : 'Essayez de modifier vos critères de filtrage.'
+                }
+              </p>
               <button onClick={handleAddBuilding} className="btn-primary">
                 <Plus className="h-5 w-5 mr-2" />
                 Ajouter un Immeuble
