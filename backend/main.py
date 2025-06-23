@@ -101,7 +101,12 @@ class BuildingUpdate(BaseModel):
     notes: Optional[str] = None
 
 # Système de persistance avec fichier JSON
-BUILDINGS_DATA_FILE = "buildings_data.json"
+# Utilisation d'un disque persistant monté sur /var/data
+DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
+
+# Créer le répertoire de données s'il n'existe pas
+os.makedirs(DATA_DIR, exist_ok=True)
 
 def load_buildings_data():
     """Charger les données depuis le fichier JSON"""

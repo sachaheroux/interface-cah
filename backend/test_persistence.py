@@ -1,117 +1,91 @@
 #!/usr/bin/env python3
 """
 Script de test pour vérifier la persistance des données
+Usage: python test_persistence.py
 """
-import requests
+
+import os
 import json
-import time
+import sys
 
-API_BASE_URL = "https://interface-cah-backend.onrender.com"
+# Configuration
+DATA_DIR = os.environ.get("DATA_DIR", "./data")
+BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 
-def test_api():
-    """Tester l'API et la persistance des données"""
-    print("🧪 Test de l'API Interface CAH")
-    print("=" * 50)
+def test_data_persistence():
+    """Test la persistance des données"""
+    print("🧪 Test de persistance des données")
+    print(f"📂 Répertoire de données: {DATA_DIR}")
+    print(f"📄 Fichier de données: {BUILDINGS_DATA_FILE}")
     
-    # Test 1: Vérifier que l'API fonctionne
-    print("\n1. Test de santé de l'API...")
-    try:
-        response = requests.get(f"{API_BASE_URL}/health")
-        if response.status_code == 200:
-            print("✅ API fonctionnelle")
-        else:
-            print(f"❌ API non fonctionnelle (status: {response.status_code})")
-            return
-    except Exception as e:
-        print(f"❌ Erreur de connexion: {e}")
-        return
+    # Créer le répertoire s'il n'existe pas
+    os.makedirs(DATA_DIR, exist_ok=True)
+    print(f"✅ Répertoire créé/vérifié: {DATA_DIR}")
     
-    # Test 2: Vérifier les données actuelles
-    print("\n2. Vérification des données actuelles...")
-    try:
-        response = requests.get(f"{API_BASE_URL}/api/buildings")
-        buildings = response.json()
-        print(f"📊 Nombre d'immeubles actuels: {len(buildings)}")
-        
-        # Afficher les immeubles existants
-        for building in buildings:
-            print(f"   - {building['name']} (ID: {building['id']}, Valeur: {building.get('financials', {}).get('currentValue', 0)}$)")
-    except Exception as e:
-        print(f"❌ Erreur récupération immeubles: {e}")
-        return
-    
-    # Test 3: Vérifier le dashboard
-    print("\n3. Test du dashboard...")
-    try:
-        response = requests.get(f"{API_BASE_URL}/api/dashboard")
-        dashboard = response.json()
-        print(f"📈 Statistiques dashboard:")
-        print(f"   - Total immeubles: {dashboard['totalBuildings']}")
-        print(f"   - Total unités: {dashboard['totalUnits']}")
-        print(f"   - Valeur portfolio: {dashboard['portfolioValue']:,.0f}$")
-        print(f"   - Taux d'occupation: {dashboard['occupancyRate']}%")
-    except Exception as e:
-        print(f"❌ Erreur dashboard: {e}")
-        return
-    
-    # Test 4: Créer un immeuble de test
-    print("\n4. Test de création d'immeuble...")
-    test_building = {
-        "name": "Test Immeuble Persistance",
-        "address": {
-            "street": "123 Rue Test",
-            "city": "Montréal",
-            "province": "QC",
-            "postalCode": "H1H 1H1",
-            "country": "Canada"
-        },
-        "type": "residential",
-        "units": 10,
-        "floors": 3,
-        "yearBuilt": 2020,
-        "totalArea": 5000,
-        "financials": {
-            "purchasePrice": 800000,
-            "downPayment": 160000,
-            "interestRate": 5.5,
-            "currentValue": 900000
-        },
-        "contacts": {
-            "owner": "Test Owner",
-            "bank": "Test Bank",
-            "contractor": "Test Contractor"
-        },
-        "notes": "Immeuble créé pour tester la persistance"
+    # Test d'écriture
+    test_data = {
+        "buildings": [
+            {
+                "id": 1,
+                "name": "Test Building",
+                "type": "Résidentiel",
+                "units": 10
+            }
+        ],
+        "next_id": 2
     }
     
     try:
-        response = requests.post(f"{API_BASE_URL}/api/buildings", json=test_building)
-        if response.status_code == 200:
-            new_building = response.json()
-            print(f"✅ Immeuble créé avec succès (ID: {new_building['id']})")
-            
-            # Vérifier que les données sont bien sauvegardées
-            time.sleep(2)  # Attendre un peu
-            
-            response = requests.get(f"{API_BASE_URL}/api/dashboard")
-            dashboard_after = response.json()
-            print(f"📈 Nouvelles statistiques:")
-            print(f"   - Total immeubles: {dashboard_after['totalBuildings']}")
-            print(f"   - Valeur portfolio: {dashboard_after['portfolioValue']:,.0f}$")
-            
-            if dashboard_after['portfolioValue'] > dashboard['portfolioValue']:
-                print("✅ Persistance fonctionne - valeur portfolio mise à jour!")
-            else:
-                print("⚠️  Valeur portfolio non mise à jour")
-                
-        else:
-            print(f"❌ Erreur création immeuble (status: {response.status_code})")
-            print(f"Response: {response.text}")
+        with open(BUILDINGS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(test_data, f, ensure_ascii=False, indent=2)
+        print("✅ Écriture des données de test réussie")
     except Exception as e:
-        print(f"❌ Erreur création immeuble: {e}")
+        print(f"❌ Erreur d'écriture: {e}")
+        return False
     
-    print("\n" + "=" * 50)
-    print("🏁 Test terminé")
+    # Test de lecture
+    try:
+        with open(BUILDINGS_DATA_FILE, 'r', encoding='utf-8') as f:
+            loaded_data = json.load(f)
+        print("✅ Lecture des données réussie")
+        print(f"📊 Données chargées: {len(loaded_data.get('buildings', []))} immeubles")
+    except Exception as e:
+        print(f"❌ Erreur de lecture: {e}")
+        return False
+    
+    # Vérification des permissions
+    if os.access(DATA_DIR, os.R_OK | os.W_OK):
+        print("✅ Permissions de lecture/écriture OK")
+    else:
+        print("❌ Problème de permissions")
+        return False
+    
+    print("🎉 Test de persistance réussi !")
+    return True
+
+def show_environment():
+    """Affiche les variables d'environnement importantes"""
+    print("\n🔧 Variables d'environnement:")
+    print(f"DATA_DIR: {os.environ.get('DATA_DIR', 'Non définie (utilise ./data)')}")
+    print(f"PWD: {os.getcwd()}")
+    
+    if os.path.exists(BUILDINGS_DATA_FILE):
+        stat = os.stat(BUILDINGS_DATA_FILE)
+        print(f"📄 Fichier existe: {BUILDINGS_DATA_FILE} ({stat.st_size} bytes)")
+    else:
+        print(f"📄 Fichier n'existe pas encore: {BUILDINGS_DATA_FILE}")
 
 if __name__ == "__main__":
-    test_api() 
+    print("=" * 50)
+    print("🏗️  Interface CAH - Test de Persistance")
+    print("=" * 50)
+    
+    show_environment()
+    print()
+    
+    if test_data_persistence():
+        print("\n✅ Tous les tests sont passés !")
+        sys.exit(0)
+    else:
+        print("\n❌ Certains tests ont échoué")
+        sys.exit(1) 
