@@ -4,6 +4,8 @@ import { buildingsService } from '../services/api'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
+import MapView from '../components/MapView'
+import MapTestButton from '../components/MapTestButton'
 import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
@@ -16,6 +18,7 @@ export default function Buildings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [showMapView, setShowMapView] = useState(false)
 
   useEffect(() => {
     fetchBuildings()
@@ -173,6 +176,14 @@ export default function Buildings() {
     setBuildingToDelete(null)
   }
 
+  const handleMapView = () => {
+    setShowMapView(true)
+  }
+
+  const handleCloseMapView = () => {
+    setShowMapView(false)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -226,7 +237,7 @@ export default function Buildings() {
             <Plus className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
             <span className="text-xs lg:text-sm">Nouvel Immeuble</span>
           </button>
-          <button className="btn-secondary text-center py-2 lg:py-3">
+          <button onClick={handleMapView} className="btn-secondary text-center py-2 lg:py-3">
             <MapPin className="h-4 w-4 lg:h-5 lg:w-5 mx-auto mb-1" />
             <span className="text-xs lg:text-sm">Vue Carte</span>
           </button>
@@ -375,6 +386,18 @@ export default function Buildings() {
         buildingValue={buildingToDelete?.financials?.currentValue || 0}
         loading={deleting}
       />
+
+      {/* Map View Modal */}
+      <MapView
+        buildings={buildings}
+        isOpen={showMapView}
+        onClose={handleCloseMapView}
+        onViewBuilding={handleViewBuilding}
+        onEditBuilding={handleEditBuilding}
+      />
+
+      {/* Test Button (Development only) */}
+      <MapTestButton />
     </div>
   )
 } 
