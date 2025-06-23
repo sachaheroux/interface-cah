@@ -6,6 +6,7 @@ import uvicorn
 from datetime import datetime
 import json
 import os
+import platform
 
 app = FastAPI(
     title="Interface CAH API",
@@ -162,7 +163,14 @@ class TenantUpdate(BaseModel):
 
 # Système de persistance avec fichier JSON
 # Utilisation du répertoire recommandé par Render : /opt/render/project/src/data
-DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
+# En local, utiliser un répertoire relatif pour éviter les problèmes de permissions
+if platform.system() == "Windows" or os.environ.get("ENVIRONMENT") == "development":
+    # En local (Windows) ou développement, utiliser un répertoire relatif
+    DATA_DIR = os.environ.get("DATA_DIR", "./data")
+else:
+    # Sur Render ou production Linux, utiliser le répertoire recommandé
+    DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
+
 BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
 
