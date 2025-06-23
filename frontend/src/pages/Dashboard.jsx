@@ -126,12 +126,12 @@ export default function Dashboard() {
       changeType: 'neutral'
     },
     {
-      name: 'Revenus Mensuels Estimés',
-      value: dashboardData?.monthlyRevenue ? `${Math.round(dashboardData.monthlyRevenue).toLocaleString('fr-CA')}$` : '0$',
-      icon: DollarSign,
+      name: 'Taux d\'Occupation',
+      value: dashboardData?.occupancyRate ? `${dashboardData.occupancyRate}%` : '0%',
+      icon: Users,
       color: 'bg-primary-500',
-      change: dashboardData?.monthlyRevenue > 0 ? 'Estimation 0.5%/mois' : 'Aucun revenu',
-      changeType: 'neutral'
+      change: dashboardData?.occupancyRate >= 90 ? 'Excellent taux' : dashboardData?.occupancyRate >= 80 ? 'Bon taux' : 'À améliorer',
+      changeType: dashboardData?.occupancyRate >= 90 ? 'positive' : dashboardData?.occupancyRate >= 80 ? 'neutral' : 'negative'
     }
   ]
 

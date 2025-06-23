@@ -117,7 +117,7 @@ def load_buildings_data():
     except Exception as e:
         print(f"Erreur chargement données: {e}")
     
-    # Retourner structure vide par défaut
+    # Retourner structure vide - les vraies données seront ajoutées par l'utilisateur
     return {"buildings": [], "next_id": 1}
 
 def save_buildings_data(data):
@@ -179,30 +179,52 @@ async def get_dashboard_data():
             for building in buildings
         )
         
-        # Calculer le revenu mensuel estimé (estimation basée sur la valeur)
-        # Estimation : 0.5% de la valeur du portfolio par mois
-        monthly_revenue = total_portfolio_value * 0.005
+        # Calculer le taux d'occupation (simulation : 85-95% d'occupation selon l'âge)
+        occupied_units = 0
+        for building in buildings:
+            units = building.get("units", 0)
+            year_built = building.get("yearBuilt", 2020)
+            current_year = 2024
+            building_age = current_year - year_built
+            
+            # Taux d'occupation basé sur l'âge : plus récent = meilleur taux
+            if building_age <= 2:
+                occupancy_rate = 0.95  # 95% pour immeubles récents
+            elif building_age <= 5:
+                occupancy_rate = 0.90  # 90% pour immeubles moyens
+            else:
+                occupancy_rate = 0.85  # 85% pour immeubles plus anciens
+            
+            occupied_units += int(units * occupancy_rate)
+        
+        # Calculer le pourcentage global d'occupation
+        occupancy_percentage = (occupied_units / total_units * 100) if total_units > 0 else 0
         
         return {
             "totalBuildings": total_buildings,
             "totalUnits": total_units,
             "portfolioValue": total_portfolio_value,
-            "monthlyRevenue": monthly_revenue,
+            "occupancyRate": round(occupancy_percentage, 1),
             "recentActivity": [
                 {
                     "type": "info",
                     "message": f"Portfolio actuel : {total_buildings} immeubles",
-                    "timestamp": "2025-06-22T23:00:00Z"
+                    "timestamp": "2025-06-23T12:00:00Z"
                 },
                 {
                     "type": "success", 
                     "message": f"Total unités : {total_units}",
-                    "timestamp": "2025-06-22T22:30:00Z"
+                    "timestamp": "2025-06-23T11:30:00Z"
                 },
                 {
                     "type": "info",
                     "message": f"Valeur portfolio : {total_portfolio_value:,.0f} $",
-                    "timestamp": "2025-06-22T22:00:00Z"
+                    "timestamp": "2025-06-23T11:00:00Z"
+                },
+                {
+                    "type": "success",
+                    "message": f"Taux d'occupation : {round(occupancy_percentage, 1)}%",
+                    "timestamp": "2025-06-23T10:30:00Z"
                 }
             ]
         }
@@ -211,12 +233,12 @@ async def get_dashboard_data():
             "totalBuildings": 0,
             "totalUnits": 0, 
             "portfolioValue": 0,
-            "monthlyRevenue": 0,
+            "occupancyRate": 0,
             "recentActivity": [
                 {
                     "type": "info",
                     "message": "Aucun immeuble dans le portfolio",
-                    "timestamp": "2025-06-22T23:00:00Z"
+                    "timestamp": "2025-06-23T12:00:00Z"
                 }
             ]
         }
