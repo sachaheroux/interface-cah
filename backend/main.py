@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 # Import des modules de base de données
-from database import get_db, create_tables, init_default_buildings, BuildingDB
+from database import get_db, create_tables, init_default_buildings, BuildingDB, serialize_json_field, deserialize_json_field
 
 app = FastAPI(
     title="Interface CAH API",
@@ -129,10 +129,12 @@ async def get_dashboard_data(db: Session = Depends(get_db)):
         # Calculer les statistiques réelles
         total_buildings = len(buildings)
         total_units = sum(building.units for building in buildings)
-        total_portfolio_value = sum(
-            building.financials.get("currentValue", 0) if building.financials else 0 
-            for building in buildings
-        )
+        total_portfolio_value = 0
+        
+        for building in buildings:
+            financials = deserialize_json_field(building.financials)
+            if financials and isinstance(financials, dict):
+                total_portfolio_value += financials.get("currentValue", 0)
         
         # Calculer le revenu mensuel estimé (estimation basée sur la valeur)
         # Estimation : 0.5% de la valeur du portfolio par mois
@@ -187,15 +189,15 @@ async def get_buildings(db: Session = Depends(get_db)):
             result.append({
                 "id": building.id,
                 "name": building.name,
-                "address": building.address,
+                "address": deserialize_json_field(building.address),
                 "type": building.type,
                 "units": building.units,
                 "floors": building.floors,
                 "yearBuilt": building.year_built,
                 "totalArea": building.total_area,
-                "characteristics": building.characteristics,
-                "financials": building.financials,
-                "contacts": building.contacts,
+                "characteristics": deserialize_json_field(building.characteristics),
+                "financials": deserialize_json_field(building.financials),
+                "contacts": deserialize_json_field(building.contacts),
                 "notes": building.notes,
                 "createdAt": building.created_at.isoformat() + "Z" if building.created_at else None,
                 "updatedAt": building.updated_at.isoformat() + "Z" if building.updated_at else None
@@ -215,15 +217,15 @@ async def get_building(building_id: int, db: Session = Depends(get_db)):
         return {
             "id": building.id,
             "name": building.name,
-            "address": building.address,
+            "address": deserialize_json_field(building.address),
             "type": building.type,
             "units": building.units,
             "floors": building.floors,
             "yearBuilt": building.year_built,
             "totalArea": building.total_area,
-            "characteristics": building.characteristics,
-            "financials": building.financials,
-            "contacts": building.contacts,
+            "characteristics": deserialize_json_field(building.characteristics),
+            "financials": deserialize_json_field(building.financials),
+            "contacts": deserialize_json_field(building.contacts),
             "notes": building.notes,
             "createdAt": building.created_at.isoformat() + "Z" if building.created_at else None,
             "updatedAt": building.updated_at.isoformat() + "Z" if building.updated_at else None
@@ -240,15 +242,15 @@ async def create_building(building_data: BuildingCreate, db: Session = Depends(g
         # Créer le nouvel immeuble
         new_building = BuildingDB(
             name=building_data.name,
-            address=building_data.address.dict(),
+            address=serialize_json_field(building_data.address.dict()),
             type=building_data.type,
             units=building_data.units,
             floors=building_data.floors,
             year_built=building_data.yearBuilt,
             total_area=building_data.totalArea,
-            characteristics=building_data.characteristics.dict() if building_data.characteristics else None,
-            financials=building_data.financials.dict() if building_data.financials else None,
-            contacts=building_data.contacts.dict() if building_data.contacts else None,
+            characteristics=serialize_json_field(building_data.characteristics.dict() if building_data.characteristics else None),
+            financials=serialize_json_field(building_data.financials.dict() if building_data.financials else None),
+            contacts=serialize_json_field(building_data.contacts.dict() if building_data.contacts else None),
             notes=building_data.notes
         )
         
@@ -259,15 +261,15 @@ async def create_building(building_data: BuildingCreate, db: Session = Depends(g
         return {
             "id": new_building.id,
             "name": new_building.name,
-            "address": new_building.address,
+            "address": deserialize_json_field(new_building.address),
             "type": new_building.type,
             "units": new_building.units,
             "floors": new_building.floors,
             "yearBuilt": new_building.year_built,
             "totalArea": new_building.total_area,
-            "characteristics": new_building.characteristics,
-            "financials": new_building.financials,
-            "contacts": new_building.contacts,
+            "characteristics": deserialize_json_field(new_building.characteristics),
+            "financials": deserialize_json_field(new_building.financials),
+            "contacts": deserialize_json_field(new_building.contacts),
             "notes": new_building.notes,
             "createdAt": new_building.created_at.isoformat() + "Z",
             "updatedAt": new_building.updated_at.isoformat() + "Z"
@@ -288,9 +290,9 @@ async def update_building(building_id: int, building_data: BuildingUpdate, db: S
         update_data = building_data.dict(exclude_unset=True)
         for field, value in update_data.items():
             if field == "address" and value:
-                setattr(building, field, value.dict())
+                setattr(building, field, serialize_json_field(value.dict()))
             elif field in ["characteristics", "financials", "contacts"] and value:
-                setattr(building, field, value.dict())
+                setattr(building, field, serialize_json_field(value.dict()))
             elif field == "yearBuilt":
                 setattr(building, "year_built", value)
             elif field == "totalArea":
@@ -305,15 +307,15 @@ async def update_building(building_id: int, building_data: BuildingUpdate, db: S
         return {
             "id": building.id,
             "name": building.name,
-            "address": building.address,
+            "address": deserialize_json_field(building.address),
             "type": building.type,
             "units": building.units,
             "floors": building.floors,
             "yearBuilt": building.year_built,
             "totalArea": building.total_area,
-            "characteristics": building.characteristics,
-            "financials": building.financials,
-            "contacts": building.contacts,
+            "characteristics": deserialize_json_field(building.characteristics),
+            "financials": deserialize_json_field(building.financials),
+            "contacts": deserialize_json_field(building.contacts),
             "notes": building.notes,
             "createdAt": building.created_at.isoformat() + "Z",
             "updatedAt": building.updated_at.isoformat() + "Z"
