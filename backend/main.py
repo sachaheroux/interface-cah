@@ -101,8 +101,8 @@ class BuildingUpdate(BaseModel):
     notes: Optional[str] = None
 
 # Système de persistance avec fichier JSON
-# Utilisation d'un disque persistant monté sur /var/data
-DATA_DIR = os.environ.get("DATA_DIR", "/var/data")
+# Utilisation du répertoire recommandé par Render : /opt/render/project/src/data
+DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
 BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
