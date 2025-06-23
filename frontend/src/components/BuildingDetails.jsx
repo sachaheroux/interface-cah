@@ -240,13 +240,9 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
           <div>
-            {onDelete && isUserCreatedBuilding() && (
+            {onDelete && (
               <button
-                onClick={() => {
-                  if (window.confirm('Êtes-vous sûr de vouloir supprimer cet immeuble ?')) {
-                    onDelete(building.id)
-                  }
-                }}
+                onClick={() => onDelete(building)}
                 className="px-4 py-2 text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 transition-colors flex items-center space-x-2"
               >
                 <Trash2 className="h-4 w-4" />

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react'
 import { buildingsService } from '../services/api'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import { getBuildingTypeLabel } from '../types/building'
 
 export default function Buildings() {
@@ -12,6 +13,9 @@ export default function Buildings() {
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [selectedBuilding, setSelectedBuilding] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [buildingToDelete, setBuildingToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchBuildings()
@@ -118,17 +122,28 @@ export default function Buildings() {
     setSelectedBuilding(null)
   }
 
-  const handleDeleteBuilding = async (buildingId) => {
+  const handleDeleteClick = (building) => {
+    setBuildingToDelete(building)
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!buildingToDelete) return
+    
     try {
+      setDeleting(true)
       setError(null)
       
       // Supprimer via API
-      await buildingsService.deleteBuilding(buildingId)
+      await buildingsService.deleteBuilding(buildingToDelete.id)
       
       // Supprimer de l'état local
-      setBuildings(prev => prev.filter(b => b.id !== buildingId))
+      setBuildings(prev => prev.filter(b => b.id !== buildingToDelete.id))
       
+      // Fermer les modals
+      setShowDeleteModal(false)
       setShowDetails(false)
+      setBuildingToDelete(null)
       setSelectedBuilding(null)
     } catch (error) {
       console.error('Delete error:', error)
@@ -138,7 +153,14 @@ export default function Buildings() {
       } else {
         setError(`Erreur lors de la suppression: ${error.response?.data?.detail || error.message}`)
       }
+    } finally {
+      setDeleting(false)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setBuildingToDelete(null)
   }
 
   if (loading) {
@@ -289,6 +311,13 @@ export default function Buildings() {
                   <Edit className="h-4 w-4 mr-1" />
                   Modifier
                 </button>
+                <button 
+                  onClick={() => handleDeleteClick(building)} 
+                  className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm"
+                  title="Supprimer l'immeuble"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -321,7 +350,17 @@ export default function Buildings() {
         building={selectedBuilding}
         isOpen={showDetails}
         onClose={handleCloseDetails}
-        onDelete={handleDeleteBuilding}
+        onDelete={handleDeleteClick}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        buildingName={buildingToDelete?.name || ''}
+        buildingValue={buildingToDelete?.financials?.currentValue || 0}
+        loading={deleting}
       />
     </div>
   )
