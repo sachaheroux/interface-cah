@@ -39,7 +39,7 @@ api.interceptors.response.use(
 
 // Services API pour chaque module
 export const dashboardService = {
-  getDashboardData: () => api.get('/api/dashboard'),
+  getDashboardData: () => api.get(`/api/dashboard?t=${Date.now()}`),
 }
 
 export const buildingsService = {

@@ -32,7 +32,10 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
+      setError(null)
+      // Force un nouveau fetch avec timestamp pour éviter le cache
       const response = await dashboardService.getDashboardData()
+      console.log('Dashboard data received:', response.data) // Debug
       setDashboardData(response.data)
     } catch (err) {
       setError('Erreur lors du chargement des données')
@@ -107,8 +110,18 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-gray-600 mt-1">Vue d'ensemble de vos opérations de construction</p>
         </div>
-        <div className="text-sm text-gray-500">
-          Dernière mise à jour: {new Date().toLocaleString('fr-CA')}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={fetchDashboardData}
+            disabled={loading}
+            className="btn-secondary flex items-center space-x-2"
+          >
+            <TrendingUp className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Actualiser</span>
+          </button>
+          <div className="text-sm text-gray-500">
+            Dernière mise à jour: {new Date().toLocaleString('fr-CA')}
+          </div>
         </div>
       </div>
 
