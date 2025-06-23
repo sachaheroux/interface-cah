@@ -12,10 +12,12 @@ export default function Tenants() {
 
   const fetchTenants = async () => {
     try {
+      setLoading(true)
       const response = await tenantsService.getTenants()
-      setTenants(response.data)
+      setTenants(response.data || [])
     } catch (err) {
       console.error('Tenants error:', err)
+      setTenants([]) // Définir un tableau vide en cas d'erreur
     } finally {
       setLoading(false)
     }

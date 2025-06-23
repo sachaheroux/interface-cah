@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isUsingFallback, setIsUsingFallback] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -25,21 +26,53 @@ export default function Dashboard() {
       fetchDashboardData()
     }
     
+    // Rafraîchir les données quand le localStorage change (nouveaux immeubles)
+    const handleStorageChange = (e) => {
+      if (e.key === 'localBuildings') {
+        fetchDashboardData()
+      }
+    }
+    
+    // Rafraîchir les données quand les immeubles sont modifiés
+    const handleBuildingsUpdate = (e) => {
+      console.log('Buildings updated, refreshing dashboard:', e.detail)
+      fetchDashboardData()
+    }
+    
     window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('buildingsUpdated', handleBuildingsUpdate)
+    
+    // Rafraîchir périodiquement pour capturer les changements
+    const interval = setInterval(fetchDashboardData, 30000) // Toutes les 30 secondes
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('buildingsUpdated', handleBuildingsUpdate)
+      clearInterval(interval)
+    }
   }, [])
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
       setError(null)
+      setIsUsingFallback(false)
+      
       // Force un nouveau fetch avec timestamp pour éviter le cache
       const response = await dashboardService.getDashboardData()
       console.log('Dashboard data received:', response.data) // Debug
       setDashboardData(response.data)
+      
+      // Vérifier si on utilise des données de fallback (indicateur dans les logs console)
+      const logMessages = JSON.stringify(response.data)
+      setIsUsingFallback(logMessages.includes('Mode hors ligne') || logMessages.includes('locale'))
+      
     } catch (err) {
       setError('Erreur lors du chargement des données')
       console.error('Dashboard error:', err)
+      setIsUsingFallback(true)
     } finally {
       setLoading(false)
     }
@@ -109,6 +142,12 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-gray-600 mt-1">Vue d'ensemble de vos opérations de construction</p>
+          {isUsingFallback && (
+            <div className="flex items-center mt-2 text-sm text-amber-600">
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              <span>Données calculées localement (API indisponible)</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-4">
           <button 

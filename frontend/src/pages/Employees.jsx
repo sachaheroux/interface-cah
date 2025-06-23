@@ -12,10 +12,12 @@ export default function Employees() {
 
   const fetchEmployees = async () => {
     try {
+      setLoading(true)
       const response = await employeesService.getEmployees()
-      setEmployees(response.data)
+      setEmployees(response.data || [])
     } catch (err) {
       console.error('Employees error:', err)
+      setEmployees([]) // Définir un tableau vide en cas d'erreur
     } finally {
       setLoading(false)
     }

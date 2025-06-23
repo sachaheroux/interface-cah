@@ -103,6 +103,11 @@ export default function Buildings() {
         setBuildings(prev => [...prev, response.data])
       }
       
+      // Déclencher un événement personnalisé pour notifier le dashboard
+      window.dispatchEvent(new CustomEvent('buildingsUpdated', { 
+        detail: { action: selectedBuilding ? 'update' : 'create', building: cleanedData }
+      }))
+      
       setShowForm(false)
       setSelectedBuilding(null)
     } catch (error) {
@@ -139,6 +144,11 @@ export default function Buildings() {
       
       // Supprimer de l'état local
       setBuildings(prev => prev.filter(b => b.id !== buildingToDelete.id))
+      
+      // Déclencher un événement personnalisé pour notifier le dashboard
+      window.dispatchEvent(new CustomEvent('buildingsUpdated', { 
+        detail: { action: 'delete', building: buildingToDelete }
+      }))
       
       // Fermer les modals
       setShowDeleteModal(false)

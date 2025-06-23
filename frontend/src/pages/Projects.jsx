@@ -20,6 +20,7 @@ export default function Projects() {
     } catch (err) {
       console.error('Projects error:', err)
       setError('Erreur lors du chargement des projets')
+      setProjects([]) // Définir un tableau vide en cas d'erreur
     } finally {
       setLoading(false)
     }
