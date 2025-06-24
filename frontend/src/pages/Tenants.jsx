@@ -21,48 +21,80 @@ export default function Tenants() {
     fetchTenants()
   }, [])
 
-  // Filtrer les locataires
+  // Filtrer les locataires avec vérifications de sécurité renforcées
   useEffect(() => {
-    let filtered = [...tenants]
-
-    // Filtre par terme de recherche
-    if (searchTerm) {
-      filtered = filtered.filter(tenant => 
-        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.phone?.includes(searchTerm) ||
-        tenant.building?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    console.log('Filtering tenants, current tenants:', tenants)
+    
+    // Vérifications de sécurité multiples
+    if (!tenants) {
+      console.warn('Tenants is null or undefined')
+      setFilteredTenants([])
+      return
     }
 
-    // Filtre par statut
-    if (statusFilter) {
-      filtered = filtered.filter(tenant => tenant.status === statusFilter)
+    if (!Array.isArray(tenants)) {
+      console.error('Tenants is not an array:', typeof tenants, tenants)
+      setFilteredTenants([])
+      return
     }
 
-    setFilteredTenants(filtered)
+    try {
+      let filtered = [...tenants]
+
+      // Filtre par terme de recherche
+      if (searchTerm && searchTerm.trim()) {
+        filtered = filtered.filter(tenant => {
+          if (!tenant || typeof tenant !== 'object') return false
+          
+          const name = tenant.name || ''
+          const email = tenant.email || ''
+          const phone = tenant.phone || ''
+          const building = tenant.building || ''
+          
+          const searchLower = searchTerm.toLowerCase()
+          
+          return (
+            name.toLowerCase().includes(searchLower) ||
+            email.toLowerCase().includes(searchLower) ||
+            phone.includes(searchTerm) ||
+            building.toLowerCase().includes(searchLower)
+          )
+        })
+      }
+
+      // Filtre par statut
+      if (statusFilter && statusFilter.trim()) {
+        filtered = filtered.filter(tenant => {
+          if (!tenant || typeof tenant !== 'object') return false
+          return tenant.status === statusFilter
+        })
+      }
+
+      console.log('Filtered tenants result:', filtered)
+      setFilteredTenants(filtered)
+    } catch (error) {
+      console.error('Error filtering tenants:', error)
+      setFilteredTenants([])
+    }
   }, [tenants, searchTerm, statusFilter])
 
   const fetchTenants = async () => {
     try {
       setLoading(true)
       const response = await tenantsService.getTenants()
-      console.log('Tenants API response:', response)
+      console.log('Tenants service response:', response)
       
-      // Gérer les différents formats de réponse
-      let tenantsData = []
-      if (response.data) {
-        if (Array.isArray(response.data)) {
-          tenantsData = response.data
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          tenantsData = response.data.data
-        } else if (Array.isArray(response.data.tenants)) {
-          tenantsData = response.data.tenants
-        }
+      // Simplifier - juste prendre response.data et s'assurer que c'est un tableau
+      const tenantsData = response.data || []
+      
+      // Vérification de sécurité
+      if (Array.isArray(tenantsData)) {
+        console.log('Setting tenants data:', tenantsData)
+        setTenants(tenantsData)
+      } else {
+        console.error('Tenants data is not an array:', tenantsData)
+        setTenants([])
       }
-      
-      console.log('Processed tenants data:', tenantsData)
-      setTenants(tenantsData)
     } catch (err) {
       console.error('Tenants error:', err)
       setTenants([]) // Définir un tableau vide en cas d'erreur
@@ -208,12 +240,12 @@ export default function Tenants() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">
-            Liste des Locataires ({filteredTenants.length})
+            Liste des Locataires ({Array.isArray(filteredTenants) ? filteredTenants.length : 0})
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTenants.map((tenant) => (
+          {Array.isArray(filteredTenants) && filteredTenants.map((tenant) => (
             <div key={tenant.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               {/* En-tête du locataire */}
               <div className="flex items-start justify-between mb-4">
@@ -283,14 +315,14 @@ export default function Tenants() {
         </div>
 
         {/* Empty State */}
-        {filteredTenants.length === 0 && (
+        {(!Array.isArray(filteredTenants) || filteredTenants.length === 0) && (
           <div className="text-center py-12">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {tenants.length === 0 ? 'Aucun locataire' : 'Aucun locataire correspondant aux filtres'}
+              {(!Array.isArray(tenants) || tenants.length === 0) ? 'Aucun locataire' : 'Aucun locataire correspondant aux filtres'}
             </h3>
             <p className="text-gray-600 mb-4">
-              {tenants.length === 0 
+              {(!Array.isArray(tenants) || tenants.length === 0)
                 ? 'Commencez par ajouter votre premier locataire.'
                 : 'Essayez de modifier vos critères de recherche.'
               }
