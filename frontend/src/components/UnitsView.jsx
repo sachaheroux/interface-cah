@@ -53,13 +53,25 @@ export default function UnitsView({ buildings }) {
             const buildingUnits = parseAddressAndGenerateUnits(building)
             
             // Calculer le statut dynamique pour chaque unité
-            const unitsWithStatus = buildingUnits.map(unit => ({
-              ...unit,
-              status: calculateUnitStatus(unit, storedAssignments),
-              currentTenants: storedAssignments
-                .filter(a => a.unitId === unit.id)
-                .map(a => a.tenantData)
-            }))
+            const unitsWithStatus = buildingUnits.map(unit => {
+              const unitAssignments = storedAssignments.filter(a => a.unitId === unit.id)
+              const currentTenants = unitAssignments.map(a => a.tenantData)
+              
+              // Debug détaillé pour chaque unité
+              console.log(`Unité ${unit.id}:`, {
+                unitId: unit.id,
+                assignmentsFound: unitAssignments.length,
+                assignments: unitAssignments,
+                currentTenants: currentTenants,
+                calculatedStatus: calculateUnitStatus(unit, storedAssignments)
+              })
+              
+              return {
+                ...unit,
+                status: calculateUnitStatus(unit, storedAssignments),
+                currentTenants: currentTenants
+              }
+            })
             
             allUnits.push(...unitsWithStatus)
           } catch (error) {
@@ -202,37 +214,34 @@ export default function UnitsView({ buildings }) {
   const occupiedUnits = filteredUnits.filter(unit => {
     const hasCurrentTenants = unit.currentTenants?.length > 0
     const isOccupiedStatus = unit.status === 'occupied'
+    const isOccupied = hasCurrentTenants || isOccupiedStatus
     
-    // Debug temporaire
-    if (hasCurrentTenants || isOccupiedStatus) {
-      console.log('Unité occupée trouvée:', {
-        id: unit.id,
-        address: unit.address,
-        currentTenants: unit.currentTenants,
-        status: unit.status,
-        hasCurrentTenants,
-        isOccupiedStatus
-      })
-    }
+    // Debug détaillé pour chaque unité
+    console.log(`Statistiques - Unité ${unit.id}:`, {
+      id: unit.id,
+      address: unit.address,
+      currentTenants: unit.currentTenants,
+      currentTenantsLength: unit.currentTenants?.length,
+      status: unit.status,
+      hasCurrentTenants,
+      isOccupiedStatus,
+      isOccupied
+    })
     
-    return hasCurrentTenants || isOccupiedStatus
+    return isOccupied
   }).length
+  
   const vacantUnits = totalUnits - occupiedUnits
   const totalRent = filteredUnits.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
   
-  // Debug des statistiques
-  console.log('Statistiques unités:', {
+  // Debug final des résultats
+  console.log('=== RÉSULTATS FINAUX ===', {
     totalUnits,
     occupiedUnits,
     vacantUnits,
     occupancyRate,
-    filteredUnits: filteredUnits.map(u => ({
-      id: u.id,
-      address: u.address,
-      currentTenants: u.currentTenants,
-      status: u.status
-    }))
+    allAssignments: JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
   })
 
   // Fonction de test temporaire pour diagnostiquer le problème
@@ -265,6 +274,23 @@ export default function UnitsView({ buildings }) {
     window.location.reload()
   }
 
+  // Fonction pour afficher les données de debug
+  const showDebugInfo = () => {
+    const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+    const debugInfo = {
+      totalUnits: units.length,
+      totalAssignments: assignments.length,
+      assignments: assignments,
+      unitsWithCurrentTenants: units.filter(u => u.currentTenants?.length > 0),
+      unitsWithOccupiedStatus: units.filter(u => u.status === 'occupied'),
+      unitIds: units.map(u => u.id),
+      assignmentUnitIds: assignments.map(a => a.unitId)
+    }
+    
+    alert(JSON.stringify(debugInfo, null, 2))
+    console.log('DEBUG INFO:', debugInfo)
+  }
+
   return (
     <div className="space-y-6">
       {/* Filtres et recherche */}
@@ -284,6 +310,12 @@ export default function UnitsView({ buildings }) {
               className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
             >
               Nettoyer Tests
+            </button>
+            <button
+              onClick={showDebugInfo}
+              className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Debug Info
             </button>
           </div>
         </div>
