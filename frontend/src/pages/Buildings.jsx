@@ -294,8 +294,12 @@ export default function Buildings() {
   const calculateOccupancyRate = () => {
     const allUnits = []
     filteredBuildings.forEach(building => {
-      const buildingUnits = parseAddressAndGenerateUnits(building)
-      allUnits.push(...buildingUnits)
+      try {
+        const buildingUnits = parseAddressAndGenerateUnits(building)
+        allUnits.push(...buildingUnits)
+      } catch (error) {
+        console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
+      }
     })
     
     if (allUnits.length === 0) return 0

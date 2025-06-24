@@ -119,11 +119,33 @@ export const calculateUnitStatus = (unit, assignments = []) => {
 // Fonction pour parser une adresse et générer des unités
 export const parseAddressAndGenerateUnits = (building) => {
   if (!building || !building.address) {
+    console.warn('Immeuble sans adresse:', building)
     return []
   }
 
   const units = []
-  const address = building.address.trim()
+  
+  // Gérer les différents formats d'adresse
+  let address = ''
+  try {
+    if (typeof building.address === 'string') {
+      address = building.address.trim()
+    } else if (typeof building.address === 'object' && building.address.street) {
+      // Format objet avec street, city, etc.
+      address = building.address.street.trim()
+    } else {
+      console.warn('Format d\'adresse non supporté pour l\'immeuble:', building)
+      return []
+    }
+    
+    if (!address) {
+      console.warn('Adresse vide pour l\'immeuble:', building)
+      return []
+    }
+  } catch (error) {
+    console.error('Erreur lors du traitement de l\'adresse:', building, error)
+    return []
+  }
   
   // Format 1: Adresses séparées par des tirets (ex: 4932-4934-4936 Route Des Vétérans)
   if (address.includes('-') && !address.includes(',')) {
@@ -225,12 +247,24 @@ export const parseAddressAndGenerateUnits = (building) => {
   
   // Format 3: Adresse simple (une seule unité)
   else {
+    // Construire l'adresse complète si c'est un objet
+    let fullAddress = address
+    if (typeof building.address === 'object') {
+      const parts = [
+        building.address.street,
+        building.address.city,
+        building.address.province,
+        building.address.postalCode
+      ].filter(Boolean)
+      fullAddress = parts.join(', ')
+    }
+    
     units.push({
       id: `${building.id}-1`,
       buildingId: building.id,
       buildingName: building.name,
       unitNumber: '1',
-      address: address,
+      address: fullAddress,
       type: UnitType.FOUR_HALF, // Valeur par défaut
       area: 0,
       bedrooms: 2,
