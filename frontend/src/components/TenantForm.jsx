@@ -375,7 +375,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                 <div className="flex items-center">
                                   <Home className="h-4 w-4 text-gray-400 mr-2" />
                                   <span className="font-medium text-gray-900">
-                                    {unit.buildingName} - Unité {unit.unitNumber}
+                                    {unit.address}
                                   </span>
                                   {formData.unitId === unit.id && (
                                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
@@ -383,7 +383,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">{unit.address}</p>
+                                <p className="text-sm text-gray-600 mt-1">{unit.buildingName}</p>
                                 
                                 {/* Afficher les locataires actuels s'il y en a */}
                                 {unit.currentTenants && unit.currentTenants.length > 0 && (
@@ -433,12 +433,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-blue-800"><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
-                          <p className="text-blue-800"><strong>Unité:</strong> {formData.unitInfo.unitNumber}</p>
                           <p className="text-blue-800"><strong>Adresse:</strong> {formData.unitInfo.address}</p>
+                          <p className="text-blue-800"><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
+                          <p className="text-blue-800"><strong>Type:</strong> {formData.unitInfo.type || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-blue-800"><strong>Type:</strong> {formData.unitInfo.type || 'N/A'}</p>
                           <p className="text-blue-800"><strong>Superficie:</strong> {formData.unitInfo.area ? `${formData.unitInfo.area} pi²` : 'N/A'}</p>
                           {formData.unitInfo.rental?.monthlyRent && (
                             <p className="text-blue-800"><strong>Loyer:</strong> {formData.unitInfo.rental.monthlyRent} $/mois</p>

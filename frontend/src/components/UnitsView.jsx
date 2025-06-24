@@ -20,7 +20,7 @@ import {
   Eye,
   Search
 } from 'lucide-react'
-import { parseAddressAndGenerateUnits, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
+import { parseAddressAndGenerateUnits, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel, calculateUnitStatus } from '../types/unit'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
 
@@ -35,38 +35,63 @@ export default function UnitsView({ buildings }) {
   const [selectedUnit, setSelectedUnit] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const [assignments, setAssignments] = useState([])
 
-  // Générer toutes les unités à partir des immeubles
+  // Charger les unités et les assignations
   useEffect(() => {
-    const allUnits = []
-    buildings.forEach(building => {
-      const buildingUnits = parseAddressAndGenerateUnits(building)
-      allUnits.push(...buildingUnits)
-    })
-    setUnits(allUnits)
-    setFilteredUnits(allUnits)
+    const loadUnitsAndAssignments = () => {
+      // Charger les assignations
+      const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      setAssignments(storedAssignments)
+
+      // Générer les unités depuis les immeubles
+      const allUnits = []
+      buildings.forEach(building => {
+        if (building && typeof building === 'object') {
+          const { parseAddressAndGenerateUnits } = require('../types/unit')
+          const buildingUnits = parseAddressAndGenerateUnits(building)
+          
+          // Calculer le statut dynamique pour chaque unité
+          const unitsWithStatus = buildingUnits.map(unit => ({
+            ...unit,
+            status: calculateUnitStatus(unit, storedAssignments),
+            currentTenants: storedAssignments
+              .filter(a => a.unitId === unit.id)
+              .map(a => a.tenantData)
+          }))
+          
+          allUnits.push(...unitsWithStatus)
+        }
+      })
+      
+      setUnits(allUnits)
+    }
+
+    loadUnitsAndAssignments()
   }, [buildings])
 
   // Filtrer les unités
   useEffect(() => {
-    let filtered = [...units]
+    let filtered = units
 
-    // Filtre par terme de recherche
-    if (searchTerm) {
-      filtered = filtered.filter(unit => 
-        unit.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        unit.buildingName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        unit.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        unit.unitNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtrer par terme de recherche
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase()
+      filtered = filtered.filter(unit =>
+        unit.address?.toLowerCase().includes(searchLower) ||
+        unit.buildingName?.toLowerCase().includes(searchLower) ||
+        unit.currentTenants?.some(tenant => 
+          tenant.name?.toLowerCase().includes(searchLower)
+        )
       )
     }
 
-    // Filtre par statut
+    // Filtrer par statut
     if (statusFilter) {
       filtered = filtered.filter(unit => unit.status === statusFilter)
     }
 
-    // Filtre par immeuble
+    // Filtrer par immeuble
     if (buildingFilter) {
       filtered = filtered.filter(unit => unit.buildingId.toString() === buildingFilter)
     }
@@ -255,7 +280,7 @@ export default function UnitsView({ buildings }) {
                     <Home className="h-5 w-5 text-primary-600" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="font-semibold text-gray-900">Unité #{unit.unitNumber}</h4>
+                    <h4 className="font-semibold text-gray-900">{unit.address}</h4>
                     <p className="text-sm text-gray-600">{unit.buildingName}</p>
                   </div>
                 </div>
@@ -285,22 +310,28 @@ export default function UnitsView({ buildings }) {
               )}
 
               {/* Locataire */}
-              {unit.tenant?.name && (
+              {unit.currentTenants?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
                   <div className="flex items-center mb-2">
                     <Users className="h-4 w-4 mr-2 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-900">{unit.tenant.name}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {unit.currentTenants.map(tenant => tenant.name).join(', ')}
+                    </span>
                   </div>
-                  {unit.tenant.email && (
+                  {unit.currentTenants.some(tenant => tenant.email) && (
                     <div className="flex items-center mb-1">
                       <Mail className="h-3 w-3 mr-2 text-gray-400" />
-                      <span className="text-xs text-gray-600">{unit.tenant.email}</span>
+                      <span className="text-xs text-gray-600">
+                        {unit.currentTenants.filter(t => t.email).map(t => t.email).join(', ')}
+                      </span>
                     </div>
                   )}
-                  {unit.tenant.phone && (
+                  {unit.currentTenants.some(tenant => tenant.phone) && (
                     <div className="flex items-center">
                       <Phone className="h-3 w-3 mr-2 text-gray-400" />
-                      <span className="text-xs text-gray-600">{unit.tenant.phone}</span>
+                      <span className="text-xs text-gray-600">
+                        {unit.currentTenants.filter(t => t.phone).map(t => t.phone).join(', ')}
+                      </span>
                     </div>
                   )}
                 </div>

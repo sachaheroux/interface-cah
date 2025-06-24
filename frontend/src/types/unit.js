@@ -1,19 +1,18 @@
 // Types et modèles pour les unités d'immeubles
 
-export const UnitStatus = {
-  OCCUPIED: 'occupied',
-  VACANT: 'vacant',
-  MAINTENANCE: 'maintenance',
-  RESERVED: 'reserved'
+// Types d'unités selon le format québécois
+export const UnitType = {
+  THREE_HALF: '3_1_2',
+  FOUR_HALF: '4_1_2', 
+  FIVE_HALF: '5_1_2',
+  SIX_HALF: '6_1_2',
+  SEVEN_HALF: '7_1_2'
 }
 
-export const UnitType = {
-  STUDIO: 'studio',
-  ONE_BEDROOM: '1_bedroom',
-  TWO_BEDROOM: '2_bedroom',
-  THREE_BEDROOM: '3_bedroom',
-  FOUR_BEDROOM: '4_bedroom',
-  OTHER: 'other'
+// Statut d'unité (calculé dynamiquement)
+export const UnitStatus = {
+  VACANT: 'vacant',
+  OCCUPIED: 'occupied'
 }
 
 export const defaultUnit = {
@@ -81,117 +80,186 @@ export const defaultUnit = {
 }
 
 export const getUnitTypeLabel = (type) => {
-  switch (type) {
-    case UnitType.STUDIO:
-      return 'Studio'
-    case UnitType.ONE_BEDROOM:
-      return '1 chambre'
-    case UnitType.TWO_BEDROOM:
-      return '2 chambres'
-    case UnitType.THREE_BEDROOM:
-      return '3 chambres'
-    case UnitType.FOUR_BEDROOM:
-      return '4 chambres'
-    case UnitType.OTHER:
-      return 'Autre'
-    default:
-      return type
+  const labels = {
+    [UnitType.THREE_HALF]: '3 1/2',
+    [UnitType.FOUR_HALF]: '4 1/2', 
+    [UnitType.FIVE_HALF]: '5 1/2',
+    [UnitType.SIX_HALF]: '6 1/2',
+    [UnitType.SEVEN_HALF]: '7 1/2'
   }
+  return labels[type] || type
 }
 
 export const getUnitStatusLabel = (status) => {
-  switch (status) {
-    case UnitStatus.OCCUPIED:
-      return 'Occupée'
-    case UnitStatus.VACANT:
-      return 'Libre'
-    case UnitStatus.MAINTENANCE:
-      return 'Maintenance'
-    case UnitStatus.RESERVED:
-      return 'Réservée'
-    default:
-      return status
+  const labels = {
+    [UnitStatus.VACANT]: 'Libre',
+    [UnitStatus.OCCUPIED]: 'Occupée'
   }
+  return labels[status] || status
 }
 
 export const getUnitStatusColor = (status) => {
-  switch (status) {
-    case UnitStatus.OCCUPIED:
-      return 'bg-green-100 text-green-800'
-    case UnitStatus.VACANT:
-      return 'bg-red-100 text-red-800'
-    case UnitStatus.MAINTENANCE:
-      return 'bg-yellow-100 text-yellow-800'
-    case UnitStatus.RESERVED:
-      return 'bg-blue-100 text-blue-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
+  const colors = {
+    [UnitStatus.VACANT]: 'bg-green-100 text-green-800',
+    [UnitStatus.OCCUPIED]: 'bg-red-100 text-red-800'
   }
+  return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
-// Fonction pour parser l'adresse et générer les unités
-export const parseAddressAndGenerateUnits = (building) => {
-  const units = []
-  const address = typeof building.address === 'string' ? building.address : building.address?.street || ''
-  const city = typeof building.address === 'string' ? '' : building.address?.city || ''
-  const province = typeof building.address === 'string' ? '' : building.address?.province || ''
-  const postalCode = typeof building.address === 'string' ? '' : building.address?.postalCode || ''
-  const country = typeof building.address === 'string' ? '' : building.address?.country || ''
+// Fonction pour calculer le statut dynamiquement
+export const calculateUnitStatus = (unit, assignments = []) => {
+  if (!assignments || assignments.length === 0) {
+    return UnitStatus.VACANT
+  }
   
-  // Format 2: 4490, 1-2-3-4-5-6, Rue Denault (numéro de base + unités numérotées)
-  if (address.includes(',')) {
-    const parts = address.split(',').map(part => part.trim())
-    if (parts.length >= 2) {
-      const baseNumber = parts[0]
-      const unitNumbers = parts[1].split('-')
-      const streetName = parts.length > 2 ? parts.slice(2).join(', ') : ''
-      
-      unitNumbers.forEach((unitNum, index) => {
-        const unitAddress = streetName 
-          ? `${baseNumber} #${unitNum.trim()} ${streetName}`
-          : `${baseNumber} #${unitNum.trim()}`
-        units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
+  const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+  return unitAssignments.length > 0 ? UnitStatus.OCCUPIED : UnitStatus.VACANT
+}
+
+// Fonction pour parser une adresse et générer des unités
+export const parseAddressAndGenerateUnits = (building) => {
+  if (!building || !building.address) {
+    return []
+  }
+
+  const units = []
+  const address = building.address.trim()
+  
+  // Format 1: Adresses séparées par des tirets (ex: 4932-4934-4936 Route Des Vétérans)
+  if (address.includes('-') && !address.includes(',')) {
+    const parts = address.split(' ')
+    const addressNumbers = parts[0]
+    const streetName = parts.slice(1).join(' ')
+    
+    if (addressNumbers.includes('-')) {
+      const numbers = addressNumbers.split('-')
+      numbers.forEach((num, index) => {
+        units.push({
+          id: `${building.id}-${index + 1}`,
+          buildingId: building.id,
+          buildingName: building.name,
+          unitNumber: num,
+          address: `${num} ${streetName}`,
+          type: UnitType.FOUR_HALF, // Valeur par défaut
+          area: 0,
+          bedrooms: 2,
+          bathrooms: 1,
+          rental: {
+            monthlyRent: 0,
+            deposit: 0,
+            leaseStart: '',
+            leaseEnd: '',
+            rentDueDay: 1,
+          },
+          amenities: {
+            heating: false,
+            electricity: false,
+            wifi: false,
+            furnished: false,
+            parking: false,
+            laundry: false,
+            airConditioning: false,
+            balcony: false,
+            storage: false,
+            dishwasher: false,
+            washerDryer: false,
+          },
+          notes: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        })
       })
     }
   }
-  // Format 1: 4932-4934-4936 Route Des Vétérans (adresses séparées par des tirets)
-  else if (address.includes('-') && !address.includes('#')) {
-    const parts = address.split(' ')
-    const numbers = parts[0].split('-')
-    const streetName = parts.slice(1).join(' ')
+  
+  // Format 2: Adresse avec numéros d'unités (ex: 4490, 1-2-3-4-5-6, Rue Denault)
+  else if (address.includes(',')) {
+    const parts = address.split(',').map(part => part.trim())
     
-    numbers.forEach((number, index) => {
-      const unitAddress = `${number.trim()} ${streetName}`
-      units.push(createUnitFromBuilding(building, index + 1, unitAddress, city, province, postalCode, country))
-    })
-  }
-  // Format standard: créer des unités numérotées basées sur le nombre d'unités
-  else {
-    for (let i = 1; i <= building.units; i++) {
-      const unitAddress = `${address} #${i}`
-      units.push(createUnitFromBuilding(building, i, unitAddress, city, province, postalCode, country))
+    if (parts.length >= 3) {
+      const baseAddress = parts[0]
+      const unitNumbers = parts[1]
+      const streetName = parts[2]
+      
+      if (unitNumbers.includes('-')) {
+        const numbers = unitNumbers.split('-')
+        numbers.forEach((num, index) => {
+          units.push({
+            id: `${building.id}-${index + 1}`,
+            buildingId: building.id,
+            buildingName: building.name,
+            unitNumber: num,
+            address: `${baseAddress} Unité ${num}, ${streetName}`,
+            type: UnitType.FOUR_HALF, // Valeur par défaut
+            area: 0,
+            bedrooms: 2,
+            bathrooms: 1,
+            rental: {
+              monthlyRent: 0,
+              deposit: 0,
+              leaseStart: '',
+              leaseEnd: '',
+              rentDueDay: 1,
+            },
+            amenities: {
+              heating: false,
+              electricity: false,
+              wifi: false,
+              furnished: false,
+              parking: false,
+              laundry: false,
+              airConditioning: false,
+              balcony: false,
+              storage: false,
+              dishwasher: false,
+              washerDryer: false,
+            },
+            notes: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+        })
+      }
     }
   }
   
-  return units
-}
-
-const createUnitFromBuilding = (building, unitNumber, unitAddress, city, province, postalCode, country) => {
-  return {
-    ...defaultUnit,
-    id: `${building.id}-${unitNumber}`,
-    buildingId: building.id,
-    buildingName: building.name,
-    unitNumber: unitNumber.toString(),
-    address: unitAddress,
-    fullAddress: {
-      street: unitAddress,
-      city,
-      province,
-      postalCode,
-      country
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  // Format 3: Adresse simple (une seule unité)
+  else {
+    units.push({
+      id: `${building.id}-1`,
+      buildingId: building.id,
+      buildingName: building.name,
+      unitNumber: '1',
+      address: address,
+      type: UnitType.FOUR_HALF, // Valeur par défaut
+      area: 0,
+      bedrooms: 2,
+      bathrooms: 1,
+      rental: {
+        monthlyRent: 0,
+        deposit: 0,
+        leaseStart: '',
+        leaseEnd: '',
+        rentDueDay: 1,
+      },
+      amenities: {
+        heating: false,
+        electricity: false,
+        wifi: false,
+        furnished: false,
+        parking: false,
+        laundry: false,
+        airConditioning: false,
+        balcony: false,
+        storage: false,
+        dishwasher: false,
+        washerDryer: false,
+      },
+      notes: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    })
   }
+
+  return units
 } 

@@ -111,9 +111,12 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                 <Home className="h-8 w-8 text-green-600 mr-3" />
                 <div>
                   <p className="text-sm text-green-600">Unité assignée</p>
-                  <p className="text-lg font-semibold text-green-900">
-                    {tenantUnit ? `${tenantUnit.buildingName} - ${tenantUnit.unitNumber}` : 'Aucune unité'}
-                  </p>
+                  <div className="flex items-center">
+                    <Home className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-sm text-gray-600">
+                      {tenantUnit ? tenantUnit.address : 'Aucune unité'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -181,9 +184,6 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                     <div>
                       <p className="text-sm text-gray-500">Adresse complète</p>
                       <p className="text-gray-900">{tenantUnit.address}</p>
-                      <p className="text-sm text-gray-600">
-                        {tenantUnit.buildingName} - Unité {tenantUnit.unitNumber}
-                      </p>
                     </div>
                   </div>
                   

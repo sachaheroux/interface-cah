@@ -5,9 +5,7 @@ import { unitsService } from '../services/api'
 
 export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    unitNumber: '',
-    type: UnitType.ONE_BEDROOM,
-    status: UnitStatus.VACANT,
+    type: UnitType.FOUR_HALF,
     area: 0,
     bedrooms: 1,
     bathrooms: 1,
@@ -64,9 +62,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   useEffect(() => {
     if (unit) {
       setFormData({
-        unitNumber: unit.unitNumber || '',
-        type: unit.type || UnitType.ONE_BEDROOM,
-        status: unit.status || UnitStatus.VACANT,
+        type: unit.type || UnitType.FOUR_HALF,
         area: unit.area || 0,
         bedrooms: unit.bedrooms || 1,
         bathrooms: unit.bathrooms || 1,
@@ -180,21 +176,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
               <h3 className="text-lg font-semibold text-gray-900">Informations de Base</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Numéro d'unité *
-                </label>
-                <input
-                  type="text"
-                  value={formData.unitNumber}
-                  onChange={(e) => handleInputChange('unitNumber', e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="101"
-                />
-              </div>
-              
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Type d'unité
@@ -214,25 +196,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Statut
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  {Object.values(UnitStatus).map(status => (
-                    <option key={status} value={status}>
-                      {getUnitStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Superficie (pi²)
                 </label>
                 <input
@@ -243,7 +206,9 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
                   placeholder="800"
                 />
               </div>
-              
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Chambres
