@@ -48,19 +48,22 @@ export default function UnitsView({ buildings }) {
       const allUnits = []
       buildings.forEach(building => {
         if (building && typeof building === 'object') {
-          const { parseAddressAndGenerateUnits } = require('../types/unit')
-          const buildingUnits = parseAddressAndGenerateUnits(building)
-          
-          // Calculer le statut dynamique pour chaque unité
-          const unitsWithStatus = buildingUnits.map(unit => ({
-            ...unit,
-            status: calculateUnitStatus(unit, storedAssignments),
-            currentTenants: storedAssignments
-              .filter(a => a.unitId === unit.id)
-              .map(a => a.tenantData)
-          }))
-          
-          allUnits.push(...unitsWithStatus)
+          try {
+            const buildingUnits = parseAddressAndGenerateUnits(building)
+            
+            // Calculer le statut dynamique pour chaque unité
+            const unitsWithStatus = buildingUnits.map(unit => ({
+              ...unit,
+              status: calculateUnitStatus(unit, storedAssignments),
+              currentTenants: storedAssignments
+                .filter(a => a.unitId === unit.id)
+                .map(a => a.tenantData)
+            }))
+            
+            allUnits.push(...unitsWithStatus)
+          } catch (error) {
+            console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
+          }
         }
       })
       
