@@ -470,10 +470,14 @@ export const unitsService = {
       const unitsResponse = await unitsService.getUnits()
       const units = unitsResponse.data || []
       
-      // Filtrer les unités libres (pas occupées)
-      const availableUnits = units.filter(unit => 
-        unit.status === 'vacant' || !unit.tenantId
-      )
+      // Récupérer les assignations pour déterminer quelles unités ont de la place
+      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      
+      const availableUnits = units.filter(unit => {
+        const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+        // Considérer qu'une unité peut avoir jusqu'à 4 locataires (configurable)
+        return unitAssignments.length < 4
+      })
       
       return { data: availableUnits }
     } catch (error) {
@@ -482,12 +486,22 @@ export const unitsService = {
     }
   },
   
+  getUnitTenants: async (unitId) => {
+    try {
+      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const unitAssignments = assignments.filter(a => a.unitId === unitId)
+      
+      return { data: unitAssignments.map(a => a.tenantData) }
+    } catch (error) {
+      console.error('Error getting unit tenants:', error)
+      return { data: [] }
+    }
+  },
+  
   assignTenantToUnit: async (unitId, tenantId, tenantData) => {
     try {
       console.log('Assigning tenant to unit:', { unitId, tenantId, tenantData })
       
-      // Pour l'instant, on stocke cette information localement
-      // Dans une vraie application, cela irait vers une API
       const assignmentData = {
         unitId,
         tenantId,
@@ -514,6 +528,21 @@ export const unitsService = {
     }
   },
   
+  removeTenantFromUnit: async (tenantId) => {
+    try {
+      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const filteredAssignments = assignments.filter(a => a.tenantId !== tenantId)
+      
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      console.log('Tenant removed from unit successfully')
+      return { data: { message: 'Locataire retiré de l\'unité' } }
+    } catch (error) {
+      console.error('Error removing tenant from unit:', error)
+      throw error
+    }
+  },
+  
   getTenantUnit: async (tenantId) => {
     try {
       const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
@@ -525,13 +554,53 @@ export const unitsService = {
         const unit = units.find(u => u.id === assignment.unitId)
         
         if (unit) {
-          return { data: unit }
+          // Enrichir l'unité avec tous ses locataires
+          const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+          const allTenants = unitAssignments.map(a => a.tenantData)
+          
+          return { 
+            data: {
+              ...unit,
+              currentTenants: allTenants,
+              assignmentDate: assignment.assignedAt
+            }
+          }
         }
       }
       
       return { data: null }
     } catch (error) {
       console.error('Error getting tenant unit:', error)
+      return { data: null }
+    }
+  },
+
+  getUnitWithTenants: async (unitId) => {
+    try {
+      const unitsResponse = await unitsService.getUnits()
+      const units = unitsResponse.data || []
+      const unit = units.find(u => u.id === unitId)
+      
+      if (unit) {
+        const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+        const unitAssignments = assignments.filter(a => a.unitId === unitId)
+        const tenants = unitAssignments.map(a => ({
+          ...a.tenantData,
+          assignedAt: a.assignedAt
+        }))
+        
+        return {
+          data: {
+            ...unit,
+            tenants,
+            occupancyCount: tenants.length
+          }
+        }
+      }
+      
+      return { data: null }
+    } catch (error) {
+      console.error('Error getting unit with tenants:', error)
       return { data: null }
     }
   }

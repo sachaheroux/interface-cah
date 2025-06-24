@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck, Home } from 'lucide-react'
+import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck, Home, Search, AlertTriangle } from 'lucide-react'
 import { TenantStatus, getTenantStatusLabel, getRelationshipLabel } from '../types/tenant'
 import { unitsService } from '../services/api'
 
@@ -34,6 +34,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [loading, setLoading] = useState(false)
   const [availableUnits, setAvailableUnits] = useState([])
   const [loadingUnits, setLoadingUnits] = useState(false)
+  const [unitSearchTerm, setUnitSearchTerm] = useState('')
+  const [filteredUnits, setFilteredUnits] = useState([])
 
   useEffect(() => {
     if (tenant) {
@@ -98,16 +100,67 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const loadAvailableUnits = async () => {
     try {
       setLoadingUnits(true)
-      const response = await unitsService.getAvailableUnits()
-      console.log('Available units:', response.data)
-      setAvailableUnits(response.data || [])
+      const response = await unitsService.getUnits() // Charger TOUTES les unités, pas seulement disponibles
+      console.log('All units:', response.data)
+      
+      // Enrichir les unités avec les informations des locataires actuels
+      const unitsWithTenants = await Promise.all(
+        (response.data || []).map(async (unit) => {
+          try {
+            const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+            const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+            
+            const currentTenants = unitAssignments.map(assignment => ({
+              id: assignment.tenantId,
+              name: assignment.tenantData.name,
+              email: assignment.tenantData.email,
+              phone: assignment.tenantData.phone
+            }))
+            
+            return {
+              ...unit,
+              currentTenants,
+              isOccupied: currentTenants.length > 0
+            }
+          } catch (error) {
+            console.error('Error loading tenants for unit:', unit.id, error)
+            return {
+              ...unit,
+              currentTenants: [],
+              isOccupied: false
+            }
+          }
+        })
+      )
+      
+      setAvailableUnits(unitsWithTenants)
     } catch (error) {
-      console.error('Error loading available units:', error)
+      console.error('Error loading units:', error)
       setAvailableUnits([])
     } finally {
       setLoadingUnits(false)
     }
   }
+
+  // Filtrer les unités selon le terme de recherche
+  useEffect(() => {
+    if (!unitSearchTerm.trim()) {
+      setFilteredUnits(availableUnits.slice(0, 20)) // Limiter à 20 unités par défaut
+      return
+    }
+
+    const searchLower = unitSearchTerm.toLowerCase()
+    const filtered = availableUnits.filter(unit => {
+      return (
+        unit.buildingName?.toLowerCase().includes(searchLower) ||
+        unit.address?.toLowerCase().includes(searchLower) ||
+        unit.unitNumber?.toString().toLowerCase().includes(searchLower) ||
+        unit.type?.toLowerCase().includes(searchLower)
+      )
+    })
+
+    setFilteredUnits(filtered.slice(0, 50)) // Limiter à 50 résultats
+  }, [unitSearchTerm, availableUnits])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -126,16 +179,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
-  const handleUnitSelection = (e) => {
-    const selectedUnitId = e.target.value
-    const selectedUnit = availableUnits.find(unit => unit.id === selectedUnitId)
-    
+  const handleUnitSelection = (unit) => {
     setFormData(prev => ({
       ...prev,
-      unitId: selectedUnitId,
-      unitInfo: selectedUnit || null,
-      building: selectedUnit?.buildingName || '',
-      unit: selectedUnit?.unitNumber || ''
+      unitId: unit?.id || '',
+      unitInfo: unit || null,
+      building: unit?.buildingName || '',
+      unit: unit?.unitNumber || ''
     }))
   }
 
@@ -279,55 +329,145 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           </div>
 
           {/* Sélection d'unité */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Home className="h-5 w-5 mr-2" />
-              Unité de Résidence
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sélectionner une unité
-                </label>
-                {loadingUnits ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-                    <span className="ml-2 text-gray-600">Chargement des unités...</span>
+          <div className="space-y-4">
+            <div className="flex items-center mb-4">
+              <Home className="h-5 w-5 text-primary-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Unité de Résidence</h3>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rechercher et sélectionner une unité
+              </label>
+              {loadingUnits ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                  <span className="ml-2 text-gray-600">Chargement des unités...</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Barre de recherche */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher par adresse, immeuble ou numéro d'unité..."
+                      value={unitSearchTerm}
+                      onChange={(e) => setUnitSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
-                ) : (
-                  <select
-                    value={formData.unitId}
-                    onChange={handleUnitSelection}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="">Sélectionner une unité...</option>
-                    {availableUnits.map(unit => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.buildingName} - Unité {unit.unitNumber} ({unit.address})
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
 
-              {formData.unitInfo && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <MapPin className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="font-medium text-blue-900">Unité sélectionnée</span>
+                  {/* Liste des unités filtrées */}
+                  <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                    {filteredUnits.length > 0 ? (
+                      <div className="divide-y divide-gray-200">
+                        {filteredUnits.map(unit => (
+                          <div
+                            key={unit.id}
+                            onClick={() => handleUnitSelection(unit)}
+                            className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                              formData.unitId === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center">
+                                  <Home className="h-4 w-4 text-gray-400 mr-2" />
+                                  <span className="font-medium text-gray-900">
+                                    {unit.buildingName} - Unité {unit.unitNumber}
+                                  </span>
+                                  {formData.unitId === unit.id && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                      Sélectionnée
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{unit.address}</p>
+                                
+                                {/* Afficher les locataires actuels s'il y en a */}
+                                {unit.currentTenants && unit.currentTenants.length > 0 && (
+                                  <div className="mt-2">
+                                    <p className="text-xs text-gray-500">Locataires actuels:</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {unit.currentTenants.map((tenant, index) => (
+                                        <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                          {tenant.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="text-right text-sm text-gray-500">
+                                <div>{unit.type || 'N/A'}</div>
+                                {unit.rental?.monthlyRent && (
+                                  <div className="font-medium text-gray-900">{unit.rental.monthlyRent} $/mois</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : unitSearchTerm ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p>Aucune unité trouvée pour "{unitSearchTerm}"</p>
+                        <p className="text-sm">Essayez avec un autre terme de recherche</p>
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500">
+                        <Home className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p>Tapez pour rechercher une unité</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-blue-800">
-                    <p><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
-                    <p><strong>Unité:</strong> {formData.unitInfo.unitNumber}</p>
-                    <p><strong>Adresse:</strong> {formData.unitInfo.address}</p>
-                  </div>
+
+                  {/* Unité sélectionnée - Aperçu détaillé */}
+                  {formData.unitInfo && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <MapPin className="h-5 w-5 text-blue-600 mr-2" />
+                        <span className="font-medium text-blue-900">Unité sélectionnée</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-blue-800"><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
+                          <p className="text-blue-800"><strong>Unité:</strong> {formData.unitInfo.unitNumber}</p>
+                          <p className="text-blue-800"><strong>Adresse:</strong> {formData.unitInfo.address}</p>
+                        </div>
+                        <div>
+                          <p className="text-blue-800"><strong>Type:</strong> {formData.unitInfo.type || 'N/A'}</p>
+                          <p className="text-blue-800"><strong>Superficie:</strong> {formData.unitInfo.area ? `${formData.unitInfo.area} pi²` : 'N/A'}</p>
+                          {formData.unitInfo.rental?.monthlyRent && (
+                            <p className="text-blue-800"><strong>Loyer:</strong> {formData.unitInfo.rental.monthlyRent} $/mois</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Bouton pour désélectionner */}
+                  {formData.unitId && (
+                    <button
+                      type="button"
+                      onClick={() => handleUnitSelection(null)}
+                      className="text-sm text-red-600 hover:text-red-700 flex items-center"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Désélectionner l'unité
+                    </button>
+                  )}
                 </div>
               )}
-
+              
               {availableUnits.length === 0 && !loadingUnits && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Aucune unité disponible. Toutes les unités sont occupées ou en maintenance.
-                </p>
+                <div className="p-4 text-center text-gray-500 border border-gray-200 rounded-lg">
+                  <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p className="font-medium">Aucune unité disponible</p>
+                  <p className="text-sm">Toutes les unités sont actuellement occupées.</p>
+                </div>
               )}
             </div>
           </div>

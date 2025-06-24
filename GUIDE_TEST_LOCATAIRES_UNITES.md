@@ -1,183 +1,189 @@
-# Guide de Test : Intégration Locataires-Unités
+# Guide de Test - Gestion Locataires et Unités Améliorée
 
-## Vue d'ensemble
-Ce guide teste la nouvelle fonctionnalité d'intégration entre les locataires et les unités, où les locataires sont assignés directement aux unités disponibles au lieu d'avoir une adresse personnelle séparée.
+## Nouvelles Fonctionnalités Implémentées
 
-## Fonctionnalités à Tester
+### 1. Recherche d'Unités dans le Formulaire Locataire
+- **Barre de recherche** remplace le menu déroulant
+- **Recherche en temps réel** par adresse, immeuble, ou numéro d'unité
+- **Affichage des locataires actuels** pour chaque unité
+- **Support de plusieurs locataires par unité** (jusqu'à 4)
 
-### 1. Création/Modification de Locataire avec Sélection d'Unité
+### 2. Affichage Direct des Locataires dans les Fiches d'Unités
+- **Section "Locataires Assignés"** remplace la sélection manuelle
+- **Informations complètes** de chaque locataire
+- **Bouton de suppression** pour retirer un locataire de l'unité
+- **Indicateur de capacité** (ex: 2/4 locataires)
 
-**Étapes :**
-1. Aller dans la section "Locataires"
+## Tests à Effectuer
+
+### A. Test de la Recherche d'Unités (Formulaire Locataire)
+
+#### 1. Navigation vers les Locataires
+```
+1. Aller dans "Locataires" dans la navigation
 2. Cliquer sur "Nouveau Locataire"
-3. Vérifier que la section "Unité de Résidence" remplace l'ancienne section "Adresse personnelle"
-4. Remplir les informations de base (nom, email, téléphone)
-5. Dans la sélection d'unité :
-   - Vérifier que les unités disponibles s'affichent
-   - Format attendu : "Nom Immeuble - Unité X (Adresse complète)"
-   - Sélectionner une unité
-   - Vérifier que l'aperçu de l'unité s'affiche avec les détails
+3. Remplir les informations de base du locataire
+4. Arriver à la section "Unité de Résidence"
+```
 
-**Résultats attendus :**
-- ✅ Dropdown avec toutes les unités disponibles (non occupées)
-- ✅ Aperçu détaillé de l'unité sélectionnée
-- ✅ Message informatif si aucune unité disponible
-- ✅ Animation de chargement pendant la récupération des unités
+#### 2. Test de la Barre de Recherche
+```
+✓ Vérifier que la barre de recherche s'affiche avec le placeholder
+✓ Taper "4932" → Doit filtrer les unités contenant cette adresse
+✓ Taper "Route" → Doit filtrer par nom de rue
+✓ Taper "Immeuble" → Doit filtrer par nom d'immeuble
+✓ Taper "101" → Doit filtrer par numéro d'unité
+✓ Effacer le texte → Doit afficher les 20 premières unités
+```
 
-### 2. Assignation Automatique Locataire-Unité
+#### 3. Test de Sélection d'Unité
+```
+✓ Cliquer sur une unité → Doit la sélectionner (bordure bleue)
+✓ Vérifier l'aperçu détaillé en bas avec toutes les infos
+✓ Voir les locataires actuels s'il y en a (badges verts)
+✓ Cliquer sur "Désélectionner l'unité" → Doit retirer la sélection
+```
 
-**Étapes :**
-1. Créer un locataire avec une unité sélectionnée
-2. Sauvegarder le locataire
-3. Vérifier que l'assignation est créée dans localStorage
-4. Aller dans la vue "Toutes les unités"
-5. Vérifier que l'unité assignée montre maintenant le locataire
+#### 4. Test des Locataires Multiples
+```
+✓ Sélectionner une unité qui a déjà des locataires
+✓ Vérifier que les locataires actuels sont affichés
+✓ Assigner le nouveau locataire à cette unité
+✓ Vérifier que l'unité peut avoir plusieurs locataires
+```
 
-**Résultats attendus :**
-- ✅ Assignation sauvegardée dans `unitTenantAssignments` localStorage
-- ✅ Unité marquée comme occupée avec informations du locataire
-- ✅ Synchronisation bidirectionnelle locataire ↔ unité
+### B. Test des Fiches d'Unités Améliorées
 
-### 3. Affichage des Détails de Locataire avec Unité
+#### 1. Accès aux Fiches d'Unités
+```
+1. Aller dans "Immeubles" → "Toutes les unités"
+2. Cliquer sur "Détails" d'une unité avec locataires
+3. Vérifier la section "Locataires Assignés"
+```
 
-**Étapes :**
-1. Ouvrir les détails d'un locataire assigné à une unité
-2. Vérifier la section "Unité de Résidence"
-3. Vérifier les statistiques en haut (unité assignée)
+#### 2. Test de l'Affichage des Locataires
+```
+✓ Voir tous les locataires assignés à l'unité
+✓ Vérifier les informations complètes (nom, email, téléphone)
+✓ Voir la date d'emménagement si disponible
+✓ Vérifier le compteur "X/4 locataires"
+```
 
-**Résultats attendus :**
-- ✅ Section "Unité de Résidence" avec informations complètes
-- ✅ Adresse complète de l'unité
-- ✅ Nom de l'immeuble et numéro d'unité
-- ✅ Type d'unité, superficie, loyer mensuel
-- ✅ Message informatif si aucune unité assignée
+#### 3. Test de Suppression de Locataires
+```
+✓ Cliquer sur l'icône poubelle d'un locataire
+✓ Confirmer la suppression dans la boîte de dialogue
+✓ Vérifier que le locataire est retiré de l'unité
+✓ Vérifier que le compteur se met à jour
+```
 
-### 4. Modification d'Assignation d'Unité
+### C. Test de Cohérence des Données
 
-**Étapes :**
-1. Modifier un locataire existant
-2. Changer l'unité assignée
-3. Sauvegarder
-4. Vérifier que l'ancienne assignation est supprimée
-5. Vérifier que la nouvelle assignation est créée
+#### 1. Synchronisation Locataire ↔ Unité
+```
+✓ Assigner un locataire à une unité via le formulaire locataire
+✓ Vérifier qu'il apparaît dans la fiche de l'unité
+✓ Retirer le locataire de l'unité
+✓ Vérifier qu'il n'apparaît plus dans la liste des unités du locataire
+```
 
-**Résultats attendus :**
-- ✅ Une seule assignation par locataire
-- ✅ L'ancienne unité redevient disponible
-- ✅ La nouvelle unité devient occupée
+#### 2. Test des Limites
+```
+✓ Essayer d'assigner plus de 4 locataires à une unité
+✓ Vérifier que l'unité reste disponible jusqu'à 4 locataires
+✓ Vérifier qu'elle disparaît des unités "disponibles" après 4 locataires
+```
 
-### 5. Gestion des Unités Disponibles
+### D. Test de Performance et UX
 
-**Étapes :**
-1. Créer plusieurs immeubles avec différents formats d'adresse
-2. Vérifier que toutes les unités sont générées correctement
-3. Assigner des locataires à quelques unités
-4. Créer un nouveau locataire
-5. Vérifier que seules les unités non assignées apparaissent
+#### 1. Recherche en Temps Réel
+```
+✓ Taper rapidement dans la barre de recherche
+✓ Vérifier que les résultats se mettent à jour fluidement
+✓ Vérifier la limitation à 50 résultats maximum
+```
 
-**Résultats attendus :**
-- ✅ Génération correcte des unités depuis tous les immeubles
-- ✅ Filtrage automatique des unités occupées
-- ✅ Mise à jour en temps réel de la disponibilité
+#### 2. Interface Responsive
+```
+✓ Tester sur mobile/tablette
+✓ Vérifier que la recherche fonctionne sur tous les écrans
+✓ Vérifier l'affichage des cartes de locataires sur mobile
+```
 
-## Tests de Cas Limites
+## Scénarios de Test Complets
 
-### Cas 1 : Aucune Unité Disponible
-- Assigner tous les locataires aux unités
-- Créer un nouveau locataire
-- Vérifier le message "Aucune unité disponible"
+### Scénario 1: Famille avec Enfants
+```
+1. Créer un locataire principal "Jean Dupont"
+2. L'assigner à l'unité "4932 Route Des Vétérans - Unité 1"
+3. Créer sa conjointe "Marie Dupont"
+4. L'assigner à la même unité
+5. Vérifier que l'unité affiche 2/4 locataires
+6. Ouvrir la fiche de l'unité et voir les deux locataires
+```
 
-### Cas 2 : Locataire Sans Unité
-- Créer un locataire sans sélectionner d'unité
-- Vérifier l'affichage dans les détails
-- Message "Aucune unité assignée"
+### Scénario 2: Colocation Étudiante
+```
+1. Créer 4 étudiants différents
+2. Les assigner tous à la même unité
+3. Vérifier que l'unité affiche 4/4 locataires
+4. Vérifier qu'elle n'apparaît plus dans les unités disponibles
+5. Retirer un étudiant
+6. Vérifier qu'elle redevient disponible (3/4)
+```
 
-### Cas 3 : Modification d'Immeuble
-- Modifier un immeuble (changer le nombre d'unités)
-- Vérifier l'impact sur les assignations existantes
-- Vérifier la génération des nouvelles unités
+### Scénario 3: Recherche Efficace
+```
+1. Avoir au moins 20 unités dans le système
+2. Chercher une adresse spécifique
+3. Vérifier que les résultats sont pertinents
+4. Sélectionner une unité avec des locataires existants
+5. Assigner un nouveau locataire
+6. Vérifier la mise à jour en temps réel
+```
+
+## Points d'Attention
+
+### Erreurs Potentielles
+- Vérifier que la recherche fonctionne avec les caractères spéciaux (é, à, ç)
+- S'assurer que les unités sans adresse ne cassent pas la recherche
+- Vérifier que la suppression de locataires met à jour les statistiques
+
+### Performance
+- La recherche doit être fluide même avec 100+ unités
+- Le chargement des locataires assignés doit être rapide
+- Les mises à jour doivent être instantanées
+
+### Accessibilité
+- Vérifier que la barre de recherche est accessible au clavier
+- S'assurer que les boutons ont des tooltips explicites
+- Vérifier le contraste des couleurs pour les badges de locataires
 
 ## Données de Test Recommandées
 
-### Immeubles à Créer
-1. **Immeuble Simple**
-   - Nom : "Résidence Maple"
-   - Adresse : "123 Rue Principale, Montréal, QC"
-   - 4 unités
-
-2. **Immeuble avec Adresses Multiples**
-   - Nom : "Complexe des Vétérans"
-   - Adresse : "4932-4934-4936 Route Des Vétérans"
-   - 6 unités
-
-3. **Immeuble avec Numéros**
-   - Nom : "Tours Denault"
-   - Adresse : "4490, 1-2-3-4-5-6, Rue Denault"
-   - 8 unités
-
-### Locataires à Créer
-1. **Locataire Complet**
-   - Nom : "Jean Dupont"
-   - Email : "jean.dupont@email.com"
-   - Téléphone : "(514) 555-0123"
-   - Unité : Résidence Maple - Unité 1
-   - Contact d'urgence complet
-   - Informations financières
-
-2. **Locataire Minimal**
-   - Nom : "Marie Martin"
-   - Unité : Complexe des Vétérans - Unité 4932
-
-3. **Locataire Sans Unité**
-   - Nom : "Pierre Durand"
-   - Aucune unité sélectionnée
-
-## Vérifications Techniques
-
-### LocalStorage
-Vérifier la structure des données dans `unitTenantAssignments` :
-```json
-[
-  {
-    "unitId": "1-1",
-    "tenantId": 123,
-    "tenantData": {
-      "name": "Jean Dupont",
-      "email": "jean.dupont@email.com",
-      "phone": "(514) 555-0123",
-      "moveInDate": "2024-01-15T10:00:00.000Z",
-      "moveOutDate": null
-    },
-    "assignedAt": "2024-01-15T10:00:00.000Z"
-  }
-]
+### Créer ces Unités pour Tester
+```
+1. 4932 Route Des Vétérans - Unité 1 (vide)
+2. 4934 Route Des Vétérans - Unité 2 (1 locataire)
+3. 4936 Route Des Vétérans - Unité 3 (2 locataires)
+4. 4490 Rue Denault - Unité 1 (3 locataires)
+5. 97A St-Alphonse - Unité A (4 locataires - pleine)
 ```
 
-### Console Logs
-Surveiller les logs pour :
-- ✅ "Available units:" - Liste des unités disponibles
-- ✅ "Assigning tenant to unit:" - Assignation en cours
-- ✅ "Tenant assigned to unit successfully" - Assignation réussie
-- ❌ Erreurs d'assignation ou de chargement
+### Créer ces Locataires
+```
+1. Jean Dupont (jean@email.com, 514-555-0001)
+2. Marie Dupont (marie@email.com, 514-555-0002)
+3. Pierre Martin (pierre@email.com, 514-555-0003)
+4. Sophie Tremblay (sophie@email.com, 514-555-0004)
+5. Alex Johnson (alex@email.com, 514-555-0005)
+```
 
-## Résultats Attendus Globaux
+## Résultats Attendus
 
-1. **Interface Utilisateur**
-   - Formulaire de locataire moderne avec sélection d'unité
-   - Détails de locataire avec informations d'unité complètes
-   - Messages informatifs appropriés
-
-2. **Fonctionnalité**
-   - Assignation automatique locataire ↔ unité
-   - Synchronisation bidirectionnelle
-   - Gestion des unités disponibles
-
-3. **Données**
-   - Persistance des assignations
-   - Cohérence entre locataires et unités
-   - Pas de doublons d'assignation
-
-4. **Performance**
-   - Chargement rapide des unités
-   - Interface réactive
-   - Pas de blocages lors des assignations 
+Après tous ces tests, vous devriez avoir :
+- ✅ Une recherche d'unités fluide et intuitive
+- ✅ Un système de locataires multiples fonctionnel
+- ✅ Une synchronisation parfaite entre locataires et unités
+- ✅ Une interface moderne et responsive
+- ✅ Des données cohérentes dans tout le système 
