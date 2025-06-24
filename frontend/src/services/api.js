@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { parseAddressAndGenerateUnits } from '../types/unit.js'
 
 // Configuration de base pour axios
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://interface-cah-backend.onrender.com'
@@ -438,6 +439,102 @@ export const apiService = {
   post: (url, data) => api.post(url, data),
   put: (url, data) => api.put(url, data),
   delete: (url) => api.delete(url),
+}
+
+export const unitsService = {
+  getUnits: async () => {
+    try {
+      // Pour l'instant, générer les unités à partir des immeubles
+      const buildingsResponse = await buildingsService.getBuildings()
+      const buildings = Array.isArray(buildingsResponse.data) ? buildingsResponse.data : buildingsResponse
+      
+      let allUnits = []
+      
+      buildings.forEach(building => {
+        if (building && typeof building === 'object') {
+          const buildingUnits = parseAddressAndGenerateUnits(building)
+          allUnits = [...allUnits, ...buildingUnits]
+        }
+      })
+      
+      console.log('Generated units from buildings:', allUnits)
+      return { data: allUnits }
+    } catch (error) {
+      console.error('Error getting units:', error)
+      return { data: [] }
+    }
+  },
+  
+  getAvailableUnits: async () => {
+    try {
+      const unitsResponse = await unitsService.getUnits()
+      const units = unitsResponse.data || []
+      
+      // Filtrer les unités libres (pas occupées)
+      const availableUnits = units.filter(unit => 
+        unit.status === 'vacant' || !unit.tenantId
+      )
+      
+      return { data: availableUnits }
+    } catch (error) {
+      console.error('Error getting available units:', error)
+      return { data: [] }
+    }
+  },
+  
+  assignTenantToUnit: async (unitId, tenantId, tenantData) => {
+    try {
+      console.log('Assigning tenant to unit:', { unitId, tenantId, tenantData })
+      
+      // Pour l'instant, on stocke cette information localement
+      // Dans une vraie application, cela irait vers une API
+      const assignmentData = {
+        unitId,
+        tenantId,
+        tenantData,
+        assignedAt: new Date().toISOString()
+      }
+      
+      // Stocker dans localStorage pour la persistance
+      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      
+      // Supprimer l'ancienne assignation pour ce locataire s'il y en a une
+      const filteredAssignments = existingAssignments.filter(a => a.tenantId !== tenantId)
+      
+      // Ajouter la nouvelle assignation
+      filteredAssignments.push(assignmentData)
+      
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      console.log('Tenant assigned to unit successfully')
+      return { data: assignmentData }
+    } catch (error) {
+      console.error('Error assigning tenant to unit:', error)
+      throw error
+    }
+  },
+  
+  getTenantUnit: async (tenantId) => {
+    try {
+      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const assignment = assignments.find(a => a.tenantId === parseInt(tenantId))
+      
+      if (assignment) {
+        const unitsResponse = await unitsService.getUnits()
+        const units = unitsResponse.data || []
+        const unit = units.find(u => u.id === assignment.unitId)
+        
+        if (unit) {
+          return { data: unit }
+        }
+      }
+      
+      return { data: null }
+    } catch (error) {
+      console.error('Error getting tenant unit:', error)
+      return { data: null }
+    }
+  }
 }
 
 export default api 

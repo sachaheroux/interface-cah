@@ -14,16 +14,15 @@ export const defaultTenant = {
   phone: '',
   status: TenantStatus.ACTIVE,
   
-  // Adresse personnelle (différente de l'unité louée)
-  personalAddress: {
-    street: '',
-    city: '',
-    province: '',
-    postalCode: '',
-    country: 'Canada'
-  },
+  // Référence à l'unité assignée
+  unitId: null,
+  unitInfo: null,
   
-  // Informations d'urgence
+  // Champs legacy pour compatibilité
+  building: '',
+  unit: '',
+  
+  // Contact d'urgence
   emergencyContact: {
     name: '',
     phone: '',
@@ -51,7 +50,6 @@ export const defaultTenant = {
     lease: null
   },
   
-  // Notes et commentaires
   notes: '',
   
   // Métadonnées

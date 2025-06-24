@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck } from 'lucide-react'
+import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck, Home } from 'lucide-react'
 import { TenantStatus, getTenantStatusLabel, getRelationshipLabel } from '../types/tenant'
+import { unitsService } from '../services/api'
 
 export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -9,13 +10,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     phone: '',
     status: TenantStatus.ACTIVE,
     
-    personalAddress: {
-      street: '',
-      city: '',
-      province: 'QC',
-      postalCode: '',
-      country: 'Canada'
-    },
+    unitId: '',
+    unitInfo: null,
     
     emergencyContact: {
       name: '',
@@ -36,6 +32,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   })
 
   const [loading, setLoading] = useState(false)
+  const [availableUnits, setAvailableUnits] = useState([])
+  const [loadingUnits, setLoadingUnits] = useState(false)
 
   useEffect(() => {
     if (tenant) {
@@ -45,13 +43,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         phone: tenant.phone || '',
         status: tenant.status || TenantStatus.ACTIVE,
         
-        personalAddress: {
-          street: tenant.personalAddress?.street || '',
-          city: tenant.personalAddress?.city || '',
-          province: tenant.personalAddress?.province || 'QC',
-          postalCode: tenant.personalAddress?.postalCode || '',
-          country: tenant.personalAddress?.country || 'Canada'
-        },
+        unitId: tenant.unitId || '',
+        unitInfo: tenant.unitInfo || null,
         
         emergencyContact: {
           name: tenant.emergencyContact?.name || '',
@@ -71,19 +64,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         notes: tenant.notes || ''
       })
     } else {
-      // Réinitialiser pour un nouveau locataire
       setFormData({
         name: '',
         email: '',
         phone: '',
         status: TenantStatus.ACTIVE,
-        personalAddress: {
-          street: '',
-          city: '',
-          province: 'QC',
-          postalCode: '',
-          country: 'Canada'
-        },
+        unitId: '',
+        unitInfo: null,
         emergencyContact: {
           name: '',
           phone: '',
@@ -102,6 +89,26 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }
   }, [tenant, isOpen])
 
+  useEffect(() => {
+    if (isOpen) {
+      loadAvailableUnits()
+    }
+  }, [isOpen])
+
+  const loadAvailableUnits = async () => {
+    try {
+      setLoadingUnits(true)
+      const response = await unitsService.getAvailableUnits()
+      console.log('Available units:', response.data)
+      setAvailableUnits(response.data || [])
+    } catch (error) {
+      console.error('Error loading available units:', error)
+      setAvailableUnits([])
+    } finally {
+      setLoadingUnits(false)
+    }
+  }
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -119,29 +126,58 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
+  const handleUnitSelection = (e) => {
+    const selectedUnitId = e.target.value
+    const selectedUnit = availableUnits.find(unit => unit.id === selectedUnitId)
+    
+    setFormData(prev => ({
+      ...prev,
+      unitId: selectedUnitId,
+      unitInfo: selectedUnit || null,
+      building: selectedUnit?.buildingName || '',
+      unit: selectedUnit?.unitNumber || ''
+    }))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!formData.name.trim()) {
-      alert('Le nom du locataire est requis')
-      return
-    }
-
-    setLoading(true)
-    
     try {
+      setLoading(true)
+      
+      // Préparer les données à sauvegarder
       const tenantData = {
         ...formData,
         id: tenant?.id || Date.now(),
         createdAt: tenant?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-      
+
+      // Si une unité est sélectionnée, assigner le locataire à l'unité
+      if (formData.unitId && formData.unitInfo) {
+        try {
+          await unitsService.assignTenantToUnit(
+            formData.unitId,
+            tenantData.id,
+            {
+              name: tenantData.name,
+              email: tenantData.email,
+              phone: tenantData.phone,
+              moveInDate: new Date().toISOString(),
+              moveOutDate: null
+            }
+          )
+          console.log('Tenant assigned to unit successfully')
+        } catch (assignError) {
+          console.error('Error assigning tenant to unit:', assignError)
+          // Continuer même si l'assignation échoue
+        }
+      }
+
       await onSave(tenantData)
       onClose()
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde du locataire')
+      console.error('Error saving tenant:', error)
     } finally {
       setLoading(false)
     }
@@ -242,74 +278,57 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Adresse personnelle */}
+          {/* Sélection d'unité */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <MapPin className="h-5 w-5 mr-2" />
-              Adresse personnelle
+              <Home className="h-5 w-5 mr-2" />
+              Unité de Résidence
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Adresse
-                </label>
-                <input
-                  type="text"
-                  value={formData.personalAddress.street}
-                  onChange={(e) => handleNestedChange('personalAddress', 'street', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="123 Rue Exemple"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ville
+                  Sélectionner une unité
                 </label>
-                <input
-                  type="text"
-                  value={formData.personalAddress.city}
-                  onChange={(e) => handleNestedChange('personalAddress', 'city', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Montréal"
-                />
+                {loadingUnits ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                    <span className="ml-2 text-gray-600">Chargement des unités...</span>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.unitId}
+                    onChange={handleUnitSelection}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Sélectionner une unité...</option>
+                    {availableUnits.map(unit => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.buildingName} - Unité {unit.unitNumber} ({unit.address})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Province
-                </label>
-                <select
-                  value={formData.personalAddress.province}
-                  onChange={(e) => handleNestedChange('personalAddress', 'province', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="QC">Québec</option>
-                  <option value="ON">Ontario</option>
-                  <option value="BC">Colombie-Britannique</option>
-                  <option value="AB">Alberta</option>
-                  <option value="MB">Manitoba</option>
-                  <option value="SK">Saskatchewan</option>
-                  <option value="NS">Nouvelle-Écosse</option>
-                  <option value="NB">Nouveau-Brunswick</option>
-                  <option value="PE">Île-du-Prince-Édouard</option>
-                  <option value="NL">Terre-Neuve-et-Labrador</option>
-                </select>
-              </div>
+              {formData.unitInfo && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <MapPin className="h-4 w-4 text-blue-600 mr-2" />
+                    <span className="font-medium text-blue-900">Unité sélectionnée</span>
+                  </div>
+                  <div className="text-sm text-blue-800">
+                    <p><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
+                    <p><strong>Unité:</strong> {formData.unitInfo.unitNumber}</p>
+                    <p><strong>Adresse:</strong> {formData.unitInfo.address}</p>
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Code postal
-                </label>
-                <input
-                  type="text"
-                  value={formData.personalAddress.postalCode}
-                  onChange={(e) => handleNestedChange('personalAddress', 'postalCode', e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="H1A 1A1"
-                  maxLength="7"
-                />
-              </div>
+              {availableUnits.length === 0 && !loadingUnits && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Aucune unité disponible. Toutes les unités sont occupées ou en maintenance.
+                </p>
+              )}
             </div>
           </div>
 
