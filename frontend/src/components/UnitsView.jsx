@@ -42,6 +42,7 @@ export default function UnitsView({ buildings }) {
     const loadUnitsAndAssignments = () => {
       // Charger les assignations
       const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      console.log('Assignations chargées:', storedAssignments)
       setAssignments(storedAssignments)
 
       // Générer les unités depuis les immeubles
@@ -196,14 +197,73 @@ export default function UnitsView({ buildings }) {
     }
   }
 
-  // Statistiques
+  // Statistiques avec debug
   const totalUnits = filteredUnits.length
-  const occupiedUnits = filteredUnits.filter(unit => 
-    unit.currentTenants?.length > 0 || unit.status === 'occupied'
-  ).length
+  const occupiedUnits = filteredUnits.filter(unit => {
+    const hasCurrentTenants = unit.currentTenants?.length > 0
+    const isOccupiedStatus = unit.status === 'occupied'
+    
+    // Debug temporaire
+    if (hasCurrentTenants || isOccupiedStatus) {
+      console.log('Unité occupée trouvée:', {
+        id: unit.id,
+        address: unit.address,
+        currentTenants: unit.currentTenants,
+        status: unit.status,
+        hasCurrentTenants,
+        isOccupiedStatus
+      })
+    }
+    
+    return hasCurrentTenants || isOccupiedStatus
+  }).length
   const vacantUnits = totalUnits - occupiedUnits
   const totalRent = filteredUnits.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
+  
+  // Debug des statistiques
+  console.log('Statistiques unités:', {
+    totalUnits,
+    occupiedUnits,
+    vacantUnits,
+    occupancyRate,
+    filteredUnits: filteredUnits.map(u => ({
+      id: u.id,
+      address: u.address,
+      currentTenants: u.currentTenants,
+      status: u.status
+    }))
+  })
+
+  // Fonction de test temporaire pour diagnostiquer le problème
+  const testOccupancy = () => {
+    if (units.length > 0) {
+      const firstUnit = units[0]
+      const testAssignment = {
+        unitId: firstUnit.id,
+        tenantId: 999,
+        tenantData: {
+          name: 'Test Locataire',
+          email: 'test@example.com',
+          phone: '514-555-0123'
+        },
+        assignedAt: new Date().toISOString()
+      }
+      
+      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const updatedAssignments = [...existingAssignments, testAssignment]
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(updatedAssignments))
+      
+      // Recharger les unités
+      window.location.reload()
+    }
+  }
+
+  // Fonction pour nettoyer les assignations de test
+  const clearTestAssignments = () => {
+    localStorage.removeItem('unitTenantAssignments')
+    window.location.reload()
+  }
 
   return (
     <div className="space-y-6">
@@ -211,6 +271,21 @@ export default function UnitsView({ buildings }) {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Filtres et Recherche</h3>
+          {/* Boutons de test temporaires */}
+          <div className="flex space-x-2">
+            <button
+              onClick={testOccupancy}
+              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Test Occuper Unité
+            </button>
+            <button
+              onClick={clearTestAssignments}
+              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Nettoyer Tests
+            </button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
