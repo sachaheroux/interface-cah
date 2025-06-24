@@ -223,7 +223,21 @@ export const tenantsService = {
     try {
       const response = await api.get('/api/tenants')
       console.log('API tenants response:', response.data)
-      return response
+      
+      // Le backend retourne {data: [...]} donc on extrait les données
+      let tenantsData = []
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          tenantsData = response.data
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          tenantsData = response.data.data
+        } else if (Array.isArray(response.data.tenants)) {
+          tenantsData = response.data.tenants
+        }
+      }
+      
+      // Retourner dans le format attendu par le frontend
+      return { data: tenantsData }
     } catch (error) {
       console.warn('API tenants failed, using fallback data:', error.message)
       // Retourner les données du localStorage en cas d'échec API
@@ -234,7 +248,12 @@ export const tenantsService = {
   
   getTenant: async (id) => {
     try {
-      return await api.get(`/api/tenants/${id}`)
+      const response = await api.get(`/api/tenants/${id}`)
+      // Extraire les données si elles sont dans response.data.data
+      if (response.data && response.data.data) {
+        return { data: response.data.data }
+      }
+      return response
     } catch (error) {
       console.warn('API get tenant failed, searching locally')
       const localTenants = JSON.parse(localStorage.getItem('localTenants') || JSON.stringify(fallbackTenants))
@@ -251,6 +270,11 @@ export const tenantsService = {
       console.log('Creating tenant with data:', data)
       const response = await api.post('/api/tenants', data)
       console.log('API create tenant response:', response.data)
+      
+      // Extraire les données si elles sont dans response.data.data
+      if (response.data && response.data.data) {
+        return { data: response.data.data }
+      }
       return response
     } catch (error) {
       console.warn('API create tenant failed, saving locally:', error.message)
@@ -278,6 +302,11 @@ export const tenantsService = {
       console.log('Updating tenant with ID:', id, 'Data:', data)
       const response = await api.put(`/api/tenants/${id}`, data)
       console.log('API update tenant response:', response.data)
+      
+      // Extraire les données si elles sont dans response.data.data
+      if (response.data && response.data.data) {
+        return { data: response.data.data }
+      }
       return response
     } catch (error) {
       console.warn('API update tenant failed, updating locally:', error.message)

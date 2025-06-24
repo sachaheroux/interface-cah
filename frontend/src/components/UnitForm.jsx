@@ -61,9 +61,25 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
     const fetchTenants = async () => {
       try {
         const response = await tenantsService.getTenants()
-        setTenants(response.data || [])
+        console.log('Tenants API response:', response)
+        
+        // Gérer les différents formats de réponse
+        let tenantsData = []
+        if (response.data) {
+          if (Array.isArray(response.data)) {
+            tenantsData = response.data
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            tenantsData = response.data.data
+          } else if (Array.isArray(response.data.tenants)) {
+            tenantsData = response.data.tenants
+          }
+        }
+        
+        console.log('Processed tenants data:', tenantsData)
+        setTenants(tenantsData)
       } catch (error) {
         console.error('Erreur lors du chargement des locataires:', error)
+        setTenants([]) // S'assurer que c'est toujours un tableau
       }
     }
     
