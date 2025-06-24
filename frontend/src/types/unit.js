@@ -100,8 +100,8 @@ export const getUnitStatusLabel = (status) => {
 
 export const getUnitStatusColor = (status) => {
   const colors = {
-    [UnitStatus.VACANT]: 'bg-green-100 text-green-800',
-    [UnitStatus.OCCUPIED]: 'bg-red-100 text-red-800'
+    [UnitStatus.VACANT]: 'bg-red-100 text-red-800',
+    [UnitStatus.OCCUPIED]: 'bg-green-100 text-green-800'
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
 }

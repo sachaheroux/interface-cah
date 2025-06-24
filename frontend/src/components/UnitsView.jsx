@@ -198,8 +198,10 @@ export default function UnitsView({ buildings }) {
 
   // Statistiques
   const totalUnits = filteredUnits.length
-  const occupiedUnits = filteredUnits.filter(unit => unit.status === 'occupied').length
-  const vacantUnits = filteredUnits.filter(unit => unit.status === 'vacant').length
+  const occupiedUnits = filteredUnits.filter(unit => 
+    unit.currentTenants?.length > 0 || unit.status === 'occupied'
+  ).length
+  const vacantUnits = totalUnits - occupiedUnits
   const totalRent = filteredUnits.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
 
@@ -287,8 +289,8 @@ export default function UnitsView({ buildings }) {
                     <p className="text-sm text-gray-600">{unit.buildingName}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUnitStatusColor(unit.status)}`}>
-                  {getUnitStatusLabel(unit.status)}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUnitStatusColor(unit.currentTenants?.length > 0 ? 'occupied' : unit.status || 'vacant')}`}>
+                  {getUnitStatusLabel(unit.currentTenants?.length > 0 ? 'occupied' : unit.status || 'vacant')}
                 </span>
               </div>
 
