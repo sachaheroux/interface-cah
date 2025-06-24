@@ -323,13 +323,6 @@ export default function Buildings() {
     
     const rate = Math.round((occupiedUnits / allUnits.length) * 100)
     
-    console.log('Calcul taux d\'occupation Buildings.jsx:', {
-      totalUnits: allUnits.length,
-      occupiedUnits: occupiedUnits,
-      assignments: storedAssignments.length,
-      calculatedRate: rate
-    })
-    
     return rate
   }
   

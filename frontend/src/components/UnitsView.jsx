@@ -42,7 +42,6 @@ export default function UnitsView({ buildings }) {
     const loadUnitsAndAssignments = () => {
       // Charger les assignations
       const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      console.log('Assignations chargées:', storedAssignments)
       setAssignments(storedAssignments)
 
       // Générer les unités depuis les immeubles
@@ -56,15 +55,6 @@ export default function UnitsView({ buildings }) {
             const unitsWithStatus = buildingUnits.map(unit => {
               const unitAssignments = storedAssignments.filter(a => a.unitId === unit.id)
               const currentTenants = unitAssignments.map(a => a.tenantData)
-              
-              // Debug détaillé pour chaque unité
-              console.log(`Unité ${unit.id}:`, {
-                unitId: unit.id,
-                assignmentsFound: unitAssignments.length,
-                assignments: unitAssignments,
-                currentTenants: currentTenants,
-                calculatedStatus: calculateUnitStatus(unit, storedAssignments)
-              })
               
               return {
                 ...unit,
@@ -219,60 +209,6 @@ export default function UnitsView({ buildings }) {
   
   // Calcul simple : (nombre d'unités occupées / nombre d'unités total) * 100
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-  
-  // Debug final simplifié
-  console.log('Calcul taux d\'occupation UnitsView.jsx:', {
-    totalUnits,
-    occupiedUnits,
-    occupancyRate: `${occupancyRate}%`
-  })
-
-  // Fonction de test temporaire pour diagnostiquer le problème
-  const testOccupancy = () => {
-    if (units.length > 0) {
-      const firstUnit = units[0]
-      const testAssignment = {
-        unitId: firstUnit.id,
-        tenantId: 999,
-        tenantData: {
-          name: 'Test Locataire',
-          email: 'test@example.com',
-          phone: '514-555-0123'
-        },
-        assignedAt: new Date().toISOString()
-      }
-      
-      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const updatedAssignments = [...existingAssignments, testAssignment]
-      localStorage.setItem('unitTenantAssignments', JSON.stringify(updatedAssignments))
-      
-      // Recharger les unités
-      window.location.reload()
-    }
-  }
-
-  // Fonction pour nettoyer les assignations de test
-  const clearTestAssignments = () => {
-    localStorage.removeItem('unitTenantAssignments')
-    window.location.reload()
-  }
-
-  // Fonction pour afficher les données de debug
-  const showDebugInfo = () => {
-    const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-    const debugInfo = {
-      totalUnits: units.length,
-      totalAssignments: assignments.length,
-      assignments: assignments,
-      unitsWithCurrentTenants: units.filter(u => u.currentTenants?.length > 0),
-      unitsWithOccupiedStatus: units.filter(u => u.status === 'occupied'),
-      unitIds: units.map(u => u.id),
-      assignmentUnitIds: assignments.map(a => a.unitId)
-    }
-    
-    alert(JSON.stringify(debugInfo, null, 2))
-    console.log('DEBUG INFO:', debugInfo)
-  }
 
   return (
     <div className="space-y-6">
@@ -280,27 +216,6 @@ export default function UnitsView({ buildings }) {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Filtres et Recherche</h3>
-          {/* Boutons de test temporaires */}
-          <div className="flex space-x-2">
-            <button
-              onClick={testOccupancy}
-              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Test Occuper Unité
-            </button>
-            <button
-              onClick={clearTestAssignments}
-              className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Nettoyer Tests
-            </button>
-            <button
-              onClick={showDebugInfo}
-              className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              Debug Info
-            </button>
-          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
