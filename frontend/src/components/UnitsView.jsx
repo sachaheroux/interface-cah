@@ -209,39 +209,22 @@ export default function UnitsView({ buildings }) {
     }
   }
 
-  // Statistiques avec debug
-  const totalUnits = filteredUnits.length
-  const occupiedUnits = filteredUnits.filter(unit => {
-    const hasCurrentTenants = unit.currentTenants?.length > 0
-    const isOccupiedStatus = unit.status === 'occupied'
-    const isOccupied = hasCurrentTenants || isOccupiedStatus
-    
-    // Debug détaillé pour chaque unité
-    console.log(`Statistiques - Unité ${unit.id}:`, {
-      id: unit.id,
-      address: unit.address,
-      currentTenants: unit.currentTenants,
-      currentTenantsLength: unit.currentTenants?.length,
-      status: unit.status,
-      hasCurrentTenants,
-      isOccupiedStatus,
-      isOccupied
-    })
-    
-    return isOccupied
-  }).length
-  
+  // Statistiques simples
+  const totalUnits = units.length
+  const occupiedUnits = units.filter(unit => 
+    unit.currentTenants?.length > 0 || unit.status === 'occupied'
+  ).length
   const vacantUnits = totalUnits - occupiedUnits
-  const totalRent = filteredUnits.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
+  const totalRent = units.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
+  
+  // Calcul simple : (nombre d'unités occupées / nombre d'unités total) * 100
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
   
-  // Debug final des résultats
-  console.log('=== RÉSULTATS FINAUX ===', {
+  // Debug final simplifié
+  console.log('Calcul taux d\'occupation UnitsView.jsx:', {
     totalUnits,
     occupiedUnits,
-    vacantUnits,
-    occupancyRate,
-    allAssignments: JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+    occupancyRate: `${occupancyRate}%`
   })
 
   // Fonction de test temporaire pour diagnostiquer le problème

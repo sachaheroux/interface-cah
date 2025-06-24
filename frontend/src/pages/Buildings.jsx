@@ -292,11 +292,23 @@ export default function Buildings() {
   
   // Calculer le vrai taux d'occupation basé sur les unités générées
   const calculateOccupancyRate = () => {
+    // Charger les assignations depuis localStorage
+    const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+    
     const allUnits = []
     filteredBuildings.forEach(building => {
       try {
         const buildingUnits = parseAddressAndGenerateUnits(building)
-        allUnits.push(...buildingUnits)
+        
+        // Ajouter les currentTenants à chaque unité
+        const unitsWithTenants = buildingUnits.map(unit => ({
+          ...unit,
+          currentTenants: storedAssignments
+            .filter(a => a.unitId === unit.id)
+            .map(a => a.tenantData)
+        }))
+        
+        allUnits.push(...unitsWithTenants)
       } catch (error) {
         console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
       }
@@ -304,8 +316,21 @@ export default function Buildings() {
     
     if (allUnits.length === 0) return 0
     
-    const occupiedUnits = allUnits.filter(unit => unit.status === 'occupied').length
-    return Math.round((occupiedUnits / allUnits.length) * 100)
+    // Compter les unités occupées (qui ont des currentTenants OU status 'occupied')
+    const occupiedUnits = allUnits.filter(unit => 
+      unit.currentTenants?.length > 0 || unit.status === 'occupied'
+    ).length
+    
+    const rate = Math.round((occupiedUnits / allUnits.length) * 100)
+    
+    console.log('Calcul taux d\'occupation Buildings.jsx:', {
+      totalUnits: allUnits.length,
+      occupiedUnits: occupiedUnits,
+      assignments: storedAssignments.length,
+      calculatedRate: rate
+    })
+    
+    return rate
   }
   
   const occupancyRate = calculateOccupancyRate()
