@@ -85,7 +85,8 @@ export default function UnitsView({ buildings }) {
               
               console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.buildingName} - ${unit.unitNumber}):`, {
                 unitAssignments: unitAssignments,
-                assignmentsCount: unitAssignments.length
+                assignmentsCount: unitAssignments.length,
+                fullUnitAssignments: JSON.stringify(unitAssignments, null, 2)
               })
               
               const currentTenants = unitAssignments.map(a => {
@@ -97,7 +98,8 @@ export default function UnitsView({ buildings }) {
                 console.log(`🐛 DEBUG - Locataire construit:`, {
                   originalTenantData: a.tenantData,
                   tenantId: a.tenantId,
-                  constructedTenant: tenant
+                  constructedTenant: tenant,
+                  constructedTenantJSON: JSON.stringify(tenant, null, 2)
                 })
                 
                 return tenant

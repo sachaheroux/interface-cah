@@ -44,10 +44,23 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       try {
         setLoadingTenants(true)
         const response = await unitsService.getUnitTenants(unit.id)
-        console.log('Assigned tenants for unit:', unit.id, response.data)
+        console.log('🐛 DEBUG - UnitForm: Assigned tenants for unit:', unit.id, response.data)
+        
+        // Vérifier les IDs des locataires
+        if (response.data) {
+          response.data.forEach((tenant, index) => {
+            console.log(`🐛 DEBUG - UnitForm: Tenant ${index}:`, {
+              tenant: tenant,
+              tenantId: tenant.id,
+              tenantIdType: typeof tenant.id,
+              tenantJSON: JSON.stringify(tenant, null, 2)
+            })
+          })
+        }
+        
         setAssignedTenants(response.data || [])
       } catch (error) {
-        console.error('Error loading assigned tenants:', error)
+        console.error('❌ UnitForm: Error loading assigned tenants:', error)
         setAssignedTenants([])
       } finally {
         setLoadingTenants(false)
@@ -55,6 +68,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
     }
     
     if (isOpen && unit) {
+      console.log('🐛 DEBUG - UnitForm: fetchAssignedTenants pour unité:', unit.id)
       fetchAssignedTenants()
     }
   }, [isOpen, unit])
@@ -109,12 +123,24 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   }
 
   const handleRemoveTenant = async (tenantId) => {
+    console.log('🐛 DEBUG - UnitForm handleRemoveTenant appelé avec tenantId:', tenantId, typeof tenantId)
+    console.log('🐛 DEBUG - UnitForm assignedTenants:', assignedTenants)
+    
+    if (!tenantId) {
+      console.error('❌ UnitForm: tenantId est undefined ou null')
+      alert('Erreur: Impossible de supprimer le locataire - ID manquant')
+      return
+    }
+    
     if (window.confirm('Êtes-vous sûr de vouloir retirer ce locataire de l\'unité ?')) {
       try {
+        console.log('🔗 UnitForm: Suppression du locataire ID:', tenantId)
         await unitsService.removeTenantFromUnit(tenantId)
         setAssignedTenants(prev => prev.filter(tenant => tenant.id !== tenantId))
+        console.log('✅ UnitForm: Locataire supprimé avec succès')
       } catch (error) {
-        console.error('Error removing tenant from unit:', error)
+        console.error('❌ UnitForm: Error removing tenant from unit:', error)
+        alert('Erreur lors de la suppression du locataire')
       }
     }
   }
