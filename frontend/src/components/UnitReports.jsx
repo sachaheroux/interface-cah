@@ -513,7 +513,7 @@ export default function UnitReports({ selectedYear }) {
                   <div>
                     <strong>🤖 Génération automatique activée !</strong> Les rapports se créent automatiquement quand vous avez des unités avec locataires et dates de bail.
                     <br />
-                    <span className="text-purple-600">Utilisez "Régénérer" pour forcer une mise à jour.</span>
+                    <span className="text-green-600">Cliquez sur "Voir détails" pour consulter ou modifier les rapports.</span>
                   </div>
                 )}
               </div>
@@ -581,15 +581,13 @@ export default function UnitReports({ selectedYear }) {
                           <Plus className="h-4 w-4 mr-1" />
                           Ajouter
                         </button>
-                        {unitReports.length > 0 && (
-                          <button
-                            onClick={() => navigate(`/unit-reports/${unit.id}/${selectedYear}`)}
-                            className="text-green-600 hover:text-green-900 flex items-center"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            Voir détails
-                          </button>
-                        )}
+                        <button
+                          onClick={() => navigate(`/unit-reports/${unit.id}/${selectedYear}`)}
+                          className="text-green-600 hover:text-green-900 flex items-center"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Voir détails
+                        </button>
                       </div>
                     </td>
                   </tr>
