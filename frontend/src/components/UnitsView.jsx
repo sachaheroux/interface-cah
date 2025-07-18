@@ -451,7 +451,7 @@ export default function UnitsView({ buildings }) {
                   Détails
                 </button>
                 <button className="flex-1 btn-secondary text-sm py-2" onClick={() => handleEditUnit(unit)}>
-                  <Edit className="h-4 w-4 mr-1" />
+                  <Edit3 className="h-4 w-4 mr-1" />
                   Modifier
                 </button>
               </div>
