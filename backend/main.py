@@ -122,6 +122,19 @@ class TenantFinancial(BaseModel):
     employer: str = ""
     employerPhone: str = ""
 
+# Modèles pour les données de bail (définis avant Tenant)
+class LeaseInfo(BaseModel):
+    startDate: str = ""
+    endDate: str = ""
+    monthlyRent: float = 0
+    paymentMethod: str = "Virement bancaire"
+
+class LeaseRenewal(BaseModel):
+    isActive: bool = False
+    startDate: str = ""
+    endDate: str = ""
+    monthlyRent: float = 0
+
 class Tenant(BaseModel):
     id: Optional[int] = None
     name: str
@@ -138,19 +151,6 @@ class Tenant(BaseModel):
     notes: str = ""
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
-
-# Modèles pour les données de bail
-class LeaseInfo(BaseModel):
-    startDate: str = ""
-    endDate: str = ""
-    monthlyRent: float = 0
-    paymentMethod: str = "Virement bancaire"
-
-class LeaseRenewal(BaseModel):
-    isActive: bool = False
-    startDate: str = ""
-    endDate: str = ""
-    monthlyRent: float = 0
 
 class TenantCreate(BaseModel):
     name: str
