@@ -21,6 +21,7 @@ import {
   Search
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel, calculateUnitStatus } from '../types/unit'
+import { assignmentsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
 
@@ -36,14 +37,35 @@ export default function UnitsView({ buildings }) {
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [assignments, setAssignments] = useState([])
+  const [loadingAssignments, setLoadingAssignments] = useState(true)
+
+  // Charger les assignations depuis le backend
+  const loadAssignments = async () => {
+    try {
+      setLoadingAssignments(true)
+      const response = await assignmentsService.getAssignments()
+      const assignmentsData = response.data || []
+      console.log('Assignments loaded from backend:', assignmentsData)
+      setAssignments(assignmentsData)
+    } catch (error) {
+      console.error('Error loading assignments:', error)
+      // Fallback vers localStorage
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      setAssignments(localAssignments)
+    } finally {
+      setLoadingAssignments(false)
+    }
+  }
 
   // Charger les unités et les assignations
   useEffect(() => {
-    const loadUnitsAndAssignments = () => {
-      // Charger les assignations
-      const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      setAssignments(storedAssignments)
+    loadAssignments()
+  }, [])
 
+  useEffect(() => {
+    if (loadingAssignments) return // Attendre que les assignations soient chargées
+    
+    const loadUnitsAndAssignments = () => {
       // Générer les unités depuis les immeubles
       const allUnits = []
       buildings.forEach(building => {
@@ -53,12 +75,12 @@ export default function UnitsView({ buildings }) {
             
             // Calculer le statut dynamique pour chaque unité
             const unitsWithStatus = buildingUnits.map(unit => {
-              const unitAssignments = storedAssignments.filter(a => a.unitId === unit.id)
+              const unitAssignments = assignments.filter(a => a.unitId === unit.id)
               const currentTenants = unitAssignments.map(a => a.tenantData)
               
               return {
                 ...unit,
-                status: calculateUnitStatus(unit, storedAssignments),
+                status: calculateUnitStatus(unit, assignments),
                 currentTenants: currentTenants
               }
             })
@@ -74,7 +96,7 @@ export default function UnitsView({ buildings }) {
     }
 
     loadUnitsAndAssignments()
-  }, [buildings])
+  }, [buildings, assignments, loadingAssignments])
 
   // Filtrer les unités
   useEffect(() => {

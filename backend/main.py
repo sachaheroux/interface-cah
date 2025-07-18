@@ -173,6 +173,7 @@ else:
 
 BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
+ASSIGNMENTS_DATA_FILE = os.path.join(DATA_DIR, "assignments_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -185,14 +186,49 @@ print(f"📂 DATA_DIR (env): {os.environ.get('DATA_DIR', 'NON DÉFINIE')}")
 print(f"📂 DATA_DIR (utilisé): {DATA_DIR}")
 print(f"📄 Fichier immeubles: {BUILDINGS_DATA_FILE}")
 print(f"📄 Fichier locataires: {TENANTS_DATA_FILE}")
+print(f"📄 Fichier assignations: {ASSIGNMENTS_DATA_FILE}")
 print(f"📁 Répertoire existe: {os.path.exists(DATA_DIR)}")
 print(f"📝 Fichier immeubles existe: {os.path.exists(BUILDINGS_DATA_FILE)}")
 print(f"📝 Fichier locataires existe: {os.path.exists(TENANTS_DATA_FILE)}")
+print(f"📝 Fichier assignations existe: {os.path.exists(ASSIGNMENTS_DATA_FILE)}")
 print(f"🔒 Permissions lecture: {os.access(DATA_DIR, os.R_OK)}")
 print(f"🔒 Permissions écriture: {os.access(DATA_DIR, os.W_OK)}")
 print(f"💾 Répertoire de travail: {os.getcwd()}")
 print(f"🗂️  Contenu DATA_DIR: {os.listdir(DATA_DIR) if os.path.exists(DATA_DIR) else 'N/A'}")
 print("=" * 60)
+
+# Cache pour les données
+buildings_cache = None
+tenants_cache = None
+assignments_cache = None
+
+def get_buildings_cache():
+    """Obtenir les données des immeubles avec cache"""
+    global buildings_cache
+    if buildings_cache is None:
+        buildings_cache = load_buildings_data()
+    return buildings_cache
+
+def get_tenants_cache():
+    """Obtenir les données des locataires avec cache"""
+    global tenants_cache
+    if tenants_cache is None:
+        tenants_cache = load_tenants_data()
+    return tenants_cache
+
+def get_assignments_cache():
+    """Obtenir les données des assignations avec cache"""
+    global assignments_cache
+    if assignments_cache is None:
+        assignments_cache = load_assignments_data()
+    return assignments_cache
+
+def invalidate_caches():
+    """Invalider tous les caches"""
+    global buildings_cache, tenants_cache, assignments_cache
+    buildings_cache = None
+    tenants_cache = None
+    assignments_cache = None
 
 def load_buildings_data():
     """Charger les données depuis le fichier JSON"""
@@ -285,35 +321,48 @@ def save_tenants_data(data):
         print(f"Erreur sauvegarde locataires: {e}")
         return False
 
-# Cache en mémoire pour cette session
-_buildings_cache = None
-_tenants_cache = None
+def load_assignments_data():
+    """Charger les données des assignations depuis le fichier JSON"""
+    try:
+        if os.path.exists(ASSIGNMENTS_DATA_FILE):
+            with open(ASSIGNMENTS_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données assignations chargées: {len(data.get('assignments', []))} assignations")
+                return data
+    except Exception as e:
+        print(f"Erreur chargement données assignations depuis fichier: {e}")
+    
+    # Retourner structure vide si pas de fichier ou erreur
+    return {"assignments": [], "next_id": 1}
 
-def get_buildings_cache():
-    """Obtenir les données depuis le cache mémoire"""
-    global _buildings_cache
-    if _buildings_cache is None:
-        _buildings_cache = load_buildings_data()
-    return _buildings_cache
+def save_assignments_data(data):
+    """Sauvegarder les données des assignations dans le fichier JSON"""
+    try:
+        with open(ASSIGNMENTS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données assignations sauvegardées: {len(data.get('assignments', []))} assignations")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde assignations: {e}")
+        return False
 
 def update_buildings_cache(data):
-    """Mettre à jour le cache mémoire"""
-    global _buildings_cache
-    _buildings_cache = data
+    """Mettre à jour le cache mémoire des immeubles"""
+    global buildings_cache
+    buildings_cache = data
     save_buildings_data(data)
-
-def get_tenants_cache():
-    """Obtenir les données des locataires depuis le cache mémoire"""
-    global _tenants_cache
-    if _tenants_cache is None:
-        _tenants_cache = load_tenants_data()
-    return _tenants_cache
 
 def update_tenants_cache(data):
     """Mettre à jour le cache mémoire des locataires"""
-    global _tenants_cache
-    _tenants_cache = data
+    global tenants_cache
+    tenants_cache = data
     save_tenants_data(data)
+
+def update_assignments_cache(data):
+    """Mettre à jour le cache mémoire des assignations"""
+    global assignments_cache
+    assignments_cache = data
+    save_assignments_data(data)
 
 # Route de test de base
 @app.get("/")
@@ -648,6 +697,107 @@ async def get_employees():
         {"id": 2, "name": "Sophie Tech", "role": "Électricienne", "status": "active"},
         {"id": 3, "name": "Paul Plombier", "role": "Plombier", "status": "active"}
     ]
+
+# Routes CRUD pour les assignations locataires-unités avec persistance
+@app.get("/api/assignments")
+async def get_assignments():
+    """Récupérer toutes les assignations locataires-unités"""
+    try:
+        data = get_assignments_cache()
+        assignments = data.get("assignments", [])
+        return {"data": assignments}
+    except Exception as e:
+        print(f"Erreur lors du chargement des assignations: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des assignations: {str(e)}")
+
+@app.post("/api/assignments")
+async def create_assignment(assignment_data: dict):
+    """Créer une nouvelle assignation locataire-unité"""
+    try:
+        data = get_assignments_cache()
+        
+        # Créer la nouvelle assignation avec un ID unique
+        new_assignment = {
+            "id": data["next_id"],
+            "unitId": assignment_data.get("unitId"),
+            "tenantId": assignment_data.get("tenantId"),
+            "tenantData": assignment_data.get("tenantData", {}),
+            "assignedAt": datetime.now().isoformat() + "Z",
+            "createdAt": datetime.now().isoformat() + "Z",
+            "updatedAt": datetime.now().isoformat() + "Z"
+        }
+        
+        # Supprimer l'ancienne assignation pour ce locataire s'il y en a une
+        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != assignment_data.get("tenantId")]
+        
+        # Ajouter la nouvelle assignation
+        data["assignments"].append(new_assignment)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_assignments_cache(data)
+        
+        print(f"Assignation créée: Locataire {assignment_data.get('tenantId')} → Unité {assignment_data.get('unitId')}")
+        return {"data": new_assignment}
+    except Exception as e:
+        print(f"Erreur lors de la création de l'assignation: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'assignation: {str(e)}")
+
+@app.delete("/api/assignments/tenant/{tenant_id}")
+async def remove_tenant_assignment(tenant_id: int):
+    """Retirer un locataire de toute unité"""
+    try:
+        data = get_assignments_cache()
+        
+        # Supprimer toutes les assignations pour ce locataire
+        original_count = len(data["assignments"])
+        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != tenant_id]
+        removed_count = original_count - len(data["assignments"])
+        
+        if removed_count == 0:
+            raise HTTPException(status_code=404, detail="Aucune assignation trouvée pour ce locataire")
+        
+        # Mettre à jour le cache
+        update_assignments_cache(data)
+        
+        print(f"Assignation supprimée pour le locataire {tenant_id}")
+        return {"message": f"Locataire retiré de son unité ({removed_count} assignation(s) supprimée(s))"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression de l'assignation: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.get("/api/assignments/unit/{unit_id}")
+async def get_unit_assignments(unit_id: str):
+    """Récupérer toutes les assignations pour une unité spécifique"""
+    try:
+        data = get_assignments_cache()
+        assignments = data.get("assignments", [])
+        
+        # Filtrer les assignations pour cette unité
+        unit_assignments = [a for a in assignments if a.get("unitId") == unit_id]
+        
+        return {"data": unit_assignments}
+    except Exception as e:
+        print(f"Erreur lors du chargement des assignations d'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des assignations d'unité: {str(e)}")
+
+@app.get("/api/assignments/tenant/{tenant_id}")
+async def get_tenant_assignment(tenant_id: int):
+    """Récupérer l'assignation d'un locataire spécifique"""
+    try:
+        data = get_assignments_cache()
+        assignments = data.get("assignments", [])
+        
+        # Trouver l'assignation pour ce locataire
+        tenant_assignment = next((a for a in assignments if a.get("tenantId") == tenant_id), None)
+        
+        return {"data": tenant_assignment}
+    except Exception as e:
+        print(f"Erreur lors du chargement de l'assignation du locataire: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement de l'assignation du locataire: {str(e)}")
 
 @app.get("/api/projects")
 async def get_projects():

@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react'
-import { Building2, MapPin, Users, Plus, Edit, Eye, BarChart3, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react'
-import { buildingsService } from '../services/api'
+import { 
+  Building2, 
+  Users, 
+  Plus, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  MapPin, 
+  Calendar, 
+  DollarSign,
+  TrendingUp,
+  BarChart3
+} from 'lucide-react'
+import { buildingsService, assignmentsService } from '../services/api'
+import { parseAddressAndGenerateUnits } from '../types/unit'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
-import MapView from '../components/MapView'
 import BuildingFilters from '../components/BuildingFilters'
+import MapView from '../components/MapView'
 import UnitsView from '../components/UnitsView'
 import { getBuildingTypeLabel } from '../types/building'
-import { parseAddressAndGenerateUnits } from '../types/unit'
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
@@ -21,25 +33,36 @@ export default function Buildings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [viewMode, setViewMode] = useState('list') // 'list', 'map', ou 'units'
+  const [viewMode, setViewMode] = useState('list') // 'list', 'map', 'units'
+  const [assignments, setAssignments] = useState([])
 
   useEffect(() => {
     fetchBuildings()
+    loadAssignments()
     
-    // Écouter les changements de vue depuis le sidebar
+    // Écouter les changements de vue depuis SecondarySidebar
     const handleViewChange = (event) => {
       setViewMode(event.detail)
     }
     
     window.addEventListener('buildingsViewChange', handleViewChange)
     
-    // Émettre l'événement initial pour synchroniser le sidebar
-    window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
-    
     return () => {
       window.removeEventListener('buildingsViewChange', handleViewChange)
     }
   }, [])
+
+  const loadAssignments = async () => {
+    try {
+      const response = await assignmentsService.getAssignments()
+      setAssignments(response.data || [])
+    } catch (error) {
+      console.error('Error loading assignments:', error)
+      // Fallback vers localStorage
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      setAssignments(localAssignments)
+    }
+  }
 
   const fetchBuildings = async () => {
     try {
@@ -292,9 +315,7 @@ export default function Buildings() {
   
   // Calculer le vrai taux d'occupation basé sur les unités générées
   const calculateOccupancyRate = () => {
-    // Charger les assignations depuis localStorage
-    const storedAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-    
+    // Utiliser les assignations du backend au lieu du localStorage
     const allUnits = []
     filteredBuildings.forEach(building => {
       try {
@@ -303,7 +324,7 @@ export default function Buildings() {
         // Ajouter les currentTenants à chaque unité
         const unitsWithTenants = buildingUnits.map(unit => ({
           ...unit,
-          currentTenants: storedAssignments
+          currentTenants: assignments
             .filter(a => a.unitId === unit.id)
             .map(a => a.tenantData)
         }))

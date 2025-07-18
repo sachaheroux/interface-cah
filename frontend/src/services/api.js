@@ -470,8 +470,9 @@ export const unitsService = {
       const unitsResponse = await unitsService.getUnits()
       const units = unitsResponse.data || []
       
-      // Récupérer les assignations pour déterminer quelles unités ont de la place
-      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      // Récupérer les assignations depuis le backend au lieu du localStorage
+      const assignmentsResponse = await assignmentsService.getAssignments()
+      const assignments = assignmentsResponse.data || []
       
       const availableUnits = units.filter(unit => {
         const unitAssignments = assignments.filter(a => a.unitId === unit.id)
@@ -488,10 +489,10 @@ export const unitsService = {
   
   getUnitTenants: async (unitId) => {
     try {
-      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const unitAssignments = assignments.filter(a => a.unitId === unitId)
+      const response = await assignmentsService.getUnitAssignments(unitId)
+      const assignments = response.data || []
       
-      return { data: unitAssignments.map(a => a.tenantData) }
+      return { data: assignments.map(a => a.tenantData) }
     } catch (error) {
       console.error('Error getting unit tenants:', error)
       return { data: [] }
@@ -505,23 +506,14 @@ export const unitsService = {
       const assignmentData = {
         unitId,
         tenantId,
-        tenantData,
-        assignedAt: new Date().toISOString()
+        tenantData
       }
       
-      // Stocker dans localStorage pour la persistance
-      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      
-      // Supprimer l'ancienne assignation pour ce locataire s'il y en a une
-      const filteredAssignments = existingAssignments.filter(a => a.tenantId !== tenantId)
-      
-      // Ajouter la nouvelle assignation
-      filteredAssignments.push(assignmentData)
-      
-      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      // Utiliser le backend au lieu du localStorage
+      const response = await assignmentsService.createAssignment(assignmentData)
       
       console.log('Tenant assigned to unit successfully')
-      return { data: assignmentData }
+      return response
     } catch (error) {
       console.error('Error assigning tenant to unit:', error)
       throw error
@@ -530,13 +522,10 @@ export const unitsService = {
   
   removeTenantFromUnit: async (tenantId) => {
     try {
-      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const filteredAssignments = assignments.filter(a => a.tenantId !== tenantId)
-      
-      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      const response = await assignmentsService.removeTenantAssignment(tenantId)
       
       console.log('Tenant removed from unit successfully')
-      return { data: { message: 'Locataire retiré de l\'unité' } }
+      return response
     } catch (error) {
       console.error('Error removing tenant from unit:', error)
       throw error
@@ -545,8 +534,8 @@ export const unitsService = {
   
   getTenantUnit: async (tenantId) => {
     try {
-      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const assignment = assignments.find(a => a.tenantId === parseInt(tenantId))
+      const assignmentResponse = await assignmentsService.getTenantAssignment(tenantId)
+      const assignment = assignmentResponse.data
       
       if (assignment) {
         const unitsResponse = await unitsService.getUnits()
@@ -555,7 +544,8 @@ export const unitsService = {
         
         if (unit) {
           // Enrichir l'unité avec tous ses locataires
-          const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+          const unitAssignmentsResponse = await assignmentsService.getUnitAssignments(unit.id)
+          const unitAssignments = unitAssignmentsResponse.data || []
           const allTenants = unitAssignments.map(a => a.tenantData)
           
           return { 
@@ -582,8 +572,8 @@ export const unitsService = {
       const unit = units.find(u => u.id === unitId)
       
       if (unit) {
-        const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-        const unitAssignments = assignments.filter(a => a.unitId === unitId)
+        const assignmentsResponse = await assignmentsService.getUnitAssignments(unitId)
+        const unitAssignments = assignmentsResponse.data || []
         const tenants = unitAssignments.map(a => ({
           ...a.tenantData,
           assignedAt: a.assignedAt
@@ -602,6 +592,117 @@ export const unitsService = {
     } catch (error) {
       console.error('Error getting unit with tenants:', error)
       return { data: null }
+    }
+  }
+}
+
+// Service pour les assignations locataires-unités
+export const assignmentsService = {
+  getAssignments: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/assignments`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting assignments:', error)
+      // Fallback vers localStorage pour la transition
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      return { data: localAssignments }
+    }
+  },
+
+  createAssignment: async (assignmentData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/assignments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(assignmentData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      // Mettre à jour aussi le localStorage pour la compatibilité
+      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const filteredAssignments = existingAssignments.filter(a => a.tenantId !== assignmentData.tenantId)
+      filteredAssignments.push({
+        unitId: assignmentData.unitId,
+        tenantId: assignmentData.tenantId,
+        tenantData: assignmentData.tenantData,
+        assignedAt: new Date().toISOString()
+      })
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      return result
+    } catch (error) {
+      console.error('Error creating assignment:', error)
+      throw error
+    }
+  },
+
+  removeTenantAssignment: async (tenantId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/assignments/tenant/${tenantId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      // Mettre à jour aussi le localStorage pour la compatibilité
+      const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const filteredAssignments = assignments.filter(a => a.tenantId !== tenantId)
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      return result
+    } catch (error) {
+      console.error('Error removing tenant assignment:', error)
+      throw error
+    }
+  },
+
+  getUnitAssignments: async (unitId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/assignments/unit/${unitId}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting unit assignments:', error)
+      // Fallback vers localStorage
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const unitAssignments = localAssignments.filter(a => a.unitId === unitId)
+      return { data: unitAssignments }
+    }
+  },
+
+  getTenantAssignment: async (tenantId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/assignments/tenant/${tenantId}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting tenant assignment:', error)
+      // Fallback vers localStorage
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const assignment = localAssignments.find(a => a.tenantId === parseInt(tenantId))
+      return { data: assignment || null }
     }
   }
 }
