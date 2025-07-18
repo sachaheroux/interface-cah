@@ -260,7 +260,13 @@ export default function UnitsView({ buildings }) {
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
 
   // Fonction pour supprimer une assignation spécifique
-  const handleRemoveFromUnit = async (tenantId, unitId, tenantName, unitName) => {
+  const handleRemoveFromUnit = async (tenantId, unitId, tenantName, unitName, event) => {
+    // Empêcher la propagation de l'événement vers les éléments parents
+    if (event) {
+      event.stopPropagation()
+      event.preventDefault()
+    }
+    
     console.log('🐛 DEBUG - handleRemoveFromUnit appelé avec:', {
       tenantId,
       unitId,
@@ -269,37 +275,37 @@ export default function UnitsView({ buildings }) {
       typeof_tenantId: typeof tenantId,
       typeof_unitId: typeof unitId
     })
-    
-    // Vérifier que les IDs sont valides
+
+    // Vérifier les IDs valides
     if (!tenantId || !unitId) {
       console.error('❌ Erreur: IDs manquants', { tenantId, unitId })
       alert('Erreur: Impossible de supprimer l\'assignation - données manquantes')
       return
     }
-    
+
     const confirmMessage = `Êtes-vous sûr de vouloir retirer "${tenantName}" de l'unité "${unitName}" ?\n\nLe locataire restera dans le système, seule l'assignation à cette unité sera supprimée.`
-    
+
     if (window.confirm(confirmMessage)) {
       try {
         console.log(`🔗 Suppression assignation: ${tenantName} (${tenantId}) de ${unitName} (${unitId})`)
-        
+
         const result = await assignmentsService.removeSpecificAssignment(tenantId, unitId)
         console.log('🔄 Résultat de removeSpecificAssignment:', result)
-        
+
         console.log(`✅ ${tenantName} retiré de ${unitName} avec succès`)
-        
+
         // Recharger les assignations pour mettre à jour l'affichage
         console.log('🔄 Rechargement des assignations...')
         await loadAssignments()
         console.log('✅ Assignations rechargées')
-        
+
         // Déclencher un événement pour mettre à jour les autres vues
         console.log('📢 Déclenchement événement assignmentRemoved...')
-        window.dispatchEvent(new CustomEvent('assignmentRemoved', { 
-          detail: { tenantId, unitId, tenantName, unitName } 
+        window.dispatchEvent(new CustomEvent('assignmentRemoved', {
+          detail: { tenantId, unitId, tenantName, unitName }
         }))
         console.log('✅ Événement déclenché')
-        
+
       } catch (error) {
         console.error('❌ Erreur lors de la suppression de l\'assignation:', error)
         alert(`Erreur lors de la suppression de l'assignation de "${tenantName}". Vérifiez la console pour plus de détails.`)
@@ -452,11 +458,12 @@ export default function UnitsView({ buildings }) {
                           
                           {/* Bouton pour retirer ce locataire de cette unité */}
                           <button
-                            onClick={() => handleRemoveFromUnit(
+                            onClick={(event) => handleRemoveFromUnit(
                               tenant.id, 
                               unit.id, 
                               tenant.name, 
-                              `${unit.buildingName} - ${unit.unitNumber}`
+                              `${unit.buildingName} - ${unit.unitNumber}`,
+                              event
                             )}
                             className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                             title={`Retirer ${tenant.name} de cette unité`}

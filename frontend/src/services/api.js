@@ -510,7 +510,13 @@ export const unitsService = {
       const response = await assignmentsService.getUnitAssignments(unitId)
       const assignments = response.data || []
       
-      return { data: assignments.map(a => a.tenantData) }
+      // Retourner les données des locataires avec leurs IDs
+      return { 
+        data: assignments.map(a => ({
+          ...a.tenantData,
+          id: a.tenantData?.id || a.tenantId // S'assurer que l'ID est présent
+        }))
+      }
     } catch (error) {
       console.error('Error getting unit tenants:', error)
       return { data: [] }
