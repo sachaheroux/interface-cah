@@ -82,10 +82,20 @@ export default function UnitReports({ selectedYear }) {
       loadReports() // Les rapports pourraient aussi être affectés
     }
     
+    // Écouter l'événement de suppression d'assignation spécifique
+    const handleAssignmentRemoved = (event) => {
+      console.log(`📢 UnitReports: Événement assignmentRemoved reçu:`, event.detail)
+      console.log(`🔄 UnitReports: Rechargement des données suite à la suppression d'assignation...`)
+      loadAssignments()
+      loadReports() // Les rapports pourraient être affectés
+    }
+    
     window.addEventListener('tenantDeleted', handleTenantDeleted)
+    window.addEventListener('assignmentRemoved', handleAssignmentRemoved)
     
     return () => {
       window.removeEventListener('tenantDeleted', handleTenantDeleted)
+      window.removeEventListener('assignmentRemoved', handleAssignmentRemoved)
     }
   }, [loading, units, assignments, allTenants, reports, selectedYear])
 

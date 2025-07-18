@@ -52,12 +52,21 @@ export default function Buildings() {
       loadAssignments()
     }
     
+    // Écouter l'événement de suppression d'assignation spécifique
+    const handleAssignmentRemoved = (event) => {
+      console.log(`📢 Buildings: Événement assignmentRemoved reçu:`, event.detail)
+      console.log(`🔄 Buildings: Rechargement des assignations suite à la suppression d'assignation...`)
+      loadAssignments()
+    }
+    
     window.addEventListener('buildingsViewChange', handleViewChange)
     window.addEventListener('tenantDeleted', handleTenantDeleted)
+    window.addEventListener('assignmentRemoved', handleAssignmentRemoved)
     
     return () => {
       window.removeEventListener('buildingsViewChange', handleViewChange)
       window.removeEventListener('tenantDeleted', handleTenantDeleted)
+      window.removeEventListener('assignmentRemoved', handleAssignmentRemoved)
     }
   }, [])
 

@@ -148,10 +148,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         loadAvailableUnits()
       }
       
+      // Écouter l'événement de suppression d'assignation spécifique
+      const handleAssignmentRemoved = (event) => {
+        console.log(`📢 TenantForm: Événement assignmentRemoved reçu:`, event.detail)
+        console.log(`🔄 TenantForm: Rechargement des unités disponibles suite à la suppression d'assignation...`)
+        loadAvailableUnits()
+      }
+      
       window.addEventListener('tenantDeleted', handleTenantDeleted)
+      window.addEventListener('assignmentRemoved', handleAssignmentRemoved)
       
       return () => {
         window.removeEventListener('tenantDeleted', handleTenantDeleted)
+        window.removeEventListener('assignmentRemoved', handleAssignmentRemoved)
       }
     }
   }, [isOpen])

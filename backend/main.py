@@ -887,6 +887,33 @@ async def remove_tenant_assignment(tenant_id: int):
         print(f"Erreur lors de la suppression de l'assignation: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
+@app.delete("/api/assignments/tenant/{tenant_id}/unit/{unit_id}")
+async def remove_specific_assignment(tenant_id: int, unit_id: str):
+    """Retirer un locataire d'une unité spécifique (ne supprime que cette assignation)"""
+    try:
+        data = get_assignments_cache()
+        
+        # Trouver et supprimer seulement l'assignation spécifique
+        original_count = len(data["assignments"])
+        data["assignments"] = [a for a in data["assignments"] 
+                              if not (a.get("tenantId") == tenant_id and a.get("unitId") == unit_id)]
+        removed_count = original_count - len(data["assignments"])
+        
+        if removed_count == 0:
+            raise HTTPException(status_code=404, detail="Assignation non trouvée pour ce locataire et cette unité")
+        
+        # Mettre à jour le cache
+        update_assignments_cache(data)
+        
+        print(f"Assignation spécifique supprimée: Locataire {tenant_id} retiré de l'unité {unit_id}")
+        return {"message": f"Locataire {tenant_id} retiré de l'unité {unit_id} avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression de l'assignation spécifique: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
 @app.get("/api/assignments/unit/{unit_id}")
 async def get_unit_assignments(unit_id: str):
     """Récupérer toutes les assignations pour une unité spécifique"""

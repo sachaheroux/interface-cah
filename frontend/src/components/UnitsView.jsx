@@ -1,26 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { 
-  Home, 
-  Users, 
-  DollarSign, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Calendar,
-  Wifi,
-  Zap,
-  Thermometer,
-  Car,
-  Sofa,
-  Droplets,
-  Wind,
-  Package,
-  Plus,
-  Edit,
-  Eye,
-  Search
+  Users, MapPin, Eye, Edit3, Trash2, Search, Filter, Home, Mail, Phone, DollarSign, 
+  Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus
 } from 'lucide-react'
-import { parseAddressAndGenerateUnits, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel, calculateUnitStatus } from '../types/unit'
+import { parseAddressAndGenerateUnits } from '../types/unit'
+import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
 import { assignmentsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
@@ -89,7 +73,10 @@ export default function UnitsView({ buildings }) {
             // Calculer le statut dynamique pour chaque unité
             const unitsWithStatus = buildingUnits.map(unit => {
               const unitAssignments = assignments.filter(a => a.unitId === unit.id)
-              const currentTenants = unitAssignments.map(a => a.tenantData)
+              const currentTenants = unitAssignments.map(a => ({
+                ...a.tenantData,
+                id: a.tenantData?.id || a.tenantId // S'assurer que l'ID est présent
+              }))
               
               return {
                 ...unit,
@@ -245,6 +232,33 @@ export default function UnitsView({ buildings }) {
   // Calcul simple : (nombre d'unités occupées / nombre d'unités total) * 100
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
 
+  // Fonction pour supprimer une assignation spécifique
+  const handleRemoveFromUnit = async (tenantId, unitId, tenantName, unitName) => {
+    const confirmMessage = `Êtes-vous sûr de vouloir retirer "${tenantName}" de l'unité "${unitName}" ?\n\nLe locataire restera dans le système, seule l'assignation à cette unité sera supprimée.`
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        console.log(`🔗 Suppression assignation: ${tenantName} (${tenantId}) de ${unitName} (${unitId})`)
+        
+        await assignmentsService.removeSpecificAssignment(tenantId, unitId)
+        
+        console.log(`✅ ${tenantName} retiré de ${unitName} avec succès`)
+        
+        // Recharger les assignations pour mettre à jour l'affichage
+        await loadAssignments()
+        
+        // Déclencher un événement pour mettre à jour les autres vues
+        window.dispatchEvent(new CustomEvent('assignmentRemoved', { 
+          detail: { tenantId, unitId, tenantName, unitName } 
+        }))
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression de l\'assignation:', error)
+        alert(`Erreur lors de la suppression de l'assignation de "${tenantName}". Vérifiez la console pour plus de détails.`)
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Filtres et recherche */}
@@ -357,28 +371,52 @@ export default function UnitsView({ buildings }) {
               {/* Locataire */}
               {unit.currentTenants?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                  <div className="flex items-center mb-2">
-                    <Users className="h-4 w-4 mr-2 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {unit.currentTenants.map(tenant => tenant.name).join(', ')}
-                    </span>
-                  </div>
-                  {unit.currentTenants.some(tenant => tenant.email) && (
-                    <div className="flex items-center mb-1">
-                      <Mail className="h-3 w-3 mr-2 text-gray-400" />
-                      <span className="text-xs text-gray-600">
-                        {unit.currentTenants.filter(t => t.email).map(t => t.email).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {unit.currentTenants.some(tenant => tenant.phone) && (
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                      <Phone className="h-3 w-3 mr-2 text-gray-400" />
-                      <span className="text-xs text-gray-600">
-                        {unit.currentTenants.filter(t => t.phone).map(t => t.phone).join(', ')}
-                      </span>
+                      <Users className="h-4 w-4 mr-2 text-gray-600" />
+                      <span className="text-sm font-medium text-gray-900">Locataires</span>
                     </div>
-                  )}
+                    <span className="text-xs text-gray-500">{unit.currentTenants.length} locataire{unit.currentTenants.length > 1 ? 's' : ''}</span>
+                  </div>
+                  
+                  {/* Liste des locataires avec bouton de suppression pour chaque */}
+                  <div className="space-y-2">
+                    {unit.currentTenants.map((tenant, tenantIndex) => (
+                      <div key={tenantIndex} className="bg-white rounded-md p-2 border border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm text-gray-900">{tenant.name}</div>
+                            {tenant.email && (
+                              <div className="flex items-center mt-1">
+                                <Mail className="h-3 w-3 mr-2 text-gray-400" />
+                                <span className="text-xs text-gray-600">{tenant.email}</span>
+                              </div>
+                            )}
+                            {tenant.phone && (
+                              <div className="flex items-center mt-1">
+                                <Phone className="h-3 w-3 mr-2 text-gray-400" />
+                                <span className="text-xs text-gray-600">{tenant.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Bouton pour retirer ce locataire de cette unité */}
+                          <button
+                            onClick={() => handleRemoveFromUnit(
+                              tenant.id, 
+                              unit.id, 
+                              tenant.name, 
+                              `${unit.buildingName} - ${unit.unitNumber}`
+                            )}
+                            className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                            title={`Retirer ${tenant.name} de cette unité`}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

@@ -767,6 +767,47 @@ export const assignmentsService = {
     }
   },
 
+  // Nouvelle méthode pour supprimer une assignation spécifique (locataire + unité)
+  removeSpecificAssignment: async (tenantId, unitId) => {
+    try {
+      console.log(`🔗 Suppression assignation spécifique: Locataire ${tenantId} de l'unité ${unitId}`)
+      
+      // Utiliser la nouvelle route API spécifique
+      const response = await fetch(`${API_BASE_URL}/api/assignments/tenant/${tenantId}/unit/${unitId}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      // Mettre à jour le localStorage pour la compatibilité
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const filteredAssignments = localAssignments.filter(a => 
+        !(a.tenantId === tenantId && a.unitId === unitId)
+      )
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      console.log(`✅ Assignation spécifique supprimée: Locataire ${tenantId} retiré de l'unité ${unitId}`)
+      return result
+      
+    } catch (error) {
+      console.error('❌ Error removing specific assignment:', error)
+      
+      // Fallback: Supprimer directement du localStorage
+      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      const filteredAssignments = localAssignments.filter(a => 
+        !(a.tenantId === tenantId && a.unitId === unitId)
+      )
+      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
+      
+      console.log(`⚠️ Fallback: Assignation supprimée localement`)
+      return { success: true, fallback: true }
+    }
+  },
+
   getUnitAssignments: async (unitId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/assignments/unit/${unitId}`)
