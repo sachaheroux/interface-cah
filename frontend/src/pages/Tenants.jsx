@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Users, Plus, Phone, Mail, Home, Eye, Edit, Trash2, Search } from 'lucide-react'
-import { tenantsService } from '../services/api'
+import { tenantsService, assignmentsService } from '../services/api'
 import { getTenantStatusLabel, getTenantStatusColor } from '../types/tenant'
 import TenantForm from '../components/TenantForm'
 import TenantDetails from '../components/TenantDetails'
@@ -150,12 +150,38 @@ export default function Tenants() {
   const handleDeleteTenant = async (tenant) => {
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer le locataire "${tenant.name}" ?`)) {
       try {
+        console.log(`🗑️ Suppression du locataire: ${tenant.name} (ID: ${tenant.id})`)
+        
+        // Étape 1: Supprimer d'abord toutes les assignations du locataire
+        try {
+          console.log(`🔗 Suppression des assignations pour le locataire ${tenant.id}...`)
+          await assignmentsService.removeTenantAssignment(tenant.id)
+          console.log(`✅ Assignations supprimées pour le locataire ${tenant.id}`)
+        } catch (assignmentError) {
+          console.warn(`⚠️ Erreur lors de la suppression des assignations:`, assignmentError)
+          // Continuer même si la suppression des assignations échoue
+        }
+        
+        // Étape 2: Supprimer le locataire lui-même
+        console.log(`👤 Suppression du locataire de la base de données...`)
         await tenantsService.deleteTenant(tenant.id)
+        
+        // Étape 3: Mettre à jour l'interface
         setTenants(prev => prev.filter(t => t.id !== tenant.id))
         setShowDetails(false)
+        
+        console.log(`✅ Locataire ${tenant.name} supprimé avec succès`)
+        
+        // Étape 4: Déclencher un événement pour actualiser les autres vues
+        window.dispatchEvent(new CustomEvent('tenantDeleted', { 
+          detail: { tenantId: tenant.id, tenantName: tenant.name } 
+        }))
+        
       } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
-        // En cas d'erreur API, on supprime localement quand même
+        console.error('❌ Erreur lors de la suppression:', error)
+        alert(`Erreur lors de la suppression du locataire "${tenant.name}". Vérifiez la console pour plus de détails.`)
+        
+        // En cas d'erreur API majeure, on supprime localement quand même
         setTenants(prev => prev.filter(t => t.id !== tenant.id))
         setShowDetails(false)
       }

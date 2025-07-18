@@ -60,6 +60,19 @@ export default function UnitsView({ buildings }) {
   // Charger les unités et les assignations
   useEffect(() => {
     loadAssignments()
+    
+    // Écouter l'événement de suppression de locataire
+    const handleTenantDeleted = (event) => {
+      console.log(`📢 Événement tenantDeleted reçu:`, event.detail)
+      console.log(`🔄 Rechargement des assignations suite à la suppression...`)
+      loadAssignments()
+    }
+    
+    window.addEventListener('tenantDeleted', handleTenantDeleted)
+    
+    return () => {
+      window.removeEventListener('tenantDeleted', handleTenantDeleted)
+    }
   }, [])
 
   useEffect(() => {

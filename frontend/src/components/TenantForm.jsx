@@ -140,6 +140,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   useEffect(() => {
     if (isOpen) {
       loadAvailableUnits()
+      
+      // Écouter l'événement de suppression de locataire
+      const handleTenantDeleted = (event) => {
+        console.log(`📢 TenantForm: Événement tenantDeleted reçu:`, event.detail)
+        console.log(`🔄 TenantForm: Rechargement des unités disponibles...`)
+        loadAvailableUnits()
+      }
+      
+      window.addEventListener('tenantDeleted', handleTenantDeleted)
+      
+      return () => {
+        window.removeEventListener('tenantDeleted', handleTenantDeleted)
+      }
     }
   }, [isOpen])
 

@@ -72,6 +72,21 @@ export default function UnitReports({ selectedYear }) {
         reportsCount: reports.length
       })
     }
+    
+    // Écouter l'événement de suppression de locataire
+    const handleTenantDeleted = (event) => {
+      console.log(`📢 UnitReports: Événement tenantDeleted reçu:`, event.detail)
+      console.log(`🔄 UnitReports: Rechargement des données suite à la suppression...`)
+      loadAssignments()
+      loadTenants()
+      loadReports() // Les rapports pourraient aussi être affectés
+    }
+    
+    window.addEventListener('tenantDeleted', handleTenantDeleted)
+    
+    return () => {
+      window.removeEventListener('tenantDeleted', handleTenantDeleted)
+    }
   }, [loading, units, assignments, allTenants, reports, selectedYear])
 
   // Fonction pour générer automatiquement les rapports manquants

@@ -40,15 +40,24 @@ export default function Buildings() {
     fetchBuildings()
     loadAssignments()
     
-    // Écouter les changements de vue depuis SecondarySidebar
+    // Écouter les événements de changement de vue
     const handleViewChange = (event) => {
       setViewMode(event.detail)
     }
     
+    // Écouter l'événement de suppression de locataire
+    const handleTenantDeleted = (event) => {
+      console.log(`📢 Buildings: Événement tenantDeleted reçu:`, event.detail)
+      console.log(`🔄 Buildings: Rechargement des assignations suite à la suppression...`)
+      loadAssignments()
+    }
+    
     window.addEventListener('buildingsViewChange', handleViewChange)
+    window.addEventListener('tenantDeleted', handleTenantDeleted)
     
     return () => {
       window.removeEventListener('buildingsViewChange', handleViewChange)
+      window.removeEventListener('tenantDeleted', handleTenantDeleted)
     }
   }, [])
 
