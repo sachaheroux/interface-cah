@@ -26,18 +26,27 @@ export default function UnitsView({ buildings }) {
   // Charger les assignations depuis le backend
   const loadAssignments = async () => {
     try {
+      console.log('🔄 DEBUG - Début chargement assignations...')
       setLoadingAssignments(true)
       const response = await assignmentsService.getAssignments()
       const assignmentsData = response.data || []
-      console.log('Assignments loaded from backend:', assignmentsData)
+      console.log('✅ DEBUG - Assignments loaded from backend:', {
+        count: assignmentsData.length,
+        assignments: assignmentsData
+      })
       setAssignments(assignmentsData)
     } catch (error) {
-      console.error('Error loading assignments:', error)
+      console.error('❌ DEBUG - Error loading assignments:', error)
       // Fallback vers localStorage
       const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+      console.log('⚠️ DEBUG - Fallback to localStorage:', {
+        count: localAssignments.length,
+        assignments: localAssignments
+      })
       setAssignments(localAssignments)
     } finally {
       setLoadingAssignments(false)
+      console.log('✅ DEBUG - Fin chargement assignations')
     }
   }
 
@@ -73,10 +82,26 @@ export default function UnitsView({ buildings }) {
             // Calculer le statut dynamique pour chaque unité
             const unitsWithStatus = buildingUnits.map(unit => {
               const unitAssignments = assignments.filter(a => a.unitId === unit.id)
-              const currentTenants = unitAssignments.map(a => ({
-                ...a.tenantData,
-                id: a.tenantData?.id || a.tenantId // S'assurer que l'ID est présent
-              }))
+              
+              console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.buildingName} - ${unit.unitNumber}):`, {
+                unitAssignments: unitAssignments,
+                assignmentsCount: unitAssignments.length
+              })
+              
+              const currentTenants = unitAssignments.map(a => {
+                const tenant = {
+                  ...a.tenantData,
+                  id: a.tenantData?.id || a.tenantId // S'assurer que l'ID est présent
+                }
+                
+                console.log(`🐛 DEBUG - Locataire construit:`, {
+                  originalTenantData: a.tenantData,
+                  tenantId: a.tenantId,
+                  constructedTenant: tenant
+                })
+                
+                return tenant
+              })
               
               return {
                 ...unit,
@@ -234,28 +259,51 @@ export default function UnitsView({ buildings }) {
 
   // Fonction pour supprimer une assignation spécifique
   const handleRemoveFromUnit = async (tenantId, unitId, tenantName, unitName) => {
+    console.log('🐛 DEBUG - handleRemoveFromUnit appelé avec:', {
+      tenantId,
+      unitId,
+      tenantName,
+      unitName,
+      typeof_tenantId: typeof tenantId,
+      typeof_unitId: typeof unitId
+    })
+    
+    // Vérifier que les IDs sont valides
+    if (!tenantId || !unitId) {
+      console.error('❌ Erreur: IDs manquants', { tenantId, unitId })
+      alert('Erreur: Impossible de supprimer l\'assignation - données manquantes')
+      return
+    }
+    
     const confirmMessage = `Êtes-vous sûr de vouloir retirer "${tenantName}" de l'unité "${unitName}" ?\n\nLe locataire restera dans le système, seule l'assignation à cette unité sera supprimée.`
     
     if (window.confirm(confirmMessage)) {
       try {
         console.log(`🔗 Suppression assignation: ${tenantName} (${tenantId}) de ${unitName} (${unitId})`)
         
-        await assignmentsService.removeSpecificAssignment(tenantId, unitId)
+        const result = await assignmentsService.removeSpecificAssignment(tenantId, unitId)
+        console.log('🔄 Résultat de removeSpecificAssignment:', result)
         
         console.log(`✅ ${tenantName} retiré de ${unitName} avec succès`)
         
         // Recharger les assignations pour mettre à jour l'affichage
+        console.log('🔄 Rechargement des assignations...')
         await loadAssignments()
+        console.log('✅ Assignations rechargées')
         
         // Déclencher un événement pour mettre à jour les autres vues
+        console.log('📢 Déclenchement événement assignmentRemoved...')
         window.dispatchEvent(new CustomEvent('assignmentRemoved', { 
           detail: { tenantId, unitId, tenantName, unitName } 
         }))
+        console.log('✅ Événement déclenché')
         
       } catch (error) {
         console.error('❌ Erreur lors de la suppression de l\'assignation:', error)
         alert(`Erreur lors de la suppression de l'assignation de "${tenantName}". Vérifiez la console pour plus de détails.`)
       }
+    } else {
+      console.log('❌ Suppression annulée par l\'utilisateur')
     }
   }
 
