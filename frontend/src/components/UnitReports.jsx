@@ -16,6 +16,7 @@ export default function UnitReports({ selectedYear }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [assignments, setAssignments] = useState([])
   const [allTenants, setAllTenants] = useState([])
+  const [autoGenerating, setAutoGenerating] = useState(false)
 
   const months = [
     { value: 1, name: 'Janvier' },
@@ -47,6 +48,198 @@ export default function UnitReports({ selectedYear }) {
     loadAssignments()
     loadTenants()
   }, [])
+
+  // Génération automatique des rapports manquants quand toutes les données sont chargées
+  useEffect(() => {
+    if (!loading && units.length > 0 && assignments.length > 0 && allTenants.length > 0 && reports.length >= 0) {
+      console.log('🚀 Déclenchement génération automatique:', {
+        loading,
+        unitsCount: units.length,
+        assignmentsCount: assignments.length,
+        tenantsCount: allTenants.length,
+        reportsCount: reports.length,
+        selectedYear
+      })
+      autoGenerateMissingReports()
+    } else {
+      console.log('⏸️ Génération automatique en attente:', {
+        loading,
+        unitsCount: units.length,
+        assignmentsCount: assignments.length,
+        tenantsCount: allTenants.length,
+        reportsCount: reports.length
+      })
+    }
+  }, [loading, units, assignments, allTenants, reports, selectedYear])
+
+  // Fonction pour générer automatiquement les rapports manquants
+  const autoGenerateMissingReports = async () => {
+    try {
+      setAutoGenerating(true)
+      console.log('🔍 Vérification des rapports manquants pour', selectedYear)
+      
+      let newReportsCreated = 0
+      
+      for (const unit of units) {
+        // Récupérer les assignations pour cette unité
+        const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+        
+        if (unitAssignments.length === 0) {
+          console.log(`⏭️ Aucun locataire assigné à ${unit.buildingName} - ${unit.unitNumber}`)
+          continue
+        }
+
+        // Pour chaque assignation, vérifier les rapports manquants
+        for (const assignment of unitAssignments) {
+          const tenant = allTenants.find(t => t.id === assignment.tenantId)
+          if (!tenant) continue
+
+          // Récupérer les dates de bail
+          const leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
+          const leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
+
+          if (!leaseStart || !leaseEnd) {
+            console.log(`⚠️ Dates de bail manquantes pour ${tenant.name} dans ${unit.buildingName} - ${unit.unitNumber}`)
+            continue
+          }
+
+          // Générer les mois pour l'année sélectionnée
+          const startDate = new Date(leaseStart)
+          const endDate = new Date(leaseEnd)
+          const monthsToCheck = []
+
+          let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+          while (currentDate <= endDate) {
+            if (currentDate.getFullYear() === selectedYear) {
+              monthsToCheck.push({
+                year: currentDate.getFullYear(),
+                month: currentDate.getMonth() + 1
+              })
+            }
+            currentDate.setMonth(currentDate.getMonth() + 1)
+          }
+
+          // Créer les rapports manquants
+          for (const monthData of monthsToCheck) {
+            const existingReport = reports.find(r => 
+              r.unitId === unit.id && 
+              r.year === monthData.year && 
+              r.month === monthData.month
+            )
+
+            if (!existingReport) {
+              console.log(`✨ Création automatique: ${tenant.name} - ${unit.buildingName} ${unit.unitNumber} - ${monthData.month}/${monthData.year}`)
+              
+              const reportData = {
+                unitId: unit.id,
+                year: monthData.year,
+                month: monthData.month,
+                tenantName: tenant.name,
+                paymentMethod: tenant.paymentMethod || 'Virement bancaire',
+                isHeatedLit: unit.amenities?.electricity || false,
+                isFurnished: unit.amenities?.furnished || false,
+                wifiIncluded: unit.amenities?.wifi || false,
+                rentAmount: unit.rental?.monthlyRent || 0,
+                startDate: leaseStart,
+                endDate: leaseEnd
+              }
+
+              await reportsService.createUnitReport(reportData)
+              newReportsCreated++
+            }
+          }
+        }
+      }
+
+      if (newReportsCreated > 0) {
+        console.log(`🎉 ${newReportsCreated} nouveaux rapports créés automatiquement`)
+        // Recharger les rapports après création
+        await loadReports()
+      } else {
+        console.log('✅ Tous les rapports sont à jour')
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur lors de la génération automatique:', error)
+    } finally {
+      setAutoGenerating(false)
+    }
+  }
+
+  // Fonction pour regénérer manuellement (remplace l'ancienne génération)
+  const regenerateReportsForUnit = async (unit) => {
+    try {
+      console.log('🔄 Régénération manuelle pour:', unit)
+      
+      // Récupérer les assignations pour cette unité
+      const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+      
+      if (unitAssignments.length === 0) {
+        alert('Aucun locataire assigné à cette unité')
+        return
+      }
+
+      let reportsCreated = 0
+
+      // Pour chaque assignation, regénérer les rapports
+      for (const assignment of unitAssignments) {
+        const tenant = allTenants.find(t => t.id === assignment.tenantId)
+        if (!tenant) continue
+
+        const leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
+        const leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
+
+        if (!leaseStart || !leaseEnd) {
+          console.warn('Dates de bail manquantes pour:', tenant.name)
+          continue
+        }
+
+        // Générer les mois pour l'année sélectionnée
+        const startDate = new Date(leaseStart)
+        const endDate = new Date(leaseEnd)
+        const monthsToGenerate = []
+
+        let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+        while (currentDate <= endDate) {
+          if (currentDate.getFullYear() === selectedYear) {
+            monthsToGenerate.push({
+              year: currentDate.getFullYear(),
+              month: currentDate.getMonth() + 1
+            })
+          }
+          currentDate.setMonth(currentDate.getMonth() + 1)
+        }
+
+        // Créer/mettre à jour les rapports pour chaque mois
+        for (const monthData of monthsToGenerate) {
+          const reportData = {
+            unitId: unit.id,
+            year: monthData.year,
+            month: monthData.month,
+            tenantName: tenant.name,
+            paymentMethod: tenant.paymentMethod || 'Virement bancaire',
+            isHeatedLit: unit.amenities?.electricity || false,
+            isFurnished: unit.amenities?.furnished || false,
+            wifiIncluded: unit.amenities?.wifi || false,
+            rentAmount: unit.rental?.monthlyRent || 0,
+            startDate: leaseStart,
+            endDate: leaseEnd
+          }
+
+          await reportsService.createUnitReport(reportData)
+          reportsCreated++
+        }
+      }
+
+      // Recharger les rapports
+      await loadReports()
+      alert(`${reportsCreated} rapport(s) régénéré(s) pour ${selectedYear} !`)
+
+    } catch (error) {
+      console.error('Error regenerating reports:', error)
+      alert('Erreur lors de la régénération des rapports')
+    }
+  }
 
   const loadBuildings = async () => {
     try {
@@ -215,95 +408,6 @@ export default function UnitReports({ selectedYear }) {
     }
   }
 
-  // Fonction pour générer automatiquement les rapports basés sur les données unité + locataires
-  const generateMonthlyReportsForUnit = async (unit) => {
-    try {
-      console.log('Generating reports for unit:', unit)
-      
-      // Récupérer les assignations pour cette unité
-      const unitAssignments = assignments.filter(a => a.unitId === unit.id)
-      console.log('Unit assignments:', unitAssignments)
-      
-      if (unitAssignments.length === 0) {
-        alert('Aucun locataire assigné à cette unité')
-        return
-      }
-
-      // Pour chaque assignation, générer les rapports mensuels
-      for (const assignment of unitAssignments) {
-        const tenant = allTenants.find(t => t.id === assignment.tenantId)
-        if (!tenant) continue
-
-        // Récupérer les dates de bail depuis les données de l'unité ou de l'assignment
-        const leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
-        const leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
-
-        if (!leaseStart || !leaseEnd) {
-          console.warn('No lease dates found for tenant:', tenant.name)
-          continue
-        }
-
-        // Générer les mois entre les dates de bail
-        const startDate = new Date(leaseStart)
-        const endDate = new Date(leaseEnd)
-        const monthsToGenerate = []
-
-        let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
-        while (currentDate <= endDate) {
-          if (currentDate.getFullYear() === selectedYear) {
-            monthsToGenerate.push({
-              year: currentDate.getFullYear(),
-              month: currentDate.getMonth() + 1
-            })
-          }
-          currentDate.setMonth(currentDate.getMonth() + 1)
-        }
-
-        console.log('Months to generate:', monthsToGenerate)
-
-        // Créer les rapports pour chaque mois
-        for (const monthData of monthsToGenerate) {
-          // Vérifier si le rapport existe déjà
-          const existingReport = reports.find(r => 
-            r.unitId === unit.id && 
-            r.year === monthData.year && 
-            r.month === monthData.month
-          )
-
-          if (existingReport) {
-            console.log(`Report already exists for ${monthData.month}/${monthData.year}`)
-            continue
-          }
-
-          const reportData = {
-            unitId: unit.id,
-            year: monthData.year,
-            month: monthData.month,
-            tenantName: tenant.name,
-            paymentMethod: tenant.paymentMethod || 'Virement bancaire', // Default
-            isHeatedLit: unit.amenities?.electricity || false,
-            isFurnished: unit.amenities?.furnished || false,
-            wifiIncluded: unit.amenities?.wifi || false,
-            rentAmount: unit.rental?.monthlyRent || 0,
-            startDate: leaseStart,
-            endDate: leaseEnd
-          }
-
-          console.log('Creating report:', reportData)
-          await reportsService.createUnitReport(reportData)
-        }
-      }
-
-      // Recharger les rapports
-      await loadReports()
-      alert(`Rapports générés automatiquement pour ${selectedYear} !`)
-
-    } catch (error) {
-      console.error('Error generating reports:', error)
-      alert('Erreur lors de la génération des rapports')
-    }
-  }
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CA', {
       style: 'currency',
@@ -334,12 +438,14 @@ export default function UnitReports({ selectedYear }) {
     return unitName.includes(searchLower) || address.includes(searchLower)
   })
 
-  if (loading) {
+  if (loading || autoGenerating) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Chargement des rapports d'unités...</span>
+          <span className="ml-2 text-gray-600">
+            {autoGenerating ? 'Génération automatique des rapports...' : 'Chargement des rapports d\'unités...'}
+          </span>
         </div>
       </div>
     )
@@ -373,9 +479,20 @@ export default function UnitReports({ selectedYear }) {
                 <Search className="h-4 w-4 text-gray-400 absolute left-2.5 top-2.5" />
               </div>
               
-              {/* Info bulle pour le bouton Générer */}
-              <div className="text-xs text-gray-500 max-w-xs">
-                <strong>💡 Astuce:</strong> Utilisez "Générer" pour créer automatiquement tous les rapports mensuels basés sur les fiches unités et locataires
+              {/* Indicateur de génération automatique */}
+              <div className="text-xs text-gray-500 max-w-sm">
+                {autoGenerating ? (
+                  <div className="flex items-center text-blue-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+                    <strong>🤖 Génération automatique en cours...</strong>
+                  </div>
+                ) : (
+                  <div>
+                    <strong>🤖 Génération automatique activée !</strong> Les rapports se créent automatiquement quand vous avez des unités avec locataires et dates de bail.
+                    <br />
+                    <span className="text-purple-600">Utilisez "Régénérer" pour forcer une mise à jour.</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -451,11 +568,11 @@ export default function UnitReports({ selectedYear }) {
                           </button>
                         )}
                         <button
-                          onClick={() => generateMonthlyReportsForUnit(unit)}
+                          onClick={() => regenerateReportsForUnit(unit)}
                           className="text-purple-600 hover:text-purple-900 flex items-center"
                         >
                           <Wand2 className="h-4 w-4 mr-1" />
-                          Générer
+                          Régénérer
                         </button>
                       </div>
                     </td>
