@@ -1034,6 +1034,7 @@ async def create_unit_report(report_data: dict):
             "paymentMethod": report_data.get("paymentMethod"),
             "isHeatedLit": report_data.get("isHeatedLit", False),
             "isFurnished": report_data.get("isFurnished", False),
+            "wifiIncluded": report_data.get("wifiIncluded", False),
             "rentAmount": report_data.get("rentAmount", 0),
             "startDate": report_data.get("startDate"),
             "endDate": report_data.get("endDate"),

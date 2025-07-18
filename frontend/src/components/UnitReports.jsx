@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus, Search } from 'lucide-react'
-import { buildingsService, reportsService } from '../services/api'
+import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus, Search, Wand2 } from 'lucide-react'
+import { buildingsService, reportsService, tenantsService, assignmentsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 
@@ -14,6 +14,8 @@ export default function UnitReports({ selectedYear }) {
   const [reportToDelete, setReportToDelete] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [assignments, setAssignments] = useState([])
+  const [allTenants, setAllTenants] = useState([])
 
   const months = [
     { value: 1, name: 'Janvier' },
@@ -42,6 +44,8 @@ export default function UnitReports({ selectedYear }) {
   useEffect(() => {
     loadBuildings()
     loadReports()
+    loadAssignments()
+    loadTenants()
   }, [])
 
   const loadBuildings = async () => {
@@ -78,41 +82,93 @@ export default function UnitReports({ selectedYear }) {
     }
   }
 
+  const loadAssignments = async () => {
+    try {
+      const response = await assignmentsService.getAssignments()
+      setAssignments(response.data || [])
+    } catch (error) {
+      console.error('Error loading assignments:', error)
+    }
+  }
+
+  const loadTenants = async () => {
+    try {
+      const response = await tenantsService.getTenants()
+      setAllTenants(response.data || [])
+    } catch (error) {
+      console.error('Error loading tenants:', error)
+    }
+  }
+
   const getReportsForUnit = (unitId, year) => {
     return reports.filter(r => r.unitId === unitId && r.year === year)
   }
 
-  const handleAddReport = (unit) => {
+  const handleAddReport = async (unit) => {
+    console.log('Adding report for unit:', unit)
+    console.log('Unit rental info:', unit.rental)
+    console.log('Unit amenities:', unit.amenities)
+    
+    // Récupérer les assignations pour cette unité
+    const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+    console.log('Unit assignments:', unitAssignments)
+    
+    // Récupérer le premier locataire assigné pour pré-remplir
+    let tenantName = ''
+    let paymentMethod = 'Virement bancaire'
+    let startDate = ''
+    let endDate = ''
+    
+    if (unitAssignments.length > 0) {
+      const assignment = unitAssignments[0]
+      const tenant = allTenants.find(t => t.id === assignment.tenantId)
+      if (tenant) {
+        tenantName = tenant.name
+        paymentMethod = tenant.paymentMethod || 'Virement bancaire'
+      }
+      
+      // Utiliser les dates de bail de l'unité ou de l'assignation
+      startDate = unit.rental?.leaseStart || assignment.tenantData?.leaseStart || ''
+      endDate = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd || ''
+    }
+    
     setEditingReport({
       unitId: unit.id,
       unitName: `${unit.buildingName} - ${unit.unitNumber}`,
       year: selectedYear,
       month: 1,
-      tenantName: '',
-      paymentMethod: '',
-      isHeatedLit: false,
-      isFurnished: false,
-      rentAmount: 0,
-      startDate: '',
-      endDate: '',
+      // Données automatiques depuis la fiche unité
+      tenantName: tenantName,
+      paymentMethod: paymentMethod,
+      isHeatedLit: unit.amenities?.electricity || false,
+      isFurnished: unit.amenities?.furnished || false,
+      wifiIncluded: unit.amenities?.wifi || false,
+      rentAmount: unit.rental?.monthlyRent || 0,
+      startDate: startDate,
+      endDate: endDate,
       id: null
     })
     setSelectedUnit(unit)
   }
 
   const handleEditReport = (unit, report) => {
+    console.log('Editing report:', report)
+    console.log('Unit data:', unit)
+    
     setEditingReport({
       unitId: unit.id,
       unitName: `${unit.buildingName} - ${unit.unitNumber}`,
       year: report.year,
       month: report.month,
+      // Utiliser les données du rapport existant, sinon fallback sur unité
       tenantName: report.tenantName || '',
-      paymentMethod: report.paymentMethod || '',
-      isHeatedLit: report.isHeatedLit || false,
-      isFurnished: report.isFurnished || false,
-      rentAmount: report.rentAmount || 0,
-      startDate: report.startDate || '',
-      endDate: report.endDate || '',
+      paymentMethod: report.paymentMethod || 'Virement bancaire',
+      isHeatedLit: report.isHeatedLit !== undefined ? report.isHeatedLit : (unit.amenities?.electricity || false),
+      isFurnished: report.isFurnished !== undefined ? report.isFurnished : (unit.amenities?.furnished || false),
+      wifiIncluded: report.wifiIncluded !== undefined ? report.wifiIncluded : (unit.amenities?.wifi || false),
+      rentAmount: report.rentAmount || unit.rental?.monthlyRent || 0,
+      startDate: report.startDate || unit.rental?.leaseStart || '',
+      endDate: report.endDate || unit.rental?.leaseEnd || '',
       id: report.id
     })
     setSelectedUnit(unit)
@@ -120,7 +176,23 @@ export default function UnitReports({ selectedYear }) {
 
   const handleSaveReport = async () => {
     try {
-      const reportData = { ...editingReport }
+      const reportData = {
+        unitId: editingReport.unitId,
+        year: editingReport.year,
+        month: editingReport.month,
+        tenantName: editingReport.tenantName,
+        paymentMethod: editingReport.paymentMethod,
+        isHeatedLit: editingReport.isHeatedLit,
+        isFurnished: editingReport.isFurnished,
+        wifiIncluded: editingReport.wifiIncluded,
+        rentAmount: editingReport.rentAmount,
+        startDate: editingReport.startDate,
+        endDate: editingReport.endDate,
+        // Inclure l'ID si c'est une modification
+        ...(editingReport.id && { id: editingReport.id })
+      }
+      
+      console.log('Saving unit report with data:', reportData)
       await reportsService.createUnitReport(reportData)
       await loadReports()
       setEditingReport(null)
@@ -140,6 +212,95 @@ export default function UnitReports({ selectedYear }) {
     } catch (error) {
       console.error('Error deleting unit report:', error)
       alert('Erreur lors de la suppression du rapport')
+    }
+  }
+
+  // Fonction pour générer automatiquement les rapports basés sur les données unité + locataires
+  const generateMonthlyReportsForUnit = async (unit) => {
+    try {
+      console.log('Generating reports for unit:', unit)
+      
+      // Récupérer les assignations pour cette unité
+      const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+      console.log('Unit assignments:', unitAssignments)
+      
+      if (unitAssignments.length === 0) {
+        alert('Aucun locataire assigné à cette unité')
+        return
+      }
+
+      // Pour chaque assignation, générer les rapports mensuels
+      for (const assignment of unitAssignments) {
+        const tenant = allTenants.find(t => t.id === assignment.tenantId)
+        if (!tenant) continue
+
+        // Récupérer les dates de bail depuis les données de l'unité ou de l'assignment
+        const leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
+        const leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
+
+        if (!leaseStart || !leaseEnd) {
+          console.warn('No lease dates found for tenant:', tenant.name)
+          continue
+        }
+
+        // Générer les mois entre les dates de bail
+        const startDate = new Date(leaseStart)
+        const endDate = new Date(leaseEnd)
+        const monthsToGenerate = []
+
+        let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+        while (currentDate <= endDate) {
+          if (currentDate.getFullYear() === selectedYear) {
+            monthsToGenerate.push({
+              year: currentDate.getFullYear(),
+              month: currentDate.getMonth() + 1
+            })
+          }
+          currentDate.setMonth(currentDate.getMonth() + 1)
+        }
+
+        console.log('Months to generate:', monthsToGenerate)
+
+        // Créer les rapports pour chaque mois
+        for (const monthData of monthsToGenerate) {
+          // Vérifier si le rapport existe déjà
+          const existingReport = reports.find(r => 
+            r.unitId === unit.id && 
+            r.year === monthData.year && 
+            r.month === monthData.month
+          )
+
+          if (existingReport) {
+            console.log(`Report already exists for ${monthData.month}/${monthData.year}`)
+            continue
+          }
+
+          const reportData = {
+            unitId: unit.id,
+            year: monthData.year,
+            month: monthData.month,
+            tenantName: tenant.name,
+            paymentMethod: tenant.paymentMethod || 'Virement bancaire', // Default
+            isHeatedLit: unit.amenities?.electricity || false,
+            isFurnished: unit.amenities?.furnished || false,
+            wifiIncluded: unit.amenities?.wifi || false,
+            rentAmount: unit.rental?.monthlyRent || 0,
+            startDate: leaseStart,
+            endDate: leaseEnd
+          }
+
+          console.log('Creating report:', reportData)
+          await reportsService.createUnitReport(reportData)
+        }
+      }
+
+      // Recharger les rapports
+      await loadReports()
+      alert(`Rapports générés automatiquement pour ${selectedYear} !`)
+
+    } catch (error) {
+      console.error('Error generating reports:', error)
+      alert('Erreur lors de la génération des rapports')
     }
   }
 
@@ -210,6 +371,11 @@ export default function UnitReports({ selectedYear }) {
                   className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <Search className="h-4 w-4 text-gray-400 absolute left-2.5 top-2.5" />
+              </div>
+              
+              {/* Info bulle pour le bouton Générer */}
+              <div className="text-xs text-gray-500 max-w-xs">
+                <strong>💡 Astuce:</strong> Utilisez "Générer" pour créer automatiquement tous les rapports mensuels basés sur les fiches unités et locataires
               </div>
             </div>
           </div>
@@ -284,6 +450,13 @@ export default function UnitReports({ selectedYear }) {
                             Voir
                           </button>
                         )}
+                        <button
+                          onClick={() => generateMonthlyReportsForUnit(unit)}
+                          className="text-purple-600 hover:text-purple-900 flex items-center"
+                        >
+                          <Wand2 className="h-4 w-4 mr-1" />
+                          Générer
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -373,7 +546,12 @@ export default function UnitReports({ selectedYear }) {
                               Meublé
                             </span>
                           )}
-                          {!report?.isHeatedLit && !report?.isFurnished && report && (
+                          {report?.wifiIncluded && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              WiFi inclus
+                            </span>
+                          )}
+                          {!report?.isHeatedLit && !report?.isFurnished && !report?.wifiIncluded && report && (
                             <span className="text-gray-500">Standard</span>
                           )}
                         </div>
@@ -406,18 +584,37 @@ export default function UnitReports({ selectedYear }) {
                           ) : (
                             <button
                               onClick={() => {
+                                // Pré-remplir avec les données de l'unité et locataires
+                                const unitAssignments = assignments.filter(a => a.unitId === selectedUnit.id)
+                                let tenantName = ''
+                                let paymentMethod = 'Virement bancaire'
+                                let startDate = ''
+                                let endDate = ''
+                                
+                                if (unitAssignments.length > 0) {
+                                  const assignment = unitAssignments[0]
+                                  const tenant = allTenants.find(t => t.id === assignment.tenantId)
+                                  if (tenant) {
+                                    tenantName = tenant.name
+                                    paymentMethod = tenant.paymentMethod || 'Virement bancaire'
+                                  }
+                                  startDate = selectedUnit.rental?.leaseStart || assignment.tenantData?.leaseStart || ''
+                                  endDate = selectedUnit.rental?.leaseEnd || assignment.tenantData?.leaseEnd || ''
+                                }
+                                
                                 setEditingReport({
                                   unitId: selectedUnit.id,
                                   unitName: `${selectedUnit.buildingName} - ${selectedUnit.unitNumber}`,
                                   year: selectedYear,
                                   month: month.value,
-                                  tenantName: '',
-                                  paymentMethod: '',
-                                  isHeatedLit: false,
-                                  isFurnished: false,
-                                  rentAmount: 0,
-                                  startDate: '',
-                                  endDate: '',
+                                  tenantName: tenantName,
+                                  paymentMethod: paymentMethod,
+                                  isHeatedLit: selectedUnit.amenities?.electricity || false,
+                                  isFurnished: selectedUnit.amenities?.furnished || false,
+                                  wifiIncluded: selectedUnit.amenities?.wifi || false,
+                                  rentAmount: selectedUnit.rental?.monthlyRent || 0,
+                                  startDate: startDate,
+                                  endDate: endDate,
                                   id: null
                                 })
                               }}
@@ -554,6 +751,18 @@ export default function UnitReports({ selectedYear }) {
                     />
                     <label htmlFor="furnished" className="ml-2 block text-sm text-gray-900">
                       Meublé
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="wifiIncluded"
+                      checked={editingReport.wifiIncluded}
+                      onChange={(e) => setEditingReport(prev => ({ ...prev, wifiIncluded: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="wifiIncluded" className="ml-2 block text-sm text-gray-900">
+                      WiFi inclus
                     </label>
                   </div>
                 </div>
