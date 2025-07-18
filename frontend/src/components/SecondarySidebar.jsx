@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { 
   Plus, 
   List, 
@@ -109,6 +109,7 @@ const getSecondaryNavigation = (pathname, viewMode = 'list') => {
 
 export default function SecondarySidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [viewMode, setViewMode] = useState('list')
   
   // Écouter les changements de vue pour mettre à jour l'état actif
@@ -158,6 +159,10 @@ export default function SecondarySidebar() {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
                 } else if (item.name === 'Toutes les unités') {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'units' }))
+                } else if (item.name === 'Rapports') {
+                  navigate('/reports')
+                } else if (item.name === 'Maintenance') {
+                  navigate('/maintenance')
                 }
               }
             }
