@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus } from 'lucide-react'
+import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus, Search } from 'lucide-react'
 import { buildingsService, reportsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
@@ -13,6 +13,7 @@ export default function UnitReports({ selectedYear }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [reportToDelete, setReportToDelete] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const months = [
     { value: 1, name: 'Janvier' },
@@ -164,6 +165,14 @@ export default function UnitReports({ selectedYear }) {
     return month ? month.name : monthNumber
   }
 
+  // Filtrer les unités selon le terme de recherche
+  const filteredUnits = units.filter(unit => {
+    const searchLower = searchTerm.toLowerCase()
+    const unitName = `${unit.buildingName} - ${unit.unitNumber}`.toLowerCase()
+    const address = formatAddress(unit.address).toLowerCase()
+    return unitName.includes(searchLower) || address.includes(searchLower)
+  })
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -180,12 +189,30 @@ export default function UnitReports({ selectedYear }) {
       {/* Liste des unités */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
-            Rapports d'Unités - {selectedYear}
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Historique détaillé des locataires et revenus par unité et par mois
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Rapports d'Unités - {selectedYear}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Historique détaillé des locataires et revenus par unité et par mois
+              </p>
+            </div>
+            
+            {/* Champ de recherche */}
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Rechercher une unité..."
+                  className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <Search className="h-4 w-4 text-gray-400 absolute left-2.5 top-2.5" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -207,7 +234,7 @@ export default function UnitReports({ selectedYear }) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {units.map((unit) => {
+              {filteredUnits.map((unit) => {
                 const unitReports = getReportsForUnit(unit.id, selectedYear)
                 const totalRevenue = unitReports.reduce((sum, report) => sum + (report.rentAmount || 0), 0)
                 
@@ -265,6 +292,13 @@ export default function UnitReports({ selectedYear }) {
             </tbody>
           </table>
         </div>
+
+        {/* Message si aucun résultat */}
+        {filteredUnits.length === 0 && searchTerm && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Aucune unité trouvée pour "{searchTerm}"</p>
+          </div>
+        )}
       </div>
 
       {/* Détails des rapports d'une unité */}

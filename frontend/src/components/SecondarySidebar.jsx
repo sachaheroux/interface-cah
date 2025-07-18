@@ -21,7 +21,7 @@ import {
   Download
 } from 'lucide-react'
 
-const getSecondaryNavigation = (pathname, viewMode = 'list') => {
+const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buildings') => {
   switch (pathname) {    
     case '/buildings':
       return [
@@ -102,6 +102,15 @@ const getSecondaryNavigation = (pathname, viewMode = 'list') => {
         { name: 'Support', icon: FileText },
       ]
     
+    case '/reports':
+      return [
+        { name: 'Rapports d\'immeubles', icon: BarChart3, active: reportsMode === 'buildings' },
+        { name: 'Rapports d\'unités', icon: Users, active: reportsMode === 'units' },
+        { name: 'Retour aux immeubles', icon: List },
+        { name: 'Exporter données', icon: Download },
+        { name: 'Filtrer par année', icon: Calendar },
+      ]
+    
     default:
       return []
   }
@@ -111,6 +120,7 @@ export default function SecondarySidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState('list')
+  const [reportsMode, setReportsMode] = useState('buildings')
   
   // Écouter les changements de vue pour mettre à jour l'état actif
   useEffect(() => {
@@ -118,14 +128,20 @@ export default function SecondarySidebar() {
       setViewMode(event.detail)
     }
     
+    const handleReportsViewChange = (event) => {
+      setReportsMode(event.detail)
+    }
+    
     window.addEventListener('buildingsViewChange', handleViewChange)
+    window.addEventListener('reportsViewChange', handleReportsViewChange)
     
     return () => {
       window.removeEventListener('buildingsViewChange', handleViewChange)
+      window.removeEventListener('reportsViewChange', handleReportsViewChange)
     }
   }, [])
   
-  const secondaryNav = getSecondaryNavigation(location.pathname, viewMode)
+  const secondaryNav = getSecondaryNavigation(location.pathname, viewMode, reportsMode)
 
   // Ne pas afficher la sidebar sur la page d'accueil
   if (location.pathname === '/') {
@@ -144,6 +160,7 @@ export default function SecondarySidebar() {
           {location.pathname === '/projects' && 'Projets Construction'}
           {location.pathname === '/documents' && 'Documents'}
           {location.pathname === '/settings' && 'Paramètres'}
+          {location.pathname === '/reports' && 'Rapports'}
         </h2>
         
         <nav className="space-y-1">
@@ -163,6 +180,23 @@ export default function SecondarySidebar() {
                   navigate('/reports')
                 } else if (item.name === 'Maintenance') {
                   navigate('/maintenance')
+                }
+              }
+              
+              // Gestion spéciale pour la page Reports
+              if (location.pathname === '/reports') {
+                if (item.name === 'Rapports d\'immeubles') {
+                  window.dispatchEvent(new CustomEvent('reportsViewChange', { detail: 'buildings' }))
+                } else if (item.name === 'Rapports d\'unités') {
+                  window.dispatchEvent(new CustomEvent('reportsViewChange', { detail: 'units' }))
+                } else if (item.name === 'Retour aux immeubles') {
+                  navigate('/buildings')
+                } else if (item.name === 'Exporter données') {
+                  // TODO: Implémenter l'export de données
+                  console.log('Export des données des rapports')
+                } else if (item.name === 'Filtrer par année') {
+                  // TODO: Implémenter le filtre par année
+                  console.log('Filtre par année')
                 }
               }
             }

@@ -14,6 +14,22 @@ export default function Reports() {
     availableYears.push(year)
   }
 
+  // Écouter les changements de vue depuis la sidebar
+  useEffect(() => {
+    const handleViewChange = (event) => {
+      setActiveTab(event.detail)
+    }
+    
+    window.addEventListener('reportsViewChange', handleViewChange)
+    
+    // Synchroniser l'état initial avec la sidebar
+    window.dispatchEvent(new CustomEvent('reportsViewChange', { detail: activeTab }))
+    
+    return () => {
+      window.removeEventListener('reportsViewChange', handleViewChange)
+    }
+  }, [])
+
   const tabs = [
     {
       id: 'buildings',
@@ -28,6 +44,12 @@ export default function Reports() {
       description: 'Historique détaillé des locataires et revenus par unité et par mois'
     }
   ]
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    // Synchroniser avec la sidebar
+    window.dispatchEvent(new CustomEvent('reportsViewChange', { detail: tabId }))
+  }
 
   return (
     <div className="space-y-6">
@@ -72,7 +94,7 @@ export default function Reports() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
                     isActive
                       ? 'border-blue-500 text-blue-600'
