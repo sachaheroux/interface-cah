@@ -784,4 +784,137 @@ export const assignmentsService = {
   }
 }
 
+// Service pour les rapports d'immeubles et d'unités
+export const reportsService = {
+  // === RAPPORTS D'IMMEUBLES ===
+  getBuildingReports: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/building-reports`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting building reports:', error)
+      throw error
+    }
+  },
+
+  getBuildingReport: async (buildingId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/building-reports/${buildingId}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting building report:', error)
+      throw error
+    }
+  },
+
+  createBuildingReport: async (reportData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/building-reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData)
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error creating building report:', error)
+      throw error
+    }
+  },
+
+  deleteBuildingReport: async (reportId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/building-reports/${reportId}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error deleting building report:', error)
+      throw error
+    }
+  },
+
+  // === RAPPORTS D'UNITÉS ===
+  getUnitReports: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/unit-reports`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting unit reports:', error)
+      throw error
+    }
+  },
+
+  getUnitReport: async (unitId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/unit-reports/${unitId}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error getting unit report:', error)
+      throw error
+    }
+  },
+
+  createUnitReport: async (reportData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/unit-reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData)
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error creating unit report:', error)
+      throw error
+    }
+  },
+
+  deleteUnitReport: async (reportId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/unit-reports/${reportId}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Error deleting unit report:', error)
+      throw error
+    }
+  }
+}
+
 export default api 

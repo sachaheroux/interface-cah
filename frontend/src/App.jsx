@@ -13,6 +13,7 @@ import Contractors from './pages/Contractors'
 import Projects from './pages/Projects'
 import Documents from './pages/Documents'
 import Settings from './pages/Settings'
+import Reports from './pages/Reports'
 
 function AppContent() {
   const location = useLocation()
@@ -45,6 +46,7 @@ function AppContent() {
             <Route path="/projects" element={<Projects />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </main>
       </div>

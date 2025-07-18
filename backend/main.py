@@ -171,9 +171,12 @@ else:
     # Sur Render ou production Linux, utiliser le répertoire recommandé
     DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
 
+# Chemins des fichiers de données
 BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
 TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
 ASSIGNMENTS_DATA_FILE = os.path.join(DATA_DIR, "assignments_data.json")
+BUILDING_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "building_reports_data.json")
+UNIT_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "unit_reports_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -195,12 +198,30 @@ print(f"🔒 Permissions lecture: {os.access(DATA_DIR, os.R_OK)}")
 print(f"🔒 Permissions écriture: {os.access(DATA_DIR, os.W_OK)}")
 print(f"💾 Répertoire de travail: {os.getcwd()}")
 print(f"🗂️  Contenu DATA_DIR: {os.listdir(DATA_DIR) if os.path.exists(DATA_DIR) else 'N/A'}")
+
+if os.path.exists(ASSIGNMENTS_DATA_FILE):
+    print(f"📁 Fichier assignments trouvé: {ASSIGNMENTS_DATA_FILE}")
+else:
+    print(f"📁 Création du fichier assignments: {ASSIGNMENTS_DATA_FILE}")
+
+if os.path.exists(BUILDING_REPORTS_DATA_FILE):
+    print(f"📁 Fichier rapports immeubles trouvé: {BUILDING_REPORTS_DATA_FILE}")
+else:
+    print(f"📁 Création du fichier rapports immeubles: {BUILDING_REPORTS_DATA_FILE}")
+
+if os.path.exists(UNIT_REPORTS_DATA_FILE):
+    print(f"📁 Fichier rapports unités trouvé: {UNIT_REPORTS_DATA_FILE}")
+else:
+    print(f"📁 Création du fichier rapports unités: {UNIT_REPORTS_DATA_FILE}")
+
 print("=" * 60)
 
 # Cache pour les données
 buildings_cache = None
 tenants_cache = None
 assignments_cache = None
+building_reports_cache = None
+unit_reports_cache = None
 
 def get_buildings_cache():
     """Obtenir les données des immeubles avec cache"""
@@ -223,12 +244,28 @@ def get_assignments_cache():
         assignments_cache = load_assignments_data()
     return assignments_cache
 
+def get_building_reports_cache():
+    """Obtenir les données des rapports d'immeubles avec cache"""
+    global building_reports_cache
+    if building_reports_cache is None:
+        building_reports_cache = load_building_reports_data()
+    return building_reports_cache
+
+def get_unit_reports_cache():
+    """Obtenir les données des rapports d'unités avec cache"""
+    global unit_reports_cache
+    if unit_reports_cache is None:
+        unit_reports_cache = load_unit_reports_data()
+    return unit_reports_cache
+
 def invalidate_caches():
     """Invalider tous les caches"""
-    global buildings_cache, tenants_cache, assignments_cache
+    global buildings_cache, tenants_cache, assignments_cache, building_reports_cache, unit_reports_cache
     buildings_cache = None
     tenants_cache = None
     assignments_cache = None
+    building_reports_cache = None
+    unit_reports_cache = None
 
 def load_buildings_data():
     """Charger les données depuis le fichier JSON"""
@@ -346,6 +383,56 @@ def save_assignments_data(data):
         print(f"Erreur sauvegarde assignations: {e}")
         return False
 
+def load_building_reports_data():
+    """Charger les données des rapports d'immeubles depuis le fichier JSON"""
+    try:
+        if os.path.exists(BUILDING_REPORTS_DATA_FILE):
+            with open(BUILDING_REPORTS_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données rapports immeubles chargées: {len(data.get('reports', []))} rapports")
+                return data
+    except Exception as e:
+        print(f"Erreur chargement données rapports immeubles depuis fichier: {e}")
+    
+    # Retourner structure vide si pas de fichier ou erreur
+    return {"reports": [], "next_id": 1}
+
+def save_building_reports_data(data):
+    """Sauvegarder les données des rapports d'immeubles dans le fichier JSON"""
+    try:
+        with open(BUILDING_REPORTS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données rapports immeubles sauvegardées: {len(data.get('reports', []))} rapports")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde rapports immeubles: {e}")
+        return False
+
+def load_unit_reports_data():
+    """Charger les données des rapports d'unités depuis le fichier JSON"""
+    try:
+        if os.path.exists(UNIT_REPORTS_DATA_FILE):
+            with open(UNIT_REPORTS_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données rapports unités chargées: {len(data.get('reports', []))} rapports")
+                return data
+    except Exception as e:
+        print(f"Erreur chargement données rapports unités depuis fichier: {e}")
+    
+    # Retourner structure vide si pas de fichier ou erreur
+    return {"reports": [], "next_id": 1}
+
+def save_unit_reports_data(data):
+    """Sauvegarder les données des rapports d'unités dans le fichier JSON"""
+    try:
+        with open(UNIT_REPORTS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données rapports unités sauvegardées: {len(data.get('reports', []))} rapports")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde rapports unités: {e}")
+        return False
+
 def update_buildings_cache(data):
     """Mettre à jour le cache mémoire des immeubles"""
     global buildings_cache
@@ -363,6 +450,18 @@ def update_assignments_cache(data):
     global assignments_cache
     assignments_cache = data
     save_assignments_data(data)
+
+def update_building_reports_cache(data):
+    """Mettre à jour le cache mémoire des rapports d'immeubles"""
+    global building_reports_cache
+    building_reports_cache = data
+    save_building_reports_data(data)
+
+def update_unit_reports_cache(data):
+    """Mettre à jour le cache mémoire des rapports d'unités"""
+    global unit_reports_cache
+    unit_reports_cache = data
+    save_unit_reports_data(data)
 
 # Route de test de base
 @app.get("/")
@@ -807,6 +906,170 @@ async def get_projects():
         {"id": 2, "name": "Rénovation Immeuble E", "status": "in_progress", "progress": 65},
         {"id": 3, "name": "Extension Immeuble F", "status": "completed", "progress": 100}
     ]
+
+# ========================================
+# ROUTES POUR LES RAPPORTS D'IMMEUBLES
+# ========================================
+
+@app.get("/api/building-reports")
+async def get_building_reports():
+    """Récupérer tous les rapports d'immeubles"""
+    try:
+        data = get_building_reports_cache()
+        reports = data.get("reports", [])
+        return {"data": reports}
+    except Exception as e:
+        print(f"Erreur lors du chargement des rapports d'immeubles: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'immeubles: {str(e)}")
+
+@app.get("/api/building-reports/{building_id}")
+async def get_building_report(building_id: int):
+    """Récupérer le rapport d'un immeuble spécifique"""
+    try:
+        data = get_building_reports_cache()
+        reports = data.get("reports", [])
+        building_report = next((r for r in reports if r.get("buildingId") == building_id), None)
+        return {"data": building_report}
+    except Exception as e:
+        print(f"Erreur lors du chargement du rapport d'immeuble: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement du rapport d'immeuble: {str(e)}")
+
+@app.post("/api/building-reports")
+async def create_building_report(report_data: dict):
+    """Créer ou mettre à jour un rapport d'immeuble"""
+    try:
+        data = get_building_reports_cache()
+        building_id = report_data.get("buildingId")
+        year = report_data.get("year")
+        
+        # Vérifier si un rapport existe déjà pour cet immeuble et cette année
+        reports = data.get("reports", [])
+        existing_report = next((r for r in reports if r.get("buildingId") == building_id and r.get("year") == year), None)
+        
+        if existing_report:
+            # Mettre à jour le rapport existant
+            existing_report.update(report_data)
+            existing_report["updatedAt"] = datetime.now().isoformat() + "Z"
+            updated_report = existing_report
+        else:
+            # Créer un nouveau rapport
+            new_report = {
+                "id": data["next_id"],
+                "buildingId": building_id,
+                "year": year,
+                "createdAt": datetime.now().isoformat() + "Z",
+                "updatedAt": datetime.now().isoformat() + "Z",
+                **report_data
+            }
+            data["reports"].append(new_report)
+            data["next_id"] += 1
+            updated_report = new_report
+        
+        update_building_reports_cache(data)
+        print(f"Rapport immeuble sauvegardé: {building_id} - {year}")
+        return {"data": updated_report}
+    except Exception as e:
+        print(f"Erreur lors de la sauvegarde du rapport d'immeuble: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la sauvegarde du rapport d'immeuble: {str(e)}")
+
+@app.delete("/api/building-reports/{report_id}")
+async def delete_building_report(report_id: int):
+    """Supprimer un rapport d'immeuble"""
+    try:
+        data = get_building_reports_cache()
+        original_count = len(data["reports"])
+        data["reports"] = [r for r in data["reports"] if r.get("id") != report_id]
+        
+        if len(data["reports"]) == original_count:
+            raise HTTPException(status_code=404, detail="Rapport non trouvé")
+        
+        update_building_reports_cache(data)
+        print(f"Rapport immeuble supprimé: {report_id}")
+        return {"message": "Rapport supprimé avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression du rapport d'immeuble: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+# ========================================
+# ROUTES POUR LES RAPPORTS D'UNITÉS
+# ========================================
+
+@app.get("/api/unit-reports")
+async def get_unit_reports():
+    """Récupérer tous les rapports d'unités"""
+    try:
+        data = get_unit_reports_cache()
+        reports = data.get("reports", [])
+        return {"data": reports}
+    except Exception as e:
+        print(f"Erreur lors du chargement des rapports d'unités: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'unités: {str(e)}")
+
+@app.get("/api/unit-reports/{unit_id}")
+async def get_unit_report(unit_id: str):
+    """Récupérer tous les rapports d'une unité spécifique"""
+    try:
+        data = get_unit_reports_cache()
+        reports = data.get("reports", [])
+        unit_reports = [r for r in reports if r.get("unitId") == unit_id]
+        return {"data": unit_reports}
+    except Exception as e:
+        print(f"Erreur lors du chargement des rapports d'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'unité: {str(e)}")
+
+@app.post("/api/unit-reports")
+async def create_unit_report(report_data: dict):
+    """Créer un nouveau rapport d'unité mensuel"""
+    try:
+        data = get_unit_reports_cache()
+        
+        new_report = {
+            "id": data["next_id"],
+            "unitId": report_data.get("unitId"),
+            "year": report_data.get("year"),
+            "month": report_data.get("month"),
+            "tenantName": report_data.get("tenantName"),
+            "paymentMethod": report_data.get("paymentMethod"),
+            "isHeatedLit": report_data.get("isHeatedLit", False),
+            "isFurnished": report_data.get("isFurnished", False),
+            "rentAmount": report_data.get("rentAmount", 0),
+            "startDate": report_data.get("startDate"),
+            "endDate": report_data.get("endDate"),
+            "createdAt": datetime.now().isoformat() + "Z",
+            "updatedAt": datetime.now().isoformat() + "Z"
+        }
+        
+        data["reports"].append(new_report)
+        data["next_id"] += 1
+        
+        update_unit_reports_cache(data)
+        print(f"Rapport unité créé: {report_data.get('unitId')} - {report_data.get('year')}/{report_data.get('month')}")
+        return {"data": new_report}
+    except Exception as e:
+        print(f"Erreur lors de la création du rapport d'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création du rapport d'unité: {str(e)}")
+
+@app.delete("/api/unit-reports/{report_id}")
+async def delete_unit_report(report_id: int):
+    """Supprimer un rapport d'unité"""
+    try:
+        data = get_unit_reports_cache()
+        original_count = len(data["reports"])
+        data["reports"] = [r for r in data["reports"] if r.get("id") != report_id]
+        
+        if len(data["reports"]) == original_count:
+            raise HTTPException(status_code=404, detail="Rapport non trouvé")
+        
+        update_unit_reports_cache(data)
+        print(f"Rapport unité supprimé: {report_id}")
+        return {"message": "Rapport supprimé avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression du rapport d'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
