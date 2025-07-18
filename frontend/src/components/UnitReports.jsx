@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus, Search, Wand2 } from 'lucide-react'
+import { Users, Calendar, DollarSign, Edit3, Trash2, Eye, X, Plus, Search, ExternalLink } from 'lucide-react'
 import { buildingsService, reportsService, tenantsService, assignmentsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
+import { useNavigate } from 'react-router-dom'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 
 export default function UnitReports({ selectedYear }) {
@@ -17,6 +18,7 @@ export default function UnitReports({ selectedYear }) {
   const [assignments, setAssignments] = useState([])
   const [allTenants, setAllTenants] = useState([])
   const [autoGenerating, setAutoGenerating] = useState(false)
+  const navigate = useNavigate()
 
   const months = [
     { value: 1, name: 'Janvier' },
@@ -94,9 +96,30 @@ export default function UnitReports({ selectedYear }) {
           const tenant = allTenants.find(t => t.id === assignment.tenantId)
           if (!tenant) continue
 
-          // Récupérer les dates de bail
-          const leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
-          const leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
+          // Récupérer les dates de bail depuis la fiche locataire (nouveau système)
+          let leaseStart, leaseEnd, rentAmount, paymentMethod
+          
+          // Vérifier s'il y a un renouvellement actif
+          if (tenant.leaseRenewal?.isActive && tenant.leaseRenewal?.startDate && tenant.leaseRenewal?.endDate) {
+            leaseStart = tenant.leaseRenewal.startDate
+            leaseEnd = tenant.leaseRenewal.endDate
+            rentAmount = tenant.leaseRenewal.monthlyRent || tenant.lease?.monthlyRent || 0
+            paymentMethod = tenant.lease?.paymentMethod || 'Virement bancaire'
+            console.log(`📋 Utilisation renouvellement de bail pour ${tenant.name}: ${leaseStart} - ${leaseEnd}`)
+          } else if (tenant.lease?.startDate && tenant.lease?.endDate) {
+            leaseStart = tenant.lease.startDate
+            leaseEnd = tenant.lease.endDate
+            rentAmount = tenant.lease.monthlyRent || 0
+            paymentMethod = tenant.lease.paymentMethod || 'Virement bancaire'
+            console.log(`📋 Utilisation bail principal pour ${tenant.name}: ${leaseStart} - ${leaseEnd}`)
+          } else {
+            // Fallback vers ancien système (unité/assignment) si pas de données dans fiche locataire
+            leaseStart = unit.rental?.leaseStart || assignment.tenantData?.leaseStart
+            leaseEnd = unit.rental?.leaseEnd || assignment.tenantData?.leaseEnd
+            rentAmount = unit.rental?.monthlyRent || 0
+            paymentMethod = tenant.paymentMethod || 'Virement bancaire'
+            console.log(`📋 Fallback ancien système pour ${tenant.name}: ${leaseStart} - ${leaseEnd}`)
+          }
 
           if (!leaseStart || !leaseEnd) {
             console.log(`⚠️ Dates de bail manquantes pour ${tenant.name} dans ${unit.buildingName} - ${unit.unitNumber}`)
@@ -135,11 +158,11 @@ export default function UnitReports({ selectedYear }) {
                 year: monthData.year,
                 month: monthData.month,
                 tenantName: tenant.name,
-                paymentMethod: tenant.paymentMethod || 'Virement bancaire',
+                paymentMethod: paymentMethod,
                 isHeatedLit: unit.amenities?.electricity || false,
                 isFurnished: unit.amenities?.furnished || false,
                 wifiIncluded: unit.amenities?.wifi || false,
-                rentAmount: unit.rental?.monthlyRent || 0,
+                rentAmount: rentAmount,
                 startDate: leaseStart,
                 endDate: leaseEnd
               }
@@ -560,20 +583,13 @@ export default function UnitReports({ selectedYear }) {
                         </button>
                         {unitReports.length > 0 && (
                           <button
-                            onClick={() => setSelectedUnit(unit)}
+                            onClick={() => navigate(`/unit-reports/${unit.id}/${selectedYear}`)}
                             className="text-green-600 hover:text-green-900 flex items-center"
                           >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Voir
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Voir détails
                           </button>
                         )}
-                        <button
-                          onClick={() => regenerateReportsForUnit(unit)}
-                          className="text-purple-600 hover:text-purple-900 flex items-center"
-                        >
-                          <Wand2 className="h-4 w-4 mr-1" />
-                          Régénérer
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -590,167 +606,6 @@ export default function UnitReports({ selectedYear }) {
           </div>
         )}
       </div>
-
-      {/* Détails des rapports d'une unité */}
-      {selectedUnit && !editingReport && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">
-                {selectedUnit.buildingName} - {selectedUnit.unitNumber}
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Historique des rapports mensuels pour {selectedYear}
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedUnit(null)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mois
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Locataire
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Paiement
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Conditions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Loyer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {months.map((month) => {
-                  const report = getReportsForUnit(selectedUnit.id, selectedYear)
-                    .find(r => r.month === month.value)
-                  
-                  return (
-                    <tr key={month.value} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {month.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {report?.tenantName || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {report?.paymentMethod || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex space-x-2">
-                          {report?.isHeatedLit && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              Chauffé-éclairé
-                            </span>
-                          )}
-                          {report?.isFurnished && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Meublé
-                            </span>
-                          )}
-                          {report?.wifiIncluded && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              WiFi inclus
-                            </span>
-                          )}
-                          {!report?.isHeatedLit && !report?.isFurnished && !report?.wifiIncluded && report && (
-                            <span className="text-gray-500">Standard</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {report ? formatCurrency(report.rentAmount) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          {report ? (
-                            <>
-                              <button
-                                onClick={() => handleEditReport(selectedUnit, report)}
-                                className="text-blue-600 hover:text-blue-900 flex items-center"
-                              >
-                                <Edit3 className="h-4 w-4 mr-1" />
-                                Modifier
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setReportToDelete(report)
-                                  setShowDeleteModal(true)
-                                }}
-                                className="text-red-600 hover:text-red-900 flex items-center"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Supprimer
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                // Pré-remplir avec les données de l'unité et locataires
-                                const unitAssignments = assignments.filter(a => a.unitId === selectedUnit.id)
-                                let tenantName = ''
-                                let paymentMethod = 'Virement bancaire'
-                                let startDate = ''
-                                let endDate = ''
-                                
-                                if (unitAssignments.length > 0) {
-                                  const assignment = unitAssignments[0]
-                                  const tenant = allTenants.find(t => t.id === assignment.tenantId)
-                                  if (tenant) {
-                                    tenantName = tenant.name
-                                    paymentMethod = tenant.paymentMethod || 'Virement bancaire'
-                                  }
-                                  startDate = selectedUnit.rental?.leaseStart || assignment.tenantData?.leaseStart || ''
-                                  endDate = selectedUnit.rental?.leaseEnd || assignment.tenantData?.leaseEnd || ''
-                                }
-                                
-                                setEditingReport({
-                                  unitId: selectedUnit.id,
-                                  unitName: `${selectedUnit.buildingName} - ${selectedUnit.unitNumber}`,
-                                  year: selectedYear,
-                                  month: month.value,
-                                  tenantName: tenantName,
-                                  paymentMethod: paymentMethod,
-                                  isHeatedLit: selectedUnit.amenities?.electricity || false,
-                                  isFurnished: selectedUnit.amenities?.furnished || false,
-                                  wifiIncluded: selectedUnit.amenities?.wifi || false,
-                                  rentAmount: selectedUnit.rental?.monthlyRent || 0,
-                                  startDate: startDate,
-                                  endDate: endDate,
-                                  id: null
-                                })
-                              }}
-                              className="text-green-600 hover:text-green-900 flex items-center"
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Ajouter
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Formulaire d'édition */}
       {editingReport && (

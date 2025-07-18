@@ -13,6 +13,20 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     unitId: '',
     unitInfo: null,
     
+    lease: {
+      startDate: '',
+      endDate: '',
+      monthlyRent: 0,
+      paymentMethod: 'Virement bancaire'
+    },
+    
+    leaseRenewal: {
+      isActive: false,
+      startDate: '',
+      endDate: '',
+      monthlyRent: 0
+    },
+    
     emergencyContact: {
       name: '',
       phone: '',
@@ -48,6 +62,20 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         unitId: tenant.unitId || '',
         unitInfo: tenant.unitInfo || null,
         
+        lease: {
+          startDate: tenant.lease?.startDate || '',
+          endDate: tenant.lease?.endDate || '',
+          monthlyRent: tenant.lease?.monthlyRent || 0,
+          paymentMethod: tenant.lease?.paymentMethod || 'Virement bancaire'
+        },
+        
+        leaseRenewal: {
+          isActive: tenant.leaseRenewal?.isActive || false,
+          startDate: tenant.leaseRenewal?.startDate || '',
+          endDate: tenant.leaseRenewal?.endDate || '',
+          monthlyRent: tenant.leaseRenewal?.monthlyRent || 0
+        },
+        
         emergencyContact: {
           name: tenant.emergencyContact?.name || '',
           phone: tenant.emergencyContact?.phone || '',
@@ -73,6 +101,18 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         status: TenantStatus.ACTIVE,
         unitId: '',
         unitInfo: null,
+        lease: {
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0,
+          paymentMethod: 'Virement bancaire'
+        },
+        leaseRenewal: {
+          isActive: false,
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0
+        },
         emergencyContact: {
           name: '',
           phone: '',
@@ -174,6 +214,26 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       ...prev,
       [section]: {
         ...prev[section],
+        [field]: value
+      }
+    }))
+  }
+
+  const handleLeaseChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      lease: {
+        ...prev.lease,
+        [field]: value
+      }
+    }))
+  }
+
+  const handleLeaseRenewalChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      leaseRenewal: {
+        ...prev.leaseRenewal,
         [field]: value
       }
     }))
@@ -468,6 +528,145 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   <p className="text-sm">Toutes les unités sont actuellement occupées.</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Informations de Bail */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              Informations de Bail
+            </h3>
+            
+            {/* Bail actuel */}
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="text-md font-medium text-gray-900 mb-4">Bail Actuel</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de début
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.lease.startDate}
+                      onChange={(e) => handleLeaseChange('startDate', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de fin
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.lease.endDate}
+                      onChange={(e) => handleLeaseChange('endDate', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Loyer mensuel (CAD)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.lease.monthlyRent}
+                      onChange={(e) => handleLeaseChange('monthlyRent', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Méthode de paiement
+                    </label>
+                    <select
+                      value={formData.lease.paymentMethod}
+                      onChange={(e) => handleLeaseChange('paymentMethod', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="Virement bancaire">Virement bancaire</option>
+                      <option value="Chèque">Chèque</option>
+                      <option value="Comptant">Comptant</option>
+                      <option value="Carte de crédit">Carte de crédit</option>
+                      <option value="Prélèvement automatique">Prélèvement automatique</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Renouvellement de bail */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-medium text-gray-900">Renouvellement de Bail</h4>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="leaseRenewalActive"
+                      checked={formData.leaseRenewal.isActive}
+                      onChange={(e) => handleLeaseRenewalChange('isActive', e.target.checked)}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="leaseRenewalActive" className="ml-2 block text-sm text-gray-900">
+                      Activer le renouvellement
+                    </label>
+                  </div>
+                </div>
+                
+                {formData.leaseRenewal.isActive && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nouvelle date de début
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.leaseRenewal.startDate}
+                        onChange={(e) => handleLeaseRenewalChange('startDate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nouvelle date de fin
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.leaseRenewal.endDate}
+                        onChange={(e) => handleLeaseRenewalChange('endDate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nouveau loyer mensuel (CAD)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.leaseRenewal.monthlyRent}
+                        onChange={(e) => handleLeaseRenewalChange('monthlyRent', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {!formData.leaseRenewal.isActive && (
+                  <p className="text-sm text-gray-600">
+                    Cochez la case ci-dessus pour configurer un renouvellement de bail avec de nouvelles conditions.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

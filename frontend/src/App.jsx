@@ -14,6 +14,7 @@ import Projects from './pages/Projects'
 import Documents from './pages/Documents'
 import Settings from './pages/Settings'
 import Reports from './pages/Reports'
+import UnitReportDetails from './pages/UnitReportDetails'
 
 function AppContent() {
   const location = useLocation()
@@ -47,6 +48,7 @@ function AppContent() {
             <Route path="/documents" element={<Documents />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/unit-reports/:unitId/:year" element={<UnitReportDetails />} />
           </Routes>
         </main>
       </div>
