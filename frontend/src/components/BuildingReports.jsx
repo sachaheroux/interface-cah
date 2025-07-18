@@ -46,14 +46,24 @@ export default function BuildingReports({ selectedYear }) {
   }
 
   const handleEditReport = (building) => {
+    console.log('Building data:', building)
+    console.log('Financial info:', building.financials)
+    console.log('Purchase price:', building.financials?.purchasePrice)
+    console.log('Down payment:', building.financials?.downPayment)
+    
     const existingReport = getReportForBuilding(building.id, selectedYear)
+    console.log('Existing report:', existingReport)
+    
+    const purchaseCost = building.financials?.purchasePrice || 0
+    const downPayment = building.financials?.downPayment || 0
+    
     setEditingReport({
       buildingId: building.id,
       buildingName: building.name || formatAddress(building.address),
       year: selectedYear,
       // Données fixes (de la fiche immeuble) - toujours prendre depuis building
-      purchaseCost: building.purchaseCost || building.financialInfo?.purchaseCost || 0,
-      downPayment: building.downPayment || building.financialInfo?.downPayment || 0,
+      purchaseCost: purchaseCost,
+      downPayment: downPayment,
       // Données variables par année
       interestRate: existingReport?.interestRate || 0,
       currentValue: existingReport?.currentValue || 0,
@@ -72,7 +82,29 @@ export default function BuildingReports({ selectedYear }) {
 
   const handleSaveReport = async () => {
     try {
-      const reportData = { ...editingReport }
+      // S'assurer que toutes les données sont incluses, y compris les données fixes
+      const reportData = {
+        buildingId: editingReport.buildingId,
+        year: editingReport.year,
+        // Données fixes - s'assurer qu'elles sont sauvegardées
+        purchaseCost: editingReport.purchaseCost,
+        downPayment: editingReport.downPayment,
+        // Données variables par année
+        interestRate: editingReport.interestRate,
+        currentValue: editingReport.currentValue,
+        municipalTaxes: editingReport.municipalTaxes,
+        schoolTaxes: editingReport.schoolTaxes,
+        insurance: editingReport.insurance,
+        snowRemoval: editingReport.snowRemoval,
+        lawn: editingReport.lawn,
+        management: editingReport.management,
+        renovation: editingReport.renovation,
+        other: editingReport.other,
+        // Inclure l'ID si c'est une modification
+        ...(editingReport.id && { id: editingReport.id })
+      }
+      
+      console.log('Sauvegarde rapport avec données:', reportData)
       await reportsService.createBuildingReport(reportData)
       await loadReports()
       setEditingReport(null)
@@ -168,10 +200,10 @@ export default function BuildingReports({ selectedYear }) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Immeuble
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Immeuble
+                  Actions
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Rapport Excel
@@ -186,6 +218,22 @@ export default function BuildingReports({ selectedYear }) {
                 const report = getReportForBuilding(building.id, selectedYear)
                 return (
                   <tr key={building.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Building2 className="h-5 w-5 text-gray-400 mr-3" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {building.name || formatAddress(building.address)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {formatAddress(building.address)}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Coût: {formatCurrency(building.financials?.purchasePrice || 0)} | Mise de fond: {formatCurrency(building.financials?.downPayment || 0)}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
@@ -207,22 +255,6 @@ export default function BuildingReports({ selectedYear }) {
                             Supprimer
                           </button>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Building2 className="h-5 w-5 text-gray-400 mr-3" />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {building.name || formatAddress(building.address)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {formatAddress(building.address)}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            Coût: {formatCurrency(building.purchaseCost)} | Mise de fond: {formatCurrency(building.downPayment)}
-                          </div>
-                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -300,11 +332,21 @@ export default function BuildingReports({ selectedYear }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white p-3 rounded border">
                     <label className="block text-sm font-medium text-gray-700">Coût d'achat</label>
-                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(selectedBuildingDetails.purchaseCost)}</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {(() => {
+                        const report = getReportForBuilding(selectedBuildingDetails.id, selectedYear)
+                        return formatCurrency(report?.purchaseCost || selectedBuildingDetails.financials?.purchasePrice || 0)
+                      })()}
+                    </p>
                   </div>
                   <div className="bg-white p-3 rounded border">
                     <label className="block text-sm font-medium text-gray-700">Mise de fond</label>
-                    <p className="text-lg font-semibold text-gray-900">{formatCurrency(selectedBuildingDetails.downPayment)}</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {(() => {
+                        const report = getReportForBuilding(selectedBuildingDetails.id, selectedYear)
+                        return formatCurrency(report?.downPayment || selectedBuildingDetails.financials?.downPayment || 0)
+                      })()}
+                    </p>
                   </div>
                 </div>
               </div>
