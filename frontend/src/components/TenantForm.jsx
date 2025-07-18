@@ -53,6 +53,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
 
   useEffect(() => {
     if (tenant) {
+      console.log('📋 Chargement des données locataire existant:', {
+        name: tenant.name,
+        lease: tenant.lease,
+        leaseRenewal: tenant.leaseRenewal
+      })
+      
       setFormData({
         name: tenant.name || '',
         email: tenant.email || '',
@@ -220,6 +226,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   }
 
   const handleLeaseChange = (field, value) => {
+    console.log(`🔄 Changement bail - ${field}:`, value)
     setFormData(prev => ({
       ...prev,
       lease: {
@@ -230,6 +237,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   }
 
   const handleLeaseRenewalChange = (field, value) => {
+    console.log(`🔄 Changement renouvellement - ${field}:`, value)
     setFormData(prev => ({
       ...prev,
       leaseRenewal: {
@@ -255,13 +263,35 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     try {
       setLoading(true)
       
-      // Préparer les données à sauvegarder
+      // Préparer les données à sauvegarder avec inclusion explicite des données de bail
       const tenantData = {
         ...formData,
         id: tenant?.id || Date.now(),
         createdAt: tenant?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // S'assurer que les données de bail sont incluses
+        lease: formData.lease || {
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0,
+          paymentMethod: 'Virement bancaire'
+        },
+        leaseRenewal: formData.leaseRenewal || {
+          isActive: false,
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0
+        }
       }
+
+      // Debug: Log des données qui vont être sauvegardées
+      console.log('💾 Données locataire à sauvegarder:', {
+        name: tenantData.name,
+        lease: tenantData.lease,
+        leaseRenewal: tenantData.leaseRenewal,
+        emergencyContact: tenantData.emergencyContact,
+        financial: tenantData.financial
+      })
 
       // Si une unité est sélectionnée, assigner le locataire à l'unité
       if (formData.unitId && formData.unitInfo) {
@@ -277,17 +307,20 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               moveOutDate: null
             }
           )
-          console.log('Tenant assigned to unit successfully')
+          console.log('✅ Tenant assigned to unit successfully')
         } catch (assignError) {
-          console.error('Error assigning tenant to unit:', assignError)
+          console.error('❌ Error assigning tenant to unit:', assignError)
           // Continuer même si l'assignation échoue
         }
       }
 
+      console.log('📤 Envoi des données locataire au service...')
       await onSave(tenantData)
+      console.log('✅ Locataire sauvegardé avec succès')
       onClose()
     } catch (error) {
-      console.error('Error saving tenant:', error)
+      console.error('❌ Error saving tenant:', error)
+      alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
     } finally {
       setLoading(false)
     }

@@ -131,11 +131,26 @@ class Tenant(BaseModel):
     personalAddress: Optional[PersonalAddress] = None
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
+    lease: Optional[LeaseInfo] = None
+    leaseRenewal: Optional[LeaseRenewal] = None
     building: str = ""
     unit: str = ""
     notes: str = ""
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
+
+# Modèles pour les données de bail
+class LeaseInfo(BaseModel):
+    startDate: str = ""
+    endDate: str = ""
+    monthlyRent: float = 0
+    paymentMethod: str = "Virement bancaire"
+
+class LeaseRenewal(BaseModel):
+    isActive: bool = False
+    startDate: str = ""
+    endDate: str = ""
+    monthlyRent: float = 0
 
 class TenantCreate(BaseModel):
     name: str
@@ -145,6 +160,8 @@ class TenantCreate(BaseModel):
     personalAddress: Optional[PersonalAddress] = None
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
+    lease: Optional[LeaseInfo] = None
+    leaseRenewal: Optional[LeaseRenewal] = None
     building: str = ""
     unit: str = ""
     notes: str = ""
@@ -157,6 +174,8 @@ class TenantUpdate(BaseModel):
     personalAddress: Optional[PersonalAddress] = None
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
+    lease: Optional[LeaseInfo] = None
+    leaseRenewal: Optional[LeaseRenewal] = None
     building: Optional[str] = None
     unit: Optional[str] = None
     notes: Optional[str] = None

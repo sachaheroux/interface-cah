@@ -294,20 +294,27 @@ export const tenantsService = {
   
   createTenant: async (data) => {
     try {
-      console.log('Creating tenant with data:', data)
+      console.log('📤 Creating tenant with data:', {
+        name: data.name,
+        lease: data.lease,
+        leaseRenewal: data.leaseRenewal,
+        fullData: data
+      })
       const response = await api.post('/api/tenants', data)
-      console.log('Create tenant response:', response)
+      console.log('📥 Create tenant response:', response)
       
       // Extraire les données créées
       if (response.data?.data) {
+        console.log('✅ Tenant créé avec succès (response.data.data):', response.data.data)
         return { data: response.data.data }
       } else if (response.data) {
+        console.log('✅ Tenant créé avec succès (response.data):', response.data)
         return { data: response.data }
       }
       
       throw new Error('No data in create response')
     } catch (error) {
-      console.warn('API create tenant failed, saving locally:', error.message)
+      console.warn('⚠️ API create tenant failed, saving locally:', error.message)
       
       // Fallback vers localStorage
       const localTenants = JSON.parse(localStorage.getItem('localTenants') || '[]')
@@ -320,7 +327,11 @@ export const tenantsService = {
       
       localTenants.push(newTenant)
       localStorage.setItem('localTenants', JSON.stringify(localTenants))
-      console.log('Tenant saved locally:', newTenant)
+      console.log('💾 Tenant saved locally:', {
+        name: newTenant.name,
+        lease: newTenant.lease,
+        leaseRenewal: newTenant.leaseRenewal
+      })
       
       return { data: newTenant }
     }
@@ -328,20 +339,27 @@ export const tenantsService = {
   
   updateTenant: async (id, data) => {
     try {
-      console.log('Updating tenant with ID:', id, 'Data:', data)
+      console.log('📤 Updating tenant with ID:', id, 'Data:', {
+        name: data.name,
+        lease: data.lease,
+        leaseRenewal: data.leaseRenewal,
+        fullData: data
+      })
       const response = await api.put(`/api/tenants/${id}`, data)
-      console.log('Update tenant response:', response)
+      console.log('📥 Update tenant response:', response)
       
       // Extraire les données mises à jour
       if (response.data?.data) {
+        console.log('✅ Tenant mis à jour avec succès (response.data.data):', response.data.data)
         return { data: response.data.data }
       } else if (response.data) {
+        console.log('✅ Tenant mis à jour avec succès (response.data):', response.data)
         return { data: response.data }
       }
       
       throw new Error('No data in update response')
     } catch (error) {
-      console.warn('API update tenant failed, updating locally:', error.message)
+      console.warn('⚠️ API update tenant failed, updating locally:', error.message)
       
       // Fallback vers localStorage
       const localTenants = JSON.parse(localStorage.getItem('localTenants') || '[]')
