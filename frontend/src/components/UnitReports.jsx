@@ -149,6 +149,16 @@ export default function UnitReports({ selectedYear }) {
     }).format(amount || 0)
   }
 
+  const formatAddress = (address) => {
+    if (typeof address === 'string') {
+      return address
+    }
+    if (address && typeof address === 'object') {
+      return `${address.street || ''}, ${address.city || ''}`.replace(/^,\s*/, '').replace(/,\s*$/, '')
+    }
+    return ''
+  }
+
   const getMonthName = (monthNumber) => {
     const month = months.find(m => m.value === monthNumber)
     return month ? month.name : monthNumber
@@ -211,7 +221,7 @@ export default function UnitReports({ selectedYear }) {
                             {unit.buildingName} - {unit.unitNumber}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {unit.address}
+                            {formatAddress(unit.address)}
                           </div>
                         </div>
                       </div>

@@ -99,6 +99,16 @@ export default function BuildingReports({ selectedYear }) {
     }).format(amount || 0)
   }
 
+  const formatAddress = (address) => {
+    if (typeof address === 'string') {
+      return address
+    }
+    if (address && typeof address === 'object') {
+      return `${address.street || ''}, ${address.city || ''}`.replace(/^,\s*/, '').replace(/,\s*$/, '')
+    }
+    return ''
+  }
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -157,7 +167,7 @@ export default function BuildingReports({ selectedYear }) {
                             {building.name || building.address}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {building.address}
+                            {formatAddress(building.address)}
                           </div>
                         </div>
                       </div>
