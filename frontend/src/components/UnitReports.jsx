@@ -92,7 +92,7 @@ export default function UnitReports({ selectedYear }) {
         // Vérifier si le locataire était actif ce mois-là
         let isActiveThisMonth = false
         let currentRentAmount = 0
-
+        
         // Vérifier avec les renouvellements (priorité)
         if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
           const activeRenewal = tenant.leaseRenewals.find(renewal => {
@@ -120,11 +120,13 @@ export default function UnitReports({ selectedYear }) {
         // Si le locataire était actif, ajouter le loyer au total
         if (isActiveThisMonth) {
           totalRevenue += currentRentAmount
+          console.log(`💰 Revenu ajouté pour mois ${month} (${tenant.name}): ${currentRentAmount}$ (Total: ${totalRevenue}$)`)
           // Continuer avec le prochain locataire (pas de break)
         }
       }
     }
     
+    console.log(`🎯 Revenus totaux pour unité ${unitId}: ${totalRevenue}$`)
     return totalRevenue
   }
 

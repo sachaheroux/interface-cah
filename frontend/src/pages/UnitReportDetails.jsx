@@ -169,8 +169,7 @@ export default function UnitReportDetails() {
     
     // Collecter TOUS les locataires actifs pour ce mois
     const activeTenantsThisMonth = []
-    let rentAmount = 0
-    let paymentMethod = 'Virement bancaire'
+    let totalRentAmount = 0
     
     console.log(`🐛 DEBUG - Tous les locataires disponibles:`, allTenants.map(t => ({ id: t.id, name: t.name })))
     
@@ -204,7 +203,11 @@ export default function UnitReportDetails() {
           }
         }
         
-        if (!tenant) continue
+        // Si toujours pas trouvé, ignorer cette assignation
+        if (!tenant) {
+          console.log(`❌ Assignment ${assignment.id} ignorée - locataire introuvable`)
+          continue
+        }
       }
 
       // Vérifier si le locataire était actif ce mois-là
@@ -285,20 +288,10 @@ export default function UnitReportDetails() {
           amenities: currentAmenities
         })
         
-        // Utiliser le loyer du premier locataire (ils ont tous le même montant total)
-        if (rentAmount === 0) {
-          rentAmount = currentRentAmount
-          paymentMethod = currentPaymentMethod
-        } else if (rentAmount !== currentRentAmount) {
-          // ⚠️ DÉTECTION D'INCOHÉRENCE
-          console.warn(`⚠️ INCOHÉRENCE DÉTECTÉE - Unité ${unitId}, Mois ${monthValue}:`)
-          console.warn(`   Premier locataire: ${rentAmount}$`)
-          console.warn(`   ${tenant.name}: ${currentRentAmount}$`)
-          console.warn(`   → Utilisation du premier montant (${rentAmount}$)`)
-          console.warn(`   → VÉRIFIEZ LES FICHES LOCATAIRES pour corriger cette incohérence !`)
-        }
+        // Additionner au total des revenus
+        totalRentAmount += currentRentAmount
         
-        console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$)`)
+        console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$) - Total: ${totalRentAmount}$`)
       } else {
         console.log(`❌ Locataire ${tenant.name} non actif pour ce mois`)
       }
@@ -308,7 +301,8 @@ export default function UnitReportDetails() {
     console.log(`🐛 DEBUG - Résumé final pour mois ${monthValue}:`, {
       totalAssignments: unitAssignments.length,
       activeTenantsCount: activeTenantsThisMonth.length,
-      activeTenants: activeTenantsThisMonth.map(t => t.name)
+      activeTenants: activeTenantsThisMonth.map(t => t.name),
+      totalRentAmount: totalRentAmount
     })
 
     // Construire le résultat avec tous les locataires actifs
@@ -325,8 +319,8 @@ export default function UnitReportDetails() {
       
       const result = {
         tenantName: allTenantNames,
-        paymentMethod: paymentMethod,
-        rentAmount: rentAmount, // Montant total (pas multiplié)
+        paymentMethod: activeTenantsThisMonth[0].paymentMethod || 'Virement bancaire',
+        rentAmount: totalRentAmount, // Montant total additionné
         isHeatedLit: firstTenantAmenities.heating || firstTenantAmenities.electricity || false,
         isFurnished: firstTenantAmenities.furnished || false,
         wifiIncluded: firstTenantAmenities.wifi || false
@@ -582,6 +576,97 @@ export default function UnitReportDetails() {
                       {(!tenant.lease?.leasePdf && (!tenant.leaseRenewals || tenant.leaseRenewals.every(r => !r.renewalPdf))) && (
                         <div className="text-center py-4 text-gray-500 text-sm">
                           Aucun PDF de bail disponible pour ce locataire
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+      </div>
+
+      {/* Section Historique des Baux */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">
+            Historique des Baux
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Tous les baux et renouvellements pour cette unité (actifs et inactifs)
+          </p>
+        </div>
+        
+        <div className="p-6">
+          {(() => {
+            const unitAssignments = assignments.filter(a => a.unitId === unitId)
+            const tenantsWithLeases = []
+            
+            unitAssignments.forEach(assignment => {
+              const tenant = allTenants.find(t => t.id === assignment.tenantId)
+              if (tenant) {
+                tenantsWithLeases.push(tenant)
+              }
+            })
+            
+            if (tenantsWithLeases.length === 0) {
+              return (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Aucun locataire assigné à cette unité</p>
+                </div>
+              )
+            }
+            
+            return (
+              <div className="space-y-6">
+                {tenantsWithLeases.map((tenant, index) => (
+                  <div key={tenant.id} className="border rounded-lg p-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-4">
+                      {tenant.name}
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      {/* Bail principal */}
+                      {tenant.lease && (
+                        <div className="bg-gray-50 p-4 rounded">
+                          <h5 className="text-md font-medium text-gray-900 mb-2">Bail Principal</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="font-medium">Début:</span> {tenant.lease.startDate}
+                            </div>
+                            <div>
+                              <span className="font-medium">Fin:</span> {tenant.lease.endDate}
+                            </div>
+                            <div>
+                              <span className="font-medium">Loyer:</span> {formatCurrency(tenant.lease.monthlyRent)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Renouvellements */}
+                      {tenant.leaseRenewals && tenant.leaseRenewals.length > 0 && (
+                        <div className="space-y-3">
+                          <h5 className="text-md font-medium text-gray-900">Renouvellements</h5>
+                          {tenant.leaseRenewals.map((renewal, renewalIndex) => (
+                            <div key={renewal.id} className="bg-blue-50 p-4 rounded">
+                              <h6 className="text-sm font-medium text-gray-900 mb-2">
+                                Renouvellement {renewalIndex + 1}
+                              </h6>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <span className="font-medium">Début:</span> {renewal.startDate}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Fin:</span> {renewal.endDate}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Loyer:</span> {formatCurrency(renewal.monthlyRent)}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
