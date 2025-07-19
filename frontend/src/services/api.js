@@ -2,7 +2,7 @@ import axios from 'axios'
 import { parseAddressAndGenerateUnits } from '../types/unit.js'
 
 // Configuration de base pour axios
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://interface-cah-backend.onrender.com'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
