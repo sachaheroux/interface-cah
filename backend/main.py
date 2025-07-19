@@ -72,6 +72,7 @@ class Building(BaseModel):
     financials: Optional[Financials] = None
     contacts: Optional[Contacts] = None
     notes: str = ""
+    unitData: Optional[dict] = None  # Données personnalisées des unités
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
 
@@ -87,6 +88,7 @@ class BuildingCreate(BaseModel):
     financials: Optional[Financials] = None
     contacts: Optional[Contacts] = None
     notes: str = ""
+    unitData: Optional[dict] = None  # Données personnalisées des unités
 
 class BuildingUpdate(BaseModel):
     name: Optional[str] = None
@@ -100,6 +102,7 @@ class BuildingUpdate(BaseModel):
     financials: Optional[Financials] = None
     contacts: Optional[Contacts] = None
     notes: Optional[str] = None
+    unitData: Optional[dict] = None  # Données personnalisées des unités
 
 # Modèles pour les locataires
 class PersonalAddress(BaseModel):
