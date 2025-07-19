@@ -78,13 +78,20 @@ export default function UnitReports({ selectedYear }) {
       
       // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
       for (const assignment of unitAssignments) {
-        const tenant = allTenants.find(t => t.id === assignment.tenantId || t.id === String(assignment.tenantId) || String(t.id) === assignment.tenantId)
+        let tenant = allTenants.find(t => t.id === assignment.tenantId)
         
-        if (!tenant) continue
-        
+        if (!tenant) {
+          // Essayer de trouver par nom si available dans tenantData
+          if (assignment.tenantData && assignment.tenantData.name) {
+            tenant = allTenants.find(t => t.name === assignment.tenantData.name)
+          }
+          if (!tenant) continue
+        }
+
+        // Vérifier si le locataire était actif ce mois-là
         let isActiveThisMonth = false
         let currentRentAmount = 0
-        
+
         // Vérifier avec les renouvellements (priorité)
         if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
           const activeRenewal = tenant.leaseRenewals.find(renewal => {
