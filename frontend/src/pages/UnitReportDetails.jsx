@@ -156,7 +156,7 @@ export default function UnitReportDetails() {
         tenantName: '-',
         paymentMethod: '-',
         rentAmount: 0,
-        isHeatedLit: unit?.amenities?.electricity || false,
+        isHeatedLit: unit?.amenities?.heating || unit?.amenities?.electricity || false,
         isFurnished: unit?.amenities?.furnished || false,
         wifiIncluded: unit?.amenities?.wifi || false
       }
@@ -265,21 +265,45 @@ export default function UnitReportDetails() {
         tenantName: allTenantNames,
         paymentMethod: paymentMethod,
         rentAmount: rentAmount, // Montant total (pas multiplié)
-        isHeatedLit: unit?.amenities?.electricity || false,
+        isHeatedLit: unit?.amenities?.heating || unit?.amenities?.electricity || false,
         isFurnished: unit?.amenities?.furnished || false,
         wifiIncluded: unit?.amenities?.wifi || false
       }
+      
+      console.log(`🐛 DEBUG - Amenities de l'unité ${unitId}:`, {
+        unitAmenities: unit?.amenities,
+        heating: unit?.amenities?.heating,
+        electricity: unit?.amenities?.electricity,
+        furnished: unit?.amenities?.furnished,
+        wifi: unit?.amenities?.wifi,
+        resultConditions: {
+          isHeatedLit: result.isHeatedLit,
+          isFurnished: result.isFurnished,
+          wifiIncluded: result.wifiIncluded
+        }
+      })
+      
       console.log(`🎉 Données trouvées pour mois ${monthValue} (${activeTenantsThisMonth.length} locataires):`, result)
       return result
     }
 
     // Aucun locataire actif trouvé pour ce mois
     console.log(`❌ Aucun locataire actif trouvé pour mois ${monthValue}`)
+    
+    // Debug: Afficher les amenities même sans locataire
+    console.log(`🐛 DEBUG - Amenities unité vide ${unitId}:`, {
+      unitAmenities: unit?.amenities,
+      heating: unit?.amenities?.heating,
+      electricity: unit?.amenities?.electricity,
+      furnished: unit?.amenities?.furnished,
+      wifi: unit?.amenities?.wifi
+    })
+    
     return {
       tenantName: '-',
       paymentMethod: '-',
       rentAmount: 0,
-      isHeatedLit: unit?.amenities?.electricity || false,
+      isHeatedLit: unit?.amenities?.heating || unit?.amenities?.electricity || false,
       isFurnished: unit?.amenities?.furnished || false,
       wifiIncluded: unit?.amenities?.wifi || false
     }
