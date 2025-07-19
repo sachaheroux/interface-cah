@@ -222,12 +222,6 @@ export default function UnitsView({ buildings }) {
         unit.id === updatedUnit.id ? updatedUnit : unit
       )
       setUnits(updatedUnits)
-
-      // Mettre à jour la liste des immeubles locale aussi
-      const updatedBuildings = buildings.map(building =>
-        building.id === updatedBuilding.id ? updatedBuilding : building
-      )
-      setBuildings(updatedBuildings)
       
       console.log('✅ UnitsView: Unité sauvegardée avec succès dans le backend')
       
