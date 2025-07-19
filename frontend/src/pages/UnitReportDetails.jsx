@@ -222,11 +222,17 @@ export default function UnitReportDetails() {
 
       // Vérifier avec les renouvellements (priorité)
       if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
+        console.log(`🔍 Vérification des ${tenant.leaseRenewals.length} renouvellements pour ${tenant.name}`)
+        
         // Trouver le renouvellement actif pour cette date
         const activeRenewal = tenant.leaseRenewals.find(renewal => {
           const renewalStart = new Date(renewal.startDate)
           const renewalEnd = new Date(renewal.endDate)
-          return targetDate >= renewalStart && targetDate <= renewalEnd
+          const isActive = targetDate >= renewalStart && targetDate <= renewalEnd
+          
+          console.log(`🔍 Renouvellement ${renewal.startDate} - ${renewal.endDate}: ${isActive ? 'ACTIF' : 'inactif'}`)
+          
+          return isActive
         })
         
         if (activeRenewal) {
@@ -234,6 +240,8 @@ export default function UnitReportDetails() {
           currentRentAmount = activeRenewal.monthlyRent || 0
           currentPaymentMethod = tenant.lease?.paymentMethod || 'Virement bancaire'
           console.log(`✅ Actif via renouvellement: ${currentRentAmount}$ ${currentPaymentMethod}`)
+        } else {
+          console.log(`❌ Aucun renouvellement actif pour ${tenant.name} en ${monthValue}/${year}`)
         }
       }
       // Sinon vérifier avec lease principal
@@ -248,7 +256,11 @@ export default function UnitReportDetails() {
           currentRentAmount = tenant.lease.monthlyRent || 0
           currentPaymentMethod = tenant.lease.paymentMethod || 'Virement bancaire'
           console.log(`✅ Actif via bail principal: ${currentRentAmount}$ ${currentPaymentMethod}`)
+        } else {
+          console.log(`❌ Bail principal non actif pour ${tenant.name} en ${monthValue}/${year}`)
         }
+      } else {
+        console.log(`❌ Aucun bail trouvé pour ${tenant.name}`)
       }
 
       // Si le locataire était actif, l'ajouter à la liste

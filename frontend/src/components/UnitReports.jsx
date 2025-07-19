@@ -65,19 +65,27 @@ export default function UnitReports({ selectedYear }) {
 
   // Fonction pour calculer les revenus totaux d'une unité pour l'année
   const calculateTotalRevenue = (unitId) => {
+    console.log(`🎯 DEBUG - Calcul revenus totaux pour unité ${unitId}`)
     let totalRevenue = 0
     
     // Pour chaque mois de l'année
     for (let month = 1; month <= 12; month++) {
       const targetDate = new Date(parseInt(selectedYear), month - 1, 15) // 15ème jour du mois
+      console.log(`📅 DEBUG - Mois ${month}: ${targetDate.toISOString()}`)
       
       // Trouver les assignations pour cette unité
       const unitAssignments = assignments.filter(a => a.unitId === unitId)
+      console.log(`🔍 DEBUG - Assignations pour unité ${unitId}:`, unitAssignments.length)
       
-      if (unitAssignments.length === 0) continue
+      if (unitAssignments.length === 0) {
+        console.log(`⚠️ DEBUG - Aucune assignation pour unité ${unitId} en mois ${month}`)
+        continue
+      }
       
       // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
       for (const assignment of unitAssignments) {
+        console.log(`🔍 DEBUG - Vérification assignment ${assignment.id} (tenantId: ${assignment.tenantId})`)
+        
         // Recherche plus flexible des locataires
         const tenant = allTenants.find(t => 
           t.id === assignment.tenantId || 
@@ -87,7 +95,12 @@ export default function UnitReports({ selectedYear }) {
           parseInt(t.id) === assignment.tenantId
         )
         
-        if (!tenant) continue
+        if (!tenant) {
+          console.log(`❌ DEBUG - Locataire ${assignment.tenantId} non trouvé`)
+          continue
+        }
+
+        console.log(`✅ DEBUG - Locataire trouvé: ${tenant.name}`)
 
         // Vérifier si le locataire était actif ce mois-là
         let isActiveThisMonth = false
@@ -95,15 +108,24 @@ export default function UnitReports({ selectedYear }) {
         
         // Vérifier avec les renouvellements (priorité)
         if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
+          console.log(`🔍 DEBUG - Vérification ${tenant.leaseRenewals.length} renouvellements pour ${tenant.name}`)
+          
           const activeRenewal = tenant.leaseRenewals.find(renewal => {
             const renewalStart = new Date(renewal.startDate)
             const renewalEnd = new Date(renewal.endDate)
-            return targetDate >= renewalStart && targetDate <= renewalEnd
+            const isActive = targetDate >= renewalStart && targetDate <= renewalEnd
+            
+            console.log(`🔍 DEBUG - Renouvellement ${renewal.startDate} - ${renewal.endDate}: ${isActive ? 'ACTIF' : 'inactif'}`)
+            
+            return isActive
           })
           
           if (activeRenewal) {
             isActiveThisMonth = true
             currentRentAmount = activeRenewal.monthlyRent || 0
+            console.log(`✅ DEBUG - Actif via renouvellement: ${currentRentAmount}$`)
+          } else {
+            console.log(`❌ DEBUG - Aucun renouvellement actif pour ${tenant.name} en mois ${month}`)
           }
         }
         // Sinon vérifier avec lease principal
@@ -111,22 +133,31 @@ export default function UnitReports({ selectedYear }) {
           const leaseStart = new Date(tenant.lease.startDate)
           const leaseEnd = new Date(tenant.lease.endDate)
           
+          console.log(`🔍 DEBUG - Vérification bail principal: ${leaseStart} <= ${targetDate} <= ${leaseEnd}`)
+          
           if (targetDate >= leaseStart && targetDate <= leaseEnd) {
             isActiveThisMonth = true
             currentRentAmount = tenant.lease.monthlyRent || 0
+            console.log(`✅ DEBUG - Actif via bail principal: ${currentRentAmount}$`)
+          } else {
+            console.log(`❌ DEBUG - Bail principal non actif pour ${tenant.name} en mois ${month}`)
           }
+        } else {
+          console.log(`❌ DEBUG - Aucun bail trouvé pour ${tenant.name}`)
         }
         
         // Si le locataire était actif, ajouter le loyer au total
         if (isActiveThisMonth) {
           totalRevenue += currentRentAmount
-          console.log(`💰 Revenu ajouté pour mois ${month} (${tenant.name}): ${currentRentAmount}$ (Total: ${totalRevenue}$)`)
+          console.log(`💰 DEBUG - Revenu ajouté pour mois ${month} (${tenant.name}): ${currentRentAmount}$ (Total: ${totalRevenue}$)`)
           // Continuer avec le prochain locataire (pas de break)
+        } else {
+          console.log(`❌ DEBUG - ${tenant.name} non actif pour mois ${month}`)
         }
       }
     }
     
-    console.log(`🎯 Revenus totaux pour unité ${unitId}: ${totalRevenue}$`)
+    console.log(`🎯 DEBUG - Revenus totaux pour unité ${unitId}: ${totalRevenue}$`)
     return totalRevenue
   }
 
