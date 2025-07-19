@@ -245,6 +245,13 @@ export default function UnitReportDetails() {
         if (rentAmount === 0) {
           rentAmount = currentRentAmount
           paymentMethod = currentPaymentMethod
+        } else if (rentAmount !== currentRentAmount) {
+          // ⚠️ DÉTECTION D'INCOHÉRENCE
+          console.warn(`⚠️ INCOHÉRENCE DÉTECTÉE - Unité ${unitId}, Mois ${monthValue}:`)
+          console.warn(`   Premier locataire: ${rentAmount}$`)
+          console.warn(`   ${tenant.name}: ${currentRentAmount}$`)
+          console.warn(`   → Utilisation du premier montant (${rentAmount}$)`)
+          console.warn(`   → VÉRIFIEZ LES FICHES LOCATAIRES pour corriger cette incohérence !`)
         }
         
         console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$)`)
