@@ -78,7 +78,8 @@ export default function UnitReports({ selectedYear }) {
       
       // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
       for (const assignment of unitAssignments) {
-        const tenant = allTenants.find(t => t.id === assignment.tenantId)
+        const tenant = allTenants.find(t => t.id === assignment.tenantId || t.id === String(assignment.tenantId) || String(t.id) === assignment.tenantId)
+        
         if (!tenant) continue
         
         let isActiveThisMonth = false
@@ -208,7 +209,10 @@ export default function UnitReports({ selectedYear }) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUnits.map((unit) => {
-                const totalRevenue = calculateTotalRevenue(unit.id)
+                // Ne calculer que si les données sont chargées
+                const totalRevenue = assignments.length > 0 && allTenants.length > 0 
+                  ? calculateTotalRevenue(unit.id) 
+                  : 0
                 return (
                   <tr key={unit.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -230,7 +234,11 @@ export default function UnitReports({ selectedYear }) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(totalRevenue)}
+                      {assignments.length === 0 || allTenants.length === 0 ? (
+                        <span className="text-gray-500">Chargement...</span>
+                      ) : (
+                        formatCurrency(totalRevenue)
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
