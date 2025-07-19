@@ -131,12 +131,14 @@ class LeaseInfo(BaseModel):
     endDate: str = ""
     monthlyRent: float = 0
     paymentMethod: str = "Virement bancaire"
+    amenities: Optional[dict] = None  # Conditions du bail (wifi, heating, etc.)
 
 class LeaseRenewal(BaseModel):
     isActive: bool = False
     startDate: str = ""
     endDate: str = ""
     monthlyRent: float = 0
+    amenities: Optional[dict] = None  # Conditions du renouvellement
 
 class Tenant(BaseModel):
     id: Optional[int] = None
@@ -148,7 +150,7 @@ class Tenant(BaseModel):
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
     lease: Optional[LeaseInfo] = None
-    leaseRenewal: Optional[LeaseRenewal] = None
+    leaseRenewals: Optional[list] = None  # Liste des renouvellements au lieu d'un seul
     building: str = ""
     unit: str = ""
     notes: str = ""
@@ -164,7 +166,7 @@ class TenantCreate(BaseModel):
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
     lease: Optional[LeaseInfo] = None
-    leaseRenewal: Optional[LeaseRenewal] = None
+    leaseRenewals: Optional[list] = None  # Liste des renouvellements
     building: str = ""
     unit: str = ""
     notes: str = ""
@@ -178,7 +180,7 @@ class TenantUpdate(BaseModel):
     emergencyContact: Optional[EmergencyContact] = None
     financial: Optional[TenantFinancial] = None
     lease: Optional[LeaseInfo] = None
-    leaseRenewal: Optional[LeaseRenewal] = None
+    leaseRenewals: Optional[list] = None  # Liste des renouvellements
     building: Optional[str] = None
     unit: Optional[str] = None
     notes: Optional[str] = None

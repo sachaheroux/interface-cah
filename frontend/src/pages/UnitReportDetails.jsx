@@ -200,20 +200,22 @@ export default function UnitReportDetails() {
       let currentPaymentMethod = 'Virement bancaire'
 
       console.log(`🐛 DEBUG - Vérification bail pour ${tenant.name}:`, {
-        leaseRenewal: tenant.leaseRenewal,
+        leaseRenewals: tenant.leaseRenewals,
         lease: tenant.lease
       })
 
-      // Vérifier avec leaseRenewal (priorité)
-      if (tenant.leaseRenewal && tenant.leaseRenewal.isActive) {
-        const renewalStart = new Date(tenant.leaseRenewal.startDate)
-        const renewalEnd = new Date(tenant.leaseRenewal.endDate)
+      // Vérifier avec les renouvellements (priorité)
+      if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
+        // Trouver le renouvellement actif pour cette date
+        const activeRenewal = tenant.leaseRenewals.find(renewal => {
+          const renewalStart = new Date(renewal.startDate)
+          const renewalEnd = new Date(renewal.endDate)
+          return targetDate >= renewalStart && targetDate <= renewalEnd
+        })
         
-        console.log(`🔄 Vérification renouvellement: ${renewalStart} <= ${targetDate} <= ${renewalEnd}`)
-        
-        if (targetDate >= renewalStart && targetDate <= renewalEnd) {
+        if (activeRenewal) {
           isActiveThisMonth = true
-          currentRentAmount = tenant.leaseRenewal.monthlyRent || 0
+          currentRentAmount = activeRenewal.monthlyRent || 0
           currentPaymentMethod = tenant.lease?.paymentMethod || 'Virement bancaire'
           console.log(`✅ Actif via renouvellement: ${currentRentAmount}$ ${currentPaymentMethod}`)
         }
@@ -235,10 +237,39 @@ export default function UnitReportDetails() {
 
       // Si le locataire était actif, l'ajouter à la liste
       if (isActiveThisMonth) {
+        // Déterminer les conditions du bail actuel
+        let currentAmenities = {
+          heating: false,
+          electricity: false,
+          wifi: false,
+          furnished: false
+        }
+        
+        // Utiliser les conditions du renouvellement si actif
+        if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
+          // Trouver le renouvellement actif pour cette date
+          const activeRenewal = tenant.leaseRenewals.find(renewal => {
+            const renewalStart = new Date(renewal.startDate)
+            const renewalEnd = new Date(renewal.endDate)
+            return targetDate >= renewalStart && targetDate <= renewalEnd
+          })
+          
+          if (activeRenewal) {
+            currentAmenities = activeRenewal.amenities || tenant.lease?.amenities || currentAmenities
+            console.log(`✅ Conditions du renouvellement pour ${tenant.name}:`, currentAmenities)
+          }
+        }
+        // Sinon utiliser les conditions du bail principal
+        else if (tenant.lease) {
+          currentAmenities = tenant.lease.amenities || currentAmenities
+          console.log(`✅ Conditions du bail principal pour ${tenant.name}:`, currentAmenities)
+        }
+        
         activeTenantsThisMonth.push({
           name: tenant.name,
           rentAmount: currentRentAmount,
-          paymentMethod: currentPaymentMethod
+          paymentMethod: currentPaymentMethod,
+          amenities: currentAmenities
         })
         
         // Utiliser le loyer du premier locataire (ils ont tous le même montant total)
@@ -261,21 +292,26 @@ export default function UnitReportDetails() {
     // Construire le résultat avec tous les locataires actifs
     if (activeTenantsThisMonth.length > 0) {
       const allTenantNames = activeTenantsThisMonth.map(t => t.name).join(', ')
+      
+      // Utiliser les conditions du premier locataire (ils ont tous les mêmes conditions)
+      const firstTenantAmenities = activeTenantsThisMonth[0].amenities || {
+        heating: false,
+        electricity: false,
+        wifi: false,
+        furnished: false
+      }
+      
       const result = {
         tenantName: allTenantNames,
         paymentMethod: paymentMethod,
         rentAmount: rentAmount, // Montant total (pas multiplié)
-        isHeatedLit: unit?.amenities?.heating || unit?.amenities?.electricity || false,
-        isFurnished: unit?.amenities?.furnished || false,
-        wifiIncluded: unit?.amenities?.wifi || false
+        isHeatedLit: firstTenantAmenities.heating || firstTenantAmenities.electricity || false,
+        isFurnished: firstTenantAmenities.furnished || false,
+        wifiIncluded: firstTenantAmenities.wifi || false
       }
       
-      console.log(`🐛 DEBUG - Amenities de l'unité ${unitId}:`, {
-        unitAmenities: unit?.amenities,
-        heating: unit?.amenities?.heating,
-        electricity: unit?.amenities?.electricity,
-        furnished: unit?.amenities?.furnished,
-        wifi: unit?.amenities?.wifi,
+      console.log(`🐛 DEBUG - Conditions du bail pour ${unitId}:`, {
+        firstTenantAmenities,
         resultConditions: {
           isHeatedLit: result.isHeatedLit,
           isFurnished: result.isFurnished,
@@ -290,15 +326,7 @@ export default function UnitReportDetails() {
     // Aucun locataire actif trouvé pour ce mois
     console.log(`❌ Aucun locataire actif trouvé pour mois ${monthValue}`)
     
-    // Debug: Afficher les amenities même sans locataire
-    console.log(`🐛 DEBUG - Amenities unité vide ${unitId}:`, {
-      unitAmenities: unit?.amenities,
-      heating: unit?.amenities?.heating,
-      electricity: unit?.amenities?.electricity,
-      furnished: unit?.amenities?.furnished,
-      wifi: unit?.amenities?.wifi
-    })
-    
+    // Utiliser les conditions de l'unité par défaut si aucun locataire
     return {
       tenantName: '-',
       paymentMethod: '-',

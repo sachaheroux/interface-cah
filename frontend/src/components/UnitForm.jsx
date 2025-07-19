@@ -16,19 +16,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       leaseEnd: '',
       rentDueDay: 1,
     },
-    amenities: {
-      heating: false,
-      electricity: false,
-      wifi: false,
-      furnished: false,
-      parking: false,
-      laundry: false,
-      airConditioning: false,
-      balcony: false,
-      storage: false,
-      dishwasher: false,
-      washerDryer: false,
-    },
     notes: ''
   })
 
@@ -76,9 +63,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   useEffect(() => {
     if (unit) {
       console.log('🔄 UnitForm: Chargement des données unité:', {
-        unitId: unit.id,
-        unitAmenities: unit.amenities,
-        amenitiesKeys: unit.amenities ? Object.keys(unit.amenities) : 'undefined'
+        unitId: unit.id
       })
       
       setFormData({
@@ -93,28 +78,10 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
           leaseEnd: unit.rental?.leaseEnd || '',
           rentDueDay: unit.rental?.rentDueDay || 1,
         },
-        amenities: {
-          heating: unit.amenities?.heating || false,
-          electricity: unit.amenities?.electricity || false,
-          wifi: unit.amenities?.wifi || false,
-          furnished: unit.amenities?.furnished || false,
-          parking: unit.amenities?.parking || false,
-          laundry: unit.amenities?.laundry || false,
-          airConditioning: unit.amenities?.airConditioning || false,
-          balcony: unit.amenities?.balcony || false,
-          storage: unit.amenities?.storage || false,
-          dishwasher: unit.amenities?.dishwasher || false,
-          washerDryer: unit.amenities?.washerDryer || false,
-        },
         notes: unit.notes || ''
       })
       
-      console.log('✅ UnitForm: FormData amenities après chargement:', {
-        heating: unit.amenities?.heating || false,
-        electricity: unit.amenities?.electricity || false,
-        wifi: unit.amenities?.wifi || false,
-        furnished: unit.amenities?.furnished || false
-      })
+      console.log('✅ UnitForm: FormData chargé')
     }
   }, [unit])
 
@@ -175,9 +142,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
 
       console.log('💾 UnitForm: Sauvegarde unitData:', {
         unitId: unitData.id,
-        amenities: unitData.amenities,
-        amenitiesKeys: Object.keys(unitData.amenities || {}),
-        amenitiesValues: unitData.amenities
+        unitData: unitData
       })
 
       await onSave(unitData)
@@ -441,28 +406,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
             )}
           </div>
 
-          {/* Services inclus */}
-          <div className="space-y-4">
-            <div className="flex items-center mb-4">
-              <UserCheck className="h-5 w-5 text-primary-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Services Inclus</h3>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Object.entries(formData.amenities).map(([amenity, value]) => (
-                <label key={amenity} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={(e) => handleNestedChange('amenities', amenity, e.target.checked)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">{getAmenityLabel(amenity)}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
           {/* Notes */}
           <div className="space-y-4">
             <div className="flex items-center mb-4">
@@ -510,21 +453,4 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       </div>
     </div>
   )
-}
-
-function getAmenityLabel(amenity) {
-  const labels = {
-    heating: 'Chauffage inclus',
-    electricity: 'Électricité incluse',
-    wifi: 'WiFi inclus',
-    furnished: 'Meublé',
-    parking: 'Stationnement',
-    laundry: 'Buanderie',
-    airConditioning: 'Climatisation',
-    balcony: 'Balcon',
-    storage: 'Rangement',
-    dishwasher: 'Lave-vaisselle',
-    washerDryer: 'Laveuse-sécheuse'
-  }
-  return labels[amenity] || amenity
 } 
