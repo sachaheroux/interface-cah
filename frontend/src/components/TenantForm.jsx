@@ -18,6 +18,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       endDate: '',
       monthlyRent: 0,
       paymentMethod: 'Virement bancaire',
+      leasePdf: '', // URL ou nom du fichier PDF
       amenities: {
         heating: false,
         electricity: false,
@@ -81,6 +82,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           endDate: tenant.lease?.endDate || '',
           monthlyRent: tenant.lease?.monthlyRent || 0,
           paymentMethod: tenant.lease?.paymentMethod || 'Virement bancaire',
+          leasePdf: tenant.lease?.leasePdf || '', // Charger le PDF
           amenities: tenant.lease?.amenities || {
             heating: false,
             electricity: false,
@@ -128,6 +130,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           endDate: '',
           monthlyRent: 0,
           paymentMethod: 'Virement bancaire',
+          leasePdf: '', // URL ou nom du fichier PDF
           amenities: {
             heating: false,
             electricity: false,
@@ -320,6 +323,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           endDate: '',
           monthlyRent: 0,
           paymentMethod: 'Virement bancaire',
+          leasePdf: '', // URL ou nom du fichier PDF
           amenities: {
             heating: false,
             electricity: false,
@@ -684,6 +688,28 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       <option value="Autre">Autre</option>
                     </select>
                   </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      PDF du bail
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleLeaseChange('leasePdf', file.name);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    {formData.lease.leasePdf && (
+                      <p className="text-xs text-green-600 mt-1">
+                        ✓ {formData.lease.leasePdf}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -705,6 +731,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               startDate: '',
                               endDate: '',
                               monthlyRent: 0,
+                              renewalPdf: '', // PDF du renouvellement
                               amenities: { ...formData.lease.amenities }, // Copier les conditions du bail actuel
                               isActive: true
                             }]
@@ -778,6 +805,27 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
                             />
                           </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              PDF du renouvellement
+                            </label>
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  handleLeaseRenewalChange(renewal.id, 'renewalPdf', file.name);
+                                }
+                              }}
+                              className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                            />
+                            {renewal.renewalPdf && (
+                              <p className="text-xs text-green-600 mt-1">
+                                ✓ {renewal.renewalPdf}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Conditions du renouvellement */}
@@ -827,6 +875,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                           startDate: '',
                           endDate: '',
                           monthlyRent: 0,
+                          renewalPdf: '', // PDF du renouvellement
                           amenities: { ...formData.lease.amenities } // Copier les conditions du bail actuel
                         }]
                       }))}

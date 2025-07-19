@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Calendar, DollarSign, ArrowLeft, Building2 } from 'lucide-react'
+import { Calendar, DollarSign, ArrowLeft, Building2, FileText } from 'lucide-react'
 import { buildingsService, assignmentsService, tenantsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 
@@ -476,6 +476,98 @@ export default function UnitReportDetails() {
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Section des PDFs des baux */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">
+            Documents de Bail
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            PDFs des baux et renouvellements pour cette unité
+          </p>
+        </div>
+        
+        <div className="p-6">
+          {/* Trouver les locataires assignés à cette unité */}
+          {(() => {
+            const unitAssignments = assignments.filter(a => a.unitId === unitId)
+            const tenantsWithLeases = []
+            
+            unitAssignments.forEach(assignment => {
+              const tenant = allTenants.find(t => t.id === assignment.tenantId)
+              if (tenant) {
+                tenantsWithLeases.push(tenant)
+              }
+            })
+            
+            if (tenantsWithLeases.length === 0) {
+              return (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Aucun locataire assigné à cette unité</p>
+                </div>
+              )
+            }
+            
+            return (
+              <div className="space-y-4">
+                {tenantsWithLeases.map((tenant, index) => (
+                  <div key={tenant.id} className="border rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      {tenant.name}
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      {/* PDF du bail principal */}
+                      {tenant.lease?.leasePdf && (
+                        <div className="flex items-center justify-between bg-blue-50 p-3 rounded">
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 text-blue-600 mr-2" />
+                            <span className="text-sm font-medium text-gray-900">Bail principal</span>
+                          </div>
+                          <button
+                            onClick={() => window.open(`/api/documents/${tenant.lease.leasePdf}`, '_blank')}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            Voir PDF
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* PDFs des renouvellements */}
+                      {tenant.leaseRenewals && tenant.leaseRenewals.map((renewal, renewalIndex) => (
+                        renewal.renewalPdf && (
+                          <div key={renewal.id} className="flex items-center justify-between bg-green-50 p-3 rounded">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 text-green-600 mr-2" />
+                              <span className="text-sm font-medium text-gray-900">
+                                Renouvellement {renewalIndex + 1} ({renewal.startDate} - {renewal.endDate})
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => window.open(`/api/documents/${renewal.renewalPdf}`, '_blank')}
+                              className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            >
+                              Voir PDF
+                            </button>
+                          </div>
+                        )
+                      ))}
+                      
+                      {/* Message si aucun PDF */}
+                      {(!tenant.lease?.leasePdf && (!tenant.leaseRenewals || tenant.leaseRenewals.every(r => !r.renewalPdf))) && (
+                        <div className="text-center py-4 text-gray-500 text-sm">
+                          Aucun PDF de bail disponible pour ce locataire
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>
