@@ -92,6 +92,17 @@ export default function UnitReportDetails() {
       console.log(`🎯 UnitReportDetails: Recherche pour unitId: "${unitId}"`)
       console.log('🔍 UnitReportDetails: Correspondance exacte?', allUnitIds.includes(unitId))
       
+      // Debug: Afficher les détails des assignations pour cette unité
+      const targetAssignments = assignmentsData.filter(a => a.unitId === unitId)
+      if (targetAssignments.length > 0) {
+        console.log(`🔍 UnitReportDetails: Assignations pour unité "${unitId}":`, targetAssignments.map(a => ({
+          id: a.id,
+          unitId: a.unitId,
+          tenantId: a.tenantId,
+          tenantIdType: typeof a.tenantId
+        })))
+      }
+      
       setAssignments(assignmentsData)
     } catch (error) {
       console.error('❌ UnitReportDetails: Error loading assignments:', error)
@@ -107,6 +118,11 @@ export default function UnitReportDetails() {
         count: tenantsData.length,
         tenants: tenantsData
       })
+      
+      // Debug: Afficher tous les IDs des locataires
+      const allTenantIds = tenantsData.map(t => t.id)
+      console.log('🔍 UnitReportDetails: Tous les IDs des locataires:', allTenantIds)
+      
       setAllTenants(tenantsData)
     } catch (error) {
       console.error('❌ UnitReportDetails: Error loading tenants:', error)
