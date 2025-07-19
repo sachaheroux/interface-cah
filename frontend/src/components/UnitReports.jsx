@@ -119,7 +119,7 @@ export default function UnitReports({ selectedYear }) {
         // Si le locataire était actif, ajouter le loyer au total
         if (isActiveThisMonth) {
           totalRevenue += currentRentAmount
-          break // Un seul locataire actif par mois
+          // Continuer avec le prochain locataire (pas de break)
         }
       }
     }

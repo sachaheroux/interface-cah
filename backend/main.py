@@ -131,6 +131,7 @@ class LeaseInfo(BaseModel):
     endDate: str = ""
     monthlyRent: float = 0
     paymentMethod: str = "Virement bancaire"
+    leasePdf: str = ""  # URL ou nom du fichier PDF
     amenities: Optional[dict] = None  # Conditions du bail (wifi, heating, etc.)
 
 class LeaseRenewal(BaseModel):
@@ -138,6 +139,7 @@ class LeaseRenewal(BaseModel):
     startDate: str = ""
     endDate: str = ""
     monthlyRent: float = 0
+    renewalPdf: str = ""  # URL ou nom du fichier PDF
     amenities: Optional[dict] = None  # Conditions du renouvellement
 
 class Tenant(BaseModel):

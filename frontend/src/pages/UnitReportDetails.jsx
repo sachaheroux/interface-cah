@@ -287,6 +287,7 @@ export default function UnitReportDetails() {
         
         console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$)`)
       }
+      // Continuer avec le prochain locataire (pas de break)
     }
 
     // Construire le résultat avec tous les locataires actifs
