@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Users, MapPin, Eye, Edit3, Trash2, Search, Filter, Home, Mail, Phone, DollarSign, 
-  Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus
+  Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus,
+  Thermometer, Zap, Sofa, Droplets, Package
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
