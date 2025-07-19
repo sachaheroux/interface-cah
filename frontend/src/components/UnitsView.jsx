@@ -9,6 +9,7 @@ import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTyp
 import { assignmentsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
+import { buildingsService } from '../services/api'
 
 export default function UnitsView({ buildings }) {
   const [units, setUnits] = useState([])
@@ -168,17 +169,71 @@ export default function UnitsView({ buildings }) {
 
   const handleSaveUnit = async (updatedUnit) => {
     try {
-      // Mettre à jour l'unité dans la liste
+      console.log('💾 UnitsView: Sauvegarde unité dans le backend:', {
+        unitId: updatedUnit.id,
+        amenities: updatedUnit.amenities,
+        unitData: updatedUnit
+      })
+
+      // Trouver l'immeuble parent de cette unité
+      const parentBuilding = buildings.find(building => {
+        try {
+          const buildingUnits = parseAddressAndGenerateUnits(building)
+          return buildingUnits.some(unit => unit.id === updatedUnit.id)
+        } catch (error) {
+          return false
+        }
+      })
+
+      if (!parentBuilding) {
+        console.error('❌ Immeuble parent non trouvé pour unité:', updatedUnit.id)
+        throw new Error('Immeuble parent non trouvé')
+      }
+
+      // Mettre à jour les données de l'immeuble avec les nouvelles données d'unité
+      const updatedBuilding = {
+        ...parentBuilding,
+        // Ajouter les données d'unité modifiées
+        unitData: {
+          ...parentBuilding.unitData,
+          [updatedUnit.id]: {
+            type: updatedUnit.type,
+            area: updatedUnit.area,
+            bedrooms: updatedUnit.bedrooms,
+            bathrooms: updatedUnit.bathrooms,
+            rental: updatedUnit.rental,
+            amenities: updatedUnit.amenities,
+            notes: updatedUnit.notes,
+            updatedAt: updatedUnit.updatedAt
+          }
+        }
+      }
+
+      console.log('🔄 UnitsView: Sauvegarde immeuble avec données unité mises à jour:', {
+        buildingId: updatedBuilding.id,
+        unitData: updatedBuilding.unitData
+      })
+
+      // Sauvegarder l'immeuble mis à jour dans le backend
+      await buildingsService.updateBuilding(updatedBuilding.id, updatedBuilding)
+
+      // Mettre à jour l'unité dans la liste locale après sauvegarde réussie
       const updatedUnits = units.map(unit => 
         unit.id === updatedUnit.id ? updatedUnit : unit
       )
       setUnits(updatedUnits)
+
+      // Mettre à jour la liste des immeubles locale aussi
+      const updatedBuildings = buildings.map(building =>
+        building.id === updatedBuilding.id ? updatedBuilding : building
+      )
+      setBuildings(updatedBuildings)
       
-      // Ici, vous pourriez ajouter la logique pour sauvegarder dans une API
-      console.log('Unité sauvegardée:', updatedUnit)
+      console.log('✅ UnitsView: Unité sauvegardée avec succès dans le backend')
       
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
+      console.error('❌ UnitsView: Erreur lors de la sauvegarde:', error)
+      alert('Erreur lors de la sauvegarde de l\'unité. Vérifiez la console pour plus de détails.')
       throw error
     }
   }

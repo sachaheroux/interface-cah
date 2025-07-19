@@ -295,5 +295,44 @@ export const parseAddressAndGenerateUnits = (building) => {
     })
   }
 
+  // Merger avec les données personnalisées des unités si elles existent
+  if (building.unitData && typeof building.unitData === 'object') {
+    console.log(`🔄 Unit.js: Merging avec données personnalisées pour immeuble ${building.id}:`, building.unitData)
+    
+    units.forEach(unit => {
+      const customData = building.unitData[unit.id]
+      if (customData) {
+        console.log(`✅ Unit.js: Données personnalisées trouvées pour unité ${unit.id}:`, customData)
+        
+        // Merger les données personnalisées avec les données par défaut
+        Object.assign(unit, {
+          type: customData.type || unit.type,
+          area: customData.area || unit.area,
+          bedrooms: customData.bedrooms || unit.bedrooms,
+          bathrooms: customData.bathrooms || unit.bathrooms,
+          rental: {
+            ...unit.rental,
+            ...customData.rental
+          },
+          amenities: {
+            ...unit.amenities,
+            ...customData.amenities
+          },
+          notes: customData.notes || unit.notes,
+          updatedAt: customData.updatedAt || unit.updatedAt
+        })
+        
+        console.log(`🎉 Unit.js: Unité ${unit.id} mergée avec succès:`, {
+          amenities: unit.amenities,
+          rental: unit.rental
+        })
+      } else {
+        console.log(`⚪ Unit.js: Aucune donnée personnalisée pour unité ${unit.id}`)
+      }
+    })
+  } else {
+    console.log(`⚪ Unit.js: Aucune donnée personnalisée pour immeuble ${building.id}`)
+  }
+
   return units
 } 

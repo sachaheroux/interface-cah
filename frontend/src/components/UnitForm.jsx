@@ -75,6 +75,12 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
 
   useEffect(() => {
     if (unit) {
+      console.log('🔄 UnitForm: Chargement des données unité:', {
+        unitId: unit.id,
+        unitAmenities: unit.amenities,
+        amenitiesKeys: unit.amenities ? Object.keys(unit.amenities) : 'undefined'
+      })
+      
       setFormData({
         type: unit.type || UnitType.FOUR_HALF,
         area: unit.area || 0,
@@ -101,6 +107,13 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
           washerDryer: unit.amenities?.washerDryer || false,
         },
         notes: unit.notes || ''
+      })
+      
+      console.log('✅ UnitForm: FormData amenities après chargement:', {
+        heating: unit.amenities?.heating || false,
+        electricity: unit.amenities?.electricity || false,
+        wifi: unit.amenities?.wifi || false,
+        furnished: unit.amenities?.furnished || false
       })
     }
   }, [unit])
@@ -160,10 +173,18 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
         updatedAt: new Date().toISOString()
       }
 
+      console.log('💾 UnitForm: Sauvegarde unitData:', {
+        unitId: unitData.id,
+        amenities: unitData.amenities,
+        amenitiesKeys: Object.keys(unitData.amenities || {}),
+        amenitiesValues: unitData.amenities
+      })
+
       await onSave(unitData)
+      console.log('✅ UnitForm: Sauvegarde terminée')
       onClose()
     } catch (error) {
-      console.error('Error saving unit:', error)
+      console.error('❌ UnitForm: Error saving unit:', error)
     } finally {
       setLoading(false)
     }
