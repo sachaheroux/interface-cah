@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { Users, DollarSign, Eye, Search } from 'lucide-react'
-import { buildingsService } from '../services/api'
+import { buildingsService, assignmentsService, tenantsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import { useNavigate } from 'react-router-dom'
 
 export default function UnitReports({ selectedYear }) {
   const [buildings, setBuildings] = useState([])
   const [units, setUnits] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [allTenants, setAllTenants] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
     loadBuildings()
+    loadAssignments()
+    loadTenants()
   }, [selectedYear])
 
   const loadBuildings = async () => {
@@ -36,9 +40,83 @@ export default function UnitReports({ selectedYear }) {
       setUnits(allUnits)
     } catch (error) {
       console.error('Error loading buildings:', error)
+    }
+  }
+
+  const loadAssignments = async () => {
+    try {
+      const response = await assignmentsService.getAssignments()
+      setAssignments(response.data || [])
+    } catch (error) {
+      console.error('Error loading assignments:', error)
+    }
+  }
+
+  const loadTenants = async () => {
+    try {
+      const response = await tenantsService.getTenants()
+      setAllTenants(response.data || [])
+    } catch (error) {
+      console.error('Error loading tenants:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fonction pour calculer les revenus totaux d'une unité pour l'année
+  const calculateTotalRevenue = (unitId) => {
+    let totalRevenue = 0
+    
+    // Pour chaque mois de l'année
+    for (let month = 1; month <= 12; month++) {
+      const targetDate = new Date(parseInt(selectedYear), month - 1, 15) // 15ème jour du mois
+      
+      // Trouver les assignations pour cette unité
+      const unitAssignments = assignments.filter(a => a.unitId === unitId)
+      
+      if (unitAssignments.length === 0) continue
+      
+      // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
+      for (const assignment of unitAssignments) {
+        const tenant = allTenants.find(t => t.id === assignment.tenantId)
+        if (!tenant) continue
+        
+        let isActiveThisMonth = false
+        let currentRentAmount = 0
+        
+        // Vérifier avec les renouvellements (priorité)
+        if (tenant.leaseRenewals && tenant.leaseRenewals.length > 0) {
+          const activeRenewal = tenant.leaseRenewals.find(renewal => {
+            const renewalStart = new Date(renewal.startDate)
+            const renewalEnd = new Date(renewal.endDate)
+            return targetDate >= renewalStart && targetDate <= renewalEnd
+          })
+          
+          if (activeRenewal) {
+            isActiveThisMonth = true
+            currentRentAmount = activeRenewal.monthlyRent || 0
+          }
+        }
+        // Sinon vérifier avec lease principal
+        else if (tenant.lease) {
+          const leaseStart = new Date(tenant.lease.startDate)
+          const leaseEnd = new Date(tenant.lease.endDate)
+          
+          if (targetDate >= leaseStart && targetDate <= leaseEnd) {
+            isActiveThisMonth = true
+            currentRentAmount = tenant.lease.monthlyRent || 0
+          }
+        }
+        
+        // Si le locataire était actif, ajouter le loyer au total
+        if (isActiveThisMonth) {
+          totalRevenue += currentRentAmount
+          break // Un seul locataire actif par mois
+        }
+      }
+    }
+    
+    return totalRevenue
   }
 
   const formatCurrency = (amount) => {
@@ -130,6 +208,7 @@ export default function UnitReports({ selectedYear }) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUnits.map((unit) => {
+                const totalRevenue = calculateTotalRevenue(unit.id)
                 return (
                   <tr key={unit.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -151,7 +230,7 @@ export default function UnitReports({ selectedYear }) {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      Calculé automatiquement
+                      {formatCurrency(totalRevenue)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button

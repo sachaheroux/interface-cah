@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Building2, DollarSign, FileText, Edit3, Trash2, AlertTriangle, CheckCircle, X, Search, Upload, Eye } from 'lucide-react'
+import { Building2, DollarSign, FileText, Edit3, AlertTriangle, CheckCircle, X, Search, Upload, Eye } from 'lucide-react'
 import { buildingsService, reportsService } from '../services/api'
-import DeleteConfirmationModal from './DeleteConfirmationModal'
 
 export default function BuildingReports({ selectedYear }) {
   const [buildings, setBuildings] = useState([])
   const [reports, setReports] = useState([])
   const [selectedBuilding, setSelectedBuilding] = useState(null)
   const [editingReport, setEditingReport] = useState(null)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [reportToDelete, setReportToDelete] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDetails, setShowDetails] = useState(false)
@@ -112,18 +109,6 @@ export default function BuildingReports({ selectedYear }) {
     } catch (error) {
       console.error('Error saving report:', error)
       alert('Erreur lors de la sauvegarde du rapport')
-    }
-  }
-
-  const handleDeleteReport = async () => {
-    try {
-      await reportsService.deleteBuildingReport(reportToDelete.id)
-      await loadReports()
-      setShowDeleteModal(false)
-      setReportToDelete(null)
-    } catch (error) {
-      console.error('Error deleting report:', error)
-      alert('Erreur lors de la suppression du rapport')
     }
   }
 
@@ -243,18 +228,6 @@ export default function BuildingReports({ selectedYear }) {
                           <Edit3 className="h-4 w-4 mr-1" />
                           {report ? 'Modifier' : 'Créer'}
                         </button>
-                        {report && (
-                          <button
-                            onClick={() => {
-                              setReportToDelete(report)
-                              setShowDeleteModal(true)
-                            }}
-                            className="text-red-600 hover:text-red-900 flex items-center"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Supprimer
-                          </button>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -620,18 +593,6 @@ export default function BuildingReports({ selectedYear }) {
           </div>
         </div>
       )}
-
-      {/* Modal de confirmation de suppression */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setReportToDelete(null)
-        }}
-        onConfirm={handleDeleteReport}
-        title="Supprimer le rapport"
-        message={`Êtes-vous sûr de vouloir supprimer le rapport de ${reportToDelete?.year} ? Cette action est irréversible.`}
-      />
     </div>
   )
 } 
