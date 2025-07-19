@@ -67,6 +67,7 @@ export default function UnitReports({ selectedYear }) {
   const calculateTotalRevenue = (unitId) => {
     console.log(`🎯 DEBUG - Calcul revenus totaux pour unité ${unitId}`)
     let totalRevenue = 0
+    let monthsWithRevenue = 0
     
     // Pour chaque mois de l'année
     for (let month = 1; month <= 12; month++) {
@@ -81,6 +82,9 @@ export default function UnitReports({ selectedYear }) {
         console.log(`⚠️ DEBUG - Aucune assignation pour unité ${unitId} en mois ${month}`)
         continue
       }
+      
+      let monthRevenue = 0
+      let activeTenantsThisMonth = 0
       
       // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
       for (const assignment of unitAssignments) {
@@ -146,18 +150,28 @@ export default function UnitReports({ selectedYear }) {
           console.log(`❌ DEBUG - Aucun bail trouvé pour ${tenant.name}`)
         }
         
-        // Si le locataire était actif, ajouter le loyer au total
+        // Si le locataire était actif, ajouter le loyer au total du mois
         if (isActiveThisMonth) {
-          totalRevenue += currentRentAmount
-          console.log(`💰 DEBUG - Revenu ajouté pour mois ${month} (${tenant.name}): ${currentRentAmount}$ (Total: ${totalRevenue}$)`)
+          monthRevenue += currentRentAmount
+          activeTenantsThisMonth++
+          console.log(`💰 DEBUG - Revenu ajouté pour mois ${month} (${tenant.name}): ${currentRentAmount}$ (Total mois: ${monthRevenue}$)`)
           // Continuer avec le prochain locataire (pas de break)
         } else {
           console.log(`❌ DEBUG - ${tenant.name} non actif pour mois ${month}`)
         }
       }
+      
+      // Ajouter le revenu du mois au total annuel
+      if (monthRevenue > 0) {
+        totalRevenue += monthRevenue
+        monthsWithRevenue++
+        console.log(`📊 DEBUG - Revenu du mois ${month}: ${monthRevenue}$ (Total annuel: ${totalRevenue}$)`)
+      } else {
+        console.log(`📊 DEBUG - Aucun revenu pour mois ${month}`)
+      }
     }
     
-    console.log(`🎯 DEBUG - Revenus totaux pour unité ${unitId}: ${totalRevenue}$`)
+    console.log(`🎯 DEBUG - Revenus totaux pour unité ${unitId}: ${totalRevenue}$ (${monthsWithRevenue} mois avec revenus)`)
     return totalRevenue
   }
 

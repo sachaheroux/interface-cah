@@ -329,10 +329,13 @@ export default function UnitReportDetails() {
         furnished: false
       }
       
+      // Afficher le loyer du premier locataire seulement (pas d'addition)
+      const firstTenantRent = activeTenantsThisMonth[0].rentAmount || 0
+      
       const result = {
         tenantName: allTenantNames,
         paymentMethod: activeTenantsThisMonth[0].paymentMethod || 'Virement bancaire',
-        rentAmount: totalRentAmount, // Montant total additionné
+        rentAmount: firstTenantRent, // Loyer du premier locataire seulement
         isHeatedLit: firstTenantAmenities.heating || firstTenantAmenities.electricity || false,
         isFurnished: firstTenantAmenities.furnished || false,
         wifiIncluded: firstTenantAmenities.wifi || false
