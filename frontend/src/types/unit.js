@@ -173,19 +173,6 @@ export const parseAddressAndGenerateUnits = (building) => {
             leaseEnd: '',
             rentDueDay: 1,
           },
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false,
-          },
           notes: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
@@ -222,19 +209,6 @@ export const parseAddressAndGenerateUnits = (building) => {
               leaseStart: '',
               leaseEnd: '',
               rentDueDay: 1,
-            },
-            amenities: {
-              heating: false,
-              electricity: false,
-              wifi: false,
-              furnished: false,
-              parking: false,
-              laundry: false,
-              airConditioning: false,
-              balcony: false,
-              storage: false,
-              dishwasher: false,
-              washerDryer: false,
             },
             notes: '',
             createdAt: new Date().toISOString(),
@@ -276,19 +250,6 @@ export const parseAddressAndGenerateUnits = (building) => {
         leaseEnd: '',
         rentDueDay: 1,
       },
-      amenities: {
-        heating: false,
-        electricity: false,
-        wifi: false,
-        furnished: false,
-        parking: false,
-        laundry: false,
-        airConditioning: false,
-        balcony: false,
-        storage: false,
-        dishwasher: false,
-        washerDryer: false,
-      },
       notes: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -314,16 +275,11 @@ export const parseAddressAndGenerateUnits = (building) => {
             ...unit.rental,
             ...customData.rental
           },
-          amenities: {
-            ...unit.amenities,
-            ...customData.amenities
-          },
           notes: customData.notes || unit.notes,
           updatedAt: customData.updatedAt || unit.updatedAt
         })
         
         console.log(`🎉 Unit.js: Unité ${unit.id} mergée avec succès:`, {
-          amenities: unit.amenities,
           rental: unit.rental
         })
       } else {

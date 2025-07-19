@@ -10,16 +10,7 @@ import {
   Phone,
   Mail,
   MapPin,
-  UserCheck,
-  Wifi,
-  Zap,
-  Thermometer,
-  Car,
-  Sofa,
-  Droplets,
-  Wind,
-  Package,
-  CheckCircle
+  UserCheck
 } from 'lucide-react'
 import { getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
 
@@ -39,37 +30,6 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
     return new Date(dateString).toLocaleDateString('fr-CA')
   }
 
-  const getAmenityIcon = (amenity) => {
-    switch (amenity) {
-      case 'heating': return <Thermometer className="h-4 w-4" />
-      case 'electricity': return <Zap className="h-4 w-4" />
-      case 'wifi': return <Wifi className="h-4 w-4" />
-      case 'furnished': return <Sofa className="h-4 w-4" />
-      case 'parking': return <Car className="h-4 w-4" />
-      case 'laundry': return <Droplets className="h-4 w-4" />
-      case 'airConditioning': return <Wind className="h-4 w-4" />
-      case 'storage': return <Package className="h-4 w-4" />
-      default: return <CheckCircle className="h-4 w-4" />
-    }
-  }
-
-  const getAmenityLabel = (amenity) => {
-    switch (amenity) {
-      case 'heating': return 'Chauffage inclus'
-      case 'electricity': return 'Électricité incluse'
-      case 'wifi': return 'WiFi inclus'
-      case 'furnished': return 'Meublé'
-      case 'parking': return 'Stationnement'
-      case 'laundry': return 'Buanderie'
-      case 'airConditioning': return 'Climatisation'
-      case 'balcony': return 'Balcon'
-      case 'storage': return 'Rangement'
-      case 'dishwasher': return 'Lave-vaisselle'
-      case 'washerDryer': return 'Laveuse-sécheuse'
-      default: return amenity
-    }
-  }
-
   const getRelationshipLabel = (relationship) => {
     switch (relationship) {
       case 'parent': return 'Parent'
@@ -81,8 +41,6 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
       default: return relationship
     }
   }
-
-  const activeAmenities = Object.entries(unit.amenities || {}).filter(([_, value]) => value)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -186,35 +144,13 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
             </div>
           </div>
 
-          {/* Services inclus */}
-          {activeAmenities.length > 0 && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Home className="h-5 w-5 mr-2" />
-                Services et commodités inclus
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {activeAmenities.map(([amenity, _]) => (
-                  <div key={amenity} className="flex items-center space-x-2 p-2 bg-green-50 rounded-lg">
-                    <div className="text-green-600">
-                      {getAmenityIcon(amenity)}
-                    </div>
-                    <span className="text-sm text-green-800 font-medium">
-                      {getAmenityLabel(amenity)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Informations du locataire */}
-          {unit.tenant?.name && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                Informations du locataire
-              </h3>
+          {/* Locataires actuels */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Locataires actuels
+            </h3>
+            {unit.tenant?.name ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
@@ -257,38 +193,40 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
                   )}
                 </div>
               </div>
+            ) : (
+              <p className="text-gray-600">Aucun locataire actuellement.</p>
+            )}
 
-              {/* Contact d'urgence */}
-              {unit.tenant.emergencyContact?.name && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Contact d'urgence
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <span className="text-sm text-gray-600">Nom: </span>
-                      <span className="font-medium">{unit.tenant.emergencyContact.name}</span>
-                    </div>
-                    {unit.tenant.emergencyContact.phone && (
-                      <div>
-                        <span className="text-sm text-gray-600">Téléphone: </span>
-                        <span className="font-medium">{unit.tenant.emergencyContact.phone}</span>
-                      </div>
-                    )}
-                    {unit.tenant.emergencyContact.relationship && (
-                      <div>
-                        <span className="text-sm text-gray-600">Relation: </span>
-                        <span className="font-medium">
-                          {getRelationshipLabel(unit.tenant.emergencyContact.relationship)}
-                        </span>
-                      </div>
-                    )}
+            {/* Contact d'urgence */}
+            {unit.tenant?.emergencyContact?.name && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Contact d'urgence
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Nom: </span>
+                    <span className="font-medium">{unit.tenant.emergencyContact.name}</span>
                   </div>
+                  {unit.tenant.emergencyContact.phone && (
+                    <div>
+                      <span className="text-sm text-gray-600">Téléphone: </span>
+                      <span className="font-medium">{unit.tenant.emergencyContact.phone}</span>
+                    </div>
+                  )}
+                  {unit.tenant.emergencyContact.relationship && (
+                    <div>
+                      <span className="text-sm text-gray-600">Relation: </span>
+                      <span className="font-medium">
+                        {getRelationshipLabel(unit.tenant.emergencyContact.relationship)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Notes */}
           {unit.notes && (

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Users, MapPin, Eye, Edit3, Trash2, Search, Filter, Home, Mail, Phone, DollarSign, 
-  Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus,
-  Thermometer, Zap, Sofa, Droplets, Package
+  Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
@@ -171,7 +170,6 @@ export default function UnitsView({ buildings }) {
     try {
       console.log('💾 UnitsView: Sauvegarde unité dans le backend:', {
         unitId: updatedUnit.id,
-        amenities: updatedUnit.amenities,
         unitData: updatedUnit
       })
 
@@ -202,7 +200,6 @@ export default function UnitsView({ buildings }) {
             bedrooms: updatedUnit.bedrooms,
             bathrooms: updatedUnit.bathrooms,
             rental: updatedUnit.rental,
-            amenities: updatedUnit.amenities,
             notes: updatedUnit.notes,
             updatedAt: updatedUnit.updatedAt
           }
@@ -262,54 +259,10 @@ export default function UnitsView({ buildings }) {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CA', {
       style: 'currency',
-      currency: 'CAD',
-      minimumFractionDigits: 0
-    }).format(amount)
+      currency: 'CAD'
+    }).format(amount || 0)
   }
 
-  const getAmenityIcon = (amenity) => {
-    switch (amenity) {
-      case 'heating': return <Thermometer className="h-4 w-4" />
-      case 'electricity': return <Zap className="h-4 w-4" />
-      case 'wifi': return <Wifi className="h-4 w-4" />
-      case 'furnished': return <Sofa className="h-4 w-4" />
-      case 'parking': return <Car className="h-4 w-4" />
-      case 'laundry': return <Droplets className="h-4 w-4" />
-      case 'airConditioning': return <Wind className="h-4 w-4" />
-      case 'storage': return <Package className="h-4 w-4" />
-      default: return null
-    }
-  }
-
-  const getAmenityLabel = (amenity) => {
-    switch (amenity) {
-      case 'heating': return 'Chauffage'
-      case 'electricity': return 'Électricité'
-      case 'wifi': return 'WiFi'
-      case 'furnished': return 'Meublé'
-      case 'parking': return 'Stationnement'
-      case 'laundry': return 'Buanderie'
-      case 'airConditioning': return 'Climatisation'
-      case 'balcony': return 'Balcon'
-      case 'storage': return 'Rangement'
-      case 'dishwasher': return 'Lave-vaisselle'
-      case 'washerDryer': return 'Laveuse-sécheuse'
-      default: return amenity
-    }
-  }
-
-  // Statistiques simples
-  const totalUnits = units.length
-  const occupiedUnits = units.filter(unit => 
-    unit.currentTenants?.length > 0 || unit.status === 'occupied'
-  ).length
-  const vacantUnits = totalUnits - occupiedUnits
-  const totalRent = units.reduce((sum, unit) => sum + (unit.rental?.monthlyRent || 0), 0)
-  
-  // Calcul simple : (nombre d'unités occupées / nombre d'unités total) * 100
-  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
-
-  // Fonction pour supprimer une assignation spécifique
   const handleRemoveFromUnit = async (tenantId, unitId, tenantName, unitName, event) => {
     // Empêcher la propagation de l'événement vers les éléments parents
     if (event) {
@@ -526,30 +479,6 @@ export default function UnitsView({ buildings }) {
                   </div>
                 </div>
               )}
-
-              {/* Services inclus */}
-              <div className="mb-4">
-                <h5 className="text-xs font-medium text-gray-700 mb-2">Services inclus:</h5>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(unit.amenities).map(([amenity, included]) => {
-                    if (!included) return null
-                    const icon = getAmenityIcon(amenity)
-                    return (
-                      <span
-                        key={amenity}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800"
-                        title={getAmenityLabel(amenity)}
-                      >
-                        {icon && <span className="mr-1">{icon}</span>}
-                        {getAmenityLabel(amenity)}
-                      </span>
-                    )
-                  })}
-                  {Object.values(unit.amenities).every(val => !val) && (
-                    <span className="text-xs text-gray-500">Aucun service inclus</span>
-                  )}
-                </div>
-              </div>
 
               {/* Actions */}
               <div className="flex space-x-2">
