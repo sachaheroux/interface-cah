@@ -149,6 +149,7 @@ export default function UnitReportDetails() {
     // Trouver les assignations pour cette unité
     const unitAssignments = assignments.filter(a => a.unitId === unitId)
     console.log(`🐛 DEBUG - Assignations pour unité ${unitId}:`, unitAssignments)
+    console.log(`🐛 DEBUG - Tous les assignments:`, assignments.map(a => ({ unitId: a.unitId, tenantId: a.tenantId })))
     
     if (unitAssignments.length === 0) {
       console.log(`⚠️ Aucune assignation trouvée pour unité ${unitId}`)
@@ -171,12 +172,24 @@ export default function UnitReportDetails() {
     let rentAmount = 0
     let paymentMethod = 'Virement bancaire'
     
+    console.log(`🐛 DEBUG - Tous les locataires disponibles:`, allTenants.map(t => ({ id: t.id, name: t.name })))
+    
     for (const assignment of unitAssignments) {
-      let tenant = allTenants.find(t => t.id === assignment.tenantId)
+      // Recherche plus flexible des locataires
+      let tenant = allTenants.find(t => 
+        t.id === assignment.tenantId || 
+        t.id === String(assignment.tenantId) || 
+        String(t.id) === assignment.tenantId ||
+        t.id === parseInt(assignment.tenantId) ||
+        parseInt(t.id) === assignment.tenantId
+      )
+      
       console.log(`🐛 DEBUG - Assignment ${assignment.id}, recherche locataire ${assignment.tenantId}:`, {
         assignment,
         tenantFound: !!tenant,
-        tenant: tenant
+        tenant: tenant,
+        tenantIdType: typeof assignment.tenantId,
+        allTenantIds: allTenants.map(t => ({ id: t.id, type: typeof t.id }))
       })
       
       if (!tenant) {
@@ -286,9 +299,17 @@ export default function UnitReportDetails() {
         }
         
         console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$)`)
+      } else {
+        console.log(`❌ Locataire ${tenant.name} non actif pour ce mois`)
       }
       // Continuer avec le prochain locataire (pas de break)
     }
+
+    console.log(`🐛 DEBUG - Résumé final pour mois ${monthValue}:`, {
+      totalAssignments: unitAssignments.length,
+      activeTenantsCount: activeTenantsThisMonth.length,
+      activeTenants: activeTenantsThisMonth.map(t => t.name)
+    })
 
     // Construire le résultat avec tous les locataires actifs
     if (activeTenantsThisMonth.length > 0) {
