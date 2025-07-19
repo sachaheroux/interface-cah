@@ -174,7 +174,73 @@ export default function UnitReportDetails() {
         tenant: tenant
       })
       
-      if (!tenant) continue
+      if (!tenant) {
+        console.log(`⚠️ Locataire ${assignment.tenantId} non trouvé - assignation orpheline`)
+        
+        // Essayer de trouver par nom si available dans tenantData
+        if (assignment.tenantData && assignment.tenantData.name) {
+          const tenantByName = allTenants.find(t => t.name === assignment.tenantData.name)
+          if (tenantByName) {
+            console.log(`🔄 Correspondance par nom trouvée: ${tenantByName.name} (ID: ${tenantByName.id})`)
+            // Utiliser le locataire trouvé par nom
+            const tenant = tenantByName
+            
+            // Vérifier si le locataire était actif ce mois-là
+            let isActiveThisMonth = false
+            let rentAmount = 0
+            let paymentMethod = 'Virement bancaire'
+
+            console.log(`🐛 DEBUG - Vérification bail pour ${tenant.name}:`, {
+              leaseRenewal: tenant.leaseRenewal,
+              lease: tenant.lease
+            })
+
+            // Vérifier avec leaseRenewal (priorité)
+            if (tenant.leaseRenewal && tenant.leaseRenewal.isActive) {
+              const renewalStart = new Date(tenant.leaseRenewal.startDate)
+              const renewalEnd = new Date(tenant.leaseRenewal.endDate)
+              
+              console.log(`🔄 Vérification renouvellement: ${renewalStart} <= ${targetDate} <= ${renewalEnd}`)
+              
+              if (targetDate >= renewalStart && targetDate <= renewalEnd) {
+                isActiveThisMonth = true
+                rentAmount = tenant.leaseRenewal.monthlyRent || 0
+                paymentMethod = tenant.lease?.paymentMethod || 'Virement bancaire'
+                console.log(`✅ Actif via renouvellement: ${rentAmount}$ ${paymentMethod}`)
+              }
+            }
+            // Sinon vérifier avec lease principal
+            else if (tenant.lease) {
+              const leaseStart = new Date(tenant.lease.startDate)
+              const leaseEnd = new Date(tenant.lease.endDate)
+              
+              console.log(`🔄 Vérification bail principal: ${leaseStart} <= ${targetDate} <= ${leaseEnd}`)
+              
+              if (targetDate >= leaseStart && targetDate <= leaseEnd) {
+                isActiveThisMonth = true
+                rentAmount = tenant.lease.monthlyRent || 0
+                paymentMethod = tenant.lease.paymentMethod || 'Virement bancaire'
+                console.log(`✅ Actif via bail principal: ${rentAmount}$ ${paymentMethod}`)
+              }
+            }
+
+            // Si le locataire était actif, retourner ses données
+            if (isActiveThisMonth) {
+              const result = {
+                tenantName: tenant.name,
+                paymentMethod: paymentMethod,
+                rentAmount: rentAmount,
+                isHeatedLit: unit?.amenities?.electricity || false,
+                isFurnished: unit?.amenities?.furnished || false,
+                wifiIncluded: unit?.amenities?.wifi || false
+              }
+              console.log(`🎉 Données trouvées par nom pour mois ${monthValue}:`, result)
+              return result
+            }
+          }
+        }
+        continue
+      }
 
       // Vérifier si le locataire était actif ce mois-là
       let isActiveThisMonth = false
