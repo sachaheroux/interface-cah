@@ -35,19 +35,39 @@ export default function UnitReportDetails() {
 
   const loadUnitData = async () => {
     try {
+      console.log(`🔄 UnitReportDetails: Recherche de l'unité avec ID: "${unitId}"`)
       // Récupérer tous les immeubles pour trouver l'unité
       const response = await buildingsService.getBuildings()
       const buildings = response.data || []
+      console.log('🏢 UnitReportDetails: Immeubles chargés:', buildings.length)
       
       let targetUnit = null
       for (const building of buildings) {
         try {
           const buildingUnits = parseAddressAndGenerateUnits(building)
+          console.log(`🏠 Building "${building.name}" - unités générées:`, buildingUnits.map(u => ({
+            id: u.id,
+            unitNumber: u.unitNumber,
+            buildingName: u.buildingName
+          })))
+          
           targetUnit = buildingUnits.find(u => u.id === unitId)
-          if (targetUnit) break
+          if (targetUnit) {
+            console.log('✅ UnitReportDetails: Unité trouvée:', {
+              id: targetUnit.id,
+              unitNumber: targetUnit.unitNumber,
+              buildingName: targetUnit.buildingName,
+              address: targetUnit.address
+            })
+            break
+          }
         } catch (error) {
           console.error('Error parsing building units:', error)
         }
+      }
+      
+      if (!targetUnit) {
+        console.log(`❌ UnitReportDetails: Aucune unité trouvée pour ID: "${unitId}"`)
       }
       
       setUnit(targetUnit)
@@ -65,6 +85,13 @@ export default function UnitReportDetails() {
         count: assignmentsData.length,
         assignments: assignmentsData
       })
+      
+      // Debug: Afficher tous les unitId des assignations
+      const allUnitIds = assignmentsData.map(a => a.unitId)
+      console.log('🔍 UnitReportDetails: Tous les unitId des assignations:', allUnitIds)
+      console.log(`🎯 UnitReportDetails: Recherche pour unitId: "${unitId}"`)
+      console.log('🔍 UnitReportDetails: Correspondance exacte?', allUnitIds.includes(unitId))
+      
       setAssignments(assignmentsData)
     } catch (error) {
       console.error('❌ UnitReportDetails: Error loading assignments:', error)
