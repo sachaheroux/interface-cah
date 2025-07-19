@@ -58,19 +58,31 @@ export default function UnitReportDetails() {
 
   const loadAssignments = async () => {
     try {
+      console.log('🔄 UnitReportDetails: Chargement des assignations...')
       const response = await assignmentsService.getAssignments()
-      setAssignments(response.data || [])
+      const assignmentsData = response.data || []
+      console.log('✅ UnitReportDetails: Assignations chargées:', {
+        count: assignmentsData.length,
+        assignments: assignmentsData
+      })
+      setAssignments(assignmentsData)
     } catch (error) {
-      console.error('Error loading assignments:', error)
+      console.error('❌ UnitReportDetails: Error loading assignments:', error)
     }
   }
 
   const loadTenants = async () => {
     try {
+      console.log('🔄 UnitReportDetails: Chargement des locataires...')
       const response = await tenantsService.getTenants()
-      setAllTenants(response.data || [])
+      const tenantsData = response.data || []
+      console.log('✅ UnitReportDetails: Locataires chargés:', {
+        count: tenantsData.length,
+        tenants: tenantsData
+      })
+      setAllTenants(tenantsData)
     } catch (error) {
-      console.error('Error loading tenants:', error)
+      console.error('❌ UnitReportDetails: Error loading tenants:', error)
     } finally {
       setLoading(false)
     }
@@ -83,10 +95,20 @@ export default function UnitReportDetails() {
 
   // Fonction pour obtenir automatiquement les données d'un mois
   const getMonthData = (monthValue) => {
+    console.log(`🐛 DEBUG - getMonthData pour mois ${monthValue}:`, {
+      unitId,
+      year,
+      assignmentsCount: assignments.length,
+      tenantsCount: allTenants.length,
+      unitExists: !!unit
+    })
+
     // Trouver les assignations pour cette unité
     const unitAssignments = assignments.filter(a => a.unitId === unitId)
+    console.log(`🐛 DEBUG - Assignations pour unité ${unitId}:`, unitAssignments)
     
     if (unitAssignments.length === 0) {
+      console.log(`⚠️ Aucune assignation trouvée pour unité ${unitId}`)
       return {
         tenantName: '-',
         paymentMethod: '-',
@@ -99,9 +121,16 @@ export default function UnitReportDetails() {
 
     // Pour chaque assignation, vérifier si le locataire était actif ce mois-là
     const targetDate = new Date(parseInt(year), monthValue - 1, 15) // 15ème jour du mois
+    console.log(`🐛 DEBUG - Date cible pour mois ${monthValue}:`, targetDate)
     
     for (const assignment of unitAssignments) {
       const tenant = allTenants.find(t => t.id === assignment.tenantId)
+      console.log(`🐛 DEBUG - Assignment ${assignment.id}, recherche locataire ${assignment.tenantId}:`, {
+        assignment,
+        tenantFound: !!tenant,
+        tenant: tenant
+      })
+      
       if (!tenant) continue
 
       // Vérifier si le locataire était actif ce mois-là
@@ -109,15 +138,23 @@ export default function UnitReportDetails() {
       let rentAmount = 0
       let paymentMethod = 'Virement bancaire'
 
+      console.log(`🐛 DEBUG - Vérification bail pour ${tenant.name}:`, {
+        leaseRenewal: tenant.leaseRenewal,
+        lease: tenant.lease
+      })
+
       // Vérifier avec leaseRenewal (priorité)
       if (tenant.leaseRenewal && tenant.leaseRenewal.isActive) {
         const renewalStart = new Date(tenant.leaseRenewal.startDate)
         const renewalEnd = new Date(tenant.leaseRenewal.endDate)
         
+        console.log(`🔄 Vérification renouvellement: ${renewalStart} <= ${targetDate} <= ${renewalEnd}`)
+        
         if (targetDate >= renewalStart && targetDate <= renewalEnd) {
           isActiveThisMonth = true
           rentAmount = tenant.leaseRenewal.monthlyRent || 0
           paymentMethod = tenant.lease?.paymentMethod || 'Virement bancaire'
+          console.log(`✅ Actif via renouvellement: ${rentAmount}$ ${paymentMethod}`)
         }
       }
       // Sinon vérifier avec lease principal
@@ -125,16 +162,19 @@ export default function UnitReportDetails() {
         const leaseStart = new Date(tenant.lease.startDate)
         const leaseEnd = new Date(tenant.lease.endDate)
         
+        console.log(`🔄 Vérification bail principal: ${leaseStart} <= ${targetDate} <= ${leaseEnd}`)
+        
         if (targetDate >= leaseStart && targetDate <= leaseEnd) {
           isActiveThisMonth = true
           rentAmount = tenant.lease.monthlyRent || 0
           paymentMethod = tenant.lease.paymentMethod || 'Virement bancaire'
+          console.log(`✅ Actif via bail principal: ${rentAmount}$ ${paymentMethod}`)
         }
       }
 
       // Si le locataire était actif, retourner ses données
       if (isActiveThisMonth) {
-        return {
+        const result = {
           tenantName: tenant.name,
           paymentMethod: paymentMethod,
           rentAmount: rentAmount,
@@ -142,10 +182,13 @@ export default function UnitReportDetails() {
           isFurnished: unit?.amenities?.furnished || false,
           wifiIncluded: unit?.amenities?.wifi || false
         }
+        console.log(`🎉 Données trouvées pour mois ${monthValue}:`, result)
+        return result
       }
     }
 
     // Aucun locataire actif trouvé pour ce mois
+    console.log(`❌ Aucun locataire actif trouvé pour mois ${monthValue}`)
     return {
       tenantName: '-',
       paymentMethod: '-',
@@ -224,13 +267,8 @@ export default function UnitReportDetails() {
             Rapports Mensuels - {year}
           </h3>
           <p className="text-sm text-gray-600 mt-1">
-            🤖 Données générées automatiquement à partir des fiches locataires et unité
+            Détails pour chaque mois de l'année
           </p>
-          <div className="text-xs text-gray-500 mt-2">
-            <strong>Locataire:</strong> Basé sur les assignations et durées de bail • 
-            <strong className="ml-2">Loyer:</strong> Depuis la fiche locataire (bail/renouvellement) • 
-            <strong className="ml-2">Conditions:</strong> Depuis la fiche de l'unité
-          </div>
         </div>
 
         <div className="overflow-x-auto">

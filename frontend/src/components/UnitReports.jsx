@@ -106,15 +106,6 @@ export default function UnitReports({ selectedYear }) {
                 />
                 <Search className="h-4 w-4 text-gray-400 absolute left-2.5 top-2.5" />
               </div>
-              
-              {/* Indicateur de génération automatique */}
-              <div className="text-xs text-gray-500 max-w-sm">
-                <div>
-                  <strong>🤖 Système automatique !</strong> Les données sont générées en temps réel à partir des fiches locataires et unités.
-                  <br />
-                  <span className="text-green-600">Cliquez sur "Voir détails" pour consulter les rapports mensuels de chaque unité.</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
