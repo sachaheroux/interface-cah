@@ -1200,7 +1200,23 @@ async def get_document(filename: str):
         
         # Vérifier si le fichier existe
         if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail=f"Document '{filename}' non trouvé")
+            # Lister les fichiers disponibles pour aider au diagnostic
+            available_files = []
+            if os.path.exists(documents_dir):
+                available_files = [f for f in os.listdir(documents_dir) if f.lower().endswith('.pdf')]
+            
+            error_detail = {
+                "error": "Document non trouvé",
+                "requested_file": filename,
+                "documents_dir": documents_dir,
+                "available_files": available_files,
+                "message": f"Le fichier '{filename}' n'existe pas. Fichiers disponibles: {available_files}"
+            }
+            
+            raise HTTPException(
+                status_code=404, 
+                detail=error_detail
+            )
         
         # Retourner le fichier
         return FileResponse(

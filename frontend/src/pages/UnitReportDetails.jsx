@@ -632,7 +632,20 @@ export default function UnitReportDetails() {
                                   window.open(pdfUrl, '_blank')
                                 } else {
                                   console.error(`❌ PDF non trouvé: ${tenant.lease.leasePdf}`)
-                                  alert(`Le fichier PDF "${tenant.lease.leasePdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                  
+                                  // Essayer de récupérer les détails de l'erreur
+                                  try {
+                                    const errorData = await response.json()
+                                    console.log('🔍 Détails de l\'erreur:', errorData)
+                                    
+                                    if (errorData.available_files && errorData.available_files.length > 0) {
+                                      alert(`Le fichier PDF "${tenant.lease.leasePdf}" n'existe pas sur le serveur.\n\nFichiers disponibles:\n${errorData.available_files.join('\n')}\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                    } else {
+                                      alert(`Le fichier PDF "${tenant.lease.leasePdf}" n'existe pas sur le serveur.\n\nAucun fichier PDF disponible.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                    }
+                                  } catch (parseError) {
+                                    alert(`Le fichier PDF "${tenant.lease.leasePdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                  }
                                 }
                               } catch (error) {
                                 console.error('Erreur lors de l\'ouverture du PDF:', error)
@@ -670,7 +683,20 @@ export default function UnitReportDetails() {
                                         window.open(pdfUrl, '_blank')
                                       } else {
                                         console.error(`❌ PDF renouvellement non trouvé: ${renewal.renewalPdf}`)
-                                        alert(`Le fichier PDF "${renewal.renewalPdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                        
+                                        // Essayer de récupérer les détails de l'erreur
+                                        try {
+                                          const errorData = await response.json()
+                                          console.log('🔍 Détails de l\'erreur renouvellement:', errorData)
+                                          
+                                          if (errorData.available_files && errorData.available_files.length > 0) {
+                                            alert(`Le fichier PDF "${renewal.renewalPdf}" n'existe pas sur le serveur.\n\nFichiers disponibles:\n${errorData.available_files.join('\n')}\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                          } else {
+                                            alert(`Le fichier PDF "${renewal.renewalPdf}" n'existe pas sur le serveur.\n\nAucun fichier PDF disponible.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                          }
+                                        } catch (parseError) {
+                                          alert(`Le fichier PDF "${renewal.renewalPdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                        }
                                       }
                                     } catch (error) {
                                       console.error('Erreur lors de l\'ouverture du PDF:', error)
