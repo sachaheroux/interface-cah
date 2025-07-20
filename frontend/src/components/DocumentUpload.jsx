@@ -5,12 +5,16 @@ export default function DocumentUpload({ onUploadSuccess }) {
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState(null)
 
+  console.log('📄 DocumentUpload component rendered')
+
   const handleFileUpload = async (event) => {
+    console.log('📁 Fichier sélectionné:', event.target.files[0])
     const file = event.target.files[0]
     if (!file) return
 
     // Vérifier le type de fichier
     if (!file.name.toLowerCase().endsWith('.pdf')) {
+      console.log('❌ Fichier non-PDF rejeté:', file.name)
       setUploadStatus({
         type: 'error',
         message: 'Seuls les fichiers PDF sont acceptés'
@@ -18,6 +22,7 @@ export default function DocumentUpload({ onUploadSuccess }) {
       return
     }
 
+    console.log('✅ Fichier PDF accepté, début de l\'upload:', file.name)
     setUploading(true)
     setUploadStatus(null)
 
@@ -26,13 +31,18 @@ export default function DocumentUpload({ onUploadSuccess }) {
       formData.append('file', file)
 
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      console.log('🌐 URL d\'upload:', `${API_BASE_URL}/api/documents/upload`)
+      
       const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
         method: 'POST',
         body: formData
       })
 
+      console.log('📡 Réponse du serveur:', response.status, response.statusText)
+
       if (response.ok) {
         const result = await response.json()
+        console.log('✅ Upload réussi:', result)
         setUploadStatus({
           type: 'success',
           message: `Fichier "${file.name}" uploadé avec succès`
@@ -42,12 +52,14 @@ export default function DocumentUpload({ onUploadSuccess }) {
         }
       } else {
         const error = await response.json()
+        console.error('❌ Erreur upload:', error)
         setUploadStatus({
           type: 'error',
           message: error.detail || 'Erreur lors de l\'upload'
         })
       }
     } catch (error) {
+      console.error('❌ Erreur réseau:', error)
       setUploadStatus({
         type: 'error',
         message: 'Erreur de connexion lors de l\'upload'

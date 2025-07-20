@@ -11,6 +11,13 @@ export default function Documents() {
     // Ici on pourrait rafraîchir la liste des documents
   }
 
+  const handleToggleUpload = () => {
+    console.log('🔘 Bouton Téléverser Document cliqué')
+    console.log('📊 État actuel showUpload:', showUpload)
+    setShowUpload(!showUpload)
+    console.log('📊 Nouvel état showUpload:', !showUpload)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -19,8 +26,8 @@ export default function Documents() {
           <p className="text-gray-600 mt-1">Bibliothèque de fichiers et documents</p>
         </div>
         <button 
-          className="btn-primary flex items-center"
-          onClick={() => setShowUpload(!showUpload)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+          onClick={handleToggleUpload}
         >
           <Upload className="h-5 w-5 mr-2" />
           Téléverser Document
