@@ -128,10 +128,12 @@ export default function Tenants() {
           tenant.id === tenantData.id ? response.data || tenantData : tenant
         )
         setTenants(updatedTenants)
+        return response // Retourner la réponse pour l'assignation
       } else {
         // Création d'un nouveau locataire
         const response = await tenantsService.createTenant(tenantData)
         setTenants(prev => [...prev, response.data || tenantData])
+        return response // Retourner la réponse pour l'assignation
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
@@ -141,8 +143,10 @@ export default function Tenants() {
           tenant.id === tenantData.id ? tenantData : tenant
         )
         setTenants(updatedTenants)
+        return { data: tenantData }
       } else {
         setTenants(prev => [...prev, tenantData])
+        return { data: tenantData }
       }
     }
   }

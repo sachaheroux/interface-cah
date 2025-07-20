@@ -353,9 +353,18 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       // Si une unité est sélectionnée, assigner le locataire à l'unité
       if (formData.unitId && formData.unitInfo) {
         try {
+          // Créer d'abord le locataire pour obtenir son vrai ID
+          console.log('📤 Envoi des données locataire au service...')
+          const savedTenant = await onSave(tenantData)
+          console.log('✅ Locataire sauvegardé avec succès')
+          
+          // Maintenant assigner avec le vrai ID du locataire créé
+          const realTenantId = savedTenant.data?.id || savedTenant.id
+          console.log(`🔗 Assignation du locataire ${realTenantId} à l'unité ${formData.unitId}`)
+          
           await unitsService.assignTenantToUnit(
             formData.unitId,
-            tenantData.id,
+            realTenantId, // Utiliser le vrai ID du locataire créé
             {
               name: tenantData.name,
               email: tenantData.email,
@@ -369,11 +378,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           console.error('❌ Error assigning tenant to unit:', assignError)
           // Continuer même si l'assignation échoue
         }
+      } else {
+        // Pas d'unité sélectionnée, juste sauvegarder le locataire
+        console.log('📤 Envoi des données locataire au service...')
+        await onSave(tenantData)
+        console.log('✅ Locataire sauvegardé avec succès')
       }
-
-      console.log('📤 Envoi des données locataire au service...')
-      await onSave(tenantData)
-      console.log('✅ Locataire sauvegardé avec succès')
       onClose()
     } catch (error) {
       console.error('❌ Error saving tenant:', error)
