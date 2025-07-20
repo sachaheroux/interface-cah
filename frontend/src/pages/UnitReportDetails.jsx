@@ -542,8 +542,29 @@ export default function UnitReportDetails() {
               
               if (tenant) {
                 tenantsWithLeases.push(tenant)
+              } else {
+                console.log(`⚠️ Assignment ${assignment.id} ignorée - tenantId ${assignment.tenantId} non trouvé`)
               }
             })
+            
+            // Si aucun locataire trouvé via assignations, essayer de trouver tous les locataires qui ont des baux
+            if (tenantsWithLeases.length === 0) {
+              console.log(`🔍 Aucun locataire trouvé via assignations, recherche de tous les locataires avec baux...`)
+              
+              // Chercher tous les locataires qui ont des baux (pour afficher l'historique)
+              const allTenantsWithLeases = allTenants.filter(tenant => 
+                tenant.lease || (tenant.leaseRenewals && tenant.leaseRenewals.length > 0)
+              )
+              
+              console.log(`📋 Locataires avec baux trouvés:`, allTenantsWithLeases.map(t => ({
+                id: t.id,
+                name: t.name,
+                hasLease: !!t.lease,
+                hasRenewals: t.leaseRenewals ? t.leaseRenewals.length : 0
+              })))
+              
+              tenantsWithLeases.push(...allTenantsWithLeases)
+            }
             
             console.log(`📊 Résumé des locataires avec baux:`, tenantsWithLeases.map(t => ({
               id: t.id,
