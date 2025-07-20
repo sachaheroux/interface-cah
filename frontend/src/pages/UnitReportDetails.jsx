@@ -309,14 +309,21 @@ export default function UnitReportDetails() {
           amenities: currentAmenities
         })
         
-        // Additionner au total des revenus
-        totalRentAmount += currentRentAmount
+        // Ne pas additionner au total des revenus ici - on le fera après avoir traité tous les locataires
+        // totalRentAmount += currentRentAmount
         
-        console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$) - Total: ${totalRentAmount}$`)
+        console.log(`✅ Locataire actif ajouté: ${tenant.name} (${currentRentAmount}$)`)
       } else {
         console.log(`❌ Locataire ${tenant.name} non actif pour ce mois`)
       }
       // Continuer avec le prochain locataire (pas de break)
+    }
+
+    // Après avoir traité tous les locataires, prendre le montant du premier locataire seulement
+    // (puisque tous les locataires d'une même unité partagent le même bail)
+    if (activeTenantsThisMonth.length > 0) {
+      totalRentAmount = activeTenantsThisMonth[0].rentAmount || 0
+      console.log(`💰 Revenu total pour unité ${unitId}, mois ${monthValue}: ${totalRentAmount}$ (basé sur le premier locataire seulement)`)
     }
 
     console.log(`🐛 DEBUG - Résumé final pour mois ${monthValue}:`, {
