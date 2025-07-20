@@ -275,7 +275,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   }
 
   const handleLeaseChange = (field, value) => {
-    console.log(`🔄 Changement bail - ${field}:`, value)
     setFormData(prev => ({
       ...prev,
       lease: {
@@ -286,13 +285,85 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   }
 
   const handleLeaseRenewalChange = (id, field, value) => {
-    console.log(`🔄 Changement renouvellement - ${field}:`, value)
     setFormData(prev => ({
       ...prev,
-      leaseRenewals: prev.leaseRenewals.map(renewal =>
-        renewal.id === id ? { ...renewal, [field]: value } : renewal
+      leaseRenewals: prev.leaseRenewals.map(renewal => 
+        renewal.id === id 
+          ? { ...renewal, [field]: value }
+          : renewal
       )
     }))
+  }
+
+  // Nouvelle fonction pour uploader un PDF
+  const uploadPdfFile = async (file, type = 'lease') => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log(`✅ PDF uploadé avec succès: ${result.filename}`)
+        return result.filename
+      } else {
+        const error = await response.json()
+        console.error('❌ Erreur upload PDF:', error)
+        alert(`Erreur lors de l'upload: ${error.detail || 'Erreur inconnue'}`)
+        return null
+      }
+    } catch (error) {
+      console.error('❌ Erreur upload PDF:', error)
+      alert('Erreur de connexion lors de l\'upload')
+      return null
+    }
+  }
+
+  // Fonction pour gérer l'upload du PDF du bail principal
+  const handleLeasePdfUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Seuls les fichiers PDF sont acceptés')
+      return
+    }
+
+    // Afficher un message de chargement
+    handleLeaseChange('leasePdf', `Upload en cours: ${file.name}...`)
+
+    const uploadedFilename = await uploadPdfFile(file, 'lease')
+    if (uploadedFilename) {
+      handleLeaseChange('leasePdf', uploadedFilename)
+    } else {
+      handleLeaseChange('leasePdf', '')
+    }
+  }
+
+  // Fonction pour gérer l'upload du PDF de renouvellement
+  const handleRenewalPdfUpload = async (event, renewalId) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Seuls les fichiers PDF sont acceptés')
+      return
+    }
+
+    // Afficher un message de chargement
+    handleLeaseRenewalChange(renewalId, 'renewalPdf', `Upload en cours: ${file.name}...`)
+
+    const uploadedFilename = await uploadPdfFile(file, 'renewal')
+    if (uploadedFilename) {
+      handleLeaseRenewalChange(renewalId, 'renewalPdf', uploadedFilename)
+    } else {
+      handleLeaseRenewalChange(renewalId, 'renewalPdf', '')
+    }
   }
 
   const handleUnitSelection = (unit) => {
@@ -706,17 +777,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     <input
                       type="file"
                       accept=".pdf"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          handleLeaseChange('leasePdf', file.name);
-                        }
-                      }}
+                      onChange={handleLeasePdfUpload}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                     {formData.lease.leasePdf && (
-                      <p className="text-xs text-green-600 mt-1">
-                        ✓ {formData.lease.leasePdf}
+                      <p className={`text-xs mt-1 ${
+                        formData.lease.leasePdf.startsWith('Upload en cours') 
+                          ? 'text-blue-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {formData.lease.leasePdf.startsWith('Upload en cours') 
+                          ? '⏳ ' + formData.lease.leasePdf
+                          : '✓ ' + formData.lease.leasePdf
+                        }
                       </p>
                     )}
                   </div>
@@ -822,17 +895,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                             <input
                               type="file"
                               accept=".pdf"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  handleLeaseRenewalChange(renewal.id, 'renewalPdf', file.name);
-                                }
-                              }}
+                              onChange={(e) => handleRenewalPdfUpload(e, renewal.id)}
                               className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
                             />
                             {renewal.renewalPdf && (
-                              <p className="text-xs text-green-600 mt-1">
-                                ✓ {renewal.renewalPdf}
+                              <p className={`text-xs mt-1 ${
+                                renewal.renewalPdf.startsWith('Upload en cours') 
+                                  ? 'text-blue-600' 
+                                  : 'text-green-600'
+                              }`}>
+                                {renewal.renewalPdf.startsWith('Upload en cours') 
+                                  ? '⏳ ' + renewal.renewalPdf
+                                  : '✓ ' + renewal.renewalPdf
+                                }
                               </p>
                             )}
                           </div>
