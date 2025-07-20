@@ -527,12 +527,32 @@ export default function UnitReportDetails() {
             const unitAssignments = assignments.filter(a => a.unitId === unitId)
             const tenantsWithLeases = []
             
+            console.log(`🔍 DEBUG - Recherche des locataires pour unité ${unitId}:`)
+            console.log(`📋 Assignations trouvées:`, unitAssignments)
+            
             unitAssignments.forEach(assignment => {
               const tenant = allTenants.find(t => t.id === assignment.tenantId)
+              console.log(`🔍 Assignment ${assignment.id}:`, {
+                tenantId: assignment.tenantId,
+                tenantFound: !!tenant,
+                tenant: tenant ? { id: tenant.id, name: tenant.name } : null,
+                hasLease: tenant?.lease ? true : false,
+                hasRenewals: tenant?.leaseRenewals ? tenant.leaseRenewals.length : 0
+              })
+              
               if (tenant) {
                 tenantsWithLeases.push(tenant)
               }
             })
+            
+            console.log(`📊 Résumé des locataires avec baux:`, tenantsWithLeases.map(t => ({
+              id: t.id,
+              name: t.name,
+              hasLease: !!t.lease,
+              hasRenewals: t.leaseRenewals ? t.leaseRenewals.length : 0,
+              leasePdf: t.lease?.leasePdf || 'Aucun',
+              renewalsWithPdf: t.leaseRenewals ? t.leaseRenewals.filter(r => r.renewalPdf).length : 0
+            })))
             
             if (tenantsWithLeases.length === 0) {
               return (
@@ -559,7 +579,12 @@ export default function UnitReportDetails() {
                             <span className="text-sm font-medium text-gray-900">Bail principal</span>
                           </div>
                           <button
-                            onClick={() => window.open(`/api/documents/${tenant.lease.leasePdf}`, '_blank')}
+                            onClick={() => {
+                              console.log(`🔍 Tentative d'ouverture PDF: ${tenant.lease.leasePdf}`)
+                              const pdfUrl = `http://localhost:8000/api/documents/${tenant.lease.leasePdf}`
+                              console.log(`🔗 URL PDF: ${pdfUrl}`)
+                              window.open(pdfUrl, '_blank')
+                            }}
                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                           >
                             Voir PDF
@@ -568,24 +593,35 @@ export default function UnitReportDetails() {
                       )}
                       
                       {/* PDFs des renouvellements */}
-                      {tenant.leaseRenewals && tenant.leaseRenewals.map((renewal, renewalIndex) => (
-                        renewal.renewalPdf && (
-                          <div key={renewal.id} className="flex items-center justify-between bg-green-50 p-3 rounded">
-                            <div className="flex items-center">
-                              <FileText className="h-4 w-4 text-green-600 mr-2" />
-                              <span className="text-sm font-medium text-gray-900">
-                                Renouvellement {renewalIndex + 1} ({renewal.startDate} - {renewal.endDate})
-                              </span>
+                      {tenant.leaseRenewals && tenant.leaseRenewals.length > 0 && (
+                        <div className="space-y-2">
+                          {tenant.leaseRenewals.map((renewal, renewalIndex) => (
+                            <div key={renewal.id || renewalIndex} className="flex items-center justify-between bg-green-50 p-3 rounded">
+                              <div className="flex items-center">
+                                <FileText className="h-4 w-4 text-green-600 mr-2" />
+                                <span className="text-sm font-medium text-gray-900">
+                                  Renouvellement {renewalIndex + 1} ({renewal.startDate} - {renewal.endDate})
+                                </span>
+                              </div>
+                              {renewal.renewalPdf ? (
+                                <button
+                                  onClick={() => {
+                                    console.log(`🔍 Tentative d'ouverture PDF renouvellement: ${renewal.renewalPdf}`)
+                                    const pdfUrl = `http://localhost:8000/api/documents/${renewal.renewalPdf}`
+                                    console.log(`🔗 URL PDF renouvellement: ${pdfUrl}`)
+                                    window.open(pdfUrl, '_blank')
+                                  }}
+                                  className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                >
+                                  Voir PDF
+                                </button>
+                              ) : (
+                                <span className="text-gray-500 text-sm">Aucun PDF</span>
+                              )}
                             </div>
-                            <button
-                              onClick={() => window.open(`/api/documents/${renewal.renewalPdf}`, '_blank')}
-                              className="text-green-600 hover:text-green-800 text-sm font-medium"
-                            >
-                              Voir PDF
-                            </button>
-                          </div>
-                        )
-                      ))}
+                          ))}
+                        </div>
+                      )}
                       
                       {/* Message si aucun PDF */}
                       {(!tenant.lease?.leasePdf && (!tenant.leaseRenewals || tenant.leaseRenewals.every(r => !r.renewalPdf))) && (

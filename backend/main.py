@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import uvicorn
@@ -1109,21 +1110,39 @@ async def create_unit_report(report_data: dict):
 async def delete_unit_report(report_id: int):
     """Supprimer un rapport d'unité"""
     try:
-        data = get_unit_reports_cache()
-        original_count = len(data["reports"])
-        data["reports"] = [r for r in data["reports"] if r.get("id") != report_id]
+        reports = load_unit_reports_data()
+        reports = [r for r in reports if r.get('id') != report_id]
+        save_unit_reports_data(reports)
+        update_unit_reports_cache(reports)
+        return {"message": "Rapport d'unité supprimé avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
+@app.get("/api/documents/{filename}")
+async def get_document(filename: str):
+    """Servir un document (PDF, image, etc.)"""
+    try:
+        # Créer le répertoire documents s'il n'existe pas
+        documents_dir = os.path.join(DATA_DIR, "documents")
+        os.makedirs(documents_dir, exist_ok=True)
         
-        if len(data["reports"]) == original_count:
-            raise HTTPException(status_code=404, detail="Rapport non trouvé")
+        # Chemin complet du fichier
+        file_path = os.path.join(documents_dir, filename)
         
-        update_unit_reports_cache(data)
-        print(f"Rapport unité supprimé: {report_id}")
-        return {"message": "Rapport supprimé avec succès"}
+        # Vérifier si le fichier existe
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"Document '{filename}' non trouvé")
+        
+        # Retourner le fichier
+        return FileResponse(
+            path=file_path,
+            filename=filename,
+            media_type='application/octet-stream'
+        )
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la suppression du rapport d'unité: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du document: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
