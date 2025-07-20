@@ -1,7 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FileText, Plus, Upload, Folder } from 'lucide-react'
+import DocumentUpload from '../components/DocumentUpload'
 
 export default function Documents() {
+  const [showUpload, setShowUpload] = useState(false)
+
+  const handleUploadSuccess = (result) => {
+    console.log('✅ Document uploadé avec succès:', result)
+    setShowUpload(false)
+    // Ici on pourrait rafraîchir la liste des documents
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -9,11 +18,19 @@ export default function Documents() {
           <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
           <p className="text-gray-600 mt-1">Bibliothèque de fichiers et documents</p>
         </div>
-        <button className="btn-primary flex items-center">
+        <button 
+          className="btn-primary flex items-center"
+          onClick={() => setShowUpload(!showUpload)}
+        >
           <Upload className="h-5 w-5 mr-2" />
           Téléverser Document
         </button>
       </div>
+
+      {/* Section Upload */}
+      {showUpload && (
+        <DocumentUpload onUploadSuccess={handleUploadSuccess} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card text-center cursor-pointer hover:bg-gray-50">

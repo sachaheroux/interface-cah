@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 import os
 import platform
+import shutil
 
 app = FastAPI(
     title="Interface CAH API",
@@ -1131,6 +1132,60 @@ async def delete_unit_report(report_id: int):
         return {"message": "Rapport d'unité supprimé avec succès"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
+@app.post("/api/documents/upload")
+async def upload_document(file: UploadFile = File(...)):
+    """Uploader un document (PDF, image, etc.)"""
+    try:
+        # Créer le répertoire documents s'il n'existe pas
+        documents_dir = os.path.join(DATA_DIR, "documents")
+        os.makedirs(documents_dir, exist_ok=True)
+        
+        # Vérifier le type de fichier
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
+        
+        # Chemin complet du fichier
+        file_path = os.path.join(documents_dir, file.filename)
+        
+        # Sauvegarder le fichier
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        print(f"✅ Document uploadé: {file.filename}")
+        return {
+            "message": "Document uploadé avec succès",
+            "filename": file.filename,
+            "size": os.path.getsize(file_path)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'upload: {str(e)}")
+
+@app.get("/api/documents")
+async def list_documents():
+    """Lister tous les documents disponibles"""
+    try:
+        # Créer le répertoire documents s'il n'existe pas
+        documents_dir = os.path.join(DATA_DIR, "documents")
+        os.makedirs(documents_dir, exist_ok=True)
+        
+        # Lister les fichiers
+        files = []
+        if os.path.exists(documents_dir):
+            for filename in os.listdir(documents_dir):
+                if filename.lower().endswith('.pdf'):
+                    file_path = os.path.join(documents_dir, filename)
+                    files.append({
+                        "filename": filename,
+                        "size": os.path.getsize(file_path),
+                        "uploaded_at": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat()
+                    })
+        
+        return {"documents": files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des documents: {str(e)}")
 
 @app.get("/api/documents/{filename}")
 async def get_document(filename: str):

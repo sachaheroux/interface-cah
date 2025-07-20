@@ -621,11 +621,23 @@ export default function UnitReportDetails() {
                             <span className="text-sm font-medium text-gray-900">Bail principal</span>
                           </div>
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               console.log(`🔍 Tentative d'ouverture PDF: ${tenant.lease.leasePdf}`)
                               const pdfUrl = `${API_BASE_URL}/api/documents/${tenant.lease.leasePdf}`
                               console.log(`🔗 URL PDF: ${pdfUrl}`)
-                              window.open(pdfUrl, '_blank')
+                              
+                              try {
+                                const response = await fetch(pdfUrl)
+                                if (response.ok) {
+                                  window.open(pdfUrl, '_blank')
+                                } else {
+                                  console.error(`❌ PDF non trouvé: ${tenant.lease.leasePdf}`)
+                                  alert(`Le fichier PDF "${tenant.lease.leasePdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                }
+                              } catch (error) {
+                                console.error('Erreur lors de l\'ouverture du PDF:', error)
+                                alert('Erreur lors de l\'ouverture du PDF. Vérifiez votre connexion.')
+                              }
                             }}
                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                           >
@@ -647,11 +659,23 @@ export default function UnitReportDetails() {
                               </div>
                               {renewal.renewalPdf ? (
                                 <button
-                                  onClick={() => {
+                                  onClick={async () => {
                                     console.log(`🔍 Tentative d'ouverture PDF renouvellement: ${renewal.renewalPdf}`)
                                     const pdfUrl = `${API_BASE_URL}/api/documents/${renewal.renewalPdf}`
                                     console.log(`🔗 URL PDF renouvellement: ${pdfUrl}`)
-                                    window.open(pdfUrl, '_blank')
+                                    
+                                    try {
+                                      const response = await fetch(pdfUrl)
+                                      if (response.ok) {
+                                        window.open(pdfUrl, '_blank')
+                                      } else {
+                                        console.error(`❌ PDF renouvellement non trouvé: ${renewal.renewalPdf}`)
+                                        alert(`Le fichier PDF "${renewal.renewalPdf}" n'existe pas sur le serveur.\n\nPour résoudre ce problème:\n1. Uploadez le fichier PDF via l'interface\n2. Ou contactez l'administrateur`)
+                                      }
+                                    } catch (error) {
+                                      console.error('Erreur lors de l\'ouverture du PDF:', error)
+                                      alert('Erreur lors de l\'ouverture du PDF. Vérifiez votre connexion.')
+                                    }
                                   }}
                                   className="text-green-600 hover:text-green-800 text-sm font-medium"
                                 >
