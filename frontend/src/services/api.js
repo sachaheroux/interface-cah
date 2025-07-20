@@ -851,6 +851,25 @@ export const assignmentsService = {
       const assignment = localAssignments.find(a => a.tenantId === parseInt(tenantId))
       return { data: assignment || null }
     }
+  },
+
+  // Nouvelle méthode pour nettoyer les assignations invalides
+  cleanInvalidAssignments: async () => {
+    try {
+      console.log('🧹 Nettoyage des assignations invalides...')
+      const response = await fetch(`${API_BASE_URL}/api/assignments/clean`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      console.log('✅ Nettoyage terminé:', result)
+      return result
+    } catch (error) {
+      console.error('❌ Erreur lors du nettoyage:', error)
+      throw error
+    }
   }
 }
 

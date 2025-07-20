@@ -1158,5 +1158,52 @@ async def get_document(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du document: {str(e)}")
 
+@app.get("/api/assignments/clean")
+async def clean_invalid_assignments():
+    """Nettoyer les assignations avec des tenantId invalides"""
+    try:
+        data = get_assignments_cache()
+        tenants_data = get_tenants_cache()
+        
+        # Récupérer les IDs valides des locataires
+        valid_tenant_ids = {t.get("id") for t in tenants_data.get("tenants", [])}
+        
+        # Analyser les assignations
+        assignments = data.get("assignments", [])
+        original_count = len(assignments)
+        
+        invalid_assignments = []
+        valid_assignments = []
+        
+        for assignment in assignments:
+            tenant_id = assignment.get("tenantId")
+            
+            # Vérifier si l'ID est valide
+            if tenant_id in valid_tenant_ids:
+                valid_assignments.append(assignment)
+            else:
+                invalid_assignments.append(assignment)
+        
+        # Sauvegarder les assignations valides seulement
+        data["assignments"] = valid_assignments
+        update_assignments_cache(data)
+        
+        return {
+            "message": "Nettoyage terminé",
+            "removed_count": len(invalid_assignments),
+            "kept_count": len(valid_assignments),
+            "total_original": original_count,
+            "invalid_assignments": [
+                {
+                    "id": a.get("id"),
+                    "tenantId": a.get("tenantId"),
+                    "unitId": a.get("unitId")
+                } for a in invalid_assignments
+            ]
+        }
+    except Exception as e:
+        print(f"Erreur lors du nettoyage des assignations: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du nettoyage: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

@@ -194,6 +194,15 @@ export default function UnitReportDetails() {
       if (!tenant) {
         console.log(`⚠️ Locataire ${assignment.tenantId} non trouvé - assignation orpheline`)
         
+        // Vérifier si le tenantId est un timestamp invalide
+        const tenantId = assignment.tenantId
+        const isInvalidId = typeof tenantId === 'number' && tenantId > 1000000000000 // Timestamp JavaScript typique
+        
+        if (isInvalidId) {
+          console.log(`❌ TenantId invalide détecté: ${tenantId} (probablement un timestamp) - assignation ignorée`)
+          continue
+        }
+        
         // Essayer de trouver par nom si available dans tenantData
         if (assignment.tenantData && assignment.tenantData.name) {
           const tenantByName = allTenants.find(t => t.name === assignment.tenantData.name)
