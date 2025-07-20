@@ -90,17 +90,26 @@ export default function UnitReports({ selectedYear }) {
       for (const assignment of unitAssignments) {
         console.log(`🔍 DEBUG - Vérification assignment ${assignment.id} (tenantId: ${assignment.tenantId})`)
         
+        // Vérifier si le tenantId est valide (pas un timestamp JavaScript)
+        const tenantId = assignment.tenantId
+        const isInvalidId = typeof tenantId === 'number' && tenantId > 1000000000000 // Timestamp JavaScript typique
+        
+        if (isInvalidId) {
+          console.log(`❌ DEBUG - TenantId invalide détecté: ${tenantId} (probablement un timestamp)`)
+          continue
+        }
+        
         // Recherche plus flexible des locataires
         const tenant = allTenants.find(t => 
-          t.id === assignment.tenantId || 
-          t.id === String(assignment.tenantId) || 
-          String(t.id) === assignment.tenantId ||
-          t.id === parseInt(assignment.tenantId) ||
-          parseInt(t.id) === assignment.tenantId
+          t.id === tenantId || 
+          t.id === String(tenantId) || 
+          String(t.id) === tenantId ||
+          t.id === parseInt(tenantId) ||
+          parseInt(t.id) === tenantId
         )
         
         if (!tenant) {
-          console.log(`❌ DEBUG - Locataire ${assignment.tenantId} non trouvé`)
+          console.log(`❌ DEBUG - Locataire ${tenantId} non trouvé`)
           continue
         }
 

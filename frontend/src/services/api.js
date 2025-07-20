@@ -316,11 +316,15 @@ export const tenantsService = {
     } catch (error) {
       console.warn('⚠️ API create tenant failed, saving locally:', error.message)
       
-      // Fallback vers localStorage
+      // Fallback vers localStorage avec un ID plus sûr
       const localTenants = JSON.parse(localStorage.getItem('localTenants') || '[]')
+      
+      // Utiliser un ID basé sur le nom plutôt qu'un timestamp pour éviter les conflits
+      const safeId = localTenants.length > 0 ? Math.max(...localTenants.map(t => t.id || 0)) + 1 : 1
+      
       const newTenant = {
         ...data,
-        id: Date.now(), // ID temporaire basé sur timestamp
+        id: safeId, // ID séquentiel au lieu de timestamp
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -328,6 +332,7 @@ export const tenantsService = {
       localTenants.push(newTenant)
       localStorage.setItem('localTenants', JSON.stringify(localTenants))
       console.log('💾 Tenant saved locally:', {
+        id: newTenant.id,
         name: newTenant.name,
         lease: newTenant.lease,
         leaseRenewal: newTenant.leaseRenewal

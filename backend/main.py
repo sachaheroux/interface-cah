@@ -841,12 +841,24 @@ async def create_assignment(assignment_data: dict):
     """Créer une nouvelle assignation locataire-unité"""
     try:
         data = get_assignments_cache()
+        tenant_id = assignment_data.get("tenantId")
+        
+        # Validation : Vérifier que le locataire existe
+        tenants_data = get_tenants_cache()
+        tenant_exists = any(t.get("id") == tenant_id for t in tenants_data.get("tenants", []))
+        
+        if not tenant_exists:
+            print(f"❌ Assignation rejetée: Locataire {tenant_id} n'existe pas")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Le locataire avec l'ID {tenant_id} n'existe pas dans la base de données"
+            )
         
         # Créer la nouvelle assignation avec un ID unique
         new_assignment = {
             "id": data["next_id"],
             "unitId": assignment_data.get("unitId"),
-            "tenantId": assignment_data.get("tenantId"),
+            "tenantId": tenant_id,
             "tenantData": assignment_data.get("tenantData", {}),
             "assignedAt": datetime.now().isoformat() + "Z",
             "createdAt": datetime.now().isoformat() + "Z",
@@ -854,7 +866,7 @@ async def create_assignment(assignment_data: dict):
         }
         
         # Supprimer l'ancienne assignation pour ce locataire s'il y en a une
-        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != assignment_data.get("tenantId")]
+        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != tenant_id]
         
         # Ajouter la nouvelle assignation
         data["assignments"].append(new_assignment)
@@ -863,8 +875,10 @@ async def create_assignment(assignment_data: dict):
         # Mettre à jour le cache
         update_assignments_cache(data)
         
-        print(f"Assignation créée: Locataire {assignment_data.get('tenantId')} → Unité {assignment_data.get('unitId')}")
+        print(f"✅ Assignation créée: Locataire {tenant_id} → Unité {assignment_data.get('unitId')}")
         return {"data": new_assignment}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Erreur lors de la création de l'assignation: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'assignation: {str(e)}")
