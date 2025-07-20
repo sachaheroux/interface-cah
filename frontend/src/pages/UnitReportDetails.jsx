@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Calendar, DollarSign, ArrowLeft, Building2, FileText } from 'lucide-react'
+import { ArrowLeft, Building2, FileText, Calendar, DollarSign, Users, Eye } from 'lucide-react'
 import { buildingsService, assignmentsService, tenantsService } from '../services/api'
 import { parseAddressAndGenerateUnits } from '../types/unit'
+
+// Configuration de l'API
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function UnitReportDetails() {
   const { unitId, year } = useParams()
@@ -35,6 +38,7 @@ export default function UnitReportDetails() {
 
   const loadUnitData = async () => {
     try {
+      setLoading(true)
       console.log(`🔄 UnitReportDetails: Recherche de l'unité avec ID: "${unitId}"`)
       // Récupérer tous les immeubles pour trouver l'unité
       const response = await buildingsService.getBuildings()
@@ -55,9 +59,8 @@ export default function UnitReportDetails() {
           if (targetUnit) {
             console.log('✅ UnitReportDetails: Unité trouvée:', {
               id: targetUnit.id,
-              unitNumber: targetUnit.unitNumber,
               buildingName: targetUnit.buildingName,
-              address: targetUnit.address
+              unitNumber: targetUnit.unitNumber
             })
             break
           }
@@ -66,13 +69,15 @@ export default function UnitReportDetails() {
         }
       }
       
-      if (!targetUnit) {
-        console.log(`❌ UnitReportDetails: Aucune unité trouvée pour ID: "${unitId}"`)
+      if (targetUnit) {
+        setUnit(targetUnit)
+      } else {
+        console.error(`❌ UnitReportDetails: Unité ${unitId} non trouvée`)
       }
-      
-      setUnit(targetUnit)
     } catch (error) {
       console.error('Error loading unit data:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -618,7 +623,7 @@ export default function UnitReportDetails() {
                           <button
                             onClick={() => {
                               console.log(`🔍 Tentative d'ouverture PDF: ${tenant.lease.leasePdf}`)
-                              const pdfUrl = `http://localhost:8000/api/documents/${tenant.lease.leasePdf}`
+                              const pdfUrl = `${API_BASE_URL}/api/documents/${tenant.lease.leasePdf}`
                               console.log(`🔗 URL PDF: ${pdfUrl}`)
                               window.open(pdfUrl, '_blank')
                             }}
@@ -644,7 +649,7 @@ export default function UnitReportDetails() {
                                 <button
                                   onClick={() => {
                                     console.log(`🔍 Tentative d'ouverture PDF renouvellement: ${renewal.renewalPdf}`)
-                                    const pdfUrl = `http://localhost:8000/api/documents/${renewal.renewalPdf}`
+                                    const pdfUrl = `${API_BASE_URL}/api/documents/${renewal.renewalPdf}`
                                     console.log(`🔗 URL PDF renouvellement: ${pdfUrl}`)
                                     window.open(pdfUrl, '_blank')
                                   }}
