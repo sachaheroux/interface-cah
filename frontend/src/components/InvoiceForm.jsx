@@ -35,11 +35,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       setLoading(true);
       
       // Charger les immeubles
-      const buildingsResponse = await api.get('/buildings');
+      const buildingsResponse = await api.get('/api/buildings');
       setBuildings(buildingsResponse.data || []);
       
       // Charger les constantes
-      const constantsResponse = await api.get('/invoices/constants');
+      const constantsResponse = await api.get('/api/invoices/constants');
       setConstants(constantsResponse.data);
       
       // Si un immeuble est spécifié, charger ses unités
@@ -48,7 +48,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       }
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err);
-      setError('Erreur lors du chargement des données');
+      // Ne pas afficher d'erreur pour les données optionnelles
+      setError('');
     } finally {
       setLoading(false);
     }
