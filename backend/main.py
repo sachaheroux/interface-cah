@@ -31,6 +31,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Constantes pour les factures
+INVOICE_CATEGORIES = {
+    "municipal_taxes": "Taxes municipales",
+    "school_taxes": "Taxes scolaire", 
+    "insurance": "Assurance",
+    "snow_removal": "Déneigement",
+    "lawn_care": "Gazon",
+    "management": "Gestion",
+    "renovations": "Rénovations",
+    "repairs": "Réparations",
+    "other": "Autres"
+}
+
+PAYMENT_TYPES = {
+    "bank_transfer": "Virement bancaire",
+    "check": "Chèque",
+    "cash": "Espèces"
+}
+
+INVOICE_TYPES = {
+    "rental_building": "Immeuble en location",
+    "construction_project": "Projet de construction"
+}
+
 # Modèles Pydantic pour la validation des données
 class Address(BaseModel):
     street: str
@@ -189,6 +213,49 @@ class TenantUpdate(BaseModel):
     unit: Optional[str] = None
     notes: Optional[str] = None
 
+# Modèles pour les factures
+class Invoice(BaseModel):
+    id: Optional[int] = None
+    invoiceNumber: str
+    category: str  # municipal_taxes, school_taxes, insurance, etc.
+    source: str = ""  # D'où vient la facture (texte libre)
+    date: str  # Format YYYY-MM-DD
+    amount: float
+    paymentType: str  # bank_transfer, check, cash
+    buildingId: Optional[int] = None
+    unitId: Optional[str] = None  # null si facture pour tout l'immeuble
+    pdfFilename: str = ""
+    notes: str = ""
+    type: str = "rental_building"  # rental_building ou construction_project
+    createdAt: Optional[str] = None
+    updatedAt: Optional[str] = None
+
+class InvoiceCreate(BaseModel):
+    invoiceNumber: str
+    category: str
+    source: str = ""
+    date: str
+    amount: float
+    paymentType: str
+    buildingId: Optional[int] = None
+    unitId: Optional[str] = None
+    pdfFilename: str = ""
+    notes: str = ""
+    type: str = "rental_building"
+
+class InvoiceUpdate(BaseModel):
+    invoiceNumber: Optional[str] = None
+    category: Optional[str] = None
+    source: Optional[str] = None
+    date: Optional[str] = None
+    amount: Optional[float] = None
+    paymentType: Optional[str] = None
+    buildingId: Optional[int] = None
+    unitId: Optional[str] = None
+    pdfFilename: Optional[str] = None
+    notes: Optional[str] = None
+    type: Optional[str] = None
+
 # Système de persistance avec fichier JSON
 # Utilisation du répertoire recommandé par Render : /opt/render/project/src/data
 # En local, utiliser un répertoire relatif pour éviter les problèmes de permissions
@@ -205,6 +272,7 @@ TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
 ASSIGNMENTS_DATA_FILE = os.path.join(DATA_DIR, "assignments_data.json")
 BUILDING_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "building_reports_data.json")
 UNIT_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "unit_reports_data.json")
+INVOICES_DATA_FILE = os.path.join(DATA_DIR, "invoices_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -250,6 +318,7 @@ tenants_cache = None
 assignments_cache = None
 building_reports_cache = None
 unit_reports_cache = None
+invoices_cache = None
 
 def get_buildings_cache():
     """Obtenir les données des immeubles avec cache"""
@@ -286,14 +355,22 @@ def get_unit_reports_cache():
         unit_reports_cache = load_unit_reports_data()
     return unit_reports_cache
 
+def get_invoices_cache():
+    """Obtenir les données des factures avec cache"""
+    global invoices_cache
+    if invoices_cache is None:
+        invoices_cache = load_invoices_data()
+    return invoices_cache
+
 def invalidate_caches():
     """Invalider tous les caches"""
-    global buildings_cache, tenants_cache, assignments_cache, building_reports_cache, unit_reports_cache
+    global buildings_cache, tenants_cache, assignments_cache, building_reports_cache, unit_reports_cache, invoices_cache
     buildings_cache = None
     tenants_cache = None
     assignments_cache = None
     building_reports_cache = None
     unit_reports_cache = None
+    invoices_cache = None
 
 def load_buildings_data():
     """Charger les données depuis le fichier JSON"""
@@ -461,6 +538,31 @@ def save_unit_reports_data(data):
         print(f"Erreur sauvegarde rapports unités: {e}")
         return False
 
+def load_invoices_data():
+    """Charger les données des factures depuis le fichier JSON"""
+    try:
+        if os.path.exists(INVOICES_DATA_FILE):
+            with open(INVOICES_DATA_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                print(f"Données factures chargées: {len(data.get('invoices', []))} factures")
+                return data
+    except Exception as e:
+        print(f"Erreur chargement données factures depuis fichier: {e}")
+    
+    # Retourner structure vide si pas de fichier ou erreur
+    return {"invoices": [], "next_id": 1}
+
+def save_invoices_data(data):
+    """Sauvegarder les données des factures dans le fichier JSON"""
+    try:
+        with open(INVOICES_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Données factures sauvegardées: {len(data.get('invoices', []))} factures")
+        return True
+    except Exception as e:
+        print(f"Erreur sauvegarde factures: {e}")
+        return False
+
 def update_buildings_cache(data):
     """Mettre à jour le cache mémoire des immeubles"""
     global buildings_cache
@@ -490,6 +592,12 @@ def update_unit_reports_cache(data):
     global unit_reports_cache
     unit_reports_cache = data
     save_unit_reports_data(data)
+
+def update_invoices_cache(data):
+    """Mettre à jour le cache mémoire des factures"""
+    global invoices_cache
+    invoices_cache = data
+    save_invoices_data(data)
 
 # Route de test de base
 @app.get("/")
@@ -1275,6 +1383,191 @@ async def clean_invalid_assignments():
     except Exception as e:
         print(f"Erreur lors du nettoyage des assignations: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du nettoyage: {str(e)}")
+
+# ========================================
+# ROUTES POUR LES FACTURES
+# ========================================
+
+@app.get("/api/invoices")
+async def get_invoices():
+    """Récupérer toutes les factures"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        return {"data": invoices}
+    except Exception as e:
+        print(f"Erreur lors du chargement des factures: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures: {str(e)}")
+
+@app.get("/api/invoices/{invoice_id}")
+async def get_invoice(invoice_id: int):
+    """Récupérer une facture spécifique par ID"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        for invoice in invoices:
+            if invoice.get("id") == invoice_id:
+                return {"data": invoice}
+        
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la récupération de la facture: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la facture: {str(e)}")
+
+@app.post("/api/invoices")
+async def create_invoice(invoice_data: InvoiceCreate):
+    """Créer une nouvelle facture"""
+    try:
+        data = get_invoices_cache()
+        
+        # Vérifier l'unicité du numéro de facture
+        existing_invoices = data.get("invoices", [])
+        invoice_number = invoice_data.invoiceNumber
+        
+        if any(inv.get("invoiceNumber") == invoice_number for inv in existing_invoices):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Une facture avec le numéro '{invoice_number}' existe déjà"
+            )
+        
+        # Créer la nouvelle facture avec un ID unique
+        new_invoice = invoice_data.dict()
+        new_invoice["id"] = data["next_id"]
+        new_invoice["createdAt"] = datetime.now().isoformat() + "Z"
+        new_invoice["updatedAt"] = datetime.now().isoformat() + "Z"
+        
+        # Ajouter aux données
+        data["invoices"].append(new_invoice)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_invoices_cache(data)
+        
+        print(f"✅ Facture créée: {invoice_number} - {invoice_data.category}")
+        return {"data": new_invoice}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la création de la facture: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la facture: {str(e)}")
+
+@app.put("/api/invoices/{invoice_id}")
+async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdate):
+    """Mettre à jour une facture existante"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        # Trouver et mettre à jour la facture
+        invoice_found = False
+        for i, invoice in enumerate(invoices):
+            if invoice.get("id") == invoice_id:
+                # Vérifier l'unicité du numéro de facture si modifié
+                if invoice_data.invoiceNumber and invoice_data.invoiceNumber != invoice.get("invoiceNumber"):
+                    existing_invoices = [inv for inv in invoices if inv.get("id") != invoice_id]
+                    if any(inv.get("invoiceNumber") == invoice_data.invoiceNumber for inv in existing_invoices):
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"Une facture avec le numéro '{invoice_data.invoiceNumber}' existe déjà"
+                        )
+                
+                # Mettre à jour seulement les champs fournis
+                update_data = invoice_data.dict(exclude_unset=True)
+                invoices[i].update(update_data)
+                invoices[i]["updatedAt"] = datetime.now().isoformat() + "Z"
+                invoice_found = True
+                
+                # Mettre à jour le cache
+                update_invoices_cache(data)
+                
+                print(f"✅ Facture mise à jour: {invoices[i].get('invoiceNumber')}")
+                return {"data": invoices[i]}
+        
+        if not invoice_found:
+            raise HTTPException(status_code=404, detail="Facture non trouvée")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la facture: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la facture: {str(e)}")
+
+@app.delete("/api/invoices/{invoice_id}")
+async def delete_invoice(invoice_id: int):
+    """Supprimer une facture"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        # Trouver la facture à supprimer
+        invoice_to_delete = None
+        for invoice in invoices:
+            if invoice.get("id") == invoice_id:
+                invoice_to_delete = invoice
+                break
+        
+        if not invoice_to_delete:
+            raise HTTPException(status_code=404, detail="Facture non trouvée")
+        
+        # Supprimer la facture
+        data["invoices"] = [inv for inv in invoices if inv.get("id") != invoice_id]
+        
+        # Mettre à jour le cache
+        update_invoices_cache(data)
+        
+        print(f"✅ Facture supprimée: {invoice_to_delete.get('invoiceNumber')}")
+        return {"message": "Facture supprimée avec succès"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression de la facture: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.get("/api/invoices/building/{building_id}")
+async def get_building_invoices(building_id: int):
+    """Récupérer toutes les factures d'un immeuble spécifique"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        # Filtrer les factures pour cet immeuble
+        building_invoices = [inv for inv in invoices if inv.get("buildingId") == building_id]
+        
+        return {"data": building_invoices}
+    except Exception as e:
+        print(f"Erreur lors du chargement des factures d'immeuble: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures d'immeuble: {str(e)}")
+
+@app.get("/api/invoices/building/{building_id}/category/{category}")
+async def get_building_category_invoices(building_id: int, category: str):
+    """Récupérer toutes les factures d'une catégorie spécifique pour un immeuble"""
+    try:
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        # Filtrer les factures pour cet immeuble et cette catégorie
+        category_invoices = [
+            inv for inv in invoices 
+            if inv.get("buildingId") == building_id and inv.get("category") == category
+        ]
+        
+        return {"data": category_invoices}
+    except Exception as e:
+        print(f"Erreur lors du chargement des factures de catégorie: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures de catégorie: {str(e)}")
+
+@app.get("/api/invoices/constants")
+async def get_invoice_constants():
+    """Récupérer les constantes pour les factures (catégories, types de paiement, etc.)"""
+    return {
+        "categories": INVOICE_CATEGORIES,
+        "paymentTypes": PAYMENT_TYPES,
+        "invoiceTypes": INVOICE_TYPES
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

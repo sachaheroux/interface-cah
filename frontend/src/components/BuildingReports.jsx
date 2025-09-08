@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react'
-import { Building2, DollarSign, FileText, Edit3, AlertTriangle, CheckCircle, X, Search, Upload, Eye } from 'lucide-react'
-import { buildingsService, reportsService } from '../services/api'
+import { Building2, DollarSign, FileText, Edit3, AlertTriangle, CheckCircle, X, Search, Upload, Eye, Receipt } from 'lucide-react'
+import { buildingsService, reportsService, api } from '../services/api'
 
 export default function BuildingReports({ selectedYear }) {
   const [buildings, setBuildings] = useState([])
   const [reports, setReports] = useState([])
+  const [invoices, setInvoices] = useState([])
   const [selectedBuilding, setSelectedBuilding] = useState(null)
   const [editingReport, setEditingReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [selectedBuildingDetails, setSelectedBuildingDetails] = useState(null)
+  const [constants, setConstants] = useState({
+    categories: {},
+    paymentTypes: {},
+    invoiceTypes: {}
+  })
 
   useEffect(() => {
     loadBuildings()
     loadReports()
+    loadInvoices()
+    loadConstants()
   }, [])
 
   const loadBuildings = async () => {
@@ -38,8 +46,68 @@ export default function BuildingReports({ selectedYear }) {
     }
   }
 
+  const loadInvoices = async () => {
+    try {
+      const response = await api.get('/invoices')
+      setInvoices(response.data.data || [])
+    } catch (error) {
+      console.error('Error loading invoices:', error)
+    }
+  }
+
+  const loadConstants = async () => {
+    try {
+      const response = await api.get('/invoices/constants')
+      setConstants(response.data)
+    } catch (error) {
+      console.error('Error loading constants:', error)
+    }
+  }
+
   const getReportForBuilding = (buildingId, year) => {
     return reports.find(r => r.buildingId === buildingId && r.year === year)
+  }
+
+  // Calculer les montants des factures par catégorie pour un immeuble et une année
+  const getInvoiceAmountsForBuilding = (buildingId, year) => {
+    const buildingInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.date)
+      return invoice.buildingId === buildingId && invoiceDate.getFullYear() === year
+    })
+
+    const amounts = {
+      municipal_taxes: 0,
+      school_taxes: 0,
+      insurance: 0,
+      snow_removal: 0,
+      lawn_care: 0,
+      management: 0,
+      renovations: 0,
+      repairs: 0,
+      other: 0
+    }
+
+    buildingInvoices.forEach(invoice => {
+      if (amounts.hasOwnProperty(invoice.category)) {
+        amounts[invoice.category] += invoice.amount
+      }
+    })
+
+    return {
+      amounts,
+      invoices: buildingInvoices,
+      total: Object.values(amounts).reduce((sum, amount) => sum + amount, 0)
+    }
+  }
+
+  // Obtenir les factures pour une catégorie spécifique
+  const getInvoicesForCategory = (buildingId, year, category) => {
+    return invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.date)
+      return invoice.buildingId === buildingId && 
+             invoiceDate.getFullYear() === year && 
+             invoice.category === category
+    })
   }
 
   const handleEditReport = (building) => {
@@ -346,17 +414,75 @@ export default function BuildingReports({ selectedYear }) {
                   )
                 }
 
+                // Obtenir les montants des factures pour cet immeuble et cette année
+                const invoiceData = getInvoiceAmountsForBuilding(selectedBuildingDetails.id, selectedYear)
+                
                 const dataItems = [
                   { label: 'Pourcentage d\'intérêt', value: `${report.interestRate || 0}%`, type: 'rate' },
                   { label: 'Valeur actuelle', value: formatCurrency(report.currentValue), type: 'currency' },
-                  { label: 'Taxes municipales', value: formatCurrency(report.municipalTaxes), type: 'invoice' },
-                  { label: 'Taxes scolaires', value: formatCurrency(report.schoolTaxes), type: 'invoice' },
-                  { label: 'Assurance', value: formatCurrency(report.insurance), type: 'invoice' },
-                  { label: 'Déneigement', value: formatCurrency(report.snowRemoval), type: 'invoice' },
-                  { label: 'Gazon', value: formatCurrency(report.lawn), type: 'invoice' },
-                  { label: 'Gestion', value: formatCurrency(report.management), type: 'invoice' },
-                  { label: 'Rénovation', value: formatCurrency(report.renovation), type: 'invoice' },
-                  { label: 'Autres', value: formatCurrency(report.other), type: 'invoice' }
+                  { 
+                    label: 'Taxes municipales', 
+                    value: formatCurrency(invoiceData.amounts.municipal_taxes), 
+                    type: 'invoice',
+                    category: 'municipal_taxes',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'municipal_taxes')
+                  },
+                  { 
+                    label: 'Taxes scolaires', 
+                    value: formatCurrency(invoiceData.amounts.school_taxes), 
+                    type: 'invoice',
+                    category: 'school_taxes',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'school_taxes')
+                  },
+                  { 
+                    label: 'Assurance', 
+                    value: formatCurrency(invoiceData.amounts.insurance), 
+                    type: 'invoice',
+                    category: 'insurance',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'insurance')
+                  },
+                  { 
+                    label: 'Déneigement', 
+                    value: formatCurrency(invoiceData.amounts.snow_removal), 
+                    type: 'invoice',
+                    category: 'snow_removal',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'snow_removal')
+                  },
+                  { 
+                    label: 'Gazon', 
+                    value: formatCurrency(invoiceData.amounts.lawn_care), 
+                    type: 'invoice',
+                    category: 'lawn_care',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'lawn_care')
+                  },
+                  { 
+                    label: 'Gestion', 
+                    value: formatCurrency(invoiceData.amounts.management), 
+                    type: 'invoice',
+                    category: 'management',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'management')
+                  },
+                  { 
+                    label: 'Rénovation', 
+                    value: formatCurrency(invoiceData.amounts.renovations), 
+                    type: 'invoice',
+                    category: 'renovations',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'renovations')
+                  },
+                  { 
+                    label: 'Réparations', 
+                    value: formatCurrency(invoiceData.amounts.repairs), 
+                    type: 'invoice',
+                    category: 'repairs',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'repairs')
+                  },
+                  { 
+                    label: 'Autres', 
+                    value: formatCurrency(invoiceData.amounts.other), 
+                    type: 'invoice',
+                    category: 'other',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'other')
+                  }
                 ]
 
                 return (
@@ -369,19 +495,31 @@ export default function BuildingReports({ selectedYear }) {
                             <div>
                               <label className="block text-sm font-medium text-gray-700">{item.label}</label>
                               <p className="text-lg font-semibold text-gray-900 mt-1">{item.value}</p>
+                              {item.type === 'invoice' && item.invoices && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {item.invoices.length} facture{item.invoices.length > 1 ? 's' : ''}
+                                </p>
+                              )}
                             </div>
-                            {item.type === 'invoice' && (
+                            {item.type === 'invoice' && item.invoices && item.invoices.length > 0 && (
                               <div className="ml-2">
-                                <button className="text-gray-400 hover:text-blue-600 p-1">
-                                  <FileText className="h-4 w-4" />
+                                <button 
+                                  onClick={() => {
+                                    // Afficher les factures pour cette catégorie
+                                    console.log('Factures pour', item.category, ':', item.invoices)
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 p-1 flex flex-col items-center"
+                                  title="Voir les factures"
+                                >
+                                  <Receipt className="h-4 w-4" />
+                                  <span className="text-xs mt-1">Factures</span>
                                 </button>
-                                <p className="text-xs text-gray-500 mt-1">PDF</p>
                               </div>
                             )}
                           </div>
-                          {item.type === 'invoice' && (
+                          {item.type === 'invoice' && (!item.invoices || item.invoices.length === 0) && (
                             <p className="text-xs text-gray-500 mt-2">
-                              Facture disponible prochainement
+                              Aucune facture pour cette catégorie
                             </p>
                           )}
                         </div>
