@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Receipt, Plus, DollarSign, FileText, Eye, Trash2, Edit, Calendar, Building, Hash } from 'lucide-react'
-import { api } from '../services/api'
+import api from '../services/api'
 import InvoiceForm from '../components/InvoiceForm'
 
 export default function Billing() {

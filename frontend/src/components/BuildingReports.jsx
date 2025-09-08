@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Building2, DollarSign, FileText, Edit3, AlertTriangle, CheckCircle, X, Search, Upload, Eye, Receipt } from 'lucide-react'
-import { buildingsService, reportsService, api } from '../services/api'
+import { buildingsService, reportsService } from '../services/api'
+import api from '../services/api'
 
 export default function BuildingReports({ selectedYear }) {
   const [buildings, setBuildings] = useState([])
