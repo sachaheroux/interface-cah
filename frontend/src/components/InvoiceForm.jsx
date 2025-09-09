@@ -18,6 +18,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
 
   const [buildings, setBuildings] = useState([]);
   const [units, setUnits] = useState([]);
+  const [filteredBuildings, setFilteredBuildings] = useState([]);
+  const [buildingSearchTerm, setBuildingSearchTerm] = useState('');
+  const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
+  const [selectedBuildingName, setSelectedBuildingName] = useState('');
+  const [currency, setCurrency] = useState('CAD');
   const [constants, setConstants] = useState({
     categories: {
       "municipal_taxes": "Taxes municipales",
@@ -48,6 +53,20 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
   useEffect(() => {
     loadData();
   }, []);
+
+  // Fermer le dropdown des immeubles quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBuildingDropdown && !event.target.closest('.relative')) {
+        setShowBuildingDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBuildingDropdown]);
 
   const loadData = useCallback(async () => {
     try {
@@ -129,8 +148,60 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     )), [units]
   );
 
+  // Logique de recherche d'immeubles
+  const handleBuildingSearch = (searchTerm) => {
+    setBuildingSearchTerm(searchTerm);
+    if (searchTerm.length > 0) {
+      const filtered = buildings.filter(building => 
+        building.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredBuildings(filtered);
+      setShowBuildingDropdown(true);
+    } else {
+      setFilteredBuildings([]);
+      setShowBuildingDropdown(false);
+    }
+  };
+
+  const selectBuilding = (building) => {
+    setFormData(prev => ({
+      ...prev,
+      buildingId: building.id,
+      unitId: '' // Reset unit selection
+    }));
+    setSelectedBuildingName(building.name);
+    setBuildingSearchTerm(building.name);
+    setShowBuildingDropdown(false);
+    
+    // Charger les unités pour cet immeuble
+    if (building.unitData) {
+      const buildingUnits = Object.keys(building.unitData).map(unitId => ({
+        id: unitId,
+        name: unitId
+      }));
+      setUnits(buildingUnits);
+    } else {
+      setUnits([]);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Gestion spéciale pour le montant avec virgules
+    if (name === 'amount') {
+      // Remplacer les points par des virgules et valider le format
+      let cleanValue = value.replace(/\./g, ',');
+      // Vérifier que c'est un nombre valide avec virgule
+      if (cleanValue === '' || /^\d+([,]\d{1,2})?$/.test(cleanValue)) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: cleanValue
+        }));
+      }
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -193,11 +264,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
         ...formData,
         buildingId: parseInt(formData.buildingId),
         unitId: formData.unitId || null,
-        amount: parseFloat(formData.amount)
+        amount: parseFloat(formData.amount.replace(',', '.')) // Convertir virgule en point pour l'API
       };
 
       // Créer la facture
-      const response = await api.post('/invoices', invoiceData);
+      const response = await api.post('/api/invoices', invoiceData);
       
       console.log('Facture créée:', response.data);
       
@@ -318,17 +389,27 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Montant *
               </label>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleInputChange}
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.00"
-                required
-              />
+              <div className="flex">
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="CAD">$ CAD</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+                <input
+                  type="text"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0,00"
+                  required
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Utilisez la virgule (,) pour les décimales</p>
             </div>
           </div>
 
@@ -350,20 +431,44 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
 
           {/* Immeuble et unité */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Immeuble *
               </label>
-              <select
-                name="buildingId"
-                value={formData.buildingId}
-                onChange={handleInputChange}
+              <input
+                type="text"
+                value={buildingSearchTerm}
+                onChange={(e) => handleBuildingSearch(e.target.value)}
+                onFocus={() => setShowBuildingDropdown(true)}
+                placeholder="Rechercher un immeuble..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-              >
-                <option value="">Sélectionner un immeuble</option>
-                {buildingOptions}
-              </select>
+              />
+              
+              {/* Dropdown des immeubles filtrés */}
+              {showBuildingDropdown && filteredBuildings.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredBuildings.map(building => (
+                    <div
+                      key={building.id}
+                      onClick={() => selectBuilding(building)}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900">{building.name}</div>
+                      <div className="text-sm text-gray-500">{building.address?.street}, {building.address?.city}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Message si aucun immeuble trouvé */}
+              {showBuildingDropdown && buildingSearchTerm.length > 0 && filteredBuildings.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    Aucun immeuble trouvé
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -374,12 +479,15 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 name="unitId"
                 value={formData.unitId}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!formData.buildingId}
               >
                 <option value="">Tout l'immeuble</option>
                 {unitOptions}
               </select>
+              {formData.buildingId && units.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">Aucune unité disponible pour cet immeuble</p>
+              )}
             </div>
           </div>
 
