@@ -25,15 +25,15 @@ export default function Billing() {
       setLoading(true)
       
       // Charger les factures
-      const invoicesResponse = await api.get('/invoices')
+      const invoicesResponse = await api.get('/api/invoices')
       setInvoices(invoicesResponse.data.data || [])
       
       // Charger les immeubles
-      const buildingsResponse = await api.get('/buildings')
+      const buildingsResponse = await api.get('/api/buildings')
       setBuildings(buildingsResponse.data || [])
       
       // Charger les constantes
-      const constantsResponse = await api.get('/invoices/constants')
+      const constantsResponse = await api.get('/api/invoices/constants')
       setConstants(constantsResponse.data)
       
     } catch (err) {
@@ -51,7 +51,7 @@ export default function Billing() {
   const handleDeleteInvoice = async (invoiceId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) {
       try {
-        await api.delete(`/invoices/${invoiceId}`)
+        await api.delete(`/api/invoices/${invoiceId}`)
         setInvoices(prev => prev.filter(inv => inv.id !== invoiceId))
       } catch (err) {
         console.error('Erreur lors de la suppression:', err)
