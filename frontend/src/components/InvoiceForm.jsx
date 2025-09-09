@@ -23,6 +23,10 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
   const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
   const [selectedBuildingName, setSelectedBuildingName] = useState('');
   const [currency, setCurrency] = useState('CAD');
+  const [filteredUnits, setFilteredUnits] = useState([]);
+  const [unitSearchTerm, setUnitSearchTerm] = useState('');
+  const [showUnitDropdown, setShowUnitDropdown] = useState(false);
+  const [selectedUnitName, setSelectedUnitName] = useState('');
   const [constants, setConstants] = useState({
     categories: {
       "municipal_taxes": "Taxes municipales",
@@ -54,11 +58,14 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     loadData();
   }, []);
 
-  // Fermer le dropdown des immeubles quand on clique ailleurs
+  // Fermer les dropdowns quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showBuildingDropdown && !event.target.closest('.relative')) {
+      if (showBuildingDropdown && !event.target.closest('.building-search')) {
         setShowBuildingDropdown(false);
+      }
+      if (showUnitDropdown && !event.target.closest('.unit-search')) {
+        setShowUnitDropdown(false);
       }
     };
 
@@ -66,7 +73,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showBuildingDropdown]);
+  }, [showBuildingDropdown, showUnitDropdown]);
 
   const loadData = useCallback(async () => {
     try {
@@ -173,6 +180,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     setBuildingSearchTerm(building.name);
     setShowBuildingDropdown(false);
     
+    // Reset unit selection
+    setSelectedUnitName('');
+    setUnitSearchTerm('');
+    setShowUnitDropdown(false);
+    
     // Charger les unités pour cet immeuble
     console.log('Immeuble sélectionné:', building); // Debug
     
@@ -182,6 +194,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
         name: unitId
       }));
       setUnits(buildingUnits);
+      setFilteredUnits(buildingUnits);
       console.log('Unités chargées depuis unitData:', buildingUnits);
     } else if (building.units && Array.isArray(building.units)) {
       // Fallback: si les unités sont dans un tableau
@@ -190,6 +203,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
         name: unit.name || unit
       }));
       setUnits(buildingUnits);
+      setFilteredUnits(buildingUnits);
       console.log('Unités chargées depuis units array:', buildingUnits);
     } else {
       // Fallback: générer des unités par défaut basées sur le nombre d'unités
@@ -202,8 +216,34 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
         });
       }
       setUnits(buildingUnits);
+      setFilteredUnits(buildingUnits);
       console.log('Unités générées par défaut:', buildingUnits);
     }
+  };
+
+  // Logique de recherche d'unités
+  const handleUnitSearch = (searchTerm) => {
+    setUnitSearchTerm(searchTerm);
+    if (searchTerm.length > 0) {
+      const filtered = units.filter(unit => 
+        unit.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUnits(filtered);
+      setShowUnitDropdown(true);
+    } else {
+      setFilteredUnits(units);
+      setShowUnitDropdown(true);
+    }
+  };
+
+  const selectUnit = (unit) => {
+    setFormData(prev => ({
+      ...prev,
+      unitId: unit.id
+    }));
+    setSelectedUnitName(unit.name);
+    setUnitSearchTerm(unit.name);
+    setShowUnitDropdown(false);
   };
 
   const handleInputChange = (e) => {
@@ -410,11 +450,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Montant *
               </label>
-              <div className="flex max-w-xs">
+              <div className="flex max-w-sm">
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
+                  className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-28"
                 >
                   <option value="CAD">$ CAD</option>
                   <option value="USD">$ USD</option>
@@ -425,7 +465,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                   name="amount"
                   value={formData.amount}
                   onChange={handleInputChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-24"
                   placeholder="0,00"
                   required
                 />
@@ -452,7 +492,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
 
           {/* Immeuble et unité */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
+            <div className="relative building-search">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Immeuble *
               </label>
@@ -492,20 +532,57 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               )}
             </div>
 
-            <div>
+            <div className="relative unit-search">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Unité (optionnel)
               </label>
-              <select
-                name="unitId"
-                value={formData.unitId}
-                onChange={handleInputChange}
+              <input
+                type="text"
+                value={unitSearchTerm}
+                onChange={(e) => handleUnitSearch(e.target.value)}
+                onFocus={() => formData.buildingId && setShowUnitDropdown(true)}
+                placeholder={formData.buildingId ? "Rechercher une unité..." : "Sélectionnez d'abord un immeuble"}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!formData.buildingId}
-              >
-                <option value="">Tout l'immeuble</option>
-                {unitOptions}
-              </select>
+              />
+              
+              {/* Dropdown des unités filtrées */}
+              {showUnitDropdown && formData.buildingId && filteredUnits.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, unitId: '' }));
+                      setSelectedUnitName('');
+                      setUnitSearchTerm('');
+                      setShowUnitDropdown(false);
+                    }}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
+                  >
+                    <div className="font-medium text-gray-900">Tout l'immeuble</div>
+                    <div className="text-sm text-gray-500">Facture pour l'ensemble de l'immeuble</div>
+                  </div>
+                  {filteredUnits.map(unit => (
+                    <div
+                      key={unit.id}
+                      onClick={() => selectUnit(unit)}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900">{unit.name}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Message si aucune unité trouvée */}
+              {showUnitDropdown && formData.buildingId && unitSearchTerm.length > 0 && filteredUnits.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    Aucune unité trouvée
+                  </div>
+                </div>
+              )}
+              
+              {/* Messages d'état */}
               {formData.buildingId && units.length === 0 && (
                 <p className="text-xs text-gray-500 mt-1">Aucune unité disponible pour cet immeuble</p>
               )}
