@@ -57,6 +57,30 @@ INVOICE_TYPES = {
     "construction_project": "Projet de construction"
 }
 
+# ========================================
+# ENDPOINT POUR LES CONSTANTES (défini tôt pour éviter les erreurs)
+# ========================================
+
+@app.get("/api/invoices/constants")
+async def get_invoice_constants():
+    """Récupérer les constantes pour les factures (catégories, types de paiement, etc.)"""
+    try:
+        print("🔧 Récupération des constantes de factures...")
+        print(f"📊 Catégories: {len(INVOICE_CATEGORIES)}")
+        print(f"💳 Types de paiement: {len(PAYMENT_TYPES)}")
+        print(f"📋 Types de facture: {len(INVOICE_TYPES)}")
+        
+        # Retourner directement les constantes sans wrapper
+        return {
+            "categories": INVOICE_CATEGORIES,
+            "paymentTypes": PAYMENT_TYPES,
+            "invoiceTypes": INVOICE_TYPES
+        }
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de la récupération des constantes: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des constantes: {str(e)}")
+
 # Modèles Pydantic pour la validation des données
 class Address(BaseModel):
     street: str
@@ -1561,15 +1585,6 @@ async def get_building_category_invoices(building_id: int, category: str):
     except Exception as e:
         print(f"Erreur lors du chargement des factures de catégorie: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures de catégorie: {str(e)}")
-
-@app.get("/api/invoices/constants")
-async def get_invoice_constants():
-    """Récupérer les constantes pour les factures (catégories, types de paiement, etc.)"""
-    return {
-        "categories": INVOICE_CATEGORIES,
-        "paymentTypes": PAYMENT_TYPES,
-        "invoiceTypes": INVOICE_TYPES
-    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
