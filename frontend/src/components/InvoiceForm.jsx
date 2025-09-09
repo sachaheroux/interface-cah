@@ -75,6 +75,26 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     };
   }, [showBuildingDropdown, showUnitDropdown]);
 
+  // Filtrer les unités selon le terme de recherche (identique à TenantForm)
+  useEffect(() => {
+    if (!unitSearchTerm.trim()) {
+      setFilteredUnits(units.slice(0, 20)); // Limiter à 20 unités par défaut
+      return;
+    }
+
+    const searchLower = unitSearchTerm.toLowerCase();
+    const filtered = units.filter(unit => {
+      return (
+        unit.buildingName?.toLowerCase().includes(searchLower) ||
+        unit.address?.toLowerCase().includes(searchLower) ||
+        unit.unitNumber?.toString().toLowerCase().includes(searchLower) ||
+        unit.type?.toLowerCase().includes(searchLower)
+      );
+    });
+
+    setFilteredUnits(filtered.slice(0, 50)); // Limiter à 50 résultats
+  }, [unitSearchTerm, units]);
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -170,7 +190,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     }
   };
 
-  const selectBuilding = (building) => {
+  const selectBuilding = async (building) => {
     setFormData(prev => ({
       ...prev,
       buildingId: building.id,
@@ -185,62 +205,38 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     setUnitSearchTerm('');
     setShowUnitDropdown(false);
     
-    // Charger les unités pour cet immeuble
-    console.log('Immeuble sélectionné:', building); // Debug
-    
-    if (building.unitData) {
-      const buildingUnits = Object.keys(building.unitData).map(unitId => {
-        const unit = building.unitData[unitId];
-        return {
-          id: unitId,
-          name: unit.address || unit.name || unitId,
-          address: unit.address || unit.name || unitId
-        };
-      });
+    // Charger TOUTES les unités comme dans TenantForm
+    try {
+      console.log('Immeuble sélectionné:', building); // Debug
+      
+      // Utiliser le service des unités pour charger toutes les unités
+      const response = await api.get('/api/units');
+      const allUnits = response.data || [];
+      
+      // Filtrer les unités pour cet immeuble spécifique
+      const buildingUnits = allUnits.filter(unit => 
+        unit.buildingId === building.id || 
+        unit.buildingName === building.name ||
+        (unit.address && unit.address.includes(building.name))
+      );
+      
+      console.log('Toutes les unités:', allUnits);
+      console.log('Unités filtrées pour cet immeuble:', buildingUnits);
+      
       setUnits(buildingUnits);
       setFilteredUnits(buildingUnits);
-      console.log('Unités chargées depuis unitData:', buildingUnits);
-    } else if (building.units && Array.isArray(building.units)) {
-      // Fallback: si les unités sont dans un tableau
-      const buildingUnits = building.units.map(unit => ({
-        id: unit.id || unit,
-        name: unit.address || unit.name || unit,
-        address: unit.address || unit.name || unit
-      }));
-      setUnits(buildingUnits);
-      setFilteredUnits(buildingUnits);
-      console.log('Unités chargées depuis units array:', buildingUnits);
-    } else {
-      // Fallback: générer des unités par défaut basées sur le nombre d'unités
-      const unitCount = building.unitCount || 0;
-      const buildingUnits = [];
-      for (let i = 1; i <= unitCount; i++) {
-        buildingUnits.push({
-          id: `unit-${i}`,
-          name: `Unité ${i}`,
-          address: `Unité ${i}`
-        });
-      }
-      setUnits(buildingUnits);
-      setFilteredUnits(buildingUnits);
-      console.log('Unités générées par défaut:', buildingUnits);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des unités:', error);
+      setUnits([]);
+      setFilteredUnits([]);
     }
   };
 
-  // Logique de recherche d'unités
+  // Logique de recherche d'unités (identique à TenantForm)
   const handleUnitSearch = (searchTerm) => {
     setUnitSearchTerm(searchTerm);
-    if (searchTerm.length > 0) {
-      const filtered = units.filter(unit => 
-        unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (unit.address && unit.address.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredUnits(filtered);
-      setShowUnitDropdown(true);
-    } else {
-      setFilteredUnits(units);
-      setShowUnitDropdown(true);
-    }
+    setShowUnitDropdown(true);
   };
 
   const selectUnit = (unit) => {
@@ -572,12 +568,28 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                     <div
                       key={unit.id}
                       onClick={() => selectUnit(unit)}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                        formData.unitId === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                      }`}
                     >
-                      <div className="font-medium text-gray-900">{unit.name}</div>
-                      {unit.address && unit.address !== unit.name && (
-                        <div className="text-sm text-gray-500">{unit.address}</div>
-                      )}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className="font-medium text-gray-900">
+                              {unit.address}
+                            </span>
+                            {formData.unitId === unit.id && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                Sélectionnée
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{unit.buildingName}</p>
+                          {unit.unitNumber && (
+                            <p className="text-xs text-gray-500">Unité: {unit.unitNumber}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -598,6 +610,23 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               )}
               {formData.buildingId && units.length > 0 && (
                 <p className="text-xs text-green-600 mt-1">{units.length} unité(s) disponible(s)</p>
+              )}
+              
+              {/* Bouton pour désélectionner */}
+              {formData.unitId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, unitId: '' }));
+                    setSelectedUnitName('');
+                    setUnitSearchTerm('');
+                    setShowUnitDropdown(false);
+                  }}
+                  className="text-sm text-red-600 hover:text-red-700 flex items-center mt-2"
+                >
+                  <span className="mr-1">×</span>
+                  Désélectionner l'unité
+                </button>
               )}
             </div>
           </div>
