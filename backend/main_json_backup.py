@@ -10,31 +10,11 @@ import os
 import platform
 import shutil
 
-# Imports pour SQLite
-from database import db_manager, init_database
-from database_service import db_service
-from backup_service import backup_service
-from validation_service import data_validator, consistency_checker, ValidationLevel
-from monitoring_service import database_monitor
-
 app = FastAPI(
     title="Interface CAH API",
     description="API pour la gestion de construction - Interface CAH",
     version="1.0.0"
 )
-
-# Initialiser la base de données au démarrage
-@app.on_event("startup")
-async def startup_event():
-    """Initialiser la base de données au démarrage de l'application"""
-    print("🚀 Démarrage de l'application Interface CAH...")
-    print("🗄️ Initialisation de la base de données SQLite...")
-    
-    if init_database():
-        print("✅ Base de données initialisée avec succès")
-    else:
-        print("❌ Erreur lors de l'initialisation de la base de données")
-        raise Exception("Impossible d'initialiser la base de données")
 
 # Configuration CORS pour permettre les requêtes du frontend
 app.add_middleware(
@@ -86,15 +66,16 @@ async def get_invoice_constants():
     """Récupérer les constantes pour les factures (catégories, types de paiement, etc.)"""
     try:
         print("🔧 Récupération des constantes de factures...")
+        print(f"📊 Catégories: {len(INVOICE_CATEGORIES)}")
+        print(f"💳 Types de paiement: {len(PAYMENT_TYPES)}")
+        print(f"📋 Types de facture: {len(INVOICE_TYPES)}")
         
-        # Utiliser le service SQLite
-        constants = db_service.get_invoice_constants()
-        
-        print(f"📊 Catégories: {len(constants['categories'])}")
-        print(f"💳 Types de paiement: {len(constants['paymentTypes'])}")
-        print(f"📋 Types de facture: {len(constants['invoiceTypes'])}")
-        
-        return constants
+        # Retourner directement les constantes sans wrapper
+        return {
+            "categories": INVOICE_CATEGORIES,
+            "paymentTypes": PAYMENT_TYPES,
+            "invoiceTypes": INVOICE_TYPES
+        }
         
     except Exception as e:
         print(f"❌ Erreur lors de la récupération des constantes: {e}")
@@ -735,25 +716,28 @@ async def get_dashboard_data():
             ]
         }
 
-# Routes CRUD pour les immeubles avec SQLite
+# Routes CRUD pour les immeubles avec persistance
 @app.get("/api/buildings")
 async def get_buildings():
     """Récupérer tous les immeubles"""
     try:
-        buildings = db_service.get_buildings()
-        return buildings
+        data = get_buildings_cache()
+        return data.get("buildings", [])
     except Exception as e:
-        print(f"❌ Erreur lors du chargement des immeubles: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des immeubles: {str(e)}")
 
 @app.get("/api/buildings/{building_id}")
 async def get_building(building_id: int):
     """Récupérer un immeuble spécifique par ID"""
     try:
-        building = db_service.get_building(building_id)
-        if not building:
-            raise HTTPException(status_code=404, detail="Immeuble non trouvé")
-        return building
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
+        
+        for building in buildings:
+            if building.get("id") == building_id:
+                return building
+        
+        raise HTTPException(status_code=404, detail="Immeuble non trouvé")
     except HTTPException:
         raise
     except Exception as e:
@@ -763,11 +747,20 @@ async def get_building(building_id: int):
 async def create_building(building_data: BuildingCreate):
     """Créer un nouvel immeuble"""
     try:
-        # Convertir en dictionnaire pour le service
-        building_dict = building_data.dict()
+        data = get_buildings_cache()
         
-        # Créer l'immeuble via le service SQLite
-        new_building = db_service.create_building(building_dict)
+        # Créer le nouvel immeuble avec un ID unique
+        new_building = building_data.dict()
+        new_building["id"] = data["next_id"]
+        new_building["createdAt"] = datetime.now().isoformat() + "Z"
+        new_building["updatedAt"] = datetime.now().isoformat() + "Z"
+        
+        # Ajouter aux données
+        data["buildings"].append(new_building)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_buildings_cache(data)
         
         return new_building
     except Exception as e:
@@ -777,16 +770,27 @@ async def create_building(building_data: BuildingCreate):
 async def update_building(building_id: int, building_data: BuildingUpdate):
     """Mettre à jour un immeuble existant"""
     try:
-        # Convertir en dictionnaire pour le service
-        update_dict = building_data.dict(exclude_unset=True)
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
         
-        # Mettre à jour l'immeuble via le service SQLite
-        updated_building = db_service.update_building(building_id, update_dict)
+        # Trouver et mettre à jour l'immeuble
+        building_found = False
+        for i, building in enumerate(buildings):
+            if building.get("id") == building_id:
+                # Mettre à jour seulement les champs fournis
+                update_data = building_data.dict(exclude_unset=True)
+                buildings[i].update(update_data)
+                buildings[i]["updatedAt"] = datetime.now().isoformat() + "Z"
+                building_found = True
+                
+                # Mettre à jour le cache
+                update_buildings_cache(data)
+                
+                return buildings[i]
         
-        if not updated_building:
+        if not building_found:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
-        
-        return updated_building
+            
     except HTTPException:
         raise
     except Exception as e:
@@ -796,13 +800,27 @@ async def update_building(building_id: int, building_data: BuildingUpdate):
 async def delete_building(building_id: int):
     """Supprimer un immeuble"""
     try:
-        # Supprimer l'immeuble via le service SQLite
-        success = db_service.delete_building(building_id)
+        data = get_buildings_cache()
+        buildings = data.get("buildings", [])
         
-        if not success:
+        # Trouver l'immeuble à supprimer
+        building_to_delete = None
+        for building in buildings:
+            if building.get("id") == building_id:
+                building_to_delete = building
+                break
+        
+        if not building_to_delete:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
         
+        # Supprimer l'immeuble
+        data["buildings"] = [b for b in buildings if b.get("id") != building_id]
+        
+        # Mettre à jour le cache
+        update_buildings_cache(data)
+        
         return {"message": "Immeuble supprimé avec succès"}
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -1400,7 +1418,8 @@ async def clean_invalid_assignments():
 async def get_invoices():
     """Récupérer toutes les factures"""
     try:
-        invoices = db_service.get_invoices()
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
         return {"data": invoices}
     except Exception as e:
         print(f"Erreur lors du chargement des factures: {e}")
@@ -1410,10 +1429,14 @@ async def get_invoices():
 async def get_invoice(invoice_id: int):
     """Récupérer une facture spécifique par ID"""
     try:
-        invoice = db_service.get_invoice(invoice_id)
-        if not invoice:
-            raise HTTPException(status_code=404, detail="Facture non trouvée")
-        return {"data": invoice}
+        data = get_invoices_cache()
+        invoices = data.get("invoices", [])
+        
+        for invoice in invoices:
+            if invoice.get("id") == invoice_id:
+                return {"data": invoice}
+        
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
     except HTTPException:
         raise
     except Exception as e:
@@ -1424,12 +1447,32 @@ async def get_invoice(invoice_id: int):
 async def create_invoice(invoice_data: InvoiceCreate):
     """Créer une nouvelle facture"""
     try:
-        # Convertir en dictionnaire pour le service
-        invoice_dict = invoice_data.dict()
+        data = get_invoices_cache()
         
-        # Créer la facture via le service SQLite
-        new_invoice = db_service.create_invoice(invoice_dict)
+        # Vérifier l'unicité du numéro de facture
+        existing_invoices = data.get("invoices", [])
+        invoice_number = invoice_data.invoiceNumber
         
+        if any(inv.get("invoiceNumber") == invoice_number for inv in existing_invoices):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Une facture avec le numéro '{invoice_number}' existe déjà"
+            )
+        
+        # Créer la nouvelle facture avec un ID unique
+        new_invoice = invoice_data.dict()
+        new_invoice["id"] = data["next_id"]
+        new_invoice["createdAt"] = datetime.now().isoformat() + "Z"
+        new_invoice["updatedAt"] = datetime.now().isoformat() + "Z"
+        
+        # Ajouter aux données
+        data["invoices"].append(new_invoice)
+        data["next_id"] += 1
+        
+        # Mettre à jour le cache
+        update_invoices_cache(data)
+        
+        print(f"✅ Facture créée: {invoice_number} - {invoice_data.category}")
         return {"data": new_invoice}
     except HTTPException:
         raise
@@ -1542,282 +1585,6 @@ async def get_building_category_invoices(building_id: int, category: str):
     except Exception as e:
         print(f"Erreur lors du chargement des factures de catégorie: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures de catégorie: {str(e)}")
-
-# ========================================
-# ENDPOINTS DE SAUVEGARDE
-# ========================================
-
-@app.post("/api/backup/create")
-async def create_backup():
-    """Créer une sauvegarde manuelle de la base de données"""
-    try:
-        backup_path = backup_service.create_backup("manual")
-        if backup_path:
-            return {
-                "success": True,
-                "message": "Sauvegarde créée avec succès",
-                "backup_path": backup_path
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Échec de la création de la sauvegarde")
-    except Exception as e:
-        print(f"Erreur lors de la création de la sauvegarde: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la sauvegarde: {str(e)}")
-
-@app.get("/api/backup/list")
-async def list_backups():
-    """Lister toutes les sauvegardes disponibles"""
-    try:
-        backups = backup_service.list_backups()
-        return {
-            "success": True,
-            "backups": backups,
-            "count": len(backups)
-        }
-    except Exception as e:
-        print(f"Erreur lors du listing des sauvegardes: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du listing des sauvegardes: {str(e)}")
-
-@app.post("/api/backup/restore")
-async def restore_backup(backup_path: str):
-    """Restaurer une sauvegarde"""
-    try:
-        success = backup_service.restore_backup(backup_path)
-        if success:
-            return {
-                "success": True,
-                "message": "Sauvegarde restaurée avec succès"
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Échec de la restauration de la sauvegarde")
-    except Exception as e:
-        print(f"Erreur lors de la restauration: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la restauration: {str(e)}")
-
-@app.post("/api/backup/start-automatic")
-async def start_automatic_backups():
-    """Démarrer les sauvegardes automatiques"""
-    try:
-        backup_service.start_automatic_backups()
-        return {
-            "success": True,
-            "message": "Sauvegardes automatiques démarrées"
-        }
-    except Exception as e:
-        print(f"Erreur lors du démarrage des sauvegardes automatiques: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du démarrage des sauvegardes automatiques: {str(e)}")
-
-@app.post("/api/backup/stop-automatic")
-async def stop_automatic_backups():
-    """Arrêter les sauvegardes automatiques"""
-    try:
-        backup_service.stop_automatic_backups()
-        return {
-            "success": True,
-            "message": "Sauvegardes automatiques arrêtées"
-        }
-    except Exception as e:
-        print(f"Erreur lors de l'arrêt des sauvegardes automatiques: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'arrêt des sauvegardes automatiques: {str(e)}")
-
-# ========================================
-# ENDPOINTS DE VALIDATION
-# ========================================
-
-@app.get("/api/validation/run")
-async def run_validation():
-    """Exécuter une validation complète des données"""
-    try:
-        results = data_validator.validate_all()
-        
-        # Compter les résultats par niveau
-        counts = {
-            "info": 0,
-            "warning": 0,
-            "error": 0,
-            "critical": 0
-        }
-        
-        for result in results:
-            counts[result.level.value] += 1
-        
-        return {
-            "success": True,
-            "message": "Validation terminée",
-            "summary": {
-                "total_issues": len(results),
-                "counts": counts
-            },
-            "results": [
-                {
-                    "level": result.level.value,
-                    "message": result.message,
-                    "table": result.table,
-                    "record_id": result.record_id,
-                    "field": result.field,
-                    "suggested_fix": result.suggested_fix
-                }
-                for result in results
-            ]
-        }
-    except Exception as e:
-        print(f"Erreur lors de la validation: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la validation: {str(e)}")
-
-@app.get("/api/validation/consistency")
-async def check_consistency():
-    """Vérifier la cohérence des données"""
-    try:
-        issues = consistency_checker.check_orphaned_records()
-        
-        return {
-            "success": True,
-            "message": "Vérification de cohérence terminée",
-            "issues": issues,
-            "count": len(issues)
-        }
-    except Exception as e:
-        print(f"Erreur lors de la vérification de cohérence: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la vérification de cohérence: {str(e)}")
-
-@app.get("/api/validation/health")
-async def get_validation_health():
-    """Obtenir un résumé de la santé des données"""
-    try:
-        # Validation rapide
-        results = data_validator.validate_all()
-        
-        # Compter les problèmes critiques
-        critical_issues = [r for r in results if r.level == ValidationLevel.CRITICAL]
-        error_issues = [r for r in results if r.level == ValidationLevel.ERROR]
-        warning_issues = [r for r in results if r.level == ValidationLevel.WARNING]
-        
-        # Déterminer le statut global
-        if critical_issues:
-            status = "critical"
-        elif error_issues:
-            status = "error"
-        elif warning_issues:
-            status = "warning"
-        else:
-            status = "healthy"
-        
-        return {
-            "success": True,
-            "status": status,
-            "summary": {
-                "critical": len(critical_issues),
-                "errors": len(error_issues),
-                "warnings": len(warning_issues),
-                "total": len(results)
-            },
-            "message": f"Données {'saines' if status == 'healthy' else 'problématiques'}"
-        }
-    except Exception as e:
-        print(f"Erreur lors de l'évaluation de la santé: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'évaluation de la santé: {str(e)}")
-
-# ========================================
-# ENDPOINTS DE MONITORING
-# ========================================
-
-@app.get("/api/monitoring/health")
-async def get_database_health():
-    """Obtenir un résumé complet de la santé de la base de données"""
-    try:
-        health_summary = database_monitor.get_health_summary()
-        return {
-            "success": True,
-            "data": health_summary
-        }
-    except Exception as e:
-        print(f"Erreur lors de la récupération de la santé: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la santé: {str(e)}")
-
-@app.get("/api/monitoring/metrics")
-async def get_database_metrics():
-    """Obtenir les métriques actuelles de la base de données"""
-    try:
-        db_metrics = database_monitor.get_database_metrics()
-        system_metrics = database_monitor.get_system_metrics()
-        
-        return {
-            "success": True,
-            "database": {
-                "timestamp": db_metrics.timestamp.isoformat(),
-                "status": db_metrics.status.value,
-                "health_score": db_metrics.health_score,
-                "file_size": db_metrics.file_size,
-                "file_size_mb": round(db_metrics.file_size / (1024 * 1024), 2),
-                "response_time": round(db_metrics.response_time, 3),
-                "record_counts": db_metrics.record_counts,
-                "total_records": sum(db_metrics.record_counts.values())
-            },
-            "system": {
-                "timestamp": system_metrics.timestamp.isoformat(),
-                "cpu_percent": round(system_metrics.cpu_percent, 1),
-                "memory_percent": round(system_metrics.memory_percent, 1),
-                "disk_percent": round(system_metrics.disk_percent, 1),
-                "available_memory_gb": round(system_metrics.available_memory / (1024**3), 2),
-                "available_disk_gb": round(system_metrics.available_disk / (1024**3), 2)
-            }
-        }
-    except Exception as e:
-        print(f"Erreur lors de la récupération des métriques: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des métriques: {str(e)}")
-
-@app.get("/api/monitoring/history")
-async def get_metrics_history(hours: int = 24):
-    """Obtenir l'historique des métriques"""
-    try:
-        history = database_monitor.get_metrics_history(hours)
-        return {
-            "success": True,
-            "data": history
-        }
-    except Exception as e:
-        print(f"Erreur lors de la récupération de l'historique: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de l'historique: {str(e)}")
-
-@app.post("/api/monitoring/start")
-async def start_monitoring(interval: int = 60):
-    """Démarrer le monitoring automatique"""
-    try:
-        database_monitor.start_monitoring(interval)
-        return {
-            "success": True,
-            "message": f"Monitoring démarré avec un intervalle de {interval} secondes"
-        }
-    except Exception as e:
-        print(f"Erreur lors du démarrage du monitoring: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du démarrage du monitoring: {str(e)}")
-
-@app.post("/api/monitoring/stop")
-async def stop_monitoring():
-    """Arrêter le monitoring automatique"""
-    try:
-        database_monitor.stop_monitoring()
-        return {
-            "success": True,
-            "message": "Monitoring arrêté"
-        }
-    except Exception as e:
-        print(f"Erreur lors de l'arrêt du monitoring: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'arrêt du monitoring: {str(e)}")
-
-@app.get("/api/monitoring/status")
-async def get_monitoring_status():
-    """Obtenir le statut du monitoring"""
-    try:
-        return {
-            "success": True,
-            "monitoring_active": database_monitor.monitoring_active,
-            "metrics_count": len(database_monitor.metrics_history),
-            "system_metrics_count": len(database_monitor.system_history)
-        }
-    except Exception as e:
-        print(f"Erreur lors de la récupération du statut: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du statut: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

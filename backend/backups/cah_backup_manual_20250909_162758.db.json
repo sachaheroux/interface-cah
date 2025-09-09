@@ -1,0 +1,8 @@
+{
+  "backup_type": "manual",
+  "created_at": "2025-09-09T16:27:58.385785",
+  "database_path": "./data\\cah_database.db",
+  "backup_size": 2049,
+  "compressed": true,
+  "version": "1.0.0"
+}

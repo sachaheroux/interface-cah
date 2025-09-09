@@ -1,0 +1,8 @@
+{
+  "backup_type": "test_direct",
+  "created_at": "2025-09-09T16:24:58.633064",
+  "database_path": "./data\\cah_database.db",
+  "backup_size": 2054,
+  "compressed": true,
+  "version": "1.0.0"
+}
