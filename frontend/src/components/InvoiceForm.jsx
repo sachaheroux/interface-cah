@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 
 const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) => {
@@ -49,7 +49,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -74,9 +74,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [buildingId, loadUnitsForBuilding]);
 
-  const loadUnitsForBuilding = async (buildingId) => {
+  const loadUnitsForBuilding = useCallback(async (buildingId) => {
     try {
       const building = buildings.find(b => b.id === buildingId);
       if (building && building.unitData) {
@@ -89,7 +89,32 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     } catch (err) {
       console.error('Erreur lors du chargement des unités:', err);
     }
-  };
+  }, [buildings]);
+
+  // Optimiser les options des menus déroulants
+  const categoryOptions = useMemo(() => 
+    Object.entries(constants.categories).map(([key, value]) => (
+      <option key={key} value={key}>{value}</option>
+    )), [constants.categories]
+  );
+
+  const paymentTypeOptions = useMemo(() => 
+    Object.entries(constants.paymentTypes).map(([key, value]) => (
+      <option key={key} value={key}>{value}</option>
+    )), [constants.paymentTypes]
+  );
+
+  const buildingOptions = useMemo(() => 
+    buildings.map(building => (
+      <option key={building.id} value={building.id}>{building.name}</option>
+    )), [buildings]
+  );
+
+  const unitOptions = useMemo(() => 
+    units.map(unit => (
+      <option key={unit.id} value={unit.id}>{unit.name}</option>
+    )), [units]
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -242,9 +267,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 required
               >
                 <option value="">Sélectionner une catégorie</option>
-                {Object.entries(constants.categories).map(([key, value]) => (
-                  <option key={key} value={key}>{value}</option>
-                ))}
+                {categoryOptions}
               </select>
             </div>
           </div>
@@ -308,9 +331,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               required
             >
               <option value="">Sélectionner un type de paiement</option>
-              {Object.entries(constants.paymentTypes).map(([key, value]) => (
-                <option key={key} value={key}>{value}</option>
-              ))}
+              {paymentTypeOptions}
             </select>
           </div>
 
@@ -328,11 +349,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 required
               >
                 <option value="">Sélectionner un immeuble</option>
-                {buildings.map(building => (
-                  <option key={building.id} value={building.id}>
-                    {building.name}
-                  </option>
-                ))}
+                {buildingOptions}
               </select>
             </div>
 
@@ -348,11 +365,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 disabled={!formData.buildingId}
               >
                 <option value="">Tout l'immeuble</option>
-                {units.map(unit => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </option>
-                ))}
+                {unitOptions}
               </select>
             </div>
           </div>
