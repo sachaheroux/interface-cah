@@ -19,9 +19,28 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
   const [buildings, setBuildings] = useState([]);
   const [units, setUnits] = useState([]);
   const [constants, setConstants] = useState({
-    categories: {},
-    paymentTypes: {},
-    invoiceTypes: {}
+    categories: {
+      "municipal_taxes": "Taxes municipales",
+      "school_taxes": "Taxes scolaire",
+      "insurance": "Assurance",
+      "snow_removal": "Déneigement",
+      "lawn_care": "Gazon",
+      "management": "Gestion",
+      "renovations": "Rénovations",
+      "repairs": "Réparations",
+      "wifi": "WiFi",
+      "electricity": "Électricité",
+      "other": "Autres"
+    },
+    paymentTypes: {
+      "bank_transfer": "Virement bancaire",
+      "check": "Chèque",
+      "cash": "Espèces"
+    },
+    invoiceTypes: {
+      "rental_building": "Immeuble en location",
+      "construction_project": "Projet de construction"
+    }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +59,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       
       // Charger les constantes
       const constantsResponse = await api.get('/api/invoices/constants');
-      setConstants(constantsResponse.data);
+      if (constantsResponse.data) {
+        setConstants(constantsResponse.data);
+      }
       
       // Si un immeuble est spécifié, charger ses unités
       if (buildingId) {

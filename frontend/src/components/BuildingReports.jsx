@@ -85,6 +85,8 @@ export default function BuildingReports({ selectedYear }) {
       management: 0,
       renovations: 0,
       repairs: 0,
+      wifi: 0,
+      electricity: 0,
       other: 0
     }
 
@@ -165,6 +167,8 @@ export default function BuildingReports({ selectedYear }) {
         lawn: editingReport.lawn,
         management: editingReport.management,
         renovation: editingReport.renovation,
+        wifi: editingReport.wifi || 0,
+        electricity: editingReport.electricity || 0,
         other: editingReport.other,
         // Inclure l'ID si c'est une modification
         ...(editingReport.id && { id: editingReport.id })
@@ -478,6 +482,20 @@ export default function BuildingReports({ selectedYear }) {
                     invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'repairs')
                   },
                   { 
+                    label: 'WiFi', 
+                    value: formatCurrency(invoiceData.amounts.wifi), 
+                    type: 'invoice',
+                    category: 'wifi',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'wifi')
+                  },
+                  { 
+                    label: 'Électricité', 
+                    value: formatCurrency(invoiceData.amounts.electricity), 
+                    type: 'invoice',
+                    category: 'electricity',
+                    invoices: getInvoicesForCategory(selectedBuildingDetails.id, selectedYear, 'electricity')
+                  },
+                  { 
                     label: 'Autres', 
                     value: formatCurrency(invoiceData.amounts.other), 
                     type: 'invoice',
@@ -693,6 +711,26 @@ export default function BuildingReports({ selectedYear }) {
                       type="number"
                       value={editingReport.renovation}
                       onChange={(e) => setEditingReport(prev => ({ ...prev, renovation: parseFloat(e.target.value) || 0 }))}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Sera automatiquement rempli depuis la section factures</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">WiFi</label>
+                    <input
+                      type="number"
+                      value={editingReport.wifi || 0}
+                      onChange={(e) => setEditingReport(prev => ({ ...prev, wifi: parseFloat(e.target.value) || 0 }))}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Sera automatiquement rempli depuis la section factures</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Électricité</label>
+                    <input
+                      type="number"
+                      value={editingReport.electricity || 0}
+                      onChange={(e) => setEditingReport(prev => ({ ...prev, electricity: parseFloat(e.target.value) || 0 }))}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">Sera automatiquement rempli depuis la section factures</p>

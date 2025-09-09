@@ -41,6 +41,8 @@ INVOICE_CATEGORIES = {
     "management": "Gestion",
     "renovations": "Rénovations",
     "repairs": "Réparations",
+    "wifi": "WiFi",
+    "electricity": "Électricité",
     "other": "Autres"
 }
 
