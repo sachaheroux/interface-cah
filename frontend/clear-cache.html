@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nettoyage du Cache - Interface CAH</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .danger {
+            background-color: #dc3545;
+        }
+        .danger:hover {
+            background-color: #c82333;
+        }
+        .warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .warning:hover {
+            background-color: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Nettoyage du Cache - Interface CAH</h1>
+        
+        <div id="status" class="status info">
+            Prêt à nettoyer le cache du navigateur
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="clearAllCache()">🧹 Nettoyer Tout le Cache</button>
+            <button onclick="clearLocalStorage()" class="warning">🗑️ Vider localStorage</button>
+            <button onclick="clearSessionStorage()" class="warning">🗑️ Vider sessionStorage</button>
+            <button onclick="reloadPage()">🔄 Recharger la Page</button>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h3>📋 Éléments à nettoyer :</h3>
+            <ul>
+                <li><strong>localStorage</strong> : Données locales persistantes</li>
+                <li><strong>sessionStorage</strong> : Données de session</li>
+                <li><strong>Cache du navigateur</strong> : Fichiers mis en cache</li>
+                <li><strong>Cookies</strong> : Données de cookies (si présents)</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+            <strong>⚠️ Attention :</strong> Cette action supprimera toutes les données locales du navigateur. 
+            Assurez-vous d'avoir sauvegardé vos données importantes avant de continuer.
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLocalStorage() {
+            try {
+                const keys = Object.keys(localStorage);
+                localStorage.clear();
+                updateStatus(`✅ localStorage vidé (${keys.length} éléments supprimés)`, 'success');
+            } catch (error) {
+                updateStatus(`❌ Erreur lors du vidage de localStorage: ${error.message}`, 'error');
+            }
+        }
+
+        function clearSessionStorage() {
+            try {
+                const keys = Object.keys(sessionStorage);
+                sessionStorage.clear();
+                updateStatus(`✅ sessionStorage vidé (${keys.length} éléments supprimés)`, 'success');
+            } catch (error) {
+                updateStatus(`❌ Erreur lors du vidage de sessionStorage: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllCache() {
+            try {
+                // Vider localStorage
+                const localKeys = Object.keys(localStorage);
+                localStorage.clear();
+                
+                // Vider sessionStorage
+                const sessionKeys = Object.keys(sessionStorage);
+                sessionStorage.clear();
+                
+                // Essayer de vider le cache du navigateur (si supporté)
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(name) {
+                            caches.delete(name);
+                        });
+                    });
+                }
+                
+                updateStatus(`✅ Cache complètement vidé ! localStorage: ${localKeys.length} éléments, sessionStorage: ${sessionKeys.length} éléments`, 'success');
+                
+                // Recharger la page après 2 secondes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                updateStatus(`❌ Erreur lors du nettoyage: ${error.message}`, 'error');
+            }
+        }
+
+        function reloadPage() {
+            window.location.reload();
+        }
+
+        // Afficher les données actuelles au chargement
+        window.onload = function() {
+            const localKeys = Object.keys(localStorage);
+            const sessionKeys = Object.keys(sessionStorage);
+            
+            updateStatus(`Cache actuel - localStorage: ${localKeys.length} éléments, sessionStorage: ${sessionKeys.length} éléments`, 'info');
+        };
+    </script>
+</body>
+</html>

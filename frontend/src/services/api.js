@@ -182,42 +182,8 @@ export const buildingsService = {
   },
 }
 
-// Données de fallback pour les locataires
-const fallbackTenants = [
-  { 
-    id: 1, 
-    name: "Jean Dupont", 
-    email: "jean.dupont@email.com",
-    phone: "(514) 555-0123",
-    building: "Immeuble A", 
-    unit: "A-101", 
-    status: "active",
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-15T10:00:00Z"
-  },
-  { 
-    id: 2, 
-    name: "Marie Martin", 
-    email: "marie.martin@email.com",
-    phone: "(514) 555-0124",
-    building: "Immeuble A", 
-    unit: "A-102", 
-    status: "active",
-    createdAt: "2024-01-20T14:30:00Z",
-    updatedAt: "2024-01-20T14:30:00Z"
-  },
-  { 
-    id: 3, 
-    name: "Pierre Durand", 
-    email: "pierre.durand@email.com",
-    phone: "(514) 555-0125",
-    building: "Immeuble B", 
-    unit: "B-201", 
-    status: "pending",
-    createdAt: "2024-02-01T09:15:00Z",
-    updatedAt: "2024-02-01T09:15:00Z"
-  }
-]
+// Données de fallback pour les locataires (VIDÉES)
+const fallbackTenants = []
 
 export const tenantsService = {
   getTenants: async () => {
@@ -412,12 +378,8 @@ export const maintenanceService = {
   deleteMaintenanceItem: (id) => api.delete(`/api/maintenance/${id}`),
 }
 
-// Données de fallback pour les employés
-const fallbackEmployees = [
-  { id: 1, name: "Marc Ouvrier", role: "Contremaître", status: "active" },
-  { id: 2, name: "Sophie Tech", role: "Électricienne", status: "active" },
-  { id: 3, name: "Paul Plombier", role: "Plombier", status: "active" }
-]
+// Données de fallback pour les employés (VIDÉES)
+const fallbackEmployees = []
 
 export const employeesService = {
   getEmployees: async () => {
@@ -434,12 +396,8 @@ export const employeesService = {
   deleteEmployee: (id) => api.delete(`/api/employees/${id}`),
 }
 
-// Données de fallback pour les projets
-const fallbackProjects = [
-  { id: 1, name: "Nouveau Complexe D", status: "planning", progress: 10 },
-  { id: 2, name: "Rénovation Immeuble E", status: "in_progress", progress: 65 },
-  { id: 3, name: "Extension Immeuble F", status: "completed", progress: 100 }
-]
+// Données de fallback pour les projets (VIDÉES)
+const fallbackProjects = []
 
 export const projectsService = {
   getProjects: async () => {
