@@ -841,20 +841,11 @@ async def get_tenant(tenant_id: int):
 async def create_tenant(tenant_data: TenantCreate):
     """Créer un nouveau locataire"""
     try:
-        data = get_tenants_cache()
+        # Convertir en dictionnaire pour le service
+        tenant_dict = tenant_data.dict()
         
-        # Créer le nouveau locataire avec un ID unique
-        new_tenant = tenant_data.dict()
-        new_tenant["id"] = data["next_id"]
-        new_tenant["createdAt"] = datetime.now().isoformat() + "Z"
-        new_tenant["updatedAt"] = datetime.now().isoformat() + "Z"
-        
-        # Ajouter aux données
-        data["tenants"].append(new_tenant)
-        data["next_id"] += 1
-        
-        # Mettre à jour le cache
-        update_tenants_cache(data)
+        # Créer le locataire via le service SQLite
+        new_tenant = db_service.create_tenant(tenant_dict)
         
         return {"data": new_tenant}
     except Exception as e:
