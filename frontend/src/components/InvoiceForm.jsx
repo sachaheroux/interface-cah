@@ -174,14 +174,35 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     setShowBuildingDropdown(false);
     
     // Charger les unités pour cet immeuble
+    console.log('Immeuble sélectionné:', building); // Debug
+    
     if (building.unitData) {
       const buildingUnits = Object.keys(building.unitData).map(unitId => ({
         id: unitId,
         name: unitId
       }));
       setUnits(buildingUnits);
+      console.log('Unités chargées depuis unitData:', buildingUnits);
+    } else if (building.units && Array.isArray(building.units)) {
+      // Fallback: si les unités sont dans un tableau
+      const buildingUnits = building.units.map(unit => ({
+        id: unit.id || unit,
+        name: unit.name || unit
+      }));
+      setUnits(buildingUnits);
+      console.log('Unités chargées depuis units array:', buildingUnits);
     } else {
-      setUnits([]);
+      // Fallback: générer des unités par défaut basées sur le nombre d'unités
+      const unitCount = building.unitCount || 0;
+      const buildingUnits = [];
+      for (let i = 1; i <= unitCount; i++) {
+        buildingUnits.push({
+          id: `unit-${i}`,
+          name: `Unité ${i}`
+        });
+      }
+      setUnits(buildingUnits);
+      console.log('Unités générées par défaut:', buildingUnits);
     }
   };
 
@@ -389,11 +410,11 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Montant *
               </label>
-              <div className="flex">
+              <div className="flex max-w-xs">
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-20"
                 >
                   <option value="CAD">$ CAD</option>
                   <option value="USD">$ USD</option>
@@ -404,7 +425,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                   name="amount"
                   value={formData.amount}
                   onChange={handleInputChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-32"
                   placeholder="0,00"
                   required
                 />
@@ -487,6 +508,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               </select>
               {formData.buildingId && units.length === 0 && (
                 <p className="text-xs text-gray-500 mt-1">Aucune unité disponible pour cet immeuble</p>
+              )}
+              {formData.buildingId && units.length > 0 && (
+                <p className="text-xs text-green-600 mt-1">{units.length} unité(s) disponible(s)</p>
               )}
             </div>
           </div>
