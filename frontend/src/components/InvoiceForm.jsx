@@ -189,10 +189,14 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     console.log('Immeuble sélectionné:', building); // Debug
     
     if (building.unitData) {
-      const buildingUnits = Object.keys(building.unitData).map(unitId => ({
-        id: unitId,
-        name: unitId
-      }));
+      const buildingUnits = Object.keys(building.unitData).map(unitId => {
+        const unit = building.unitData[unitId];
+        return {
+          id: unitId,
+          name: unit.address || unit.name || unitId,
+          address: unit.address || unit.name || unitId
+        };
+      });
       setUnits(buildingUnits);
       setFilteredUnits(buildingUnits);
       console.log('Unités chargées depuis unitData:', buildingUnits);
@@ -200,7 +204,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       // Fallback: si les unités sont dans un tableau
       const buildingUnits = building.units.map(unit => ({
         id: unit.id || unit,
-        name: unit.name || unit
+        name: unit.address || unit.name || unit,
+        address: unit.address || unit.name || unit
       }));
       setUnits(buildingUnits);
       setFilteredUnits(buildingUnits);
@@ -212,7 +217,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       for (let i = 1; i <= unitCount; i++) {
         buildingUnits.push({
           id: `unit-${i}`,
-          name: `Unité ${i}`
+          name: `Unité ${i}`,
+          address: `Unité ${i}`
         });
       }
       setUnits(buildingUnits);
@@ -226,7 +232,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     setUnitSearchTerm(searchTerm);
     if (searchTerm.length > 0) {
       const filtered = units.filter(unit => 
-        unit.name.toLowerCase().includes(searchTerm.toLowerCase())
+        unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (unit.address && unit.address.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredUnits(filtered);
       setShowUnitDropdown(true);
@@ -568,6 +575,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                     >
                       <div className="font-medium text-gray-900">{unit.name}</div>
+                      {unit.address && unit.address !== unit.name && (
+                        <div className="text-sm text-gray-500">{unit.address}</div>
+                      )}
                     </div>
                   ))}
                 </div>
