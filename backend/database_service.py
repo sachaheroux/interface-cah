@@ -448,6 +448,37 @@ class DatabaseService:
     # MÉTHODES MANQUANTES POUR LA VALIDATION
     # ========================================
     
+    def create_assignment(self, assignment_data: Dict) -> Dict:
+        """Créer une nouvelle assignation"""
+        session = self.get_session()
+        try:
+            assignment = Assignment(
+                tenant_id=assignment_data["tenantId"],
+                building_id=assignment_data["buildingId"],
+                unit_id=assignment_data["unitId"],
+                unit_number=assignment_data.get("unitNumber"),
+                unit_address=assignment_data.get("unitAddress"),
+                move_in_date=datetime.fromisoformat(assignment_data["moveInDate"]) if assignment_data.get("moveInDate") else None,
+                move_out_date=datetime.fromisoformat(assignment_data["moveOutDate"]) if assignment_data.get("moveOutDate") else None,
+                rent_amount=assignment_data.get("rentAmount"),
+                deposit_amount=assignment_data.get("depositAmount"),
+                lease_start_date=datetime.fromisoformat(assignment_data["leaseStartDate"]) if assignment_data.get("leaseStartDate") else None,
+                lease_end_date=datetime.fromisoformat(assignment_data["leaseEndDate"]) if assignment_data.get("leaseEndDate") else None,
+                rent_due_day=assignment_data.get("rentDueDay", 1),
+                notes=assignment_data.get("notes", "")
+            )
+            
+            session.add(assignment)
+            session.commit()
+            session.refresh(assignment)
+            
+            return assignment.to_dict()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+    
     def get_assignments(self, skip: int = 0, limit: int = 100) -> List[Dict]:
         """Récupérer toutes les assignations"""
         session = self.get_session()
