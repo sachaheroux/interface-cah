@@ -2,11 +2,13 @@ services:
   - type: web
     name: interface-cah-backend
     env: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: PORT
-        value: 8000 
+        value: 3.11.10
+      - key: DATA_DIR
+        value: /opt/render/project/src/data
+      - key: ENVIRONMENT
+        value: production
