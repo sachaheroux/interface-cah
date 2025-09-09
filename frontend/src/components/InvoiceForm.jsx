@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
+import { unitsService } from '../services/api';
 
 const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) => {
   const [formData, setFormData] = useState({
@@ -205,12 +206,12 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     setUnitSearchTerm('');
     setShowUnitDropdown(false);
     
-    // Charger TOUTES les unités comme dans TenantForm
+    // Charger les unités en utilisant le service existant
     try {
       console.log('Immeuble sélectionné:', building); // Debug
       
-      // Utiliser le service des unités pour charger toutes les unités
-      const response = await api.get('/api/units');
+      // Utiliser le service des unités existant
+      const response = await unitsService.getUnits();
       const allUnits = response.data || [];
       
       // Filtrer les unités pour cet immeuble spécifique
