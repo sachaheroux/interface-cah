@@ -58,14 +58,27 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       setBuildings(buildingsResponse.data || []);
       
       // Charger les constantes
-      const constantsResponse = await api.get('/api/invoices/constants');
-      if (constantsResponse.data) {
-        setConstants(constantsResponse.data);
+      try {
+        const constantsResponse = await api.get('/api/invoices/constants');
+        if (constantsResponse.data) {
+          setConstants(constantsResponse.data);
+        }
+      } catch (constantsError) {
+        console.warn('Erreur chargement constantes, utilisation des valeurs par défaut:', constantsError);
+        // Les constantes par défaut sont déjà définies dans useState
       }
       
       // Si un immeuble est spécifié, charger ses unités
       if (buildingId) {
-        loadUnitsForBuilding(buildingId);
+        // Charger les unités directement ici pour éviter la référence circulaire
+        const building = buildingsResponse.data?.find(b => b.id === buildingId);
+        if (building && building.unitData) {
+          const buildingUnits = Object.keys(building.unitData).map(unitId => ({
+            id: unitId,
+            name: unitId
+          }));
+          setUnits(buildingUnits);
+        }
       }
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err);
@@ -74,7 +87,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     } finally {
       setLoading(false);
     }
-  }, [buildingId, loadUnitsForBuilding]);
+  }, [buildingId]);
 
   const loadUnitsForBuilding = useCallback(async (buildingId) => {
     try {

@@ -33,8 +33,37 @@ export default function Billing() {
       setBuildings(buildingsResponse.data || [])
       
       // Charger les constantes
-      const constantsResponse = await api.get('/api/invoices/constants')
-      setConstants(constantsResponse.data)
+      try {
+        const constantsResponse = await api.get('/api/invoices/constants')
+        setConstants(constantsResponse.data)
+      } catch (constantsError) {
+        console.warn('Erreur chargement constantes, utilisation des valeurs par défaut:', constantsError)
+        // Utiliser les constantes par défaut si l'API échoue
+        setConstants({
+          categories: {
+            "municipal_taxes": "Taxes municipales",
+            "school_taxes": "Taxes scolaire",
+            "insurance": "Assurance",
+            "snow_removal": "Déneigement",
+            "lawn_care": "Gazon",
+            "management": "Gestion",
+            "renovations": "Rénovations",
+            "repairs": "Réparations",
+            "wifi": "WiFi",
+            "electricity": "Électricité",
+            "other": "Autres"
+          },
+          paymentTypes: {
+            "bank_transfer": "Virement bancaire",
+            "check": "Chèque",
+            "cash": "Espèces"
+          },
+          invoiceTypes: {
+            "rental_building": "Immeuble en location",
+            "construction_project": "Projet de construction"
+          }
+        })
+      }
       
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err)
