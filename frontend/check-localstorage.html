@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification localStorage - Interface CAH</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .data-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .data-key {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .data-content {
+            background: white;
+            padding: 10px;
+            border-radius: 3px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .danger {
+            background-color: #dc3545;
+        }
+        .danger:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Vérification du localStorage</h1>
+        
+        <div id="localStorageData"></div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="refreshData()">🔄 Actualiser</button>
+            <button onclick="clearAllData()" class="danger">🗑️ Supprimer TOUTES les données</button>
+        </div>
+    </div>
+
+    <script>
+        function displayLocalStorageData() {
+            const container = document.getElementById('localStorageData');
+            const keys = Object.keys(localStorage);
+            
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="data-section"><p>Aucune donnée dans localStorage</p></div>';
+                return;
+            }
+            
+            let html = '';
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                let parsedValue;
+                let displayValue;
+                
+                try {
+                    parsedValue = JSON.parse(value);
+                    displayValue = JSON.stringify(parsedValue, null, 2);
+                } catch (e) {
+                    displayValue = value;
+                }
+                
+                html += `
+                    <div class="data-section">
+                        <div class="data-key">${key}</div>
+                        <div class="data-content">${displayValue}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function refreshData() {
+            displayLocalStorageData();
+        }
+        
+        function clearAllData() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer TOUTES les données du localStorage ? Cette action est irréversible !')) {
+                localStorage.clear();
+                displayLocalStorageData();
+                alert('Toutes les données ont été supprimées !');
+            }
+        }
+        
+        // Afficher les données au chargement
+        window.onload = function() {
+            displayLocalStorageData();
+        };
+    </script>
+</body>
+</html>
