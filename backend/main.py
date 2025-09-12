@@ -1895,13 +1895,13 @@ async def migrate_schema():
     try:
         from sqlalchemy import text
         
-        # Ajouter la colonne month à unit_reports
         session = db_service.get_session()
         try:
-            # Vérifier si la colonne existe déjà
+            # Vérifier les colonnes existantes
             result = session.execute(text("PRAGMA table_info(unit_reports)"))
             columns = [row[1] for row in result.fetchall()]
             
+            # Ajouter la colonne month si elle n'existe pas
             if 'month' not in columns:
                 print("Ajout de la colonne month à unit_reports...")
                 session.execute(text("ALTER TABLE unit_reports ADD COLUMN month INTEGER"))
@@ -1909,6 +1909,15 @@ async def migrate_schema():
                 print("✅ Colonne month ajoutée")
             else:
                 print("✅ Colonne month existe déjà")
+            
+            # Ajouter la colonne tenant_name si elle n'existe pas
+            if 'tenant_name' not in columns:
+                print("Ajout de la colonne tenant_name à unit_reports...")
+                session.execute(text("ALTER TABLE unit_reports ADD COLUMN tenant_name TEXT"))
+                session.commit()
+                print("✅ Colonne tenant_name ajoutée")
+            else:
+                print("✅ Colonne tenant_name existe déjà")
             
             return {"message": "Migration du schéma réussie"}
         finally:
