@@ -1897,29 +1897,38 @@ async def migrate_schema():
         
         session = db_service.get_session()
         try:
-            # Vérifier les colonnes existantes
-            result = session.execute(text("PRAGMA table_info(unit_reports)"))
-            columns = [row[1] for row in result.fetchall()]
+            # Recréer complètement la table unit_reports avec le bon schéma
+            print("🔄 Recréation de la table unit_reports...")
             
-            # Ajouter la colonne month si elle n'existe pas
-            if 'month' not in columns:
-                print("Ajout de la colonne month à unit_reports...")
-                session.execute(text("ALTER TABLE unit_reports ADD COLUMN month INTEGER"))
-                session.commit()
-                print("✅ Colonne month ajoutée")
-            else:
-                print("✅ Colonne month existe déjà")
+            # Supprimer l'ancienne table
+            session.execute(text("DROP TABLE IF EXISTS unit_reports"))
             
-            # Ajouter la colonne tenant_name si elle n'existe pas
-            if 'tenant_name' not in columns:
-                print("Ajout de la colonne tenant_name à unit_reports...")
-                session.execute(text("ALTER TABLE unit_reports ADD COLUMN tenant_name TEXT"))
-                session.commit()
-                print("✅ Colonne tenant_name ajoutée")
-            else:
-                print("✅ Colonne tenant_name existe déjà")
+            # Créer la nouvelle table avec le bon schéma
+            session.execute(text("""
+                CREATE TABLE unit_reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    unit_id INTEGER NOT NULL,
+                    year INTEGER NOT NULL,
+                    month INTEGER,
+                    tenant_name TEXT,
+                    payment_method TEXT,
+                    is_heated_lit BOOLEAN DEFAULT 0,
+                    is_furnished BOOLEAN DEFAULT 0,
+                    wifi_included BOOLEAN DEFAULT 0,
+                    rent_amount REAL DEFAULT 0.0,
+                    start_date TEXT,
+                    end_date TEXT,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE CASCADE
+                )
+            """))
             
-            return {"message": "Migration du schéma réussie"}
+            session.commit()
+            print("✅ Table unit_reports recréée avec le bon schéma")
+            
+            return {"message": "Migration du schéma réussie - Table unit_reports recréée"}
         finally:
             session.close()
     except Exception as e:
