@@ -11,6 +11,16 @@ import json
 
 Base = declarative_base()
 
+# Méthodes utilitaires pour éviter la récursion et gérer les erreurs JSON
+def safe_json_loads(json_string):
+    """Charger JSON de manière sécurisée"""
+    if not json_string:
+        return {}
+    try:
+        return json.loads(json_string)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
 class Building(Base):
     """Modèle pour les immeubles"""
     __tablename__ = "buildings"
@@ -30,17 +40,32 @@ class Building(Base):
     characteristics = Column(Text)  # JSON string
     financials = Column(Text)      # JSON string
     contacts = Column(Text)        # JSON string
-    unit_data = Column(Text)       # JSON string
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_default = Column(Boolean, default=False)
     
-    # Relations
-    assignments = relationship("Assignment", back_populates="building")
-    building_reports = relationship("BuildingReport", back_populates="building")
-    unit_reports = relationship("UnitReport", back_populates="building")
-    invoices = relationship("Invoice", back_populates="building")
+    # Relations avec lazy loading optimisé
+    units_rel = relationship("Unit", back_populates="building", lazy="select", cascade="all, delete-orphan")
+    building_reports = relationship("BuildingReport", back_populates="building", lazy="select")
+    invoices = relationship("Invoice", back_populates="building", lazy="select")
+    
+    # Relations indirectes via les unités
+    @property
+    def assignments(self):
+        """Récupérer toutes les assignations via les unités"""
+        assignments = []
+        for unit in self.units_rel:
+            assignments.extend(unit.assignments)
+        return assignments
+    
+    @property
+    def unit_reports(self):
+        """Récupérer tous les rapports d'unités via les unités"""
+        unit_reports = []
+        for unit in self.units_rel:
+            unit_reports.extend(unit.unit_reports)
+        return unit_reports
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -59,10 +84,9 @@ class Building(Base):
             "floors": self.floors,
             "yearBuilt": self.year_built,
             "totalArea": self.total_area,
-            "characteristics": json.loads(self.characteristics) if self.characteristics else {},
-            "financials": json.loads(self.financials) if self.financials else {},
-            "contacts": json.loads(self.contacts) if self.contacts else {},
-            "unitData": json.loads(self.unit_data) if self.unit_data else {},
+            "characteristics": safe_json_loads(self.characteristics),
+            "financials": safe_json_loads(self.financials),
+            "contacts": safe_json_loads(self.contacts),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None
@@ -86,8 +110,8 @@ class Tenant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations - Un locataire a une assignation active maximum
-    assignments = relationship("Assignment", back_populates="tenant", uselist=False)
+    # Relations - Un locataire peut avoir plusieurs assignations (historique)
+    assignments = relationship("Assignment", back_populates="tenant", lazy="select")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -103,10 +127,72 @@ class Tenant(Base):
             },
             "moveInDate": self.move_in_date.isoformat() if self.move_in_date else None,
             "moveOutDate": self.move_out_date.isoformat() if self.move_out_date else None,
-            "financial": json.loads(self.financial_info) if self.financial_info else {},
+            "financial": safe_json_loads(self.financial_info),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class Unit(Base):
+    """Modèle pour les unités"""
+    __tablename__ = "units"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
+    unit_number = Column(String(50), nullable=False, index=True)
+    unit_address = Column(String(255))
+    type = Column(String(50), default="1 1/2")  # 1 1/2, 2 1/2, 3 1/2, 4 1/2, 5 1/2
+    area = Column(Integer, default=0)  # en pieds carrés
+    bedrooms = Column(Integer, default=1)
+    bathrooms = Column(Integer, default=1)
+    amenities = Column(Text)  # JSON string pour les équipements
+    rental_info = Column(Text)  # JSON string pour les infos locatives
+    notes = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    building = relationship("Building", back_populates="units_rel", lazy="select")
+    assignments = relationship("Assignment", back_populates="unit", lazy="select", cascade="all, delete-orphan")
+    unit_reports = relationship("UnitReport", back_populates="unit", lazy="select", cascade="all, delete-orphan")
+    
+    # Contrainte unique pour éviter les doublons d'unités dans le même immeuble
+    __table_args__ = (UniqueConstraint('building_id', 'unit_number', name='unique_building_unit_number'),)
+    
+    def to_dict(self):
+        """Convertir en dictionnaire pour l'API"""
+        return {
+            "id": self.id,
+            "buildingId": self.building_id,
+            "unitNumber": self.unit_number,
+            "unitAddress": self.unit_address,
+            "type": self.type,
+            "area": self.area,
+            "bedrooms": self.bedrooms,
+            "bathrooms": self.bathrooms,
+            "amenities": safe_json_loads(self.amenities),
+            "rentalInfo": safe_json_loads(self.rental_info),
+            "notes": self.notes,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+            # Données enrichies
+            "buildingData": self._get_building_data()
+        }
+    
+    def _get_building_data(self):
+        """Obtenir les données de l'immeuble de manière sécurisée"""
+        if not hasattr(self, 'building') or not self.building:
+            return None
+        return {
+            "id": self.building.id,
+            "name": self.building.name,
+            "address": {
+                "street": self.building.address_street or "",
+                "city": self.building.address_city or "",
+                "province": self.building.address_province or "",
+                "postalCode": self.building.address_postal_code or "",
+                "country": self.building.address_country or "Canada"
+            }
         }
 
 class Assignment(Base):
@@ -115,37 +201,45 @@ class Assignment(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
-    unit_id = Column(String(50), nullable=False, index=True)
-    unit_number = Column(String(50))
-    unit_address = Column(String(255))
+    unit_id = Column(Integer, ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True)
     move_in_date = Column(Date, nullable=False)
     move_out_date = Column(Date)
     rent_amount = Column(DECIMAL(10, 2))
     deposit_amount = Column(DECIMAL(10, 2))
     lease_start_date = Column(Date)
     lease_end_date = Column(Date)
-    rent_due_day = Column(Integer, default=1)
+    rent_due_day = Column(Integer, default=1)  # 1-31, validation au niveau applicatif
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations - Une assignation = un locataire + une unité
-    tenant = relationship("Tenant", back_populates="assignments")
-    building = relationship("Building", back_populates="assignments")
+    tenant = relationship("Tenant", back_populates="assignments", lazy="select")
+    unit = relationship("Unit", back_populates="assignments", lazy="select")
     
-    # Contrainte unique pour éviter les assignations multiples par locataire
-    __table_args__ = (UniqueConstraint('tenant_id', name='unique_tenant_assignment'),)
+    # Propriété calculée pour l'immeuble (via l'unité)
+    @property
+    def building(self):
+        return self.unit.building if self.unit else None
+    
+    # Propriété calculée pour l'immeuble ID (pour compatibilité)
+    @property
+    def building_id(self):
+        return self.unit.building_id if self.unit else None
+    
+    # Contrainte unique pour éviter les assignations multiples ACTIVES par locataire
+    # Note: Cette contrainte sera gérée au niveau applicatif, pas au niveau base de données
+    # car SQLite ne supporte pas les contraintes conditionnelles complexes
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
         return {
             "id": self.id,
             "tenantId": self.tenant_id,
-            "buildingId": self.building_id,
             "unitId": self.unit_id,
-            "unitNumber": self.unit_number,
-            "unitAddress": self.unit_address,
+            "buildingId": self.building.id if self.building else None,
+            "unitNumber": self.unit.unit_number if self.unit else None,
+            "unitAddress": self.unit.unit_address if self.unit else None,
             "moveInDate": self.move_in_date.isoformat() if self.move_in_date else None,
             "moveOutDate": self.move_out_date.isoformat() if self.move_out_date else None,
             "rentAmount": float(self.rent_amount) if self.rent_amount else None,
@@ -156,9 +250,51 @@ class Assignment(Base):
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
-            # Données enrichies
-            "tenantData": self.tenant.to_dict() if self.tenant else None,
-            "buildingData": self.building.to_dict() if self.building else None
+            # Données enrichies (éviter la récursion infinie)
+            "tenantData": self._get_tenant_data(),
+            "unitData": self._get_unit_data(),
+            "buildingData": self._get_building_data()
+        }
+    
+    def _get_tenant_data(self):
+        """Obtenir les données du locataire de manière sécurisée"""
+        if not hasattr(self, 'tenant') or not self.tenant:
+            return None
+        return {
+            "id": self.tenant.id,
+            "name": self.tenant.name,
+            "email": self.tenant.email,
+            "phone": self.tenant.phone
+        }
+    
+    def _get_unit_data(self):
+        """Obtenir les données de l'unité de manière sécurisée"""
+        if not hasattr(self, 'unit') or not self.unit:
+            return None
+        return {
+            "id": self.unit.id,
+            "unitNumber": self.unit.unit_number,
+            "unitAddress": self.unit.unit_address,
+            "type": self.unit.type,
+            "area": self.unit.area,
+            "bedrooms": self.unit.bedrooms,
+            "bathrooms": self.unit.bathrooms
+        }
+    
+    def _get_building_data(self):
+        """Obtenir les données de l'immeuble de manière sécurisée"""
+        if not hasattr(self, 'building') or not self.building:
+            return None
+        return {
+            "id": self.building.id,
+            "name": self.building.name,
+            "address": {
+                "street": self.building.address_street or "",
+                "city": self.building.address_city or "",
+                "province": self.building.address_province or "",
+                "postalCode": self.building.address_postal_code or "",
+                "country": self.building.address_country or "Canada"
+            }
         }
 
 class BuildingReport(Base):
@@ -184,7 +320,7 @@ class BuildingReport(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations
-    building = relationship("Building", back_populates="building_reports")
+    building = relationship("Building", back_populates="building_reports", lazy="select")
     
     # Contrainte unique
     __table_args__ = (UniqueConstraint('building_id', 'year', name='unique_building_year'),)
@@ -195,17 +331,17 @@ class BuildingReport(Base):
             "id": self.id,
             "buildingId": self.building_id,
             "year": self.year,
-            "municipalTaxes": float(self.municipal_taxes),
-            "schoolTaxes": float(self.school_taxes),
-            "insurance": float(self.insurance),
-            "snowRemoval": float(self.snow_removal),
-            "lawnCare": float(self.lawn_care),
-            "management": float(self.management),
-            "renovations": float(self.renovations),
-            "repairs": float(self.repairs),
-            "wifi": float(self.wifi),
-            "electricity": float(self.electricity),
-            "other": float(self.other),
+            "municipalTaxes": float(self.municipal_taxes) if self.municipal_taxes else 0.0,
+            "schoolTaxes": float(self.school_taxes) if self.school_taxes else 0.0,
+            "insurance": float(self.insurance) if self.insurance else 0.0,
+            "snowRemoval": float(self.snow_removal) if self.snow_removal else 0.0,
+            "lawnCare": float(self.lawn_care) if self.lawn_care else 0.0,
+            "management": float(self.management) if self.management else 0.0,
+            "renovations": float(self.renovations) if self.renovations else 0.0,
+            "repairs": float(self.repairs) if self.repairs else 0.0,
+            "wifi": float(self.wifi) if self.wifi else 0.0,
+            "electricity": float(self.electricity) if self.electricity else 0.0,
+            "other": float(self.other) if self.other else 0.0,
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None
@@ -216,39 +352,86 @@ class UnitReport(Base):
     __tablename__ = "unit_reports"
     
     id = Column(Integer, primary_key=True, index=True)
-    building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
-    unit_id = Column(String(50), nullable=False, index=True)
+    unit_id = Column(Integer, ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True)
     year = Column(Integer, nullable=False, index=True)
-    rent_collected = Column(DECIMAL(10, 2), default=0)
-    expenses = Column(DECIMAL(10, 2), default=0)
-    maintenance = Column(DECIMAL(10, 2), default=0)
-    utilities = Column(DECIMAL(10, 2), default=0)
-    other_income = Column(DECIMAL(10, 2), default=0)
+    month = Column(Integer, nullable=False, index=True)  # 1-12, validation au niveau applicatif
+    tenant_name = Column(String(255))
+    payment_method = Column(String(100))
+    is_heated_lit = Column(Boolean, default=False)
+    is_furnished = Column(Boolean, default=False)
+    wifi_included = Column(Boolean, default=False)
+    rent_amount = Column(DECIMAL(10, 2), default=0.0)
+    start_date = Column(Date)
+    end_date = Column(Date)
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations
-    building = relationship("Building", back_populates="unit_reports")
+    unit = relationship("Unit", back_populates="unit_reports", lazy="select")
+    
+    # Propriété calculée pour l'immeuble (via l'unité)
+    @property
+    def building(self):
+        return self.unit.building if self.unit else None
+    
+    # Propriété calculée pour l'immeuble ID (pour compatibilité)
+    @property
+    def building_id(self):
+        return self.unit.building_id if self.unit else None
     
     # Contrainte unique
-    __table_args__ = (UniqueConstraint('building_id', 'unit_id', 'year', name='unique_building_unit_year'),)
+    __table_args__ = (UniqueConstraint('unit_id', 'year', 'month', name='unique_unit_year_month'),)
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
         return {
             "id": self.id,
-            "buildingId": self.building_id,
             "unitId": self.unit_id,
+            "buildingId": self.building.id if self.building else None,
             "year": self.year,
-            "rentCollected": float(self.rent_collected),
-            "expenses": float(self.expenses),
-            "maintenance": float(self.maintenance),
-            "utilities": float(self.utilities),
-            "otherIncome": float(self.other_income),
+            "month": self.month,
+            "tenantName": self.tenant_name,
+            "paymentMethod": self.payment_method,
+            "isHeatedLit": self.is_heated_lit,
+            "isFurnished": self.is_furnished,
+            "wifiIncluded": self.wifi_included,
+            "rentAmount": float(self.rent_amount) if self.rent_amount else None,
+            "startDate": self.start_date.isoformat() if self.start_date else None,
+            "endDate": self.end_date.isoformat() if self.end_date else None,
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
-            "updatedAt": self.updated_at.isoformat() if self.updated_at else None
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+            # Données enrichies
+            "unitData": self._get_unit_data(),
+            "buildingData": self._get_building_data()
+        }
+    
+    def _get_unit_data(self):
+        """Obtenir les données de l'unité de manière sécurisée"""
+        if not hasattr(self, 'unit') or not self.unit:
+            return None
+        return {
+            "id": self.unit.id,
+            "unitNumber": self.unit.unit_number,
+            "unitAddress": self.unit.unit_address,
+            "type": self.unit.type
+        }
+    
+    def _get_building_data(self):
+        """Obtenir les données de l'immeuble de manière sécurisée"""
+        if not hasattr(self, 'building') or not self.building:
+            return None
+        return {
+            "id": self.building.id,
+            "name": self.building.name,
+            "address": {
+                "street": self.building.address_street or "",
+                "city": self.building.address_city or "",
+                "province": self.building.address_province or "",
+                "postalCode": self.building.address_postal_code or "",
+                "country": self.building.address_country or "Canada"
+            }
         }
 
 class Invoice(Base):
@@ -273,7 +456,7 @@ class Invoice(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations - Factures liées aux unités, pas aux locataires
-    building = relationship("Building", back_populates="invoices")
+    building = relationship("Building", back_populates="invoices", lazy="select")
     
     # Pas de relation directe avec les locataires
     # Les factures sont liées aux unités via unit_id

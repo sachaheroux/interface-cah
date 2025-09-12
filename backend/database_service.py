@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3me 
 """
 Service de base de données pour Interface CAH
 """
@@ -10,7 +10,7 @@ from datetime import datetime, date
 import json
 
 from database import db_manager
-from models import Building, Tenant, Assignment, BuildingReport, UnitReport, Invoice
+from models import Building, Tenant, Unit, Assignment, BuildingReport, UnitReport, Invoice
 
 class DatabaseService:
     """Service principal pour les opérations de base de données"""
@@ -21,6 +21,24 @@ class DatabaseService:
     def get_session(self):
         """Obtenir une session de base de données"""
         return self.db_manager.SessionLocal()
+    
+    def _safe_parse_date(self, date_string):
+        """Parser une date de manière sécurisée"""
+        if not date_string:
+            return None
+        try:
+            return datetime.fromisoformat(date_string).date()
+        except (ValueError, TypeError):
+            return None
+    
+    def _safe_parse_float(self, value, default=0.0):
+        """Parser une valeur flottante de manière sécurisée"""
+        if value is None:
+            return default
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return default
     
     # ========================================
     # OPÉRATIONS SUR LES IMMEUBLES
@@ -79,7 +97,6 @@ class DatabaseService:
                 characteristics=json.dumps(building_data.get("characteristics", {})),
                 financials=json.dumps(building_data.get("financials", {})),
                 contacts=json.dumps(building_data.get("contacts", {})),
-                unit_data=json.dumps(building_data.get("unitData", {})),
                 notes=building_data.get("notes", ""),
                 is_default=False
             )
@@ -91,7 +108,8 @@ class DatabaseService:
             return building.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -149,7 +167,8 @@ class DatabaseService:
             return building.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -170,7 +189,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -210,8 +230,8 @@ class DatabaseService:
                 emergency_contact_name=emergency_contact.get("name"),
                 emergency_contact_phone=emergency_contact.get("phone"),
                 emergency_contact_relationship=emergency_contact.get("relationship"),
-                move_in_date=datetime.fromisoformat(tenant_data["moveInDate"]) if tenant_data.get("moveInDate") else None,
-                move_out_date=datetime.fromisoformat(tenant_data["moveOutDate"]) if tenant_data.get("moveOutDate") else None,
+                move_in_date=self._safe_parse_date(tenant_data.get("moveInDate")),
+                move_out_date=self._safe_parse_date(tenant_data.get("moveOutDate")),
                 financial_info=json.dumps(tenant_data.get("financial", {})),
                 notes=tenant_data.get("notes", "")
             )
@@ -223,7 +243,8 @@ class DatabaseService:
             return tenant.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -268,7 +289,8 @@ class DatabaseService:
             return tenant.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -285,10 +307,132 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
+    # ========================================
+    # OPÉRATIONS SUR LES UNITÉS
+    # ========================================
+    
+    def create_unit(self, unit_data: Dict) -> Dict:
+        """Créer une nouvelle unité"""
+        session = self.get_session()
+        try:
+            # Validation des clés étrangères
+            building_id = unit_data["buildingId"]
+            
+            # Vérifier que l'immeuble existe
+            building = session.query(Building).filter(Building.id == building_id).first()
+            if not building:
+                raise ValueError(f"L'immeuble avec l'ID {building_id} n'existe pas")
+            
+            unit = Unit(
+                building_id=building_id,
+                unit_number=unit_data["unitNumber"],
+                unit_address=unit_data.get("unitAddress"),
+                type=unit_data.get("type", "1 1/2"),
+                area=unit_data.get("area", 0),
+                bedrooms=unit_data.get("bedrooms", 1),
+                bathrooms=unit_data.get("bathrooms", 1),
+                amenities=json.dumps(unit_data.get("amenities", {})),
+                rental_info=json.dumps(unit_data.get("rentalInfo", {})),
+                notes=unit_data.get("notes", "")
+            )
+            
+            session.add(unit)
+            session.commit()
+            session.refresh(unit)
+            
+            
+            return unit.to_dict()
+        except ValueError as e:
+            session.rollback()
+            raise e
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Erreur lors de la création de l'unité: {str(e)}")
+        finally:
+            session.close()
+    
+    def get_units(self, skip: int = 0, limit: int = 100) -> List[Dict]:
+        """Récupérer toutes les unités"""
+        session = self.get_session()
+        try:
+            units = session.query(Unit).offset(skip).limit(limit).all()
+            return [unit.to_dict() for unit in units]
+        finally:
+            session.close()
+    
+    def get_unit(self, unit_id: int) -> Optional[Dict]:
+        """Récupérer une unité par ID"""
+        session = self.get_session()
+        try:
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            return unit.to_dict() if unit else None
+        finally:
+            session.close()
+    
+    def get_units_by_building(self, building_id: int) -> List[Dict]:
+        """Récupérer toutes les unités d'un immeuble"""
+        session = self.get_session()
+        try:
+            units = session.query(Unit).filter(Unit.building_id == building_id).all()
+            return [unit.to_dict() for unit in units]
+        finally:
+            session.close()
+    
+    def update_unit(self, unit_id: int, unit_data: Dict) -> Optional[Dict]:
+        """Mettre à jour une unité"""
+        session = self.get_session()
+        try:
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            if not unit:
+                return None
+            
+            # Champs autorisés pour la mise à jour
+            allowed_fields = [
+                'unit_number', 'unit_address', 'type', 'area', 'bedrooms', 
+                'bathrooms', 'amenities', 'rental_info', 'notes'
+            ]
+            
+            for field, value in unit_data.items():
+                if field in allowed_fields:
+                    if field in ['amenities', 'rental_info']:
+                        setattr(unit, field, json.dumps(value) if value else "{}")
+                    else:
+                        setattr(unit, field, value)
+            
+            unit.updated_at = datetime.utcnow()
+            session.commit()
+            session.refresh(unit)
+            
+            return unit.to_dict()
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Erreur lors de la mise à jour de l'unité: {str(e)}")
+        finally:
+            session.close()
+    
+    def delete_unit(self, unit_id: int) -> bool:
+        """Supprimer une unité"""
+        session = self.get_session()
+        try:
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            if not unit:
+                return False
+            
+            session.delete(unit)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+        finally:
+            session.close()
+
     # ========================================
     # OPÉRATIONS SUR LES FACTURES
     # ========================================
@@ -325,7 +469,7 @@ class DatabaseService:
                 category=invoice_data["category"],
                 source=invoice_data["source"],
                 date=datetime.fromisoformat(invoice_data["date"]).date(),
-                amount=invoice_data["amount"],
+                amount=self._safe_parse_float(invoice_data["amount"], 0.0),
                 currency=invoice_data.get("currency", "CAD"),
                 payment_type=invoice_data["paymentType"],
                 building_id=invoice_data.get("buildingId"),
@@ -343,7 +487,8 @@ class DatabaseService:
             return invoice.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -394,7 +539,8 @@ class DatabaseService:
             return invoice.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -411,7 +557,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -452,16 +599,27 @@ class DatabaseService:
         """Créer une nouvelle assignation"""
         session = self.get_session()
         try:
+            # Validation des clés étrangères
+            tenant_id = assignment_data["tenantId"]
+            unit_id = assignment_data["unitId"]
+            
+            # Vérifier que le locataire existe
+            tenant = session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            if not tenant:
+                raise ValueError(f"Le locataire avec l'ID {tenant_id} n'existe pas")
+            
+            # Vérifier que l'unité existe
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            if not unit:
+                raise ValueError(f"L'unité avec l'ID {unit_id} n'existe pas")
+            
             assignment = Assignment(
-                tenant_id=assignment_data["tenantId"],
-                building_id=assignment_data["buildingId"],
-                unit_id=assignment_data["unitId"],
-                unit_number=assignment_data.get("unitNumber"),
-                unit_address=assignment_data.get("unitAddress"),
-                move_in_date=datetime.fromisoformat(assignment_data["moveInDate"]) if assignment_data.get("moveInDate") else None,
-                move_out_date=datetime.fromisoformat(assignment_data["moveOutDate"]) if assignment_data.get("moveOutDate") else None,
-                rent_amount=assignment_data.get("rentAmount"),
-                deposit_amount=assignment_data.get("depositAmount"),
+                tenant_id=tenant_id,
+                unit_id=unit_id,
+                move_in_date=self._safe_parse_date(assignment_data.get("moveInDate")),
+                move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
+                rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
+                deposit_amount=self._safe_parse_float(assignment_data.get("depositAmount"), 0.0),
                 lease_start_date=datetime.fromisoformat(assignment_data["leaseStartDate"]) if assignment_data.get("leaseStartDate") else None,
                 lease_end_date=datetime.fromisoformat(assignment_data["leaseEndDate"]) if assignment_data.get("leaseEndDate") else None,
                 rent_due_day=assignment_data.get("rentDueDay", 1),
@@ -473,9 +631,12 @@ class DatabaseService:
             session.refresh(assignment)
             
             return assignment.to_dict()
-        except Exception as e:
+        except ValueError as e:
             session.rollback()
             raise e
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Erreur lors de la création de l'assignation: {str(e)}")
         finally:
             session.close()
     
@@ -497,6 +658,24 @@ class DatabaseService:
         finally:
             session.close()
     
+    def delete_assignment(self, assignment_id: int) -> bool:
+        """Supprimer une assignation"""
+        session = self.get_session()
+        try:
+            assignment = session.query(Assignment).filter(Assignment.id == assignment_id).first()
+            if not assignment:
+                return False
+            
+            session.delete(assignment)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+        finally:
+            session.close()
+    
     def get_building_reports(self, skip: int = 0, limit: int = 100) -> List[Dict]:
         """Récupérer tous les rapports d'immeubles"""
         session = self.get_session()
@@ -512,6 +691,24 @@ class DatabaseService:
         try:
             report = session.query(BuildingReport).filter(BuildingReport.id == report_id).first()
             return report.to_dict() if report else None
+        finally:
+            session.close()
+    
+    def delete_building_report(self, report_id: int) -> bool:
+        """Supprimer un rapport d'immeuble"""
+        session = self.get_session()
+        try:
+            report = session.query(BuildingReport).filter(BuildingReport.id == report_id).first()
+            if not report:
+                return False
+            
+            session.delete(report)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -533,21 +730,51 @@ class DatabaseService:
         finally:
             session.close()
     
-    def get_units(self, skip: int = 0, limit: int = 100) -> List[Dict]:
-        """Récupérer toutes les unités"""
+    def delete_unit_report(self, report_id: int) -> bool:
+        """Supprimer un rapport d'unité"""
         session = self.get_session()
         try:
-            # Note: Cette méthode nécessiterait un modèle Unit
-            # Pour l'instant, on retourne une liste vide
-            return []
+            report = session.query(UnitReport).filter(UnitReport.id == report_id).first()
+            if not report:
+                return False
+            
+            session.delete(report)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
+    
     def get_unit(self, unit_id: int) -> Optional[Dict]:
         """Récupérer une unité par ID"""
-        # Note: Cette méthode nécessiterait un modèle Unit
-        # Pour l'instant, on retourne None
-        return None
+        session = self.get_session()
+        try:
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            return unit.to_dict() if unit else None
+        finally:
+            session.close()
+    
+    def delete_unit(self, unit_id: int) -> bool:
+        """Supprimer une unité"""
+        session = self.get_session()
+        try:
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            if not unit:
+                return False
+            
+            session.delete(unit)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+        finally:
+            session.close()
     
     # ========================================
     # MÉTHODES POUR LES CARDINALITÉS CORRIGÉES
@@ -603,10 +830,10 @@ class DatabaseService:
                 unit_id=assignment_data["unitId"],
                 unit_number=assignment_data.get("unitNumber"),
                 unit_address=assignment_data.get("unitAddress"),
-                move_in_date=datetime.fromisoformat(assignment_data["moveInDate"]) if assignment_data.get("moveInDate") else None,
-                move_out_date=datetime.fromisoformat(assignment_data["moveOutDate"]) if assignment_data.get("moveOutDate") else None,
-                rent_amount=assignment_data.get("rentAmount"),
-                deposit_amount=assignment_data.get("depositAmount"),
+                move_in_date=self._safe_parse_date(assignment_data.get("moveInDate")),
+                move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
+                rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
+                deposit_amount=self._safe_parse_float(assignment_data.get("depositAmount"), 0.0),
                 lease_start_date=datetime.fromisoformat(assignment_data["leaseStartDate"]) if assignment_data.get("leaseStartDate") else None,
                 lease_end_date=datetime.fromisoformat(assignment_data["leaseEndDate"]) if assignment_data.get("leaseEndDate") else None,
                 rent_due_day=assignment_data.get("rentDueDay", 1),
@@ -620,7 +847,8 @@ class DatabaseService:
             return assignment.to_dict()
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
     
@@ -643,9 +871,125 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            raise e
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
         finally:
             session.close()
+    
+    def create_building_report(self, report_data: Dict) -> Dict:
+        """Créer un nouveau rapport d'immeuble"""
+        session = self.get_session()
+        try:
+            # Validation des clés étrangères
+            building_id = report_data["buildingId"]
+            
+            # Vérifier que l'immeuble existe
+            building = session.query(Building).filter(Building.id == building_id).first()
+            if not building:
+                raise ValueError(f"L'immeuble avec l'ID {building_id} n'existe pas")
+            
+            report = BuildingReport(
+                building_id=building_id,
+                year=report_data["year"],
+                municipal_taxes=self._safe_parse_float(report_data.get("municipalTaxes"), 0.0),
+                school_taxes=self._safe_parse_float(report_data.get("schoolTaxes"), 0.0),
+                insurance=self._safe_parse_float(report_data.get("insurance"), 0.0),
+                snow_removal=self._safe_parse_float(report_data.get("snowRemoval"), 0.0),
+                lawn_care=self._safe_parse_float(report_data.get("lawnCare"), 0.0),
+                management=self._safe_parse_float(report_data.get("management"), 0.0),
+                renovations=self._safe_parse_float(report_data.get("renovations"), 0.0),
+                repairs=self._safe_parse_float(report_data.get("repairs"), 0.0),
+                wifi=self._safe_parse_float(report_data.get("wifi"), 0.0),
+                electricity=self._safe_parse_float(report_data.get("electricity"), 0.0),
+                other=self._safe_parse_float(report_data.get("other"), 0.0),
+                notes=report_data.get("notes", "")
+            )
+            
+            session.add(report)
+            session.commit()
+            session.refresh(report)
+            
+            return report.to_dict()
+        except ValueError as e:
+            session.rollback()
+            raise e
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Erreur lors de la création du rapport d'immeuble: {str(e)}")
+        finally:
+            session.close()
+    
+    def update_building_report(self, report_id: int, report_data: Dict) -> Dict:
+        """Mettre à jour un rapport d'immeuble"""
+        session = self.get_session()
+        try:
+            report = session.query(BuildingReport).filter(BuildingReport.id == report_id).first()
+            if not report:
+                return None
+            
+            # Mettre à jour les champs de manière sécurisée
+            allowed_fields = [
+                'year', 'municipal_taxes', 'school_taxes', 'insurance', 
+                'snow_removal', 'lawn_care', 'management', 'renovations', 
+                'repairs', 'wifi', 'electricity', 'other', 'notes'
+            ]
+            
+            for key, value in report_data.items():
+                if key in allowed_fields and hasattr(report, key):
+                    setattr(report, key, value)
+            
+            session.commit()
+            session.refresh(report)
+            
+            return report.to_dict()
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression: {e}")
+            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+        finally:
+            session.close()
+    
+    def create_unit_report(self, report_data: Dict) -> Dict:
+        """Créer un nouveau rapport d'unité"""
+        session = self.get_session()
+        try:
+            # Validation des clés étrangères
+            unit_id = report_data["unitId"]
+            
+            # Vérifier que l'unité existe
+            unit = session.query(Unit).filter(Unit.id == unit_id).first()
+            if not unit:
+                raise ValueError(f"L'unité avec l'ID {unit_id} n'existe pas")
+            
+            report = UnitReport(
+                unit_id=unit_id,
+                year=report_data["year"],
+                month=report_data["month"],
+                tenant_name=report_data.get("tenantName"),
+                payment_method=report_data.get("paymentMethod"),
+                is_heated_lit=report_data.get("isHeatedLit", False),
+                is_furnished=report_data.get("isFurnished", False),
+                wifi_included=report_data.get("wifiIncluded", False),
+                rent_amount=self._safe_parse_float(report_data.get("rentAmount"), 0.0),
+                start_date=self._safe_parse_date(report_data.get("startDate")),
+                end_date=self._safe_parse_date(report_data.get("endDate")),
+                notes=report_data.get("notes", "")
+            )
+            
+            session.add(report)
+            session.commit()
+            session.refresh(report)
+            
+            return report.to_dict()
+        except ValueError as e:
+            session.rollback()
+            raise e
+        except Exception as e:
+            session.rollback()
+            raise ValueError(f"Erreur lors de la création du rapport d'unité: {str(e)}")
+        finally:
+            session.close()
+    
 
 # Instance globale du service
 db_service = DatabaseService()

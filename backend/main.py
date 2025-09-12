@@ -98,7 +98,7 @@ async def get_invoice_constants():
         
     except Exception as e:
         print(f"❌ Erreur lors de la récupération des constantes: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des constantes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erreur interne du serveur")
 
 # Modèles Pydantic pour la validation des données
 class Address(BaseModel):
@@ -106,7 +106,11 @@ class Address(BaseModel):
     city: str
     province: str
     postalCode: str
-    country: str
+    country: str = "Canada"
+    
+    class Config:
+        # Validation personnalisée
+        validate_assignment = True
 
 class Characteristics(BaseModel):
     parking: int = 0
@@ -813,12 +817,11 @@ async def delete_building(building_id: int):
 async def get_tenants():
     """Récupérer tous les locataires"""
     try:
-        data = get_tenants_cache()
-        tenants = data.get("tenants", [])
+        tenants = db_service.get_tenants()
         return {"data": tenants}
     except Exception as e:
         print(f"Erreur lors du chargement des locataires: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des locataires: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/tenants/{tenant_id}")
 async def get_tenant(tenant_id: int):
@@ -856,58 +859,34 @@ async def create_tenant(tenant_data: TenantCreate):
 async def update_tenant(tenant_id: int, tenant_data: TenantUpdate):
     """Mettre à jour un locataire existant"""
     try:
-        data = get_tenants_cache()
-        tenants = data.get("tenants", [])
+        # Convertir en dictionnaire pour le service
+        update_dict = tenant_data.dict(exclude_unset=True)
         
-        # Trouver et mettre à jour le locataire
-        tenant_found = False
-        for i, tenant in enumerate(tenants):
-            if tenant.get("id") == tenant_id:
-                # Mettre à jour seulement les champs fournis
-                update_data = tenant_data.dict(exclude_unset=True)
-                tenants[i].update(update_data)
-                tenants[i]["updatedAt"] = datetime.now().isoformat() + "Z"
-                tenant_found = True
-                
-                # Mettre à jour le cache
-                update_tenants_cache(data)
-                
-                return {"data": tenants[i]}
+        # Mettre à jour via le service SQLite
+        updated_tenant = db_service.update_tenant(tenant_id, update_dict)
         
-        if not tenant_found:
+        if not updated_tenant:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
-            
+        
+        print(f"Locataire mis à jour: {tenant_id}")
+        return {"data": updated_tenant}
     except HTTPException:
         raise
     except Exception as e:
         print(f"Erreur lors de la mise à jour du locataire: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du locataire: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.delete("/api/tenants/{tenant_id}")
 async def delete_tenant(tenant_id: int):
     """Supprimer un locataire"""
     try:
-        data = get_tenants_cache()
-        tenants = data.get("tenants", [])
+        # Supprimer le locataire via le service SQLite
+        success = db_service.delete_tenant(tenant_id)
         
-        # Trouver le locataire à supprimer
-        tenant_to_delete = None
-        for tenant in tenants:
-            if tenant.get("id") == tenant_id:
-                tenant_to_delete = tenant
-                break
-        
-        if not tenant_to_delete:
+        if not success:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
         
-        # Supprimer le locataire
-        data["tenants"] = [t for t in tenants if t.get("id") != tenant_id]
-        
-        # Mettre à jour le cache
-        update_tenants_cache(data)
-        
         return {"message": "Locataire supprimé avec succès"}
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -937,51 +916,30 @@ async def get_employees():
 async def get_assignments():
     """Récupérer toutes les assignations locataires-unités"""
     try:
-        data = get_assignments_cache()
-        assignments = data.get("assignments", [])
+        assignments = db_service.get_assignments()
         return {"data": assignments}
     except Exception as e:
         print(f"Erreur lors du chargement des assignations: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des assignations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.post("/api/assignments")
 async def create_assignment(assignment_data: dict):
     """Créer une nouvelle assignation locataire-unité"""
     try:
-        data = get_assignments_cache()
         tenant_id = assignment_data.get("tenantId")
         
         # Validation : Vérifier que le locataire existe
-        tenants_data = get_tenants_cache()
-        tenant_exists = any(t.get("id") == tenant_id for t in tenants_data.get("tenants", []))
-        
-        if not tenant_exists:
+        tenant = db_service.get_tenant(tenant_id)
+        if not tenant:
             print(f"❌ Assignation rejetée: Locataire {tenant_id} n'existe pas")
             raise HTTPException(
                 status_code=400, 
                 detail=f"Le locataire avec l'ID {tenant_id} n'existe pas dans la base de données"
             )
         
-        # Créer la nouvelle assignation avec un ID unique
-        new_assignment = {
-            "id": data["next_id"],
-            "unitId": assignment_data.get("unitId"),
-            "tenantId": tenant_id,
-            "tenantData": assignment_data.get("tenantData", {}),
-            "assignedAt": datetime.now().isoformat() + "Z",
-            "createdAt": datetime.now().isoformat() + "Z",
-            "updatedAt": datetime.now().isoformat() + "Z"
-        }
-        
-        # Supprimer l'ancienne assignation pour ce locataire s'il y en a une
-        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != tenant_id]
-        
-        # Ajouter la nouvelle assignation
-        data["assignments"].append(new_assignment)
-        data["next_id"] += 1
-        
-        # Mettre à jour le cache
-        update_assignments_cache(data)
+        # Créer la nouvelle assignation via le service SQLite
+        # Le service gère automatiquement la validation des assignations actives
+        new_assignment = db_service.create_assignment_with_validation(assignment_data)
         
         print(f"✅ Assignation créée: Locataire {tenant_id} → Unité {assignment_data.get('unitId')}")
         return {"data": new_assignment}
@@ -995,21 +953,19 @@ async def create_assignment(assignment_data: dict):
 async def remove_tenant_assignment(tenant_id: int):
     """Retirer un locataire de toute unité"""
     try:
-        data = get_assignments_cache()
+        # Supprimer via le service SQLite
+        assignments = db_service.get_assignments()
+        tenant_assignments = [a for a in assignments if a.get("tenantId") == tenant_id]
         
-        # Supprimer toutes les assignations pour ce locataire
-        original_count = len(data["assignments"])
-        data["assignments"] = [a for a in data["assignments"] if a.get("tenantId") != tenant_id]
-        removed_count = original_count - len(data["assignments"])
-        
-        if removed_count == 0:
+        if not tenant_assignments:
             raise HTTPException(status_code=404, detail="Aucune assignation trouvée pour ce locataire")
         
-        # Mettre à jour le cache
-        update_assignments_cache(data)
+        # Supprimer chaque assignation
+        for assignment in tenant_assignments:
+            db_service.delete_assignment(assignment["id"])
         
         print(f"Assignation supprimée pour le locataire {tenant_id}")
-        return {"message": f"Locataire retiré de son unité ({removed_count} assignation(s) supprimée(s))"}
+        return {"message": f"Locataire retiré de son unité ({len(tenant_assignments)} assignation(s) supprimée(s))"}
         
     except HTTPException:
         raise
@@ -1021,19 +977,21 @@ async def remove_tenant_assignment(tenant_id: int):
 async def remove_specific_assignment(tenant_id: int, unit_id: str):
     """Retirer un locataire d'une unité spécifique (ne supprime que cette assignation)"""
     try:
-        data = get_assignments_cache()
+        # Supprimer via le service SQLite
+        assignments = db_service.get_assignments()
+        specific_assignment = None
         
-        # Trouver et supprimer seulement l'assignation spécifique
-        original_count = len(data["assignments"])
-        data["assignments"] = [a for a in data["assignments"] 
-                              if not (a.get("tenantId") == tenant_id and a.get("unitId") == unit_id)]
-        removed_count = original_count - len(data["assignments"])
+        for assignment in assignments:
+            if (assignment.get("tenantId") == tenant_id and 
+                assignment.get("unitId") == unit_id):
+                specific_assignment = assignment
+                break
         
-        if removed_count == 0:
+        if not specific_assignment:
             raise HTTPException(status_code=404, detail="Assignation non trouvée pour ce locataire et cette unité")
         
-        # Mettre à jour le cache
-        update_assignments_cache(data)
+        # Supprimer l'assignation spécifique
+        db_service.delete_assignment(specific_assignment["id"])
         
         print(f"Assignation spécifique supprimée: Locataire {tenant_id} retiré de l'unité {unit_id}")
         return {"message": f"Locataire {tenant_id} retiré de l'unité {unit_id} avec succès"}
@@ -1091,12 +1049,11 @@ async def get_projects():
 async def get_building_reports():
     """Récupérer tous les rapports d'immeubles"""
     try:
-        data = get_building_reports_cache()
-        reports = data.get("reports", [])
+        reports = db_service.get_building_reports()
         return {"data": reports}
     except Exception as e:
         print(f"Erreur lors du chargement des rapports d'immeubles: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'immeubles: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/building-reports/{building_id}")
 async def get_building_report(building_id: int):
@@ -1114,34 +1071,20 @@ async def get_building_report(building_id: int):
 async def create_building_report(report_data: dict):
     """Créer ou mettre à jour un rapport d'immeuble"""
     try:
-        data = get_building_reports_cache()
         building_id = report_data.get("buildingId")
         year = report_data.get("year")
         
         # Vérifier si un rapport existe déjà pour cet immeuble et cette année
-        reports = data.get("reports", [])
+        reports = db_service.get_building_reports()
         existing_report = next((r for r in reports if r.get("buildingId") == building_id and r.get("year") == year), None)
         
         if existing_report:
-            # Mettre à jour le rapport existant
-            existing_report.update(report_data)
-            existing_report["updatedAt"] = datetime.now().isoformat() + "Z"
-            updated_report = existing_report
+            # Mettre à jour le rapport existant via SQLite
+            updated_report = db_service.update_building_report(existing_report["id"], report_data)
         else:
-            # Créer un nouveau rapport
-            new_report = {
-                "id": data["next_id"],
-                "buildingId": building_id,
-                "year": year,
-                "createdAt": datetime.now().isoformat() + "Z",
-                "updatedAt": datetime.now().isoformat() + "Z",
-                **report_data
-            }
-            data["reports"].append(new_report)
-            data["next_id"] += 1
-            updated_report = new_report
+            # Créer un nouveau rapport via SQLite
+            updated_report = db_service.create_building_report(report_data)
         
-        update_building_reports_cache(data)
         print(f"Rapport immeuble sauvegardé: {building_id} - {year}")
         return {"data": updated_report}
     except Exception as e:
@@ -1152,14 +1095,12 @@ async def create_building_report(report_data: dict):
 async def delete_building_report(report_id: int):
     """Supprimer un rapport d'immeuble"""
     try:
-        data = get_building_reports_cache()
-        original_count = len(data["reports"])
-        data["reports"] = [r for r in data["reports"] if r.get("id") != report_id]
+        # Supprimer via le service SQLite
+        success = db_service.delete_building_report(report_id)
         
-        if len(data["reports"]) == original_count:
+        if not success:
             raise HTTPException(status_code=404, detail="Rapport non trouvé")
         
-        update_building_reports_cache(data)
         print(f"Rapport immeuble supprimé: {report_id}")
         return {"message": "Rapport supprimé avec succès"}
     except HTTPException:
@@ -1176,12 +1117,11 @@ async def delete_building_report(report_id: int):
 async def get_unit_reports():
     """Récupérer tous les rapports d'unités"""
     try:
-        data = get_unit_reports_cache()
-        reports = data.get("reports", [])
+        reports = db_service.get_unit_reports()
         return {"data": reports}
     except Exception as e:
         print(f"Erreur lors du chargement des rapports d'unités: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'unités: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.get("/api/unit-reports/{unit_id}")
 async def get_unit_report(unit_id: str):
@@ -1199,29 +1139,9 @@ async def get_unit_report(unit_id: str):
 async def create_unit_report(report_data: dict):
     """Créer un nouveau rapport d'unité mensuel"""
     try:
-        data = get_unit_reports_cache()
+        # Créer le rapport via le service SQLite
+        new_report = db_service.create_unit_report(report_data)
         
-        new_report = {
-            "id": data["next_id"],
-            "unitId": report_data.get("unitId"),
-            "year": report_data.get("year"),
-            "month": report_data.get("month"),
-            "tenantName": report_data.get("tenantName"),
-            "paymentMethod": report_data.get("paymentMethod"),
-            "isHeatedLit": report_data.get("isHeatedLit", False),
-            "isFurnished": report_data.get("isFurnished", False),
-            "wifiIncluded": report_data.get("wifiIncluded", False),
-            "rentAmount": report_data.get("rentAmount", 0),
-            "startDate": report_data.get("startDate"),
-            "endDate": report_data.get("endDate"),
-            "createdAt": datetime.now().isoformat() + "Z",
-            "updatedAt": datetime.now().isoformat() + "Z"
-        }
-        
-        data["reports"].append(new_report)
-        data["next_id"] += 1
-        
-        update_unit_reports_cache(data)
         print(f"Rapport unité créé: {report_data.get('unitId')} - {report_data.get('year')}/{report_data.get('month')}")
         return {"data": new_report}
     except Exception as e:
@@ -1232,13 +1152,65 @@ async def create_unit_report(report_data: dict):
 async def delete_unit_report(report_id: int):
     """Supprimer un rapport d'unité"""
     try:
-        reports = load_unit_reports_data()
-        reports = [r for r in reports if r.get('id') != report_id]
-        save_unit_reports_data(reports)
-        update_unit_reports_cache(reports)
+        # Supprimer via le service SQLite
+        success = db_service.delete_unit_report(report_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Rapport non trouvé")
+        
+        print(f"Rapport d'unité supprimé: {report_id}")
         return {"message": "Rapport d'unité supprimé avec succès"}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+        print(f"Erreur lors de la suppression du rapport d'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+# ========================================
+# ROUTES POUR LES UNITÉS
+# ========================================
+
+@app.get("/api/units")
+async def get_units():
+    """Récupérer toutes les unités"""
+    try:
+        units = db_service.get_units()
+        return {"data": units}
+    except Exception as e:
+        print(f"Erreur lors du chargement des unités: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.get("/api/units/{unit_id}")
+async def get_unit(unit_id: int):
+    """Récupérer une unité par ID"""
+    try:
+        unit = db_service.get_unit(unit_id)
+        if not unit:
+            raise HTTPException(status_code=404, detail="Unité non trouvée")
+        return {"data": unit}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors du chargement de l'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.delete("/api/units/{unit_id}")
+async def delete_unit(unit_id: int):
+    """Supprimer une unité"""
+    try:
+        # Supprimer via le service SQLite
+        success = db_service.delete_unit(unit_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Unité non trouvée")
+        
+        print(f"Unité supprimée: {unit_id}")
+        return {"message": "Unité supprimée avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression de l'unité: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.post("/api/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
@@ -1384,6 +1356,80 @@ async def clean_invalid_assignments():
         raise HTTPException(status_code=500, detail=f"Erreur lors du nettoyage: {str(e)}")
 
 # ========================================
+# ROUTES POUR LES UNITÉS
+# ========================================
+
+@app.get("/api/units")
+async def get_units(skip: int = 0, limit: int = 100):
+    """Récupérer toutes les unités"""
+    try:
+        units = db_service.get_units(skip=skip, limit=limit)
+        return {"units": units, "total": len(units)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
+
+@app.get("/api/units/{unit_id}")
+async def get_unit(unit_id: int):
+    """Récupérer une unité par ID"""
+    try:
+        unit = db_service.get_unit(unit_id)
+        if not unit:
+            raise HTTPException(status_code=404, detail="Unité non trouvée")
+        return {"unit": unit}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de l'unité: {str(e)}")
+
+@app.get("/api/buildings/{building_id}/units")
+async def get_units_by_building(building_id: int):
+    """Récupérer toutes les unités d'un immeuble"""
+    try:
+        units = db_service.get_units_by_building(building_id)
+        return {"units": units, "total": len(units)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
+
+@app.post("/api/units")
+async def create_unit(unit_data: Dict[str, Any]):
+    """Créer une nouvelle unité"""
+    try:
+        unit = db_service.create_unit(unit_data)
+        return {"unit": unit, "message": "Unité créée avec succès"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'unité: {str(e)}")
+
+@app.put("/api/units/{unit_id}")
+async def update_unit(unit_id: int, unit_data: Dict[str, Any]):
+    """Mettre à jour une unité"""
+    try:
+        unit = db_service.update_unit(unit_id, unit_data)
+        if not unit:
+            raise HTTPException(status_code=404, detail="Unité non trouvée")
+        return {"unit": unit, "message": "Unité mise à jour avec succès"}
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de l'unité: {str(e)}")
+
+@app.delete("/api/units/{unit_id}")
+async def delete_unit(unit_id: int):
+    """Supprimer une unité"""
+    try:
+        success = db_service.delete_unit(unit_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Unité non trouvée")
+        return {"message": "Unité supprimée avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de l'unité: {str(e)}")
+
+# ========================================
 # ROUTES POUR LES FACTURES
 # ========================================
 
@@ -1432,37 +1478,17 @@ async def create_invoice(invoice_data: InvoiceCreate):
 async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdate):
     """Mettre à jour une facture existante"""
     try:
-        data = get_invoices_cache()
-        invoices = data.get("invoices", [])
+        # Convertir en dictionnaire pour le service
+        update_dict = invoice_data.dict(exclude_unset=True)
         
-        # Trouver et mettre à jour la facture
-        invoice_found = False
-        for i, invoice in enumerate(invoices):
-            if invoice.get("id") == invoice_id:
-                # Vérifier l'unicité du numéro de facture si modifié
-                if invoice_data.invoiceNumber and invoice_data.invoiceNumber != invoice.get("invoiceNumber"):
-                    existing_invoices = [inv for inv in invoices if inv.get("id") != invoice_id]
-                    if any(inv.get("invoiceNumber") == invoice_data.invoiceNumber for inv in existing_invoices):
-                        raise HTTPException(
-                            status_code=400, 
-                            detail=f"Une facture avec le numéro '{invoice_data.invoiceNumber}' existe déjà"
-                        )
-                
-                # Mettre à jour seulement les champs fournis
-                update_data = invoice_data.dict(exclude_unset=True)
-                invoices[i].update(update_data)
-                invoices[i]["updatedAt"] = datetime.now().isoformat() + "Z"
-                invoice_found = True
-                
-                # Mettre à jour le cache
-                update_invoices_cache(data)
-                
-                print(f"✅ Facture mise à jour: {invoices[i].get('invoiceNumber')}")
-                return {"data": invoices[i]}
+        # Mettre à jour via le service SQLite
+        updated_invoice = db_service.update_invoice(invoice_id, update_dict)
         
-        if not invoice_found:
+        if not updated_invoice:
             raise HTTPException(status_code=404, detail="Facture non trouvée")
-            
+        
+        print(f"✅ Facture mise à jour: {updated_invoice.get('invoiceNumber')}")
+        return {"data": updated_invoice}
     except HTTPException:
         raise
     except Exception as e:
@@ -1473,28 +1499,13 @@ async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdate):
 async def delete_invoice(invoice_id: int):
     """Supprimer une facture"""
     try:
-        data = get_invoices_cache()
-        invoices = data.get("invoices", [])
+        # Supprimer la facture via le service SQLite
+        success = db_service.delete_invoice(invoice_id)
         
-        # Trouver la facture à supprimer
-        invoice_to_delete = None
-        for invoice in invoices:
-            if invoice.get("id") == invoice_id:
-                invoice_to_delete = invoice
-                break
-        
-        if not invoice_to_delete:
+        if not success:
             raise HTTPException(status_code=404, detail="Facture non trouvée")
         
-        # Supprimer la facture
-        data["invoices"] = [inv for inv in invoices if inv.get("id") != invoice_id]
-        
-        # Mettre à jour le cache
-        update_invoices_cache(data)
-        
-        print(f"✅ Facture supprimée: {invoice_to_delete.get('invoiceNumber')}")
         return {"message": "Facture supprimée avec succès"}
-        
     except HTTPException:
         raise
     except Exception as e:
