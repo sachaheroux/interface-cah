@@ -65,9 +65,11 @@ export default function Dashboard() {
       console.log('Dashboard data received:', response.data) // Debug
       setDashboardData(response.data)
       
-      // Vérifier si on utilise des données de fallback (indicateur dans les logs console)
-      const logMessages = JSON.stringify(response.data)
-      setIsUsingFallback(logMessages.includes('Mode hors ligne') || logMessages.includes('locale'))
+      // Vérifier si on utilise des données de fallback de manière plus robuste
+      const isFallback = response.data?.isFallback === true || 
+                        response.data?.source === 'localStorage' ||
+                        response.data?.mode === 'offline';
+      setIsUsingFallback(isFallback)
       
     } catch (err) {
       setError('Erreur lors du chargement des données')

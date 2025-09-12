@@ -52,9 +52,17 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
     if (!formData.address.street.trim()) newErrors.street = 'L\'adresse est requise'
     if (!formData.address.city.trim()) newErrors.city = 'La ville est requise'
     if (!formData.address.province.trim()) newErrors.province = 'La province est requise'
-    if (!formData.address.postalCode.trim()) newErrors.postalCode = 'Le code postal est requis'
-    if (formData.units <= 0) newErrors.units = 'Le nombre d\'unités doit être supérieur à 0'
-    if (formData.floors <= 0) newErrors.floors = 'Le nombre d\'étages doit être supérieur à 0'
+    if (!formData.address.postalCode.trim()) {
+      newErrors.postalCode = 'Le code postal est requis'
+    } else if (!/^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/.test(formData.address.postalCode)) {
+      newErrors.postalCode = 'Format de code postal invalide (ex: H1H 1H1)'
+    }
+    // Convertir en nombres pour la validation
+    const units = parseInt(formData.units) || 0
+    const floors = parseInt(formData.floors) || 0
+    
+    if (units <= 0) newErrors.units = 'Le nombre d\'unités doit être supérieur à 0'
+    if (floors <= 0) newErrors.floors = 'Le nombre d\'étages doit être supérieur à 0'
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -75,6 +83,7 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
       onClose()
     } catch (error) {
       console.error('Error saving building:', error)
+      setErrors({ general: `Erreur lors de la sauvegarde: ${error.message}` })
     } finally {
       setLoading(false)
     }

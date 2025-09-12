@@ -314,8 +314,10 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       if (!formData.date) {
         throw new Error('La date est requise');
       }
-      if (formData.amount <= 0) {
-        throw new Error('Le montant doit être supérieur à 0');
+      // Convertir le montant en nombre pour la validation
+      const amount = parseFloat(formData.amount.toString().replace(',', '.'));
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Le montant doit être un nombre supérieur à 0');
       }
       if (!formData.paymentType) {
         throw new Error('Le type de paiement est requis');
@@ -327,9 +329,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       // Préparer les données
       const invoiceData = {
         ...formData,
+        amount: amount, // Utiliser le montant converti
         buildingId: parseInt(formData.buildingId),
-        unitId: formData.unitId || null,
-        amount: parseFloat(formData.amount.replace(',', '.')) // Convertir virgule en point pour l'API
+        unitId: formData.unitId || null
       };
 
       // Créer la facture
@@ -344,7 +346,13 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       onClose();
     } catch (err) {
       console.error('Erreur lors de la création de la facture:', err);
-      setError(err.response?.data?.detail || err.message || 'Erreur lors de la création de la facture');
+      // Ne pas exposer les détails d'erreur du serveur
+      const errorMessage = err.response?.status === 400 
+        ? 'Données invalides. Vérifiez les informations saisies.'
+        : err.response?.status === 500
+        ? 'Erreur interne du serveur. Veuillez réessayer.'
+        : 'Erreur lors de la création de la facture';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

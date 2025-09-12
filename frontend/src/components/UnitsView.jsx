@@ -232,16 +232,31 @@ export default function UnitsView({ buildings }) {
   const handleDeleteUnit = async (unit) => {
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'unité #${unit.unitNumber} ?`)) {
       try {
-        // Supprimer l'unité de la liste
+        console.log(`🗑️ Suppression de l'unité: ${unit.unitNumber} (ID: ${unit.id})`)
+        
+        // Supprimer via l'API
+        await apiService.delete(`/api/units/${unit.id}`)
+        
+        // Supprimer de l'état local
         const updatedUnits = units.filter(u => u.id !== unit.id)
         setUnits(updatedUnits)
         setShowDetails(false)
         
-        // Ici, vous pourriez ajouter la logique pour supprimer de l'API
-        console.log('Unité supprimée:', unit)
+        console.log(`✅ Unité ${unit.unitNumber} supprimée avec succès`)
+        
+        // Déclencher un événement pour actualiser les autres vues
+        window.dispatchEvent(new CustomEvent('unitDeleted', { 
+          detail: { unitId: unit.id, unitNumber: unit.unitNumber } 
+        }))
         
       } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
+        console.error('❌ Erreur lors de la suppression:', error)
+        alert(`Erreur lors de la suppression de l'unité #${unit.unitNumber}. Vérifiez la console pour plus de détails.`)
+        
+        // En cas d'erreur API, on supprime localement quand même
+        const updatedUnits = units.filter(u => u.id !== unit.id)
+        setUnits(updatedUnits)
+        setShowDetails(false)
       }
     }
   }
