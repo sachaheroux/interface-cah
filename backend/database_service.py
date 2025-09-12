@@ -548,6 +548,104 @@ class DatabaseService:
         # Note: Cette méthode nécessiterait un modèle Unit
         # Pour l'instant, on retourne None
         return None
+    
+    # ========================================
+    # MÉTHODES POUR LES CARDINALITÉS CORRIGÉES
+    # ========================================
+    
+    def get_tenant_assignment(self, tenant_id: int) -> Optional[Dict]:
+        """Récupérer l'assignation active d'un locataire (1:1)"""
+        session = self.get_session()
+        try:
+            assignment = session.query(Assignment).filter(
+                Assignment.tenant_id == tenant_id,
+                Assignment.move_out_date.is_(None)  # Seulement les assignations actives
+            ).first()
+            return assignment.to_dict() if assignment else None
+        finally:
+            session.close()
+    
+    def get_unit_invoices(self, unit_id: str) -> List[Dict]:
+        """Récupérer les factures d'une unité (N:1)"""
+        session = self.get_session()
+        try:
+            invoices = session.query(Invoice).filter(Invoice.unit_id == unit_id).all()
+            return [invoice.to_dict() for invoice in invoices]
+        finally:
+            session.close()
+    
+    def get_tenant_invoices(self, tenant_id: int) -> List[Dict]:
+        """Récupérer les factures d'un locataire via son assignation active"""
+        assignment = self.get_tenant_assignment(tenant_id)
+        if assignment and assignment.get('unitId'):
+            return self.get_unit_invoices(assignment['unitId'])
+        return []
+    
+    def create_assignment_with_validation(self, assignment_data: Dict) -> Dict:
+        """Créer une assignation avec validation des cardinalités"""
+        session = self.get_session()
+        try:
+            tenant_id = assignment_data["tenantId"]
+            
+            # Vérifier qu'il n'y a pas déjà une assignation active pour ce locataire
+            existing_assignment = session.query(Assignment).filter(
+                Assignment.tenant_id == tenant_id,
+                Assignment.move_out_date.is_(None)
+            ).first()
+            
+            if existing_assignment:
+                raise ValueError(f"Le locataire {tenant_id} a déjà une assignation active")
+            
+            # Créer la nouvelle assignation
+            assignment = Assignment(
+                tenant_id=tenant_id,
+                building_id=assignment_data["buildingId"],
+                unit_id=assignment_data["unitId"],
+                unit_number=assignment_data.get("unitNumber"),
+                unit_address=assignment_data.get("unitAddress"),
+                move_in_date=datetime.fromisoformat(assignment_data["moveInDate"]) if assignment_data.get("moveInDate") else None,
+                move_out_date=datetime.fromisoformat(assignment_data["moveOutDate"]) if assignment_data.get("moveOutDate") else None,
+                rent_amount=assignment_data.get("rentAmount"),
+                deposit_amount=assignment_data.get("depositAmount"),
+                lease_start_date=datetime.fromisoformat(assignment_data["leaseStartDate"]) if assignment_data.get("leaseStartDate") else None,
+                lease_end_date=datetime.fromisoformat(assignment_data["leaseEndDate"]) if assignment_data.get("leaseEndDate") else None,
+                rent_due_day=assignment_data.get("rentDueDay", 1),
+                notes=assignment_data.get("notes", "")
+            )
+            
+            session.add(assignment)
+            session.commit()
+            session.refresh(assignment)
+            
+            return assignment.to_dict()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+    
+    def move_out_tenant(self, tenant_id: int, move_out_date: str) -> bool:
+        """Déménager un locataire (mettre à jour move_out_date)"""
+        session = self.get_session()
+        try:
+            assignment = session.query(Assignment).filter(
+                Assignment.tenant_id == tenant_id,
+                Assignment.move_out_date.is_(None)
+            ).first()
+            
+            if not assignment:
+                return False
+            
+            assignment.move_out_date = datetime.fromisoformat(move_out_date).date()
+            assignment.updated_at = datetime.utcnow()
+            session.commit()
+            
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
 # Instance globale du service
 db_service = DatabaseService()

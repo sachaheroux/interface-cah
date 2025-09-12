@@ -86,8 +86,8 @@ class Tenant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations
-    assignments = relationship("Assignment", back_populates="tenant")
+    # Relations - Un locataire a une assignation active maximum
+    assignments = relationship("Assignment", back_populates="tenant", uselist=False)
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -130,9 +130,12 @@ class Assignment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations
+    # Relations - Une assignation = un locataire + une unité
     tenant = relationship("Tenant", back_populates="assignments")
     building = relationship("Building", back_populates="assignments")
+    
+    # Contrainte unique pour éviter les assignations multiples par locataire
+    __table_args__ = (UniqueConstraint('tenant_id', name='unique_tenant_assignment'),)
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -269,8 +272,11 @@ class Invoice(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations
+    # Relations - Factures liées aux unités, pas aux locataires
     building = relationship("Building", back_populates="invoices")
+    
+    # Pas de relation directe avec les locataires
+    # Les factures sont liées aux unités via unit_id
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
