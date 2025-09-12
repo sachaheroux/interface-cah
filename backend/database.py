@@ -106,7 +106,6 @@ class DatabaseManager:
                     characteristics TEXT,  -- JSON string
                     financials TEXT,      -- JSON string
                     contacts TEXT,        -- JSON string
-                    unit_data TEXT,       -- JSON string
                     notes TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -121,15 +120,38 @@ class DatabaseManager:
                     name TEXT NOT NULL,
                     email TEXT,
                     phone TEXT,
-                    emergency_contact_name TEXT,
-                    emergency_contact_phone TEXT,
-                    emergency_contact_relationship TEXT,
-                    move_in_date DATE,
-                    move_out_date DATE,
+                    address_street TEXT,
+                    address_city TEXT,
+                    address_province TEXT,
+                    address_postal_code TEXT,
+                    address_country TEXT DEFAULT 'Canada',
+                    personal_info TEXT,  -- JSON string
+                    emergency_contact TEXT,  -- JSON string
                     financial_info TEXT,  -- JSON string
                     notes TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Table des unités
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS units (
+                    id INTEGER PRIMARY KEY,
+                    building_id INTEGER NOT NULL,
+                    unit_number TEXT NOT NULL,
+                    unit_address TEXT,
+                    type TEXT,
+                    area INTEGER,
+                    bedrooms INTEGER,
+                    bathrooms INTEGER,
+                    amenities TEXT,  -- JSON string
+                    rental_info TEXT,  -- JSON string
+                    notes TEXT DEFAULT '',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (building_id) REFERENCES buildings(id) ON DELETE CASCADE,
+                    UNIQUE(building_id, unit_number)
                 )
             """)
             
@@ -138,10 +160,7 @@ class DatabaseManager:
                 CREATE TABLE IF NOT EXISTS assignments (
                     id INTEGER PRIMARY KEY,
                     tenant_id INTEGER NOT NULL,
-                    building_id INTEGER NOT NULL,
-                    unit_id TEXT NOT NULL,
-                    unit_number TEXT,
-                    unit_address TEXT,
+                    unit_id INTEGER NOT NULL,
                     move_in_date DATE NOT NULL,
                     move_out_date DATE,
                     rent_amount DECIMAL(10,2),
@@ -153,7 +172,7 @@ class DatabaseManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-                    FOREIGN KEY (building_id) REFERENCES buildings(id) ON DELETE CASCADE
+                    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE
                 )
             """)
             
@@ -186,9 +205,9 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS unit_reports (
                     id INTEGER PRIMARY KEY,
-                    building_id INTEGER NOT NULL,
-                    unit_id TEXT NOT NULL,
+                    unit_id INTEGER NOT NULL,
                     year INTEGER NOT NULL,
+                    month INTEGER NOT NULL,
                     rent_collected DECIMAL(10,2) DEFAULT 0,
                     expenses DECIMAL(10,2) DEFAULT 0,
                     maintenance DECIMAL(10,2) DEFAULT 0,
@@ -197,8 +216,8 @@ class DatabaseManager:
                     notes TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (building_id) REFERENCES buildings(id) ON DELETE CASCADE,
-                    UNIQUE(building_id, unit_id, year)
+                    FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE CASCADE,
+                    UNIQUE(unit_id, year, month)
                 )
             """)
             
@@ -230,8 +249,9 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_tenants_name ON tenants(name)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_tenants_email ON tenants(email)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_assignments_tenant ON assignments(tenant_id)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_assignments_building ON assignments(building_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_assignments_unit ON assignments(unit_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_units_building ON units(building_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_unit_reports_unit ON unit_reports(unit_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_invoices_building ON invoices(building_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_invoices_category ON invoices(category)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_invoices_date ON invoices(date)")
