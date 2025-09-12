@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import shutil
+import re
 
 # Imports pour SQLite
 from database import db_manager, init_database
@@ -740,6 +741,67 @@ async def get_dashboard_data():
         }
 
 # Routes CRUD pour les immeubles avec SQLite
+def generate_units_from_address(building):
+    """Générer automatiquement les unités basées sur l'adresse de l'immeuble"""
+    try:
+        address = building.get('address', {})
+        if not address:
+            return []
+        
+        street = address.get('street', '')
+        if not street:
+            return []
+        
+        # Parser l'adresse pour extraire les numéros d'unités
+        # Format attendu: "56-58-60-62 rue Vachon" ou "56 rue Vachon"
+        unit_numbers = []
+        
+        # Chercher des numéros séparés par des tirets
+        if '-' in street:
+            # Extraire tous les numéros avant le premier espace
+            street_part = street.split(' ')[0]
+            numbers = street_part.split('-')
+            for num in numbers:
+                if num.strip().isdigit():
+                    unit_numbers.append(num.strip())
+        else:
+            # Adresse simple, une seule unité
+            unit_numbers = ['1']
+        
+        # Si pas de numéros trouvés, utiliser le nombre d'unités spécifié
+        if not unit_numbers:
+            units_count = building.get('units', 1)
+            unit_numbers = [str(i) for i in range(1, units_count + 1)]
+        
+        # Créer les unités
+        created_units = []
+        for i, unit_num in enumerate(unit_numbers):
+            unit_data = {
+                "buildingId": building['id'],
+                "unitNumber": unit_num,
+                "unitAddress": f"{unit_num} {street}",
+                "type": "1 1/2",
+                "area": 0,
+                "bedrooms": 1,
+                "bathrooms": 1,
+                "amenities": "{}",
+                "rentalInfo": "{}",
+                "notes": ""
+            }
+            
+            try:
+                created_unit = db_service.create_unit(unit_data)
+                created_units.append(created_unit)
+                print(f"   ✅ Unité {unit_num} créée (ID: {created_unit.get('id')})")
+            except Exception as e:
+                print(f"   ❌ Erreur création unité {unit_num}: {e}")
+        
+        return created_units
+        
+    except Exception as e:
+        print(f"❌ Erreur génération unités: {e}")
+        return []
+
 @app.get("/api/buildings")
 async def get_buildings():
     """Récupérer tous les immeubles"""
@@ -772,6 +834,12 @@ async def create_building(building_data: BuildingCreate):
         
         # Créer l'immeuble via le service SQLite
         new_building = db_service.create_building(building_dict)
+        
+        # Générer automatiquement les unités basées sur l'adresse
+        if new_building and new_building.get('id'):
+            units_generated = generate_units_from_address(new_building)
+            if units_generated:
+                print(f"✅ {len(units_generated)} unités générées automatiquement pour l'immeuble {new_building['id']}")
         
         return new_building
     except Exception as e:
