@@ -180,10 +180,8 @@ class DatabaseService:
             if not building:
                 return False
             
-            # Vérifier si c'est un immeuble par défaut
-            if building.is_default:
-                raise ValueError("Impossible de supprimer un immeuble par défaut")
-            
+            # Supprimer l'immeuble même s'il est marqué comme défaut
+            # (pour permettre la suppression complète des données)
             session.delete(building)
             session.commit()
             return True
