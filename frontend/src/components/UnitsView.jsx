@@ -105,8 +105,16 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           return tenant
         })
         
+        // Trouver l'immeuble parent pour obtenir le nom
+        const parentBuilding = buildings.find(b => b.id === unit.buildingId)
+        const buildingName = parentBuilding?.name || `Immeuble ${unit.buildingId}`
+        
         return {
           ...unit,
+          // Mapping des propriétés pour l'affichage
+          address: unit.unitAddress || `${unit.unitNumber} ${buildingName}`,
+          buildingName: buildingName,
+          unitNumber: unit.unitNumber,
           status: calculateUnitStatus(unit, assignments),
           currentTenants: currentTenants
         }
