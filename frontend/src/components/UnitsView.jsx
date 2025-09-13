@@ -107,7 +107,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         
         // Trouver l'immeuble parent pour obtenir le nom et l'adresse complète
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
-        const buildingName = parentBuilding?.name || `Immeuble ${unit.buildingId}`
+        const buildingName = parentBuilding?.name || `Bâtiment ${unit.buildingId}`
         
         // Créer le titre simple : "56 Vachon"
         const simpleTitle = `${unit.unitNumber} ${buildingName}`

@@ -213,7 +213,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             }))
             
             // Mapper les propriétés comme dans UnitsView
-            const buildingName = `Immeuble ${unit.buildingId}` // Vous pouvez récupérer le vrai nom si nécessaire
+            const buildingName = `Bâtiment ${unit.buildingId}` // Nom simple
             
             // Nettoyer l'adresse pour éviter la duplication
             let cleanAddress = unit.unitAddress || `${unit.unitNumber} ${buildingName}`
@@ -245,9 +245,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             console.error('Error loading tenants for unit:', unit.id, error)
             return {
               ...unit,
-              address: unit.unitAddress || `${unit.unitNumber} Immeuble ${unit.buildingId}`,
-              buildingName: `Immeuble ${unit.buildingId}`,
-              simpleTitle: `${unit.unitNumber} Immeuble ${unit.buildingId}`,
+              address: unit.unitAddress || `${unit.unitNumber} Bâtiment ${unit.buildingId}`,
+              buildingName: `Bâtiment ${unit.buildingId}`,
+              simpleTitle: `${unit.unitNumber} Bâtiment ${unit.buildingId}`,
               currentTenants: [],
               isOccupied: false
             }
