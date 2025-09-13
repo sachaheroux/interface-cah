@@ -33,6 +33,18 @@ async def startup_event():
     
     if init_database():
         print("✅ Base de données initialisée avec succès")
+        
+        # Migration automatique pour Render
+        try:
+            from migrate_render_database import migrate_render_database
+            print("🔄 Exécution de la migration Render...")
+            if migrate_render_database():
+                print("✅ Migration Render terminée avec succès")
+            else:
+                print("⚠️  Migration Render échouée, mais l'application continue")
+        except Exception as e:
+            print(f"⚠️  Erreur lors de la migration Render: {e}")
+            print("ℹ️  L'application continue sans migration")
     else:
         print("❌ Erreur lors de l'initialisation de la base de données")
         raise Exception("Impossible d'initialiser la base de données")
