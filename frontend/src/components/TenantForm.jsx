@@ -207,26 +207,36 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             
             const currentTenants = unitAssignments.map(assignment => ({
               id: assignment.tenantId,
-              name: assignment.tenantData.name,
-              email: assignment.tenantData.email,
-              phone: assignment.tenantData.phone
+              name: assignment.tenantData?.name || 'Locataire inconnu',
+              email: assignment.tenantData?.email || '',
+              phone: assignment.tenantData?.phone || ''
             }))
             
             // Nettoyer l'adresse pour éviter la duplication
             let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
+            
+            // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
             if (cleanAddress && cleanAddress.includes(' ')) {
               const parts = cleanAddress.split(' ')
               if (parts.length >= 3) {
+                // Vérifier si le deuxième élément contient des tirets (ex: "56-58-60-62")
                 if (parts[1] && parts[1].includes('-')) {
+                  // Prendre seulement le premier numéro et tout après le deuxième élément
                   const unitNum = parts[0]
                   const streetPart = parts.slice(2).join(' ')
                   cleanAddress = `${unitNum} ${streetPart}`
                 } else {
+                  // Format normal, prendre le premier numéro et tout après le premier espace
                   const unitNum = parts[0]
                   const streetPart = parts.slice(1).join(' ')
                   cleanAddress = `${unitNum} ${streetPart}`
                 }
               }
+            }
+            
+            // Fallback si l'adresse est vide ou invalide
+            if (!cleanAddress || cleanAddress.trim() === '') {
+              cleanAddress = `Unité ${unit.unitNumber || unit.id}`
             }
             
             return {
@@ -242,9 +252,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             console.error('Error loading tenants for unit:', unit.id, error)
             return {
               ...unit,
-              address: unit.unitAddress || `${unit.unitNumber}`,
+              address: unit.unitAddress || `Unité ${unit.unitNumber || unit.id}`,
               buildingName: '', // Pas de nom d'immeuble
-              simpleTitle: unit.unitAddress || `${unit.unitNumber}`,
+              simpleTitle: unit.unitAddress || `Unité ${unit.unitNumber || unit.id}`,
               currentTenants: [],
               isOccupied: false
             }
