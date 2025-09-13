@@ -108,8 +108,8 @@ class DatabaseService:
             return building.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -167,8 +167,8 @@ class DatabaseService:
             return building.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -187,8 +187,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -216,10 +216,12 @@ class DatabaseService:
     
     def create_tenant(self, tenant_data: Dict) -> Dict:
         """Créer un nouveau locataire"""
+        print(f"🔍 DEBUG - create_tenant reçu: {tenant_data}")
         session = self.get_session()
         try:
             # Extraire les contacts d'urgence
             emergency_contact = tenant_data.get("emergencyContact", {})
+            print(f"🔍 DEBUG - emergency_contact: {emergency_contact}")
             
             tenant = Tenant(
                 name=tenant_data["name"],
@@ -233,6 +235,7 @@ class DatabaseService:
                 financial_info=json.dumps(tenant_data.get("financial", {})),
                 notes=tenant_data.get("notes", "")
             )
+            print(f"🔍 DEBUG - Tenant créé: {tenant}")
             
             session.add(tenant)
             session.commit()
@@ -241,8 +244,8 @@ class DatabaseService:
             return tenant.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de la création du locataire: {e}")
+            raise ValueError(f"Erreur lors de la création du locataire: {str(e)}")
         finally:
             session.close()
     
@@ -287,8 +290,8 @@ class DatabaseService:
             return tenant.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -305,8 +308,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -425,8 +428,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
 
@@ -484,8 +487,8 @@ class DatabaseService:
             return invoice.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -536,8 +539,8 @@ class DatabaseService:
             return invoice.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -554,8 +557,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -668,8 +671,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -704,8 +707,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -740,8 +743,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -768,8 +771,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -869,8 +872,8 @@ class DatabaseService:
             return True
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
@@ -942,8 +945,8 @@ class DatabaseService:
             return report.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de l'opération: {e}")
+            raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
     
