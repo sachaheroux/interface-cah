@@ -408,17 +408,21 @@ export const apiService = {
 export const unitsService = {
   getUnits: async () => {
     try {
-      console.log('📤 Fetching units from Render API...')
-      const response = await api.get('/api/units')
-      console.log('📥 Units response from Render:', response.data)
+      // Générer les unités à partir des immeubles de Render
+      const buildingsResponse = await buildingsService.getBuildings()
+      const buildings = Array.isArray(buildingsResponse.data) ? buildingsResponse.data : buildingsResponse
       
-      if (response.data && Array.isArray(response.data)) {
-        console.log('✅ Units loaded from Render:', response.data.length)
-        return { data: response.data }
-      } else {
-        console.warn('⚠️ Unexpected units response format:', response.data)
-        return { data: [] }
-      }
+      let allUnits = []
+      
+      buildings.forEach(building => {
+        if (building && typeof building === 'object') {
+          const buildingUnits = parseAddressAndGenerateUnits(building)
+          allUnits = [...allUnits, ...buildingUnits]
+        }
+      })
+      
+      console.log('Generated units from Render buildings:', allUnits.length)
+      return { data: allUnits }
     } catch (error) {
       console.error('❌ Error getting units from Render:', error)
       throw error

@@ -227,7 +227,6 @@ export default function UnitsView({ buildings }) {
             area: updatedUnit.area,
             bedrooms: updatedUnit.bedrooms,
             bathrooms: updatedUnit.bathrooms,
-            rental: updatedUnit.rental,
             notes: updatedUnit.notes,
             updatedAt: updatedUnit.updatedAt
           }
@@ -239,14 +238,19 @@ export default function UnitsView({ buildings }) {
         unitData: updatedBuilding.unitData
       })
 
-      // Sauvegarder l'immeuble mis à jour dans le backend
+      // Sauvegarder l'immeuble mis à jour dans le backend Render
       await buildingsService.updateBuilding(updatedBuilding.id, updatedBuilding)
 
-      // Recharger les unités depuis l'API pour avoir les données mises à jour
-      await loadAssignments()
-      reloadUnits()
+      // Notifier le parent pour recharger les données
+      if (onBuildingUpdated) {
+        onBuildingUpdated(parentBuilding.id)
+      }
+
+      // Fermer le formulaire
+      setShowForm(false)
+      setSelectedUnit(null)
       
-      console.log('✅ UnitsView: Unité sauvegardée et unités rechargées')
+      console.log('✅ UnitsView: Unité sauvegardée avec succès')
       
     } catch (error) {
       console.error('❌ UnitsView: Erreur lors de la sauvegarde:', error)
