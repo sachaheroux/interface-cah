@@ -201,49 +201,14 @@ export default function UnitsView({ buildings }) {
         unitData: updatedUnit
       })
 
-      // Trouver l'immeuble parent de cette unité
-      const parentBuilding = buildings.find(building => {
-        try {
-          const buildingUnits = parseAddressAndGenerateUnits(building)
-          return buildingUnits.some(unit => unit.id === updatedUnit.id)
-        } catch (error) {
-          return false
-        }
-      })
-
-      if (!parentBuilding) {
-        console.error('❌ Immeuble parent non trouvé pour unité:', updatedUnit.id)
-        throw new Error('Immeuble parent non trouvé')
-      }
-
-      // Mettre à jour les données de l'immeuble avec les nouvelles données d'unité
-      const updatedBuilding = {
-        ...parentBuilding,
-        // Ajouter les données d'unité modifiées
-        unitData: {
-          ...parentBuilding.unitData,
-          [updatedUnit.id]: {
-            type: updatedUnit.type,
-            area: updatedUnit.area,
-            bedrooms: updatedUnit.bedrooms,
-            bathrooms: updatedUnit.bathrooms,
-            notes: updatedUnit.notes,
-            updatedAt: updatedUnit.updatedAt
-          }
-        }
-      }
-
-      console.log('🔄 UnitsView: Sauvegarde immeuble avec données unité mises à jour:', {
-        buildingId: updatedBuilding.id,
-        unitData: updatedBuilding.unitData
-      })
-
-      // Sauvegarder l'immeuble mis à jour dans le backend Render
-      await buildingsService.updateBuilding(updatedBuilding.id, updatedBuilding)
+      // Utiliser directement l'API des unités de Render
+      console.log('📤 UnitsView: Mise à jour unité via API Render...')
+      const response = await unitsService.updateUnit(updatedUnit.id, updatedUnit)
+      console.log('✅ UnitsView: Unité mise à jour sur Render:', response.data)
 
       // Notifier le parent pour recharger les données
       if (onBuildingUpdated) {
-        onBuildingUpdated(parentBuilding.id)
+        onBuildingUpdated(updatedUnit.buildingId)
       }
 
       // Fermer le formulaire
