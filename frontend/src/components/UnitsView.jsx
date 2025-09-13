@@ -109,6 +109,9 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
         const buildingName = parentBuilding?.name || `Immeuble ${unit.buildingId}`
         
+        // Créer le titre simple : "56 Vachon"
+        const simpleTitle = `${unit.unitNumber} ${buildingName}`
+        
         // Nettoyer l'adresse pour éviter la duplication
         let cleanAddress = unit.unitAddress || `${unit.unitNumber} ${buildingName}`
         
@@ -150,6 +153,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           address: cleanAddress,
           buildingName: buildingName,
           unitNumber: unit.unitNumber,
+          // Titre simple pour l'en-tête de la carte
+          simpleTitle: simpleTitle,
           status: calculateUnitStatus(unit, assignments),
           currentTenants: currentTenants
         }
@@ -435,7 +440,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                     <Home className="h-5 w-5 text-primary-600" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="font-semibold text-gray-900">{unit.address}</h4>
+                    <h4 className="font-semibold text-gray-900">{unit.simpleTitle}</h4>
                     <p className="text-sm text-gray-600">{unit.buildingName}</p>
                   </div>
                 </div>
