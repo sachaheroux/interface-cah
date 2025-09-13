@@ -76,6 +76,27 @@ class Building(Base):
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
+        # Vérifier si les nouvelles colonnes existent
+        has_new_columns = hasattr(self, 'purchase_price')
+        
+        if has_new_columns:
+            # Utiliser les nouvelles colonnes séparées
+            financials = {
+                "purchasePrice": self.purchase_price or 0.0,
+                "downPayment": self.down_payment or 0.0,
+                "interestRate": self.interest_rate or 0.0,
+                "currentValue": self.current_value or 0.0
+            }
+            contacts = {
+                "owner": self.owner_name or "",
+                "bank": self.bank_name or "",
+                "contractor": self.contractor_name or ""
+            }
+        else:
+            # Utiliser les anciennes colonnes JSON
+            financials = safe_json_loads(getattr(self, 'financials', '{}'))
+            contacts = safe_json_loads(getattr(self, 'contacts', '{}'))
+        
         return {
             "id": self.id,
             "name": self.name,
@@ -92,17 +113,8 @@ class Building(Base):
             "yearBuilt": self.year_built,
             "totalArea": self.total_area,
             "characteristics": safe_json_loads(self.characteristics),
-            "financials": {
-                "purchasePrice": self.purchase_price or 0.0,
-                "downPayment": self.down_payment or 0.0,
-                "interestRate": self.interest_rate or 0.0,
-                "currentValue": self.current_value or 0.0
-            },
-            "contacts": {
-                "owner": self.owner_name or "",
-                "bank": self.bank_name or "",
-                "contractor": self.contractor_name or ""
-            },
+            "financials": financials,
+            "contacts": contacts,
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None
