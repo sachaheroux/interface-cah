@@ -196,15 +196,7 @@ export default function UnitsView({ buildings }) {
 
   const handleSaveUnit = async (updatedUnit) => {
     try {
-      console.log('💾 UnitsView: Sauvegarde unité dans le backend:', {
-        unitId: updatedUnit.id,
-        unitData: updatedUnit
-      })
-
-      // Utiliser directement l'API des unités de Render
-      console.log('📤 UnitsView: Mise à jour unité via API Render...')
-      const response = await unitsService.updateUnit(updatedUnit.id, updatedUnit)
-      console.log('✅ UnitsView: Unité mise à jour sur Render:', response.data)
+      console.log('✅ UnitsView: Unité sauvegardée par UnitForm, rechargement des données')
 
       // Notifier le parent pour recharger les données
       if (onBuildingUpdated) {
@@ -215,11 +207,10 @@ export default function UnitsView({ buildings }) {
       setShowForm(false)
       setSelectedUnit(null)
       
-      console.log('✅ UnitsView: Unité sauvegardée avec succès')
+      console.log('✅ UnitsView: Interface mise à jour avec succès')
       
     } catch (error) {
-      console.error('❌ UnitsView: Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde de l\'unité. Vérifiez la console pour plus de détails.')
+      console.error('❌ UnitsView: Erreur lors de la mise à jour:', error)
       throw error
     }
   }
