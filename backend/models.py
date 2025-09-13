@@ -221,6 +221,7 @@ class Assignment(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     unit_id = Column(Integer, ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True)
+    building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
     move_in_date = Column(Date, nullable=False)
     move_out_date = Column(Date)
     rent_amount = Column(DECIMAL(10, 2))
@@ -232,19 +233,10 @@ class Assignment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations - Une assignation = un locataire + une unité
+    # Relations - Une assignation = un locataire + une unité + un immeuble
     tenant = relationship("Tenant", back_populates="assignments", lazy="select")
     unit = relationship("Unit", back_populates="assignments", lazy="select")
-    
-    # Propriété calculée pour l'immeuble (via l'unité)
-    @property
-    def building(self):
-        return self.unit.building if self.unit else None
-    
-    # Propriété calculée pour l'immeuble ID (pour compatibilité)
-    @property
-    def building_id(self):
-        return self.unit.building_id if self.unit else None
+    building = relationship("Building", lazy="select")
     
     # Contrainte unique pour éviter les assignations multiples ACTIVES par locataire
     # Note: Cette contrainte sera gérée au niveau applicatif, pas au niveau base de données

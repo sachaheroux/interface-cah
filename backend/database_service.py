@@ -832,6 +832,13 @@ class DatabaseService:
             # Créer la nouvelle assignation
             print(f"🔍 DEBUG - Création de l'assignation avec unit_id: {assignment_data.get('unitId')}")
             
+            # Vérifier que l'unité existe
+            unit = session.query(Unit).filter(Unit.id == assignment_data["unitId"]).first()
+            if not unit:
+                raise ValueError(f"L'unité avec l'ID {assignment_data['unitId']} n'existe pas")
+            
+            print(f"🔍 DEBUG - Unité trouvée: {unit.unit_number} dans l'immeuble {unit.building_id}")
+            
             # S'assurer que move_in_date n'est pas None (requis par le modèle)
             move_in_date = self._safe_parse_date(assignment_data.get("moveInDate"))
             if not move_in_date:
@@ -841,6 +848,7 @@ class DatabaseService:
             assignment = Assignment(
                 tenant_id=tenant_id,
                 unit_id=assignment_data["unitId"],
+                building_id=unit.building_id,  # Utiliser building_id de l'unité
                 move_in_date=move_in_date,
                 move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
                 rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
