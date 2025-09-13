@@ -51,6 +51,34 @@ export default function UnitsView({ buildings }) {
     }
   }
 
+  // Recharger les unités après mise à jour
+  const reloadUnits = () => {
+    console.log('🔄 UnitsView: Rechargement des unités...')
+    const allUnits = []
+    
+    buildings.forEach(building => {
+      try {
+        const buildingUnits = parseAddressAndGenerateUnits(building)
+        
+        // Ajouter les currentTenants à chaque unité
+        const unitsWithTenants = buildingUnits.map(unit => ({
+          ...unit,
+          currentTenants: assignments
+            .filter(a => a.unitId === unit.id)
+            .map(a => a.tenantData)
+        }))
+        
+        allUnits.push(...unitsWithTenants)
+      } catch (error) {
+        console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
+      }
+    })
+    
+    setUnits(allUnits)
+    setFilteredUnits(allUnits)
+    console.log('✅ UnitsView: Unités rechargées:', allUnits.length)
+  }
+
   // Charger les unités et les assignations
   useEffect(() => {
     loadAssignments()
@@ -214,13 +242,11 @@ export default function UnitsView({ buildings }) {
       // Sauvegarder l'immeuble mis à jour dans le backend
       await buildingsService.updateBuilding(updatedBuilding.id, updatedBuilding)
 
-      // Mettre à jour l'unité dans la liste locale après sauvegarde réussie
-      const updatedUnits = units.map(unit => 
-        unit.id === updatedUnit.id ? updatedUnit : unit
-      )
-      setUnits(updatedUnits)
+      // Recharger les unités depuis l'API pour avoir les données mises à jour
+      await loadAssignments()
+      reloadUnits()
       
-      console.log('✅ UnitsView: Unité sauvegardée avec succès dans le backend')
+      console.log('✅ UnitsView: Unité sauvegardée et unités rechargées')
       
     } catch (error) {
       console.error('❌ UnitsView: Erreur lors de la sauvegarde:', error)

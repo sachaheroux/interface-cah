@@ -136,6 +136,11 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
         
         const response = await unitsService.updateUnit(unitId, unitData)
         console.log('✅ UnitForm: Unité mise à jour via API:', response.data)
+        
+        // Notifier le parent que les données ont été mises à jour
+        if (onSave) {
+          await onSave(response.data)
+        }
       } else {
         // Création d'une nouvelle unité
         await onSave(unitData)
