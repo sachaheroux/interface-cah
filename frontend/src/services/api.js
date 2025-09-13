@@ -125,46 +125,35 @@ export const dashboardService = {
 export const buildingsService = {
   getBuildings: async () => {
     try {
-      return await api.get('/api/buildings')
+      console.log('📤 Fetching buildings from Render API...')
+      const response = await api.get('/api/buildings')
+      console.log('📥 Buildings response from Render:', response.data)
+      return response
     } catch (error) {
-      console.warn('API buildings failed, using fallback data')
-      // Retourner les données du localStorage en cas d'échec API
-      const localBuildings = JSON.parse(localStorage.getItem('localBuildings') || '[]')
-      return { data: localBuildings }
+      console.error('❌ Error getting buildings from Render:', error)
+      throw error
     }
   },
   getBuilding: (id) => api.get(`/api/buildings/${id}`),
   createBuilding: async (data) => {
     try {
-      return await api.post('/api/buildings', data)
+      console.log('📤 Creating building on Render API...')
+      const response = await api.post('/api/buildings', data)
+      console.log('📥 Building created on Render:', response.data)
+      return response
     } catch (error) {
-      console.warn('API create building failed, saving locally')
-      // Fallback vers localStorage
-      const localBuildings = JSON.parse(localStorage.getItem('localBuildings') || '[]')
-      const newBuilding = {
-        ...data,
-        id: Date.now(), // ID temporaire basé sur timestamp
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      localBuildings.push(newBuilding)
-      localStorage.setItem('localBuildings', JSON.stringify(localBuildings))
-      return { data: newBuilding }
+      console.error('❌ Error creating building on Render:', error)
+      throw error
     }
   },
   updateBuilding: async (id, data) => {
     try {
-      return await api.put(`/api/buildings/${id}`, data)
+      console.log('📤 Updating building on Render API...', { id, data })
+      const response = await api.put(`/api/buildings/${id}`, data)
+      console.log('📥 Building updated on Render:', response.data)
+      return response
     } catch (error) {
-      console.warn('API update building failed, updating locally')
-      // Fallback vers localStorage
-      const localBuildings = JSON.parse(localStorage.getItem('localBuildings') || '[]')
-      const index = localBuildings.findIndex(b => b.id === id)
-      if (index !== -1) {
-        localBuildings[index] = { ...localBuildings[index], ...data, updatedAt: new Date().toISOString() }
-        localStorage.setItem('localBuildings', JSON.stringify(localBuildings))
-        return { data: localBuildings[index] }
-      }
+      console.error('❌ Error updating building on Render:', error)
       throw error
     }
   },
@@ -218,14 +207,8 @@ export const tenantsService = {
       console.log('Final tenants array:', tenantsArray)
       return { data: tenantsArray }
     } catch (error) {
-      console.warn('API tenants failed, using fallback data:', error.message)
-      // Retourner les données du localStorage en cas d'échec API
-      const localTenants = JSON.parse(localStorage.getItem('localTenants') || '[]')
-      if (localTenants.length === 0) {
-        // Si pas de données locales, utiliser les données par défaut
-        return { data: fallbackTenants }
-      }
-      return { data: localTenants }
+      console.error('❌ Error getting tenants from Render:', error)
+      throw error
     }
   },
   
@@ -425,24 +408,20 @@ export const apiService = {
 export const unitsService = {
   getUnits: async () => {
     try {
-      // Pour l'instant, générer les unités à partir des immeubles
-      const buildingsResponse = await buildingsService.getBuildings()
-      const buildings = Array.isArray(buildingsResponse.data) ? buildingsResponse.data : buildingsResponse
+      console.log('📤 Fetching units from Render API...')
+      const response = await api.get('/api/units')
+      console.log('📥 Units response from Render:', response.data)
       
-      let allUnits = []
-      
-      buildings.forEach(building => {
-        if (building && typeof building === 'object') {
-          const buildingUnits = parseAddressAndGenerateUnits(building)
-          allUnits = [...allUnits, ...buildingUnits]
-        }
-      })
-      
-      console.log('Generated units from buildings:', allUnits)
-      return { data: allUnits }
+      if (response.data && Array.isArray(response.data)) {
+        console.log('✅ Units loaded from Render:', response.data.length)
+        return { data: response.data }
+      } else {
+        console.warn('⚠️ Unexpected units response format:', response.data)
+        return { data: [] }
+      }
     } catch (error) {
-      console.error('Error getting units:', error)
-      return { data: [] }
+      console.error('❌ Error getting units from Render:', error)
+      throw error
     }
   },
   
