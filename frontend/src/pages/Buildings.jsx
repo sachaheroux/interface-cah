@@ -446,7 +446,7 @@ export default function Buildings() {
         </div>
       ) : viewMode === 'units' ? (
         // Vue unités avec toutes les unités générées
-        <UnitsView buildings={buildings} />
+        <UnitsView buildings={buildings} onBuildingUpdated={fetchBuildings} />
       ) : (
         // Vue liste avec bouton "Nouvel immeuble" intégré
         <div className="card">
