@@ -223,6 +223,10 @@ class DatabaseService:
             emergency_contact = tenant_data.get("emergencyContact", {})
             print(f"🔍 DEBUG - emergency_contact: {emergency_contact}")
             
+            # Extraire les données de bail
+            lease_data = tenant_data.get("lease", {})
+            print(f"🔍 DEBUG - lease_data: {lease_data}")
+            
             tenant = Tenant(
                 name=tenant_data["name"],
                 email=tenant_data.get("email"),
@@ -230,8 +234,8 @@ class DatabaseService:
                 emergency_contact_name=emergency_contact.get("name"),
                 emergency_contact_phone=emergency_contact.get("phone"),
                 emergency_contact_relationship=emergency_contact.get("relationship"),
-                move_in_date=self._safe_parse_date(tenant_data.get("moveInDate")),
-                move_out_date=self._safe_parse_date(tenant_data.get("moveOutDate")),
+                move_in_date=self._safe_parse_date(tenant_data.get("moveInDate") or lease_data.get("startDate")),
+                move_out_date=self._safe_parse_date(tenant_data.get("moveOutDate") or lease_data.get("endDate")),
                 financial_info=json.dumps(tenant_data.get("financial", {})),
                 notes=tenant_data.get("notes", "")
             )
