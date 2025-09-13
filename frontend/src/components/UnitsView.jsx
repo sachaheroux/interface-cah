@@ -109,10 +109,25 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
         const buildingName = parentBuilding?.name || `Immeuble ${unit.buildingId}`
         
+        // Nettoyer l'adresse pour éviter la duplication
+        let cleanAddress = unit.unitAddress || `${unit.unitNumber} ${buildingName}`
+        
+        // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
+        // Extraire seulement le numéro de l'unité et le nom de rue
+        if (cleanAddress.includes(' ')) {
+          const parts = cleanAddress.split(' ')
+          if (parts.length >= 3) {
+            // Prendre le premier numéro (numéro de l'unité) et tout après le premier espace
+            const unitNum = parts[0]
+            const streetPart = parts.slice(1).join(' ')
+            cleanAddress = `${unitNum} ${streetPart}`
+          }
+        }
+        
         return {
           ...unit,
           // Mapping des propriétés pour l'affichage
-          address: unit.unitAddress || `${unit.unitNumber} ${buildingName}`,
+          address: cleanAddress,
           buildingName: buildingName,
           unitNumber: unit.unitNumber,
           status: calculateUnitStatus(unit, assignments),
