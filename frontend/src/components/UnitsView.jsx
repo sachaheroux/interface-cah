@@ -109,30 +109,31 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
         const buildingName = parentBuilding?.name || ''
         
-        // Nettoyer l'adresse pour éviter la duplication
-        let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
+        // Nettoyer l'adresse pour éviter la duplication (titre simple)
+        let simpleAddress = unit.unitAddress || `${unit.unitNumber}`
         
         // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
         // Extraire seulement le numéro de l'unité et le nom de rue
-        if (cleanAddress && cleanAddress.includes(' ')) {
-          const parts = cleanAddress.split(' ')
+        if (simpleAddress && simpleAddress.includes(' ')) {
+          const parts = simpleAddress.split(' ')
           if (parts.length >= 3) {
             // Vérifier si le deuxième élément contient des tirets (ex: "56-58-60-62")
             if (parts[1] && parts[1].includes('-')) {
               // Prendre seulement le premier numéro et tout après le deuxième élément
               const unitNum = parts[0]
               const streetPart = parts.slice(2).join(' ')
-              cleanAddress = `${unitNum} ${streetPart}`
+              simpleAddress = `${unitNum} ${streetPart}`
             } else {
               // Format normal, prendre le premier numéro et tout après le premier espace
               const unitNum = parts[0]
               const streetPart = parts.slice(1).join(' ')
-              cleanAddress = `${unitNum} ${streetPart}`
+              simpleAddress = `${unitNum} ${streetPart}`
             }
           }
         }
         
-        // Ajouter la ville et le code postal de l'immeuble parent
+        // Adresse complète avec ville et code postal (pour l'affichage détaillé)
+        let fullAddress = simpleAddress
         if (parentBuilding?.address) {
           const buildingAddress = parentBuilding.address
           const city = buildingAddress.city || ''
@@ -140,18 +141,18 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           
           if (city || postalCode) {
             const cityPostal = [city, postalCode].filter(Boolean).join(' ')
-            cleanAddress = `${cleanAddress}, ${cityPostal}`
+            fullAddress = `${simpleAddress}, ${cityPostal}`
           }
         }
         
         return {
           ...unit,
           // Mapping des propriétés pour l'affichage
-          address: cleanAddress,
+          address: fullAddress, // Adresse complète pour l'affichage détaillé
           buildingName: buildingName,
           unitNumber: unit.unitNumber,
-          // Titre simple pour l'en-tête de la carte
-          simpleTitle: cleanAddress,
+          // Titre simple pour l'en-tête de la carte (sans ville/code postal)
+          simpleTitle: simpleAddress,
           status: calculateUnitStatus(unit, assignments),
           currentTenants: currentTenants
         }
