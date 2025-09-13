@@ -51,32 +51,44 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
     }
   }
 
-  // Recharger les unités après mise à jour
-  const reloadUnits = () => {
-    console.log('🔄 UnitsView: Rechargement des unités...')
-    const allUnits = []
-    
-    buildings.forEach(building => {
-      try {
-        const buildingUnits = parseAddressAndGenerateUnits(building)
+  // Recharger les unités depuis Render
+  const reloadUnits = async () => {
+    try {
+      console.log('🔄 UnitsView: Rechargement des unités depuis Render...')
+      const response = await unitsService.getUnits()
+      const unitsFromRender = response.data || []
+      
+      // Calculer le statut et ajouter les currentTenants à chaque unité
+      const unitsWithStatus = unitsFromRender.map(unit => {
+        const unitAssignments = assignments.filter(a => a.unitId === unit.id)
         
-        // Ajouter les currentTenants à chaque unité
-        const unitsWithTenants = buildingUnits.map(unit => ({
+        console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.unitNumber}):`, {
+          unitAssignments: unitAssignments,
+          assignmentsCount: unitAssignments.length,
+          fullUnitAssignments: JSON.stringify(unitAssignments, null, 2)
+        })
+        
+        const currentTenants = unitAssignments.map(a => {
+          const tenant = {
+            ...a.tenantData,
+            id: a.tenantData?.id || a.tenantId
+          }
+          return tenant
+        })
+        
+        return {
           ...unit,
-          currentTenants: assignments
-            .filter(a => a.unitId === unit.id)
-            .map(a => a.tenantData)
-        }))
-        
-        allUnits.push(...unitsWithTenants)
-      } catch (error) {
-        console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
-      }
-    })
-    
-    setUnits(allUnits)
-    setFilteredUnits(allUnits)
-    console.log('✅ UnitsView: Unités rechargées:', allUnits.length)
+          status: calculateUnitStatus(unit, assignments),
+          currentTenants: currentTenants
+        }
+      })
+      
+      setUnits(unitsWithStatus)
+      setFilteredUnits(unitsWithStatus)
+      console.log('✅ UnitsView: Unités rechargées depuis Render:', unitsWithStatus.length)
+    } catch (error) {
+      console.error('❌ UnitsView: Erreur lors du rechargement des unités:', error)
+    }
   }
 
   // Charger les unités et les assignations
@@ -100,58 +112,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   useEffect(() => {
     if (loadingAssignments) return // Attendre que les assignations soient chargées
     
-    const loadUnitsAndAssignments = () => {
-      // Générer les unités depuis les immeubles
-      const allUnits = []
-      buildings.forEach(building => {
-        if (building && typeof building === 'object') {
-          try {
-            const buildingUnits = parseAddressAndGenerateUnits(building)
-            
-            // Calculer le statut dynamique pour chaque unité
-            const unitsWithStatus = buildingUnits.map(unit => {
-              const unitAssignments = assignments.filter(a => a.unitId === unit.id)
-              
-              console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.buildingName} - ${unit.unitNumber}):`, {
-                unitAssignments: unitAssignments,
-                assignmentsCount: unitAssignments.length,
-                fullUnitAssignments: JSON.stringify(unitAssignments, null, 2)
-              })
-              
-              const currentTenants = unitAssignments.map(a => {
-                const tenant = {
-                  ...a.tenantData,
-                  id: a.tenantData?.id || a.tenantId // S'assurer que l'ID est présent
-                }
-                
-                console.log(`🐛 DEBUG - Locataire construit:`, {
-                  originalTenantData: a.tenantData,
-                  tenantId: a.tenantId,
-                  constructedTenant: tenant,
-                  constructedTenantJSON: JSON.stringify(tenant, null, 2)
-                })
-                
-                return tenant
-              })
-              
-              return {
-                ...unit,
-                status: calculateUnitStatus(unit, assignments),
-                currentTenants: currentTenants
-              }
-            })
-            
-            allUnits.push(...unitsWithStatus)
-          } catch (error) {
-            console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
-          }
-        }
-      })
-      
-      setUnits(allUnits)
-    }
-
-    loadUnitsAndAssignments()
+    // Charger les unités depuis Render
+    reloadUnits()
   }, [buildings, assignments, loadingAssignments])
 
   // Filtrer les unités
