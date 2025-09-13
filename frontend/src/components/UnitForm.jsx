@@ -125,7 +125,16 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       // Utiliser le service API pour mettre à jour l'unité
       if (unit?.id) {
         // Mise à jour d'une unité existante
-        const response = await unitsService.updateUnit(unit.id, unitData)
+        // Convertir l'ID en entier si c'est un string comme "1-1"
+        let unitId = unit.id
+        if (typeof unitId === 'string' && unitId.includes('-')) {
+          // Extraire le premier nombre de l'ID (ex: "1-1" -> 1)
+          unitId = parseInt(unitId.split('-')[0])
+        }
+        
+        console.log('🔄 UnitForm: ID original:', unit.id, 'ID converti:', unitId)
+        
+        const response = await unitsService.updateUnit(unitId, unitData)
         console.log('✅ UnitForm: Unité mise à jour via API:', response.data)
       } else {
         // Création d'une nouvelle unité
