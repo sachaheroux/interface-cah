@@ -141,12 +141,11 @@ class DatabaseManager:
                     building_id INTEGER NOT NULL,
                     unit_number TEXT NOT NULL,
                     unit_address TEXT,
-                    type TEXT,
-                    area INTEGER,
-                    bedrooms INTEGER,
-                    bathrooms INTEGER,
+                    type TEXT DEFAULT '4 1/2',
+                    area INTEGER DEFAULT 0,
+                    bedrooms INTEGER DEFAULT 1,
+                    bathrooms INTEGER DEFAULT 1,
                     amenities TEXT,  -- JSON string
-                    rental_info TEXT,  -- JSON string
                     notes TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

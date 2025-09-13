@@ -330,12 +330,11 @@ class DatabaseService:
                 building_id=building_id,
                 unit_number=unit_data["unitNumber"],
                 unit_address=unit_data.get("unitAddress"),
-                type=unit_data.get("type", "1 1/2"),
+                type=unit_data.get("type", "4 1/2"),
                 area=unit_data.get("area", 0),
                 bedrooms=unit_data.get("bedrooms", 1),
                 bathrooms=unit_data.get("bathrooms", 1),
                 amenities=json.dumps(unit_data.get("amenities", {})),
-                rental_info=json.dumps(unit_data.get("rentalInfo", {})),
                 notes=unit_data.get("notes", "")
             )
             

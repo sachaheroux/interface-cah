@@ -2,6 +2,8 @@
 
 // Types d'unités selon le format québécois
 export const UnitType = {
+  ONE_HALF: '1_1_2',
+  TWO_HALF: '2_1_2',
   THREE_HALF: '3_1_2',
   FOUR_HALF: '4_1_2', 
   FIVE_HALF: '5_1_2',
@@ -27,14 +29,6 @@ export const defaultUnit = {
   bedrooms: 1,
   bathrooms: 1,
   
-  // Informations locatives
-  rental: {
-    monthlyRent: 0,
-    deposit: 0,
-    leaseStart: null,
-    leaseEnd: null,
-    rentDueDay: 1, // jour du mois
-  },
   
   // Services inclus
   amenities: {
@@ -68,8 +62,6 @@ export const defaultUnit = {
     moveOutDate: null,
   },
   
-  // Historique des loyers
-  rentHistory: [],
   
   // Notes et commentaires
   notes: '',
@@ -81,6 +73,8 @@ export const defaultUnit = {
 
 export const getUnitTypeLabel = (type) => {
   const labels = {
+    [UnitType.ONE_HALF]: '1 1/2',
+    [UnitType.TWO_HALF]: '2 1/2',
     [UnitType.THREE_HALF]: '3 1/2',
     [UnitType.FOUR_HALF]: '4 1/2', 
     [UnitType.FIVE_HALF]: '5 1/2',
@@ -166,13 +160,6 @@ export const parseAddressAndGenerateUnits = (building) => {
           area: 0,
           bedrooms: 2,
           bathrooms: 1,
-          rental: {
-            monthlyRent: 0,
-            deposit: 0,
-            leaseStart: '',
-            leaseEnd: '',
-            rentDueDay: 1,
-          },
           notes: '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
@@ -203,13 +190,6 @@ export const parseAddressAndGenerateUnits = (building) => {
             area: 0,
             bedrooms: 2,
             bathrooms: 1,
-            rental: {
-              monthlyRent: 0,
-              deposit: 0,
-              leaseStart: '',
-              leaseEnd: '',
-              rentDueDay: 1,
-            },
             notes: '',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -243,13 +223,6 @@ export const parseAddressAndGenerateUnits = (building) => {
       area: 0,
       bedrooms: 2,
       bathrooms: 1,
-      rental: {
-        monthlyRent: 0,
-        deposit: 0,
-        leaseStart: '',
-        leaseEnd: '',
-        rentDueDay: 1,
-      },
       notes: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -271,17 +244,11 @@ export const parseAddressAndGenerateUnits = (building) => {
           area: customData.area || unit.area,
           bedrooms: customData.bedrooms || unit.bedrooms,
           bathrooms: customData.bathrooms || unit.bathrooms,
-          rental: {
-            ...unit.rental,
-            ...customData.rental
-          },
           notes: customData.notes || unit.notes,
           updatedAt: customData.updatedAt || unit.updatedAt
         })
         
-        console.log(`🎉 Unit.js: Unité ${unit.id} mergée avec succès:`, {
-          rental: unit.rental
-        })
+        console.log(`🎉 Unit.js: Unité ${unit.id} mergée avec succès`)
       } else {
         console.log(`⚪ Unit.js: Aucune donnée personnalisée pour unité ${unit.id}`)
       }

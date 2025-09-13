@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, User, DollarSign, Home, Calendar, Phone, Mail, UserCheck, Plus, Search, Trash2, Edit } from 'lucide-react'
+import { X, Save, User, Home, Calendar, Phone, Mail, UserCheck, Plus, Search, Trash2, Edit } from 'lucide-react'
 import { UnitStatus, UnitType, getUnitTypeLabel, getUnitStatusLabel } from '../types/unit'
 import { unitsService } from '../services/api'
 
@@ -9,13 +9,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
     area: 0,
     bedrooms: 1,
     bathrooms: 1,
-    rental: {
-      monthlyRent: 0,
-      deposit: 0,
-      leaseStart: '',
-      leaseEnd: '',
-      rentDueDay: 1,
-    },
     notes: ''
   })
 
@@ -71,13 +64,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
         area: unit.area || 0,
         bedrooms: unit.bedrooms || 1,
         bathrooms: unit.bathrooms || 1,
-        rental: {
-          monthlyRent: unit.rental?.monthlyRent || 0,
-          deposit: unit.rental?.deposit || 0,
-          leaseStart: unit.rental?.leaseStart || '',
-          leaseEnd: unit.rental?.leaseEnd || '',
-          rentDueDay: unit.rental?.rentDueDay || 1,
-        },
         notes: unit.notes || ''
       })
       
@@ -92,15 +78,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
     }))
   }
 
-  const handleNestedChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }))
-  }
 
   const handleRemoveTenant = async (tenantId) => {
     console.log('🐛 DEBUG - UnitForm handleRemoveTenant appelé avec tenantId:', tenantId, typeof tenantId)
@@ -155,13 +132,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
     }
   }
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CA', {
-      style: 'currency',
-      currency: 'CAD',
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
 
   if (!isOpen) return null
 
@@ -252,82 +222,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Informations locatives */}
-          <div className="space-y-4">
-            <div className="flex items-center mb-4">
-              <DollarSign className="h-5 w-5 text-primary-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Informations Locatives</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loyer mensuel ($)
-                </label>
-                <input
-                  type="number"
-                  value={formData.rental.monthlyRent}
-                  onChange={(e) => handleNestedChange('rental', 'monthlyRent', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="1200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dépôt de garantie ($)
-                </label>
-                <input
-                  type="number"
-                  value={formData.rental.deposit}
-                  onChange={(e) => handleNestedChange('rental', 'deposit', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="1200"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Début du bail
-                </label>
-                <input
-                  type="date"
-                  value={formData.rental.leaseStart}
-                  onChange={(e) => handleNestedChange('rental', 'leaseStart', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fin du bail
-                </label>
-                <input
-                  type="date"
-                  value={formData.rental.leaseEnd}
-                  onChange={(e) => handleNestedChange('rental', 'leaseEnd', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jour d'échéance du loyer
-                </label>
-                <select
-                  value={formData.rental.rentDueDay}
-                  onChange={(e) => handleNestedChange('rental', 'rentDueDay', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day}>{day}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
 
           {/* Locataires assignés */}
           <div className="space-y-4">

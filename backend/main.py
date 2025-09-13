@@ -792,12 +792,11 @@ def generate_units_from_address(building):
                 "buildingId": building['id'],
                 "unitNumber": unit_num,
                 "unitAddress": f"{unit_num} {street}",
-                "type": "1 1/2",
+                "type": "4 1/2",
                 "area": 0,
                 "bedrooms": 1,
                 "bathrooms": 1,
                 "amenities": "{}",
-                "rentalInfo": "{}",
                 "notes": ""
             }
             

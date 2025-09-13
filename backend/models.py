@@ -141,12 +141,11 @@ class Unit(Base):
     building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
     unit_number = Column(String(50), nullable=False, index=True)
     unit_address = Column(String(255))
-    type = Column(String(50), default="1 1/2")  # 1 1/2, 2 1/2, 3 1/2, 4 1/2, 5 1/2
+    type = Column(String(50), default="4 1/2")  # 1 1/2, 2 1/2, 3 1/2, 4 1/2, 5 1/2
     area = Column(Integer, default=0)  # en pieds carrés
     bedrooms = Column(Integer, default=1)
     bathrooms = Column(Integer, default=1)
     amenities = Column(Text)  # JSON string pour les équipements
-    rental_info = Column(Text)  # JSON string pour les infos locatives
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -171,7 +170,6 @@ class Unit(Base):
             "bedrooms": self.bedrooms,
             "bathrooms": self.bathrooms,
             "amenities": safe_json_loads(self.amenities),
-            "rentalInfo": safe_json_loads(self.rental_info),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
