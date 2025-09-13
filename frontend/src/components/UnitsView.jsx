@@ -105,7 +105,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           return tenant
         })
         
-        // Trouver l'immeuble parent pour obtenir le nom
+        // Trouver l'immeuble parent pour obtenir le nom et l'adresse complète
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
         const buildingName = parentBuilding?.name || `Immeuble ${unit.buildingId}`
         
@@ -129,6 +129,18 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
               const streetPart = parts.slice(1).join(' ')
               cleanAddress = `${unitNum} ${streetPart}`
             }
+          }
+        }
+        
+        // Ajouter la ville et le code postal de l'immeuble parent
+        if (parentBuilding?.address) {
+          const buildingAddress = parentBuilding.address
+          const city = buildingAddress.city || ''
+          const postalCode = buildingAddress.postalCode || ''
+          
+          if (city || postalCode) {
+            const cityPostal = [city, postalCode].filter(Boolean).join(' ')
+            cleanAddress = `${cleanAddress}, ${cityPostal}`
           }
         }
         
