@@ -3,7 +3,7 @@
 Modèles SQLAlchemy pour Interface CAH
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, DECIMAL, Date, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, DECIMAL, Date, ForeignKey, UniqueConstraint, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -38,8 +38,15 @@ class Building(Base):
     year_built = Column(Integer)
     total_area = Column(Integer)
     characteristics = Column(Text)  # JSON string
-    financials = Column(Text)      # JSON string
-    contacts = Column(Text)        # JSON string
+    # Colonnes financières séparées
+    purchase_price = Column(Float, default=0.0)
+    down_payment = Column(Float, default=0.0)
+    interest_rate = Column(Float, default=0.0)
+    current_value = Column(Float, default=0.0)
+    # Colonnes de contacts séparées
+    owner_name = Column(String(255))
+    bank_name = Column(String(255))
+    contractor_name = Column(String(255))
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -85,8 +92,17 @@ class Building(Base):
             "yearBuilt": self.year_built,
             "totalArea": self.total_area,
             "characteristics": safe_json_loads(self.characteristics),
-            "financials": safe_json_loads(self.financials),
-            "contacts": safe_json_loads(self.contacts),
+            "financials": {
+                "purchasePrice": self.purchase_price or 0.0,
+                "downPayment": self.down_payment or 0.0,
+                "interestRate": self.interest_rate or 0.0,
+                "currentValue": self.current_value or 0.0
+            },
+            "contacts": {
+                "owner": self.owner_name or "",
+                "bank": self.bank_name or "",
+                "contractor": self.contractor_name or ""
+            },
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None

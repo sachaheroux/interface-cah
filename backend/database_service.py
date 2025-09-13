@@ -81,6 +81,10 @@ class DatabaseService:
                 address_postal_code = ""
                 address_country = "Canada"
             
+            # Extraire les données financières et de contacts
+            financials = building_data.get("financials", {})
+            contacts = building_data.get("contacts", {})
+            
             # Créer l'immeuble
             building = Building(
                 name=building_data["name"],
@@ -95,8 +99,15 @@ class DatabaseService:
                 year_built=building_data.get("yearBuilt"),
                 total_area=building_data.get("totalArea"),
                 characteristics=json.dumps(building_data.get("characteristics", {})),
-                financials=json.dumps(building_data.get("financials", {})),
-                contacts=json.dumps(building_data.get("contacts", {})),
+                # Colonnes financières séparées
+                purchase_price=financials.get("purchasePrice", 0.0),
+                down_payment=financials.get("downPayment", 0.0),
+                interest_rate=financials.get("interestRate", 0.0),
+                current_value=financials.get("currentValue", 0.0),
+                # Colonnes de contacts séparées
+                owner_name=contacts.get("owner", ""),
+                bank_name=contacts.get("bank", ""),
+                contractor_name=contacts.get("contractor", ""),
                 notes=building_data.get("notes", ""),
                 is_default=False
             )

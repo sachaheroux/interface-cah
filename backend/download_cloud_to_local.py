@@ -33,9 +33,30 @@ def download_cloud_to_local():
             CREATE TABLE IF NOT EXISTS buildings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                address TEXT,
+                address_street TEXT,
+                address_city TEXT,
+                address_province TEXT,
+                address_postal_code TEXT,
+                address_country TEXT DEFAULT 'Canada',
+                type TEXT NOT NULL DEFAULT 'residential',
+                units INTEGER NOT NULL DEFAULT 0,
+                floors INTEGER NOT NULL DEFAULT 1,
+                year_built INTEGER,
+                total_area INTEGER,
+                characteristics TEXT,
+                -- Colonnes financières séparées
+                purchase_price REAL DEFAULT 0.0,
+                down_payment REAL DEFAULT 0.0,
+                interest_rate REAL DEFAULT 0.0,
+                current_value REAL DEFAULT 0.0,
+                -- Colonnes de contacts séparées
+                owner_name TEXT,
+                bank_name TEXT,
+                contractor_name TEXT,
+                notes TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_default BOOLEAN DEFAULT FALSE
             )
         """)
         
@@ -139,15 +160,52 @@ def download_cloud_to_local():
             
             for building in buildings:
                 print(f"   🏢 Insertion: {building['name']} (ID: {building['id']})")
+                
+                # Extraire les données d'adresse
+                address = building.get('address', {})
+                if isinstance(address, str):
+                    address = json.loads(address) if address else {}
+                
+                # Extraire les données financières et de contacts
+                financials = building.get('financials', {})
+                contacts = building.get('contacts', {})
+                
                 cursor.execute("""
-                    INSERT OR REPLACE INTO buildings (id, name, address, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO buildings (
+                        id, name, address_street, address_city, address_province, 
+                        address_postal_code, address_country, type, units, floors, 
+                        year_built, total_area, characteristics,
+                        purchase_price, down_payment, interest_rate, current_value,
+                        owner_name, bank_name, contractor_name,
+                        notes, created_at, updated_at, is_default
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     building['id'],
                     building['name'],
-                    json.dumps(building.get('address', {})),
+                    address.get('street', ''),
+                    address.get('city', ''),
+                    address.get('province', ''),
+                    address.get('postalCode', ''),
+                    address.get('country', 'Canada'),
+                    building.get('type', 'residential'),
+                    building.get('units', 0),
+                    building.get('floors', 1),
+                    building.get('yearBuilt'),
+                    building.get('totalArea'),
+                    json.dumps(building.get('characteristics', {})),
+                    # Colonnes financières séparées
+                    financials.get('purchasePrice', 0.0),
+                    financials.get('downPayment', 0.0),
+                    financials.get('interestRate', 0.0),
+                    financials.get('currentValue', 0.0),
+                    # Colonnes de contacts séparées
+                    contacts.get('owner', ''),
+                    contacts.get('bank', ''),
+                    contacts.get('contractor', ''),
+                    building.get('notes', ''),
                     building.get('createdAt', ''),
-                    building.get('updatedAt', '')
+                    building.get('updatedAt', ''),
+                    False  # is_default
                 ))
         else:
             print(f"   ❌ Erreur immeubles: {response.status_code}")
