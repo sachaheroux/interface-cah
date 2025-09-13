@@ -823,16 +823,13 @@ class DatabaseService:
             # Créer la nouvelle assignation
             assignment = Assignment(
                 tenant_id=tenant_id,
-                building_id=assignment_data["buildingId"],
                 unit_id=assignment_data["unitId"],
-                unit_number=assignment_data.get("unitNumber"),
-                unit_address=assignment_data.get("unitAddress"),
                 move_in_date=self._safe_parse_date(assignment_data.get("moveInDate")),
                 move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
                 rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
                 deposit_amount=self._safe_parse_float(assignment_data.get("depositAmount"), 0.0),
-                lease_start_date=datetime.fromisoformat(assignment_data["leaseStartDate"]) if assignment_data.get("leaseStartDate") else None,
-                lease_end_date=datetime.fromisoformat(assignment_data["leaseEndDate"]) if assignment_data.get("leaseEndDate") else None,
+                lease_start_date=self._safe_parse_date(assignment_data.get("leaseStartDate")),
+                lease_end_date=self._safe_parse_date(assignment_data.get("leaseEndDate")),
                 rent_due_day=assignment_data.get("rentDueDay", 1),
                 notes=assignment_data.get("notes", "")
             )
