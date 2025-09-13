@@ -114,13 +114,21 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         
         // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
         // Extraire seulement le numéro de l'unité et le nom de rue
-        if (cleanAddress.includes(' ')) {
+        if (cleanAddress && cleanAddress.includes(' ')) {
           const parts = cleanAddress.split(' ')
           if (parts.length >= 3) {
-            // Prendre le premier numéro (numéro de l'unité) et tout après le premier espace
-            const unitNum = parts[0]
-            const streetPart = parts.slice(1).join(' ')
-            cleanAddress = `${unitNum} ${streetPart}`
+            // Vérifier si le deuxième élément contient des tirets (ex: "56-58-60-62")
+            if (parts[1] && parts[1].includes('-')) {
+              // Prendre seulement le premier numéro et tout après le deuxième élément
+              const unitNum = parts[0]
+              const streetPart = parts.slice(2).join(' ')
+              cleanAddress = `${unitNum} ${streetPart}`
+            } else {
+              // Format normal, prendre le premier numéro et tout après le premier espace
+              const unitNum = parts[0]
+              const streetPart = parts.slice(1).join(' ')
+              cleanAddress = `${unitNum} ${streetPart}`
+            }
           }
         }
         
