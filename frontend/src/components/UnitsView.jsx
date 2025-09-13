@@ -10,7 +10,7 @@ import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
 import { buildingsService } from '../services/api'
 
-export default function UnitsView({ buildings }) {
+export default function UnitsView({ buildings, onBuildingUpdated }) {
   const [units, setUnits] = useState([])
   const [filteredUnits, setFilteredUnits] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
