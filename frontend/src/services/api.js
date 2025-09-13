@@ -412,8 +412,11 @@ export const unitsService = {
       const response = await api.get('/api/units')
       console.log('📥 Units response from Render:', response.data)
       
-      if (response.data && Array.isArray(response.data)) {
-        console.log('✅ Units loaded from Render:', response.data.length)
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        console.log('✅ Units loaded from Render:', response.data.data.length)
+        return { data: response.data.data }
+      } else if (response.data && Array.isArray(response.data)) {
+        console.log('✅ Units loaded from Render (direct array):', response.data.length)
         return { data: response.data }
       } else {
         console.warn('⚠️ Unexpected units response format:', response.data)
