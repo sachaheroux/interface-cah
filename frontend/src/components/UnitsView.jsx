@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits } from '../types/unit'
 import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
-import { assignmentsService } from '../services/api'
+import { assignmentsService, unitsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
 import { buildingsService } from '../services/api'
@@ -51,14 +51,43 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
     }
   }
 
-  // Recharger les unités depuis Render
+  // Recharger les unités : d'abord depuis Render, sinon générer depuis les immeubles
   const reloadUnits = async () => {
     try {
-      console.log('🔄 UnitsView: Rechargement des unités depuis Render...')
-      const response = await unitsService.getUnits()
-      const unitsFromRender = response.data || []
+      console.log('🔄 UnitsView: Rechargement des unités...')
       
-      // Calculer le statut et ajouter les currentTenants à chaque unité
+      // 1. Essayer de récupérer les unités depuis Render
+      let unitsFromRender = []
+      try {
+        const response = await unitsService.getUnits()
+        unitsFromRender = response.data || []
+        console.log('✅ UnitsView: Unités récupérées depuis Render:', unitsFromRender.length)
+      } catch (error) {
+        console.log('⚠️ UnitsView: Aucune unité sur Render, génération depuis les immeubles')
+        unitsFromRender = []
+      }
+      
+      // 2. Si pas d'unités sur Render, générer depuis les immeubles
+      if (unitsFromRender.length === 0) {
+        console.log('🔄 UnitsView: Génération des unités depuis les immeubles...')
+        const allUnits = []
+        
+        buildings.forEach(building => {
+          if (building && typeof building === 'object') {
+            try {
+              const buildingUnits = parseAddressAndGenerateUnits(building)
+              allUnits.push(...buildingUnits)
+            } catch (error) {
+              console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
+            }
+          }
+        })
+        
+        unitsFromRender = allUnits
+        console.log('✅ UnitsView: Unités générées depuis les immeubles:', unitsFromRender.length)
+      }
+      
+      // 3. Calculer le statut et ajouter les currentTenants à chaque unité
       const unitsWithStatus = unitsFromRender.map(unit => {
         const unitAssignments = assignments.filter(a => a.unitId === unit.id)
         
@@ -85,7 +114,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
       
       setUnits(unitsWithStatus)
       setFilteredUnits(unitsWithStatus)
-      console.log('✅ UnitsView: Unités rechargées depuis Render:', unitsWithStatus.length)
+      console.log('✅ UnitsView: Unités finales chargées:', unitsWithStatus.length)
     } catch (error) {
       console.error('❌ UnitsView: Erreur lors du rechargement des unités:', error)
     }
