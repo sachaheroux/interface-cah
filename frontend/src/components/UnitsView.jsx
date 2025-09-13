@@ -199,8 +199,10 @@ export default function UnitsView({ buildings }) {
       console.log('✅ UnitsView: Unité sauvegardée par UnitForm, rechargement des données')
 
       // Notifier le parent pour recharger les données
-      if (onBuildingUpdated) {
+      if (onBuildingUpdated && typeof onBuildingUpdated === 'function') {
         onBuildingUpdated(updatedUnit.buildingId)
+      } else {
+        console.warn('⚠️ UnitsView: onBuildingUpdated not available, skipping refresh')
       }
 
       // Fermer le formulaire
