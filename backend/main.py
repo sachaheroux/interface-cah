@@ -767,6 +767,7 @@ def generate_units_from_address(building):
         # Parser l'adresse pour extraire les numéros d'unités
         # Format attendu: "56-58-60-62 rue Vachon" ou "56 rue Vachon"
         unit_numbers = []
+        street_name = street
         
         # Chercher des numéros séparés par des tirets
         if '-' in street:
@@ -776,6 +777,11 @@ def generate_units_from_address(building):
             for num in numbers:
                 if num.strip().isdigit():
                     unit_numbers.append(num.strip())
+            
+            # Extraire le nom de la rue (tout après le premier espace)
+            street_parts = street.split(' ', 1)
+            if len(street_parts) > 1:
+                street_name = street_parts[1]  # "rue Vachon"
         else:
             # Adresse simple, une seule unité
             unit_numbers = ['1']
@@ -791,8 +797,8 @@ def generate_units_from_address(building):
             unit_data = {
                 "buildingId": building['id'],
                 "unitNumber": unit_num,
-                "unitAddress": f"{unit_num} {street}",
-                "type": "4 1/2",
+                "unitAddress": f"{unit_num} {street_name}",
+                "type": "4 1/2",  # Type par défaut pour les nouvelles unités
                 "area": 0,
                 "bedrooms": 1,
                 "bathrooms": 1,
