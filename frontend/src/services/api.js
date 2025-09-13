@@ -472,11 +472,21 @@ export const unitsService = {
     try {
       console.log('Assigning tenant to unit:', { unitId, tenantId, tenantData })
       
+      // Préparer les données d'assignation avec les champs requis par le backend
       const assignmentData = {
-        unitId,
-        tenantId,
-        tenantData
+        unitId: parseInt(unitId),
+        tenantId: parseInt(tenantId),
+        moveInDate: tenantData.moveInDate || new Date().toISOString().split('T')[0],
+        moveOutDate: tenantData.moveOutDate || null,
+        rentAmount: tenantData.rentAmount || 0,
+        depositAmount: tenantData.depositAmount || 0,
+        leaseStartDate: tenantData.leaseStartDate || new Date().toISOString().split('T')[0],
+        leaseEndDate: tenantData.leaseEndDate || null,
+        rentDueDay: tenantData.rentDueDay || 1,
+        notes: tenantData.notes || ''
       }
+      
+      console.log('📤 Assignment data prepared:', assignmentData)
       
       // Utiliser le backend au lieu du localStorage
       const response = await assignmentsService.createAssignment(assignmentData)

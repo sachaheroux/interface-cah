@@ -464,8 +464,14 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               name: tenantData.name,
               email: tenantData.email,
               phone: tenantData.phone,
-              moveInDate: new Date().toISOString(),
-              moveOutDate: null
+              moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
+              moveOutDate: formData.lease?.endDate || null,
+              rentAmount: formData.lease?.monthlyRent || 0,
+              depositAmount: formData.financial?.deposit || 0,
+              leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
+              leaseEndDate: formData.lease?.endDate || null,
+              rentDueDay: 1,
+              notes: formData.notes || ''
             }
           )
           console.log('✅ Tenant assigned to unit successfully')
