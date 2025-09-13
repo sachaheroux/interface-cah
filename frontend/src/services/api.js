@@ -580,6 +580,29 @@ export const unitsService = {
       console.error('Error getting unit with tenants:', error)
       return { data: null }
     }
+  },
+
+  updateUnit: async (unitId, unitData) => {
+    try {
+      console.log('📤 Updating unit with ID:', unitId, 'Data:', unitData)
+      
+      const response = await api.put(`/api/units/${unitId}`, unitData)
+      console.log('📥 Update unit response:', response)
+      
+      // Extraire les données mises à jour
+      if (response.data?.unit) {
+        console.log('✅ Unit mise à jour avec succès (response.data.unit):', response.data.unit)
+        return { data: response.data.unit }
+      } else if (response.data) {
+        console.log('✅ Unit mise à jour avec succès (response.data):', response.data)
+        return { data: response.data }
+      }
+      
+      throw new Error('No data in update response')
+    } catch (error) {
+      console.error('❌ Error updating unit:', error)
+      throw error
+    }
   }
 }
 

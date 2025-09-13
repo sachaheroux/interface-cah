@@ -391,12 +391,12 @@ class DatabaseService:
             # Champs autorisés pour la mise à jour
             allowed_fields = [
                 'unit_number', 'unit_address', 'type', 'area', 'bedrooms', 
-                'bathrooms', 'amenities', 'rental_info', 'notes'
+                'bathrooms', 'amenities', 'notes'
             ]
             
             for field, value in unit_data.items():
                 if field in allowed_fields:
-                    if field in ['amenities', 'rental_info']:
+                    if field == 'amenities':
                         setattr(unit, field, json.dumps(value) if value else "{}")
                     else:
                         setattr(unit, field, value)

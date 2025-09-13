@@ -122,8 +122,17 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
         unitData: unitData
       })
 
-      await onSave(unitData)
-      console.log('✅ UnitForm: Sauvegarde terminée')
+      // Utiliser le service API pour mettre à jour l'unité
+      if (unit?.id) {
+        // Mise à jour d'une unité existante
+        const response = await unitsService.updateUnit(unit.id, unitData)
+        console.log('✅ UnitForm: Unité mise à jour via API:', response.data)
+      } else {
+        // Création d'une nouvelle unité
+        await onSave(unitData)
+        console.log('✅ UnitForm: Nouvelle unité créée')
+      }
+      
       onClose()
     } catch (error) {
       console.error('❌ UnitForm: Error saving unit:', error)
