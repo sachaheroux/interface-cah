@@ -807,9 +807,11 @@ class DatabaseService:
     
     def create_assignment_with_validation(self, assignment_data: Dict) -> Dict:
         """Créer une assignation avec validation des cardinalités"""
+        print(f"🔍 DEBUG - create_assignment_with_validation reçu: {assignment_data}")
         session = self.get_session()
         try:
             tenant_id = assignment_data["tenantId"]
+            print(f"🔍 DEBUG - tenant_id: {tenant_id}")
             
             # Vérifier qu'il n'y a pas déjà une assignation active pour ce locataire
             existing_assignment = session.query(Assignment).filter(
@@ -821,6 +823,7 @@ class DatabaseService:
                 raise ValueError(f"Le locataire {tenant_id} a déjà une assignation active")
             
             # Créer la nouvelle assignation
+            print(f"🔍 DEBUG - Création de l'assignation avec unit_id: {assignment_data.get('unitId')}")
             assignment = Assignment(
                 tenant_id=tenant_id,
                 unit_id=assignment_data["unitId"],
@@ -833,6 +836,7 @@ class DatabaseService:
                 rent_due_day=assignment_data.get("rentDueDay", 1),
                 notes=assignment_data.get("notes", "")
             )
+            print(f"🔍 DEBUG - Assignment créé: {assignment}")
             
             session.add(assignment)
             session.commit()
@@ -841,8 +845,8 @@ class DatabaseService:
             return assignment.to_dict()
         except Exception as e:
             session.rollback()
-            print(f"❌ Erreur lors de la suppression: {e}")
-            raise ValueError(f"Erreur lors de la suppression: {str(e)}")
+            print(f"❌ Erreur lors de la création de l'assignation: {e}")
+            raise ValueError(f"Erreur lors de la création de l'assignation: {str(e)}")
         finally:
             session.close()
     
