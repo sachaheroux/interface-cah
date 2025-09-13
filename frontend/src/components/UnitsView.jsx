@@ -107,13 +107,10 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         
         // Trouver l'immeuble parent pour obtenir le nom et l'adresse complète
         const parentBuilding = buildings.find(b => b.id === unit.buildingId)
-        const buildingName = parentBuilding?.name || `Bâtiment ${unit.buildingId}`
-        
-        // Créer le titre simple : "56 Vachon"
-        const simpleTitle = `${unit.unitNumber} ${buildingName}`
+        const buildingName = parentBuilding?.name || ''
         
         // Nettoyer l'adresse pour éviter la duplication
-        let cleanAddress = unit.unitAddress || `${unit.unitNumber} ${buildingName}`
+        let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
         
         // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
         // Extraire seulement le numéro de l'unité et le nom de rue
@@ -154,7 +151,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           buildingName: buildingName,
           unitNumber: unit.unitNumber,
           // Titre simple pour l'en-tête de la carte
-          simpleTitle: simpleTitle,
+          simpleTitle: cleanAddress,
           status: calculateUnitStatus(unit, assignments),
           currentTenants: currentTenants
         }

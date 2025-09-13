@@ -212,11 +212,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               phone: assignment.tenantData.phone
             }))
             
-            // Mapper les propriétés comme dans UnitsView
-            const buildingName = `Bâtiment ${unit.buildingId}` // Nom simple
-            
             // Nettoyer l'adresse pour éviter la duplication
-            let cleanAddress = unit.unitAddress || `${unit.unitNumber} ${buildingName}`
+            let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
             if (cleanAddress && cleanAddress.includes(' ')) {
               const parts = cleanAddress.split(' ')
               if (parts.length >= 3) {
@@ -236,8 +233,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               ...unit,
               // Mapping des propriétés pour l'affichage
               address: cleanAddress,
-              buildingName: buildingName,
-              simpleTitle: `${unit.unitNumber} ${buildingName}`,
+              buildingName: '', // Pas de nom d'immeuble
+              simpleTitle: cleanAddress,
               currentTenants,
               isOccupied: currentTenants.length > 0
             }
@@ -245,9 +242,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             console.error('Error loading tenants for unit:', unit.id, error)
             return {
               ...unit,
-              address: unit.unitAddress || `${unit.unitNumber} Bâtiment ${unit.buildingId}`,
-              buildingName: `Bâtiment ${unit.buildingId}`,
-              simpleTitle: `${unit.unitNumber} Bâtiment ${unit.buildingId}`,
+              address: unit.unitAddress || `${unit.unitNumber}`,
+              buildingName: '', // Pas de nom d'immeuble
+              simpleTitle: unit.unitAddress || `${unit.unitNumber}`,
               currentTenants: [],
               isOccupied: false
             }
