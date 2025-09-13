@@ -104,15 +104,8 @@ class DatabaseManager:
                     year_built INTEGER,
                     total_area INTEGER,
                     characteristics TEXT,  -- JSON string
-                    -- Colonnes financières séparées
-                    purchase_price REAL DEFAULT 0.0,
-                    down_payment REAL DEFAULT 0.0,
-                    interest_rate REAL DEFAULT 0.0,
-                    current_value REAL DEFAULT 0.0,
-                    -- Colonnes de contacts séparées
-                    owner_name TEXT,
-                    bank_name TEXT,
-                    contractor_name TEXT,
+                    financials TEXT,      -- JSON string
+                    contacts TEXT,        -- JSON string
                     notes TEXT DEFAULT '',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

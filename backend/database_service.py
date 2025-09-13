@@ -81,60 +81,25 @@ class DatabaseService:
                 address_postal_code = ""
                 address_country = "Canada"
             
-            # Extraire les données financières et de contacts
-            financials = building_data.get("financials", {})
-            contacts = building_data.get("contacts", {})
-            
-            # Vérifier si les nouvelles colonnes existent
-            has_new_columns = hasattr(Building, 'purchase_price')
-            
-            if has_new_columns:
-                # Utiliser les nouvelles colonnes séparées
-                building = Building(
-                    name=building_data["name"],
-                    address_street=address_street,
-                    address_city=address_city,
-                    address_province=address_province,
-                    address_postal_code=address_postal_code,
-                    address_country=address_country,
-                    type=building_data.get("type", ""),
-                    units=building_data.get("units", 0),
-                    floors=building_data.get("floors", 1),
-                    year_built=building_data.get("yearBuilt"),
-                    total_area=building_data.get("totalArea"),
-                    characteristics=json.dumps(building_data.get("characteristics", {})),
-                    # Colonnes financières séparées
-                    purchase_price=financials.get("purchasePrice", 0.0),
-                    down_payment=financials.get("downPayment", 0.0),
-                    interest_rate=financials.get("interestRate", 0.0),
-                    current_value=financials.get("currentValue", 0.0),
-                    # Colonnes de contacts séparées
-                    owner_name=contacts.get("owner", ""),
-                    bank_name=contacts.get("bank", ""),
-                    contractor_name=contacts.get("contractor", ""),
-                    notes=building_data.get("notes", ""),
-                    is_default=False
-                )
-            else:
-                # Utiliser l'ancien schéma avec JSON
-                building = Building(
-                    name=building_data["name"],
-                    address_street=address_street,
-                    address_city=address_city,
-                    address_province=address_province,
-                    address_postal_code=address_postal_code,
-                    address_country=address_country,
-                    type=building_data.get("type", ""),
-                    units=building_data.get("units", 0),
-                    floors=building_data.get("floors", 1),
-                    year_built=building_data.get("yearBuilt"),
-                    total_area=building_data.get("totalArea"),
-                    characteristics=json.dumps(building_data.get("characteristics", {})),
-                    financials=json.dumps(financials),
-                    contacts=json.dumps(contacts),
-                    notes=building_data.get("notes", ""),
-                    is_default=False
-                )
+            # Créer l'immeuble
+            building = Building(
+                name=building_data["name"],
+                address_street=address_street,
+                address_city=address_city,
+                address_province=address_province,
+                address_postal_code=address_postal_code,
+                address_country=address_country,
+                type=building_data.get("type", ""),
+                units=building_data.get("units", 0),
+                floors=building_data.get("floors", 1),
+                year_built=building_data.get("yearBuilt"),
+                total_area=building_data.get("totalArea"),
+                characteristics=json.dumps(building_data.get("characteristics", {})),
+                financials=json.dumps(building_data.get("financials", {})),
+                contacts=json.dumps(building_data.get("contacts", {})),
+                notes=building_data.get("notes", ""),
+                is_default=False
+            )
             
             session.add(building)
             session.commit()
