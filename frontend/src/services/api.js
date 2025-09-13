@@ -624,9 +624,16 @@ export const assignmentsService = {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              unitId: assignment.unitId,
-              tenantId: assignment.tenantId,
-              tenantData: assignment.tenantData
+              unitId: parseInt(assignment.unitId),
+              tenantId: parseInt(assignment.tenantId),
+              moveInDate: assignment.assignedAt ? new Date(assignment.assignedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              moveOutDate: null,
+              rentAmount: assignment.tenantData?.rentAmount || 0,
+              depositAmount: assignment.tenantData?.depositAmount || 0,
+              leaseStartDate: assignment.tenantData?.leaseStartDate || new Date().toISOString().split('T')[0],
+              leaseEndDate: assignment.tenantData?.leaseEndDate || null,
+              rentDueDay: 1,
+              notes: assignment.tenantData?.notes || ''
             })
           })
 

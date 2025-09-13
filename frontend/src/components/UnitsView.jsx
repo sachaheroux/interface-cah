@@ -98,9 +98,11 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         })
         
         const currentTenants = unitAssignments.map(a => {
+          // Gérer les deux formats : backend (avec tenant) et localStorage (avec tenantData)
+          const tenantData = a.tenant || a.tenantData
           const tenant = {
-            ...a.tenantData,
-            id: a.tenantData?.id || a.tenantId
+            ...tenantData,
+            id: tenantData?.id || a.tenantId
           }
           return tenant
         })
