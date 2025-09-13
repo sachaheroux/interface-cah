@@ -1255,15 +1255,7 @@ async def delete_unit_report(report_id: int):
 # ROUTES POUR LES UNITÉS
 # ========================================
 
-@app.get("/api/units")
-async def get_units():
-    """Récupérer toutes les unités"""
-    try:
-        units = db_service.get_units()
-        return {"data": units}
-    except Exception as e:
-        print(f"Erreur lors du chargement des unités: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+# Endpoint supprimé - doublon avec celui ci-dessous
 
 @app.get("/api/units/{unit_id}")
 async def get_unit(unit_id: int):
@@ -1449,7 +1441,7 @@ async def get_units(skip: int = 0, limit: int = 100):
     """Récupérer toutes les unités"""
     try:
         units = db_service.get_units(skip=skip, limit=limit)
-        return {"units": units, "total": len(units)}
+        return {"data": units}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
 
