@@ -695,6 +695,8 @@ export const assignmentsService = {
 
   createAssignment: async (assignmentData) => {
     try {
+      console.log('📤 Sending assignment data to backend:', assignmentData)
+      
       const response = await fetch(`${API_BASE_URL}/api/assignments`, {
         method: 'POST',
         headers: {
@@ -703,11 +705,16 @@ export const assignmentsService = {
         body: JSON.stringify(assignmentData)
       })
 
+      console.log('📥 Assignment response status:', response.status)
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error('❌ Assignment error response:', errorText)
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
       }
 
       const result = await response.json()
+      console.log('✅ Assignment created successfully:', result)
       
       // Mettre à jour aussi le localStorage pour la compatibilité
       const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
@@ -722,7 +729,7 @@ export const assignmentsService = {
       
       return result
     } catch (error) {
-      console.error('Error creating assignment:', error)
+      console.error('❌ Error creating assignment:', error)
       throw error
     }
   },

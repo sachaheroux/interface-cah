@@ -1011,7 +1011,10 @@ async def get_assignments():
 async def create_assignment(assignment_data: dict):
     """Créer une nouvelle assignation locataire-unité"""
     try:
+        print(f"🔍 DEBUG - create_assignment reçu: {assignment_data}")
         tenant_id = assignment_data.get("tenantId")
+        unit_id = assignment_data.get("unitId")
+        print(f"🔍 DEBUG - tenant_id: {tenant_id}, unit_id: {unit_id}")
         
         # Validation : Vérifier que le locataire existe
         tenant = db_service.get_tenant(tenant_id)
@@ -1022,16 +1025,20 @@ async def create_assignment(assignment_data: dict):
                 detail=f"Le locataire avec l'ID {tenant_id} n'existe pas dans la base de données"
             )
         
+        print(f"✅ Locataire trouvé: {tenant}")
+        
         # Créer la nouvelle assignation via le service SQLite
         # Le service gère automatiquement la validation des assignations actives
         new_assignment = db_service.create_assignment_with_validation(assignment_data)
         
-        print(f"✅ Assignation créée: Locataire {tenant_id} → Unité {assignment_data.get('unitId')}")
+        print(f"✅ Assignation créée: Locataire {tenant_id} → Unité {unit_id}")
         return {"data": new_assignment}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la création de l'assignation: {e}")
+        print(f"❌ Erreur lors de la création de l'assignation: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'assignation: {str(e)}")
 
 @app.delete("/api/assignments/tenant/{tenant_id}")

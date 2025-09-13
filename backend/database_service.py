@@ -831,10 +831,17 @@ class DatabaseService:
             
             # Créer la nouvelle assignation
             print(f"🔍 DEBUG - Création de l'assignation avec unit_id: {assignment_data.get('unitId')}")
+            
+            # S'assurer que move_in_date n'est pas None (requis par le modèle)
+            move_in_date = self._safe_parse_date(assignment_data.get("moveInDate"))
+            if not move_in_date:
+                move_in_date = datetime.now().date()
+                print(f"🔍 DEBUG - move_in_date manquant, utilisation de la date actuelle: {move_in_date}")
+            
             assignment = Assignment(
                 tenant_id=tenant_id,
                 unit_id=assignment_data["unitId"],
-                move_in_date=self._safe_parse_date(assignment_data.get("moveInDate")),
+                move_in_date=move_in_date,
                 move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
                 rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
                 deposit_amount=self._safe_parse_float(assignment_data.get("depositAmount"), 0.0),

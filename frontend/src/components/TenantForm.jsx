@@ -467,7 +467,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
               moveOutDate: formData.lease?.endDate || null,
               rentAmount: formData.lease?.monthlyRent || 0,
-              depositAmount: formData.financial?.deposit || 0,
+              depositAmount: formData.financial?.deposit || formData.financial?.depositAmount || 0,
               leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
               leaseEndDate: formData.lease?.endDate || null,
               rentDueDay: 1,
