@@ -1014,57 +1014,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 </div>
               </div>
 
-              {/* Historique des baux */}
-              {leaseHistory.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Historique des Baux</h4>
-                  <div className="space-y-3">
-                    {leaseHistory.map((assignment, index) => (
-                      <div key={assignment.id} className={`bg-white rounded-lg p-3 border-l-4 ${
-                        !assignment.moveOutDate ? 'border-green-500' : 'border-gray-300'
-                      }`}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                !assignment.moveOutDate 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {!assignment.moveOutDate ? 'Bail actif' : 'Bail terminé'}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                Bail #{index + 1}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                              <div>
-                                <span className="text-gray-600">Début:</span>
-                                <p className="font-medium">{assignment.leaseStartDate || 'Non défini'}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Fin:</span>
-                                <p className="font-medium">{assignment.leaseEndDate || 'Non défini'}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Loyer:</span>
-                                <p className="font-medium">{assignment.rentAmount ? `$${assignment.rentAmount}` : 'Non défini'}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Unité:</span>
-                                <p className="font-medium">{assignment.unitData?.name || `Unité #${assignment.unitId}`}</p>
-                              </div>
-                            </div>
-                            {assignment.notes && (
-                              <p className="text-sm text-gray-600 mt-2 italic">"{assignment.notes}"</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Renouvellement de bail */}
               <div className="bg-blue-50 rounded-lg p-4">
@@ -1079,6 +1028,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                         startDate: '',
                         endDate: '',
                         monthlyRent: 0,
+                        paymentMethod: 'Virement bancaire',
                         renewalPdf: '',
                       }]
                     }))}
@@ -1093,69 +1043,95 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     {formData.leaseRenewals.map((renewal, index) => (
                       <div key={renewal.id} className="bg-white rounded-lg p-4 shadow-sm border">
                         <div className="flex items-center justify-between mb-4">
-                          <h5 className="text-sm font-medium text-gray-900">Renouvellement {index + 1}</h5>
+                          <h5 className="text-md font-medium text-gray-900">Renouvellement {index + 1}</h5>
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({
                               ...prev,
                               leaseRenewals: prev.leaseRenewals.filter(r => r.id !== renewal.id)
                             }))}
-                            className="text-red-600 hover:text-red-700 text-sm"
+                            className="text-red-600 hover:text-red-700"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-5 w-5" />
                           </button>
                         </div>
                         
-                        {/* Informations de base du renouvellement */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                        {/* Même structure que le bail principal */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="min-h-[80px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
                               Date de début
                             </label>
                             <input
                               type="text"
                               value={renewal.startDate}
                               onChange={(e) => handleLeaseRenewalChange(renewal.id, 'startDate', e.target.value)}
-                              placeholder="YYYY-MM-DD"
-                              className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                              placeholder="2025-01-01"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
+                            <div className="h-4"></div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                          
+                          <div className="min-h-[80px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
                               Date de fin
                             </label>
                             <input
                               type="text"
                               value={renewal.endDate}
                               onChange={(e) => handleLeaseRenewalChange(renewal.id, 'endDate', e.target.value)}
-                              placeholder="YYYY-MM-DD"
-                              className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                              placeholder="2025-12-31"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
+                            <div className="h-4"></div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Nouveau loyer mensuel (CAD)
+                          
+                          <div className="min-h-[80px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Loyer mensuel (CAD)
                             </label>
                             <input
                               type="number"
                               step="0.01"
                               value={renewal.monthlyRent}
                               onChange={(e) => handleLeaseRenewalChange(renewal.id, 'monthlyRent', parseFloat(e.target.value) || 0)}
-                              className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
+                            <div className="h-4"></div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              PDF du renouvellement
+                          
+                          <div className="min-h-[80px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Méthode de paiement
                             </label>
+                            <select
+                              value={renewal.paymentMethod || 'Virement bancaire'}
+                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'paymentMethod', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            >
+                              <option value="Virement bancaire">Virement bancaire</option>
+                              <option value="Chèque">Chèque</option>
+                              <option value="Espèces">Espèces</option>
+                              <option value="Autre">Autre</option>
+                            </select>
+                            <div className="h-4"></div>
+                          </div>
+                        </div>
+                        
+                        {/* PDF du renouvellement */}
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            PDF du renouvellement
+                          </label>
+                          <div className="flex items-center space-x-4">
                             <input
                               type="file"
                               accept=".pdf"
                               onChange={(e) => handleRenewalPdfUpload(e, renewal.id)}
-                              className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
+                              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                             />
                             {renewal.renewalPdf && (
-                              <p className={`text-xs mt-1 ${
+                              <span className={`text-sm ${
                                 renewal.renewalPdf.startsWith('Upload en cours') 
                                   ? 'text-blue-600' 
                                   : 'text-green-600'
@@ -1164,7 +1140,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                   ? '⏳ ' + renewal.renewalPdf
                                   : '✓ ' + renewal.renewalPdf
                                 }
-                              </p>
+                              </span>
                             )}
                           </div>
                         </div>
