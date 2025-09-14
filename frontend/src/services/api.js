@@ -600,92 +600,9 @@ export const unitsService = {
 
 // Service pour les assignations locataires-unités
 export const assignmentsService = {
-  // Fonction de migration des données localStorage vers backend
-  migrateLocalStorageToBackend: async () => {
-    try {
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      
-      if (localAssignments.length === 0) {
-        console.log('📦 Aucune assignation locale à migrer')
-        return { migrated: 0, success: true }
-      }
-
-      console.log(`📦 Migration de ${localAssignments.length} assignations vers le backend...`)
-      
-      let migrated = 0
-      let errors = 0
-
-      // Migrer chaque assignation directement via l'API (sans modifier localStorage)
-      for (const assignment of localAssignments) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/assignments`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              unitId: parseInt(assignment.unitId),
-              tenantId: parseInt(assignment.tenantId),
-              moveInDate: assignment.assignedAt ? new Date(assignment.assignedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-              moveOutDate: null,
-              rentAmount: assignment.tenantData?.rentAmount || 0,
-              depositAmount: assignment.tenantData?.depositAmount || 0,
-              leaseStartDate: assignment.tenantData?.leaseStartDate || new Date().toISOString().split('T')[0],
-              leaseEndDate: assignment.tenantData?.leaseEndDate || null,
-              rentDueDay: 1,
-              notes: assignment.tenantData?.notes || ''
-            })
-          })
-
-          if (response.ok) {
-            migrated++
-            console.log(`✅ Assignation migrée: Locataire ${assignment.tenantId} → Unité ${assignment.unitId}`)
-          } else {
-            console.error(`❌ Erreur HTTP migration assignation ${assignment.tenantId}: ${response.status}`)
-            errors++
-          }
-        } catch (error) {
-          console.error(`❌ Erreur migration assignation ${assignment.tenantId}:`, error)
-          errors++
-        }
-      }
-
-      if (errors === 0) {
-        // Migration réussie, effacer le localStorage
-        localStorage.removeItem('unitTenantAssignments')
-        localStorage.setItem('assignationsMigrated', 'true')
-        console.log(`🎉 Migration terminée avec succès: ${migrated} assignations migrées`)
-      } else {
-        console.log(`⚠️ Migration partielle: ${migrated} réussies, ${errors} erreurs`)
-      }
-
-      return { 
-        migrated, 
-        errors, 
-        success: errors === 0,
-        total: localAssignments.length 
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de la migration des assignations:', error)
-      return { migrated: 0, errors: 1, success: false, total: 0 }
-    }
-  },
-
-  // Vérifier si les assignations ont déjà été migrées
-  hasMigrated: () => {
-    return localStorage.getItem('assignationsMigrated') === 'true'
-  },
 
   getAssignments: async () => {
     try {
-      // Vérifier et effectuer la migration si nécessaire
-      if (!assignmentsService.hasMigrated()) {
-        const migrationResult = await assignmentsService.migrateLocalStorageToBackend()
-        if (migrationResult.success && migrationResult.migrated > 0) {
-          console.log(`🔄 Migration automatique effectuée: ${migrationResult.migrated} assignations`)
-        }
-      }
-
       const response = await fetch(`${API_BASE_URL}/api/assignments`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -694,9 +611,8 @@ export const assignmentsService = {
       return result
     } catch (error) {
       console.error('Error getting assignments:', error)
-      // Fallback vers localStorage pour la transition
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      return { data: localAssignments }
+      // Retourner un tableau vide si l'API échoue
+      return { data: [] }
     }
   },
 
