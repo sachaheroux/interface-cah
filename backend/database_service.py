@@ -942,6 +942,16 @@ class DatabaseService:
                 move_in_date = datetime.now().date()
                 print(f"🔍 DEBUG - move_in_date manquant, utilisation de la date actuelle: {move_in_date}")
             
+            # Debug des valeurs avant création
+            print(f"🔍 DEBUG - Valeurs pour Assignment:")
+            print(f"  - tenant_id: {tenant_id}")
+            print(f"  - unit_id: {assignment_data['unitId']}")
+            print(f"  - move_in_date: {move_in_date}")
+            print(f"  - move_out_date: {self._safe_parse_date(assignment_data.get('moveOutDate'))}")
+            print(f"  - rent_amount: {self._safe_parse_float(assignment_data.get('rentAmount'), 0.0)}")
+            print(f"  - lease_start_date: {self._safe_parse_date(assignment_data.get('leaseStartDate'))}")
+            print(f"  - lease_end_date: {self._safe_parse_date(assignment_data.get('leaseEndDate'))}")
+            
             assignment = Assignment(
                 tenant_id=tenant_id,
                 unit_id=assignment_data["unitId"],
@@ -960,7 +970,10 @@ class DatabaseService:
             session.commit()
             session.refresh(assignment)
             
-            return assignment.to_dict()
+            result = assignment.to_dict()
+            print(f"🔍 DEBUG - Assignment.to_dict(): {result}")
+            
+            return result
         except Exception as e:
             session.rollback()
             print(f"❌ Erreur lors de la création de l'assignation: {e}")

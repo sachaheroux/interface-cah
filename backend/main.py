@@ -1126,11 +1126,18 @@ async def create_tenant_with_assignment(data: dict):
         print(f"🏠 Création de l'assignation pour l'unité: {assignment_data['unitId']}")
         assignment_data["tenantId"] = tenant_id
         
+        # Debug des données avant nettoyage
+        print(f"🔍 DEBUG - assignment_data avant nettoyage: {assignment_data}")
+        
         # Supprimer les valeurs None/vides
         assignment_data = {k: v for k, v in assignment_data.items() if v is not None and v != ""}
         
+        # Debug des données après nettoyage
+        print(f"🔍 DEBUG - assignment_data après nettoyage: {assignment_data}")
+        
         created_assignment = db_service.create_assignment_with_validation(assignment_data)
         print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
+        print(f"🔍 DEBUG - Assignation créée complète: {created_assignment}")
         
         return {
             "data": {
