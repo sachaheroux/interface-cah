@@ -476,55 +476,112 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         hasUnitInfo: !!formData.unitInfo
       })
       
-      // LOGIQUE SIMPLE : Utiliser le nouvel endpoint unifié
+      // LOGIQUE : Création ou mise à jour selon si le locataire existe
       try {
-        console.log('📤 Création locataire avec assignation...')
-        
-        // Préparer les données pour le nouvel endpoint
-        const requestData = {
-          name: tenantData.name,
-          email: tenantData.email,
-          phone: tenantData.phone,
-          notes: tenantData.notes,
-          unitId: formData.unitId || null,
-          lease: formData.lease || {},
-          moveInDate: formData.lease?.startDate,
-          moveOutDate: formData.lease?.endDate,
-          rentAmount: formData.lease?.monthlyRent,
-          leaseStartDate: formData.lease?.startDate,
-          leaseEndDate: formData.lease?.endDate,
-          rentDueDay: 1
+        if (tenant?.id) {
+          // MISE À JOUR du locataire existant
+          console.log('📝 Mise à jour du locataire existant...')
+          
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/${tenant.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: tenantData.name,
+              email: tenantData.email,
+              phone: tenantData.phone,
+              notes: tenantData.notes
+            })
+          })
+          
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
+          }
+          
+          const updatedTenant = await response.json()
+          console.log('✅ Locataire mis à jour:', updatedTenant)
+          
+          // Si une unité est sélectionnée, créer une nouvelle assignation
+          if (formData.unitId) {
+            console.log('🏠 Création d\'une nouvelle assignation...')
+            const assignmentResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                tenantId: tenant.id,
+                unitId: parseInt(formData.unitId),
+                moveInDate: formData.lease?.startDate,
+                moveOutDate: formData.lease?.endDate,
+                rentAmount: formData.lease?.monthlyRent || 0,
+                leaseStartDate: formData.lease?.startDate,
+                leaseEndDate: formData.lease?.endDate,
+                rentDueDay: 1,
+                notes: formData.notes || ''
+              })
+            })
+            
+            if (!assignmentResponse.ok) {
+              const errorText = await assignmentResponse.text()
+              throw new Error(`HTTP error! status: ${assignmentResponse.status} - ${errorText}`)
+            }
+            
+            const newAssignment = await assignmentResponse.json()
+            console.log('✅ Nouvelle assignation créée:', newAssignment)
+          }
+          
+          onSave(updatedTenant.data)
+          
+        } else {
+          // CRÉATION d'un nouveau locataire
+          console.log('📤 Création d\'un nouveau locataire...')
+          
+          const requestData = {
+            name: tenantData.name,
+            email: tenantData.email,
+            phone: tenantData.phone,
+            notes: tenantData.notes,
+            unitId: formData.unitId || null,
+            lease: formData.lease || {},
+            moveInDate: formData.lease?.startDate,
+            moveOutDate: formData.lease?.endDate,
+            rentAmount: formData.lease?.monthlyRent,
+            leaseStartDate: formData.lease?.startDate,
+            leaseEndDate: formData.lease?.endDate,
+            rentDueDay: 1
+          }
+          
+          console.log('🔍 DEBUG - Données envoyées:', requestData)
+          
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-assignment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+          })
+          
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
+          }
+          
+          const result = await response.json()
+          console.log('✅ Création réussie:', result)
+          onSave(result.data.tenant)
         }
-        
-        console.log('🔍 DEBUG - Données envoyées:', requestData)
-        
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-assignment`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestData)
-        })
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-        }
-        
-        const result = await response.json()
-        console.log('✅ Création réussie:', result)
         
       } catch (error) {
-        console.error('❌ Error creating tenant with assignment:', error)
-        throw error
+        console.error('❌ Error saving tenant:', error)
+        alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
+      } finally {
+        setLoading(false)
       }
+      
       onClose()
-    } catch (error) {
-      console.error('❌ Error saving tenant:', error)
-      alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
-    } finally {
-      setLoading(false)
-    }
   }
 
 
