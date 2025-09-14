@@ -131,27 +131,8 @@ class Tenant(Base):
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
-            # Ajouter les données de bail pour la compatibilité frontend
-            "lease": {
-                "startDate": self.move_in_date.isoformat() if self.move_in_date else "",
-                "endDate": self.move_out_date.isoformat() if self.move_out_date else "",
-                "monthlyRent": 0,  # Sera récupéré depuis l'assignation
-                "paymentMethod": "Virement bancaire",
-                "leasePdf": "",
-                "amenities": {
-                    "heating": False,
-                    "electricity": False,
-                    "wifi": False,
-                    "furnished": False,
-                    "parking": False,
-                    "laundry": False,
-                    "airConditioning": False,
-                    "balcony": False,
-                    "storage": False,
-                    "dishwasher": False,
-                    "washerDryer": False
-                }
-            }
+            # Ne pas retourner de données de bail par défaut - elles seront chargées depuis les assignations
+            "lease": None
         }
 
 class Unit(Base):

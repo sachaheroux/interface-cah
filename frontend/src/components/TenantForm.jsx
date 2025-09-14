@@ -71,12 +71,16 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       const assignmentsResponse = await assignmentsService.getAssignments()
       const allAssignments = assignmentsResponse.data || []
       
+      console.log('🔍 Recherche d\'assignations pour le locataire:', tenantId)
+      console.log('📋 Toutes les assignations:', allAssignments)
+      
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
         parseInt(a.tenantId) === tenantId && !a.moveOutDate
       )
       
       if (activeAssignment) {
+        console.log('✅ Assignation active trouvée:', activeAssignment)
         return {
           startDate: activeAssignment.leaseStartDate || '',
           endDate: activeAssignment.leaseEndDate || '',
@@ -97,6 +101,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             washerDryer: false
           }
         }
+      } else {
+        console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données de bail:', error)
@@ -117,7 +123,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       if (!isLeaseDataManuallySet && !hasLeaseDataBeenModified) {
         console.log('🔄 Chargement des données de bail depuis les assignations...')
         loadLeaseDataFromAssignments(tenant.id).then(leaseData => {
-          const finalLeaseData = leaseData || tenant.lease || {
+          // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
+          const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
             startDate: '',
             endDate: '',
             monthlyRent: 0,
@@ -136,7 +143,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               dishwasher: false,
               washerDryer: false
             }
-          }
+          })
           
           console.log('📋 Données de bail chargées:', finalLeaseData)
           
