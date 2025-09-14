@@ -100,9 +100,13 @@ class Tenant(Base):
     name = Column(String(255), nullable=False, index=True)
     email = Column(String(255), index=True)
     phone = Column(String(50))
-    emergency_contact_name = Column(String(255))
-    emergency_contact_phone = Column(String(50))
-    emergency_contact_relationship = Column(String(100))
+    address_street = Column(String(255))
+    address_city = Column(String(100))
+    address_province = Column(String(50))
+    address_postal_code = Column(String(10))
+    address_country = Column(String(50), default="Canada")
+    personal_info = Column(Text)  # JSON string
+    emergency_contact = Column(Text)  # JSON string
     financial_info = Column(Text)  # JSON string
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -118,11 +122,15 @@ class Tenant(Base):
             "name": self.name,
             "email": self.email,
             "phone": self.phone,
-            "emergencyContact": {
-                "name": self.emergency_contact_name or "",
-                "phone": self.emergency_contact_phone or "",
-                "relationship": self.emergency_contact_relationship or ""
+            "address": {
+                "street": self.address_street or "",
+                "city": self.address_city or "",
+                "province": self.address_province or "",
+                "postalCode": self.address_postal_code or "",
+                "country": self.address_country or "Canada"
             },
+            "personalInfo": safe_json_loads(self.personal_info),
+            "emergencyContact": safe_json_loads(self.emergency_contact),
             "financial": safe_json_loads(self.financial_info),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
@@ -173,21 +181,6 @@ class Unit(Base):
             "buildingData": self._get_building_data()
         }
     
-    def _get_building_data(self):
-        """Obtenir les données de l'immeuble de manière sécurisée"""
-        if not hasattr(self, 'building') or not self.building:
-            return None
-        return {
-            "id": self.building.id,
-            "name": self.building.name,
-            "address": {
-                "street": self.building.address_street or "",
-                "city": self.building.address_city or "",
-                "province": self.building.address_province or "",
-                "postalCode": self.building.address_postal_code or "",
-                "country": self.building.address_country or "Canada"
-            }
-        }
 
 class Assignment(Base):
     """Modèle pour les assignations locataire-unité"""
@@ -196,7 +189,6 @@ class Assignment(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     unit_id = Column(Integer, ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True)
-    building_id = Column(Integer, ForeignKey("buildings.id", ondelete="CASCADE"), nullable=False, index=True)
     move_in_date = Column(Date, nullable=False)
     move_out_date = Column(Date)
     rent_amount = Column(DECIMAL(10, 2))
@@ -208,10 +200,9 @@ class Assignment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relations - Une assignation = un locataire + une unité + un immeuble
+    # Relations - Une assignation = un locataire + une unité
     tenant = relationship("Tenant", back_populates="assignments", lazy="select")
     unit = relationship("Unit", back_populates="assignments", lazy="select")
-    building = relationship("Building", lazy="select")
     
     # Contrainte unique pour éviter les assignations multiples ACTIVES par locataire
     # Note: Cette contrainte sera gérée au niveau applicatif, pas au niveau base de données
@@ -223,7 +214,6 @@ class Assignment(Base):
             "id": self.id,
             "tenantId": self.tenant_id,
             "unitId": int(self.unit_id),  # S'assurer que c'est un entier
-            "buildingId": self.building.id if self.building else None,
             "unitNumber": self.unit.unit_number if self.unit else None,
             "unitAddress": self.unit.unit_address if self.unit else None,
             "moveInDate": self.move_in_date.isoformat() if self.move_in_date else None,
@@ -238,8 +228,7 @@ class Assignment(Base):
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
             # Données enrichies (éviter la récursion infinie)
             "tenantData": self._get_tenant_data(),
-            "unitData": self._get_unit_data(),
-            "buildingData": self._get_building_data()
+            "unitData": self._get_unit_data()
         }
     
     def _get_tenant_data(self):
@@ -267,21 +256,6 @@ class Assignment(Base):
             "bathrooms": self.unit.bathrooms
         }
     
-    def _get_building_data(self):
-        """Obtenir les données de l'immeuble de manière sécurisée"""
-        if not hasattr(self, 'building') or not self.building:
-            return None
-        return {
-            "id": self.building.id,
-            "name": self.building.name,
-            "address": {
-                "street": self.building.address_street or "",
-                "city": self.building.address_city or "",
-                "province": self.building.address_province or "",
-                "postalCode": self.building.address_postal_code or "",
-                "country": self.building.address_country or "Canada"
-            }
-        }
 
 class BuildingReport(Base):
     """Modèle pour les rapports d'immeubles"""
@@ -404,21 +378,6 @@ class UnitReport(Base):
             "type": self.unit.type
         }
     
-    def _get_building_data(self):
-        """Obtenir les données de l'immeuble de manière sécurisée"""
-        if not hasattr(self, 'building') or not self.building:
-            return None
-        return {
-            "id": self.building.id,
-            "name": self.building.name,
-            "address": {
-                "street": self.building.address_street or "",
-                "city": self.building.address_city or "",
-                "province": self.building.address_province or "",
-                "postalCode": self.building.address_postal_code or "",
-                "country": self.building.address_country or "Canada"
-            }
-        }
 
 class Invoice(Base):
     """Modèle pour les factures"""
