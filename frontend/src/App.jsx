@@ -2,7 +2,6 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import TopNavigation from './components/TopNavigation'
 import SecondarySidebar from './components/SecondarySidebar'
-import MigrationStatus from './components/MigrationStatus'
 import Dashboard from './pages/Dashboard'
 import Buildings from './pages/Buildings'
 import Tenants from './pages/Tenants'
@@ -25,8 +24,6 @@ function AppContent() {
       {/* Navigation horizontale fixe en haut */}
       <TopNavigation />
       
-      {/* Notification de migration des assignations */}
-      <MigrationStatus />
       
       {/* Contenu principal */}
       <div className="flex pt-20 sm:pt-16">
