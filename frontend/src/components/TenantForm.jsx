@@ -490,7 +490,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(tenantData)
+          body: JSON.stringify({
+            name: tenantData.name,
+            email: tenantData.email,
+            phone: tenantData.phone,
+            notes: tenantData.notes
+          })
         })
         
         if (!tenantResponse.ok) {
@@ -524,7 +529,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         // Retourner les données mises à jour
         onSave({
-          ...updatedTenant,
+          ...updatedTenant.data || updatedTenant,
           unitId: formData.unitId,
           unitInfo: formData.unitInfo,
           lease: formData.lease
@@ -556,7 +561,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         // Retourner les données créées
         onSave({
-          ...result.tenant,
+          ...result.data.tenant,
           unitId: formData.unitId,
           unitInfo: formData.unitInfo,
           lease: formData.lease
