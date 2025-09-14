@@ -579,9 +579,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
       } finally {
         setLoading(false)
+        onClose()
       }
-      
-      onClose()
     }
   }
 
