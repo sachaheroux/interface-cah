@@ -450,7 +450,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     setFormData(prev => ({
       ...prev,
       lease: {
-        ...prev.lease,
+        ...(prev.lease || {}), // S'assurer que lease existe
         [field]: value
       }
     }))
@@ -911,7 +911,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     </label>
                     <input
                       type="date"
-                      value={formData.lease.startDate}
+                      value={formData.lease?.startDate || ''}
                       onChange={(e) => handleLeaseChange('startDate', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
@@ -923,7 +923,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     </label>
                     <input
                       type="date"
-                      value={formData.lease.endDate}
+                      value={formData.lease?.endDate || ''}
                       onChange={(e) => handleLeaseChange('endDate', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
@@ -936,7 +936,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     <input
                       type="number"
                       step="0.01"
-                      value={formData.lease.monthlyRent}
+                      value={formData.lease?.monthlyRent || 0}
                       onChange={(e) => handleLeaseChange('monthlyRent', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="0.00"
@@ -948,7 +948,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       Méthode de paiement
                     </label>
                     <select
-                      value={formData.lease.paymentMethod}
+                      value={formData.lease?.paymentMethod || 'Virement bancaire'}
                       onChange={(e) => handleLeaseChange('paymentMethod', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
@@ -1182,14 +1182,14 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 Cochez les conditions incluses dans le bail actuel. Ces conditions peuvent changer lors des renouvellements.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries(formData.lease.amenities).map(([amenity, checked]) => (
+                {Object.entries(formData.lease?.amenities || {}).map(([amenity, checked]) => (
                   <div key={amenity} className="flex items-center">
                     <input
                       type="checkbox"
                       id={`amenity-${amenity}`}
                       checked={checked}
                       onChange={(e) => handleLeaseChange('amenities', {
-                        ...formData.lease.amenities,
+                        ...(formData.lease?.amenities || {}),
                         [amenity]: e.target.checked
                       })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
