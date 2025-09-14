@@ -2170,6 +2170,11 @@ async def migrate_remove_building_id():
         print(f"❌ Erreur lors de la migration building_id: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur migration building_id: {str(e)}")
 
+@app.get("/api/test-endpoint")
+async def test_endpoint():
+    """Endpoint de test pour vérifier le déploiement"""
+    return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
+
 @app.delete("/api/assignments/tenant/{tenant_id}")
 async def remove_tenant_assignments(tenant_id: int):
     """Supprimer toutes les assignations d'un locataire"""
