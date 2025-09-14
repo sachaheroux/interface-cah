@@ -1033,6 +1033,23 @@ async def delete_tenant(tenant_id: int):
         print(f"Erreur lors de la suppression du locataire: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
+@app.delete("/api/assignments/tenant/{tenant_id}")
+async def delete_tenant_assignments(tenant_id: int):
+    """Supprimer toutes les assignations d'un locataire"""
+    try:
+        # Supprimer toutes les assignations du locataire
+        success = db_service.delete_tenant_assignments(tenant_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Aucune assignation trouvée pour ce locataire")
+        
+        return {"message": f"Assignations du locataire {tenant_id} supprimées avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression des assignations: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
 @app.get("/api/maintenance")
 async def get_maintenance():
     """Liste des entretiens"""

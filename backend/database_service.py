@@ -302,6 +302,27 @@ class DatabaseService:
             raise ValueError(f"Erreur lors de l'opération: {str(e)}")
         finally:
             session.close()
+
+    def delete_tenant_assignments(self, tenant_id: int) -> bool:
+        """Supprimer toutes les assignations d'un locataire"""
+        session = self.get_session()
+        try:
+            assignments = session.query(Assignment).filter(Assignment.tenant_id == tenant_id).all()
+            if not assignments:
+                return False
+            
+            for assignment in assignments:
+                session.delete(assignment)
+            
+            session.commit()
+            print(f"✅ {len(assignments)} assignation(s) supprimée(s) pour le locataire {tenant_id}")
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression des assignations: {e}")
+            raise ValueError(f"Erreur lors de la suppression des assignations: {str(e)}")
+        finally:
+            session.close()
     
     # ========================================
     # OPÉRATIONS SUR LES UNITÉS
