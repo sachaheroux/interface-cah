@@ -559,47 +559,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         const updatedTenant = await tenantResponse.json()
         console.log('✅ Locataire mis à jour:', updatedTenant)
         
-        // 2. Gérer les assignations (bail de base + renouvellements)
-        console.log('🏠 Gestion des assignations...')
+        // 2. Créer les renouvellements (chaque renouvellement = 1 ligne dans assignments)
+        console.log('🏠 Création des renouvellements...')
         
-        // Récupérer les assignations existantes
-        const existingAssignmentsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`)
-        const existingAssignments = await existingAssignmentsResponse.json()
-        const tenantAssignments = existingAssignments.data.filter(a => parseInt(a.tenantId) === parseInt(tenant.id))
-        
-        console.log('📋 Assignations existantes:', tenantAssignments)
-        
-        // Mettre à jour le bail de base (première assignation)
-        if (tenantAssignments.length > 0) {
-          const baseAssignment = tenantAssignments[0]
-          console.log('🔄 Mise à jour du bail de base:', baseAssignment.id)
-          
-          const updateBaseResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments/${baseAssignment.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(assignmentData)
-          })
-          
-          if (!updateBaseResponse.ok) {
-            const errorText = await updateBaseResponse.text()
-            throw new Error(`Erreur mise à jour bail de base: ${updateBaseResponse.status} - ${errorText}`)
-          }
-          
-          console.log('✅ Bail de base mis à jour')
-        }
-        
-        // Supprimer les anciens renouvellements
-        const oldRenewals = tenantAssignments.slice(1)
-        for (const renewal of oldRenewals) {
-          console.log('🗑️ Suppression de l\'ancien renouvellement:', renewal.id)
-          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments/${renewal.id}`, {
-            method: 'DELETE'
-          })
-        }
-        
-        // Créer les nouveaux renouvellements
         for (const renewal of formData.leaseRenewals) {
           if (renewal.startDate && renewal.endDate) {
             console.log('🔄 Création du renouvellement:', renewal)
