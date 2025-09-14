@@ -24,6 +24,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       paymentMethod: 'Virement bancaire'
     },
     
+    leaseRenewals: [], // Historique des renouvellements
+    
     notes: ''
   })
 
@@ -31,6 +33,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [availableUnits, setAvailableUnits] = useState([])
   const [loadingUnits, setLoadingUnits] = useState(false)
   const [unitSearchTerm, setUnitSearchTerm] = useState('')
+  const [leaseHistory, setLeaseHistory] = useState([]) // Historique des baux depuis assignments
   const [filteredUnits, setFilteredUnits] = useState([])
 
   // Charger l'unité assignée et les données de bail depuis les assignations
@@ -42,9 +45,16 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.log('🔍 Recherche d\'assignations pour le locataire:', tenantId)
       console.log('📋 Toutes les assignations:', allAssignments)
       
+      // Trouver TOUTES les assignations pour ce locataire (historique complet)
+      const tenantAssignments = allAssignments.filter(a => 
+        parseInt(a.tenantId) === parseInt(tenantId)
+      ).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) // Plus récent en premier
+      
+      console.log('📚 Historique des baux trouvé:', tenantAssignments)
+      setLeaseHistory(tenantAssignments)
+      
       // Trouver l'assignation active pour ce locataire
-      const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === parseInt(tenantId) && 
+      const activeAssignment = tenantAssignments.find(a => 
         (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '')
       )
       
@@ -397,6 +407,26 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleLeaseRenewalChange = (renewalId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      leaseRenewals: prev.leaseRenewals.map(renewal => 
+        renewal.id === renewalId 
+          ? { ...renewal, [field]: value }
+          : renewal
+      )
+    }))
+  }
+
+  const handleRenewalPdfUpload = (event, renewalId) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Simuler l'upload (à implémenter selon vos besoins)
+      const fileName = `renewal_${renewalId}_${file.name}`
+      handleLeaseRenewalChange(renewalId, 'renewalPdf', fileName)
+    }
   }
 
 
@@ -952,6 +982,58 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   </div>
                 </div>
               </div>
+
+              {/* Historique des baux */}
+              {leaseHistory.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Historique des Baux</h4>
+                  <div className="space-y-3">
+                    {leaseHistory.map((assignment, index) => (
+                      <div key={assignment.id} className={`bg-white rounded-lg p-3 border-l-4 ${
+                        !assignment.moveOutDate ? 'border-green-500' : 'border-gray-300'
+                      }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                !assignment.moveOutDate 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {!assignment.moveOutDate ? 'Bail actif' : 'Bail terminé'}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                Bail #{index + 1}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                              <div>
+                                <span className="text-gray-600">Début:</span>
+                                <p className="font-medium">{assignment.leaseStartDate || 'Non défini'}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Fin:</span>
+                                <p className="font-medium">{assignment.leaseEndDate || 'Non défini'}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Loyer:</span>
+                                <p className="font-medium">{assignment.rentAmount ? `$${assignment.rentAmount}` : 'Non défini'}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Unité:</span>
+                                <p className="font-medium">{assignment.unitData?.name || `Unité #${assignment.unitId}`}</p>
+                              </div>
+                            </div>
+                            {assignment.notes && (
+                              <p className="text-sm text-gray-600 mt-2 italic">"{assignment.notes}"</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Renouvellement de bail */}
               <div className="bg-blue-50 rounded-lg p-4">
