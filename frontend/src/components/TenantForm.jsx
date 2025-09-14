@@ -65,6 +65,67 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [unitSearchTerm, setUnitSearchTerm] = useState('')
   const [filteredUnits, setFilteredUnits] = useState([])
 
+  // Charger l'unité assignée et les données de bail depuis les assignations
+  const loadTenantAssignmentAndLeaseData = async (tenantId) => {
+    try {
+      const assignmentsResponse = await assignmentsService.getAssignments()
+      const allAssignments = assignmentsResponse.data || []
+      
+      console.log('🔍 Recherche d\'assignations pour le locataire:', tenantId)
+      console.log('📋 Toutes les assignations:', allAssignments)
+      
+      // Trouver l'assignation active pour ce locataire
+      const activeAssignment = allAssignments.find(a => 
+        parseInt(a.tenantId) === tenantId && !a.moveOutDate
+      )
+      
+      if (activeAssignment) {
+        console.log('✅ Assignation active trouvée:', activeAssignment)
+        
+        // Récupérer les détails de l'unité
+        const unitsResponse = await unitsService.getUnits()
+        const allUnits = unitsResponse.data || []
+        const unit = allUnits.find(u => u.id === parseInt(activeAssignment.unitId))
+        
+        if (unit) {
+          console.log('✅ Unité trouvée:', unit)
+          
+          return {
+            unitData: unit,
+            leaseData: {
+              startDate: activeAssignment.leaseStartDate || '',
+              endDate: activeAssignment.leaseEndDate || '',
+              monthlyRent: activeAssignment.rentAmount || 0,
+              paymentMethod: 'Virement bancaire', // Valeur par défaut
+              leasePdf: '',
+              amenities: {
+                heating: false,
+                electricity: false,
+                wifi: false,
+                furnished: false,
+                parking: false,
+                laundry: false,
+                airConditioning: false,
+                balcony: false,
+                storage: false,
+                dishwasher: false,
+                washerDryer: false
+              }
+            }
+          }
+        } else {
+          console.log('❌ Unité non trouvée pour l\'assignation:', activeAssignment.unitId)
+        }
+      } else {
+        console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des données d\'assignation:', error)
+    }
+    
+    return { unitData: null, leaseData: null }
+  }
+
   // Charger les données de bail depuis les assignations
   const loadLeaseDataFromAssignments = async (tenantId) => {
     try {
@@ -119,85 +180,52 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         isLeaseDataManuallySet: isLeaseDataManuallySet
       })
       
-      // Charger les données de bail depuis les assignations SEULEMENT si pas déjà définies manuellement
-      if (!isLeaseDataManuallySet && !hasLeaseDataBeenModified) {
-        console.log('🔄 Chargement des données de bail depuis les assignations...')
-        loadLeaseDataFromAssignments(tenant.id).then(leaseData => {
-          // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
-          const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
-            startDate: '',
-            endDate: '',
-            monthlyRent: 0,
-            paymentMethod: 'Virement bancaire',
-            leasePdf: '',
-            amenities: {
-              heating: false,
-              electricity: false,
-              wifi: false,
-              furnished: false,
-              parking: false,
-              laundry: false,
-              airConditioning: false,
-              balcony: false,
-              storage: false,
-              dishwasher: false,
-              washerDryer: false
-            }
-          })
-          
-          console.log('📋 Données de bail chargées:', finalLeaseData)
-          
-          setFormData({
-            name: tenant.name || '',
-            email: tenant.email || '',
-            phone: tenant.phone || '',
-            status: tenant.status || TenantStatus.ACTIVE,
-            
-            unitId: tenant.unitId || '',
-            unitInfo: tenant.unitInfo || null,
-            
-            lease: finalLeaseData,
-            
-            leaseRenewals: tenant.leaseRenewals || [],
-            
-            emergencyContact: {
-              name: tenant.emergencyContact?.name || '',
-              phone: tenant.emergencyContact?.phone || '',
-              email: tenant.emergencyContact?.email || '',
-              relationship: tenant.emergencyContact?.relationship || ''
-            },
-            
-            financial: {
-              monthlyIncome: tenant.financial?.monthlyIncome || 0,
-              creditScore: tenant.financial?.creditScore || 0,
-              bankAccount: tenant.financial?.bankAccount || '',
-              employer: tenant.financial?.employer || '',
-              employerPhone: tenant.financial?.employerPhone || '',
-              depositAmount: tenant.financial?.depositAmount || 0
-            },
-            
-            notes: tenant.notes || ''
-          })
+      // Charger l'unité assignée et les données de bail depuis les assignations
+      loadTenantAssignmentAndLeaseData(tenant.id).then(({ unitData, leaseData }) => {
+        // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
+        const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0,
+          paymentMethod: 'Virement bancaire',
+          leasePdf: '',
+          amenities: {
+            heating: false,
+            electricity: false,
+            wifi: false,
+            furnished: false,
+            parking: false,
+            laundry: false,
+            airConditioning: false,
+            balcony: false,
+            storage: false,
+            dishwasher: false,
+            washerDryer: false
+          }
         })
-      } else {
-        console.log('🚫 Données de bail manuellement définies, pas de rechargement')
-        // Charger seulement les autres données, pas les données de bail
-        setFormData(prev => ({
-          ...prev,
+        
+        console.log('📋 Données chargées:', { unitData, leaseData: finalLeaseData })
+        
+        setFormData({
           name: tenant.name || '',
           email: tenant.email || '',
           phone: tenant.phone || '',
           status: tenant.status || TenantStatus.ACTIVE,
-          unitId: tenant.unitId || '',
-          unitInfo: tenant.unitInfo || null,
-          // Garder les données de bail actuelles
+          
+          unitId: unitData?.id || tenant.unitId || '',
+          unitInfo: unitData || tenant.unitInfo || null,
+          
+          lease: finalLeaseData,
+          
           leaseRenewals: tenant.leaseRenewals || [],
+          
           emergencyContact: {
             name: tenant.emergencyContact?.name || '',
             phone: tenant.emergencyContact?.phone || '',
             email: tenant.emergencyContact?.email || '',
             relationship: tenant.emergencyContact?.relationship || ''
           },
+          
           financial: {
             monthlyIncome: tenant.financial?.monthlyIncome || 0,
             creditScore: tenant.financial?.creditScore || 0,
@@ -206,9 +234,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             employerPhone: tenant.financial?.employerPhone || '',
             depositAmount: tenant.financial?.depositAmount || 0
           },
+          
           notes: tenant.notes || ''
-        }))
-      }
+        })
+      })
     } else {
       // Réinitialiser les flags pour un nouveau locataire
       setIsLeaseDataManuallySet(false)
