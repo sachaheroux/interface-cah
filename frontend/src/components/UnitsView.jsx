@@ -97,7 +97,26 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           fullUnitAssignments: JSON.stringify(unitAssignments, null, 2)
         })
         
-        const currentTenants = unitAssignments.map(a => {
+        // Filtrer seulement les assignations actives (date d'aujourd'hui entre début et fin)
+        const today = new Date()
+        const activeAssignments = unitAssignments.filter(a => {
+          const startDate = a.leaseStartDate ? new Date(a.leaseStartDate) : null
+          const endDate = a.leaseEndDate ? new Date(a.leaseEndDate) : null
+          
+          // Si pas de dates, considérer comme inactive
+          if (!startDate || !endDate) return false
+          
+          // Vérifier si aujourd'hui est entre startDate et endDate
+          return today >= startDate && today <= endDate
+        })
+        
+        console.log(`🔍 DEBUG - Unité ${unit.id} assignations actives:`, {
+          total: unitAssignments.length,
+          active: activeAssignments.length,
+          today: today
+        })
+        
+        const currentTenants = activeAssignments.map(a => {
           // Le backend retourne les données dans tenantData
           const tenantData = a.tenantData || a.tenant
           const tenant = {

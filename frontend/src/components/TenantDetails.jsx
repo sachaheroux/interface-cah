@@ -36,9 +36,30 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
       const allAssignments = assignmentsResponse.data || []
       
       // Trouver l'assignation active pour ce locataire
-      const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === parseInt(tenant.id) && !a.moveOutDate
-      )
+      // Une assignation est active si la date d'aujourd'hui est entre la date de début et de fin
+      const today = new Date()
+      const activeAssignment = allAssignments.find(a => {
+        if (parseInt(a.tenantId) !== parseInt(tenant.id)) return false
+        
+        const startDate = a.leaseStartDate ? new Date(a.leaseStartDate) : null
+        const endDate = a.leaseEndDate ? new Date(a.leaseEndDate) : null
+        
+        // Si pas de dates, considérer comme inactive
+        if (!startDate || !endDate) return false
+        
+        // Vérifier si aujourd'hui est entre startDate et endDate
+        const isActive = today >= startDate && today <= endDate
+        
+        console.log('🔍 Vérification assignation active:', {
+          id: a.id,
+          startDate: startDate,
+          endDate: endDate,
+          today: today,
+          isActive: isActive
+        })
+        
+        return isActive
+      })
       
       console.log('🔍 DEBUG - TenantDetails loadTenantUnit:', {
         tenantId: tenant.id,
