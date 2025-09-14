@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck, Home, Search, AlertTriangle } from 'lucide-react'
 import { TenantStatus, getTenantStatusLabel, getRelationshipLabel } from '../types/tenant'
-import { unitsService, assignmentsService } from '../services/api'
+import { unitsService } from '../services/api'
 
 export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -202,21 +202,15 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       const unitsWithTenants = await Promise.all(
         (response.data || []).map(async (unit) => {
           try {
-            // Récupérer les assignations depuis le backend
-            const assignmentsResponse = await assignmentsService.getAssignments()
-            const allAssignments = assignmentsResponse.data || []
-            const unitAssignments = allAssignments.filter(a => a.unitId === unit.id)
+            const assignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
+            const unitAssignments = assignments.filter(a => a.unitId === unit.id)
             
-            const currentTenants = unitAssignments.map(assignment => {
-              // Gérer les deux formats : backend (avec tenant) et localStorage (avec tenantData)
-              const tenantData = assignment.tenant || assignment.tenantData
-              return {
-                id: assignment.tenantId,
-                name: tenantData?.name || 'Locataire inconnu',
-                email: tenantData?.email || '',
-                phone: tenantData?.phone || ''
-              }
-            })
+            const currentTenants = unitAssignments.map(assignment => ({
+              id: assignment.tenantId,
+              name: assignment.tenantData?.name || 'Locataire inconnu',
+              email: assignment.tenantData?.email || '',
+              phone: assignment.tenantData?.phone || ''
+            }))
             
             // Nettoyer l'adresse pour éviter la duplication
             let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
