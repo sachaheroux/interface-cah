@@ -85,7 +85,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         // Récupérer les détails de l'unité
         const unitsResponse = await unitsService.getUnits()
         const allUnits = unitsResponse.data || []
-        const unit = allUnits.find(u => u.id === parseInt(activeAssignment.unitId))
+        const unit = allUnits.find(u => parseInt(u.id) === parseInt(activeAssignment.unitId))
         
         if (unit) {
           console.log('✅ Unité trouvée:', unit)

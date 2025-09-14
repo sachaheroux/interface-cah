@@ -50,7 +50,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
         // Récupérer les détails de l'unité
         const unitsResponse = await unitsService.getUnits()
         const allUnits = unitsResponse.data || []
-        const unit = allUnits.find(u => u.id === parseInt(activeAssignment.unitId))
+        const unit = allUnits.find(u => parseInt(u.id) === parseInt(activeAssignment.unitId))
         
         if (unit) {
           setTenantUnit({
