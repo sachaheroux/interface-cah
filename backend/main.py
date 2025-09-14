@@ -2137,25 +2137,6 @@ async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
     return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
 
-@app.delete("/api/assignments/tenant/{tenant_id}")
-async def remove_tenant_assignments(tenant_id: int):
-    """Supprimer toutes les assignations d'un locataire"""
-    try:
-        print(f"🗑️ Suppression des assignations pour le locataire {tenant_id}")
-        
-        # Supprimer toutes les assignations du locataire
-        success = db_service.remove_tenant_assignments(tenant_id)
-        
-        if success:
-            print(f"✅ Assignations supprimées pour le locataire {tenant_id}")
-            return {"message": f"Assignations supprimées pour le locataire {tenant_id}"}
-        else:
-            print(f"⚠️ Aucune assignation trouvée pour le locataire {tenant_id}")
-            return {"message": f"Aucune assignation trouvée pour le locataire {tenant_id}"}
-            
-    except Exception as e:
-        print(f"❌ Erreur lors de la suppression des assignations: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression des assignations: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
