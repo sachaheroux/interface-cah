@@ -582,7 +582,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         onClose()
       }
     }
-  }
 
 
   if (!isOpen) return null
