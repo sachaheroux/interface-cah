@@ -1,4 +1,5 @@
 import React from 'react'
+// Test deploiement - ligne propre
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import TopNavigation from './components/TopNavigation'
 import SecondarySidebar from './components/SecondarySidebar'
