@@ -61,30 +61,25 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [unitSearchTerm, setUnitSearchTerm] = useState('')
   const [filteredUnits, setFilteredUnits] = useState([])
 
-  useEffect(() => {
-    if (tenant) {
-      console.log('📋 Chargement des données locataire existant:', {
-        name: tenant.name,
-        lease: tenant.lease,
-        leaseRenewal: tenant.leaseRenewal
-      })
+  // Charger les données de bail depuis les assignations
+  const loadLeaseDataFromAssignments = async (tenantId) => {
+    try {
+      const assignmentsResponse = await assignmentsService.getAssignments()
+      const allAssignments = assignmentsResponse.data || []
       
-      setFormData({
-        name: tenant.name || '',
-        email: tenant.email || '',
-        phone: tenant.phone || '',
-        status: tenant.status || TenantStatus.ACTIVE,
-        
-        unitId: tenant.unitId || '',
-        unitInfo: tenant.unitInfo || null,
-        
-        lease: {
-          startDate: tenant.lease?.startDate || '',
-          endDate: tenant.lease?.endDate || '',
-          monthlyRent: tenant.lease?.monthlyRent || 0,
-          paymentMethod: tenant.lease?.paymentMethod || 'Virement bancaire',
-          leasePdf: tenant.lease?.leasePdf || '', // Charger le PDF
-          amenities: tenant.lease?.amenities || {
+      // Trouver l'assignation active pour ce locataire
+      const activeAssignment = allAssignments.find(a => 
+        parseInt(a.tenantId) === tenantId && !a.moveOutDate
+      )
+      
+      if (activeAssignment) {
+        return {
+          startDate: activeAssignment.leaseStartDate || '',
+          endDate: activeAssignment.leaseEndDate || '',
+          monthlyRent: activeAssignment.rentAmount || 0,
+          paymentMethod: 'Virement bancaire', // Valeur par défaut
+          leasePdf: '',
+          amenities: {
             heating: false,
             electricity: false,
             wifi: false,
@@ -97,27 +92,76 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             dishwasher: false,
             washerDryer: false
           }
-        },
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des données de bail:', error)
+    }
+    return null
+  }
+
+  useEffect(() => {
+    if (tenant) {
+      console.log('📋 Chargement des données locataire existant:', {
+        name: tenant.name,
+        lease: tenant.lease,
+        leaseRenewal: tenant.leaseRenewal
+      })
+      
+      // Charger les données de bail depuis les assignations
+      loadLeaseDataFromAssignments(tenant.id).then(leaseData => {
+        const finalLeaseData = leaseData || tenant.lease || {
+          startDate: '',
+          endDate: '',
+          monthlyRent: 0,
+          paymentMethod: 'Virement bancaire',
+          leasePdf: '',
+          amenities: {
+            heating: false,
+            electricity: false,
+            wifi: false,
+            furnished: false,
+            parking: false,
+            laundry: false,
+            airConditioning: false,
+            balcony: false,
+            storage: false,
+            dishwasher: false,
+            washerDryer: false
+          }
+        }
         
-        leaseRenewals: tenant.leaseRenewals || [],
-        
-        emergencyContact: {
-          name: tenant.emergencyContact?.name || '',
-          phone: tenant.emergencyContact?.phone || '',
-          email: tenant.emergencyContact?.email || '',
-          relationship: tenant.emergencyContact?.relationship || ''
-        },
-        
-        financial: {
-          monthlyIncome: tenant.financial?.monthlyIncome || 0,
-          creditScore: tenant.financial?.creditScore || 0,
-          bankAccount: tenant.financial?.bankAccount || '',
-          employer: tenant.financial?.employer || '',
-          employerPhone: tenant.financial?.employerPhone || '',
-          depositAmount: tenant.financial?.depositAmount || 0
-        },
-        
-        notes: tenant.notes || ''
+        setFormData({
+          name: tenant.name || '',
+          email: tenant.email || '',
+          phone: tenant.phone || '',
+          status: tenant.status || TenantStatus.ACTIVE,
+          
+          unitId: tenant.unitId || '',
+          unitInfo: tenant.unitInfo || null,
+          
+          lease: finalLeaseData,
+          
+          leaseRenewals: tenant.leaseRenewals || [],
+          
+          emergencyContact: {
+            name: tenant.emergencyContact?.name || '',
+            phone: tenant.emergencyContact?.phone || '',
+            email: tenant.emergencyContact?.email || '',
+            relationship: tenant.emergencyContact?.relationship || ''
+          },
+          
+          financial: {
+            monthlyIncome: tenant.financial?.monthlyIncome || 0,
+            creditScore: tenant.financial?.creditScore || 0,
+            bankAccount: tenant.financial?.bankAccount || '',
+            employer: tenant.financial?.employer || '',
+            employerPhone: tenant.financial?.employerPhone || '',
+            depositAmount: tenant.financial?.depositAmount || 0
+          },
+          
+          notes: tenant.notes || ''
+        })
       })
     } else {
       setFormData({
@@ -476,22 +520,29 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           const realTenantId = savedTenant.data?.id || savedTenant.id
           console.log(`🔗 Assignation du locataire ${realTenantId} à l'unité ${formData.unitId}`)
           
+          const assignmentData = {
+            name: tenantData.name,
+            email: tenantData.email,
+            phone: tenantData.phone,
+            moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
+            moveOutDate: formData.lease?.endDate || null,
+            monthlyRent: formData.lease?.monthlyRent || 0,
+            depositAmount: formData.financial?.depositAmount || 0,
+            startDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
+            endDate: formData.lease?.endDate || null,
+            rentDueDay: 1,
+            notes: formData.notes || ''
+          }
+          
+          console.log('🔍 DEBUG - Données d\'assignation envoyées:', {
+            formDataLease: formData.lease,
+            assignmentData: assignmentData
+          })
+          
           await unitsService.assignTenantToUnit(
             formData.unitId,
-            realTenantId, // Utiliser le vrai ID du locataire créé
-            {
-              name: tenantData.name,
-              email: tenantData.email,
-              phone: tenantData.phone,
-              moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
-              moveOutDate: formData.lease?.endDate || null,
-              rentAmount: formData.lease?.monthlyRent || 0,
-              depositAmount: formData.financial?.depositAmount || 0,
-              leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
-              leaseEndDate: formData.lease?.endDate || null,
-              rentDueDay: 1,
-              notes: formData.notes || ''
-            }
+            realTenantId,
+            assignmentData
           )
           console.log('✅ Tenant assigned to unit successfully')
         } catch (assignError) {

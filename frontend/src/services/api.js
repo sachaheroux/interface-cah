@@ -478,10 +478,10 @@ export const unitsService = {
         tenantId: parseInt(tenantId),
         moveInDate: tenantData.moveInDate || new Date().toISOString().split('T')[0],
         moveOutDate: tenantData.moveOutDate || null,
-        rentAmount: tenantData.rentAmount || 0,
+        rentAmount: tenantData.monthlyRent || tenantData.rentAmount || 0,
         depositAmount: tenantData.depositAmount || 0,
-        leaseStartDate: tenantData.leaseStartDate || new Date().toISOString().split('T')[0],
-        leaseEndDate: tenantData.leaseEndDate || null,
+        leaseStartDate: tenantData.startDate || tenantData.leaseStartDate || new Date().toISOString().split('T')[0],
+        leaseEndDate: tenantData.endDate || tenantData.leaseEndDate || null,
         rentDueDay: tenantData.rentDueDay || 1,
         notes: tenantData.notes || ''
       }

@@ -40,6 +40,12 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
         parseInt(a.tenantId) === tenant.id && !a.moveOutDate
       )
       
+      console.log('🔍 DEBUG - TenantDetails loadTenantUnit:', {
+        tenantId: tenant.id,
+        allAssignments: allAssignments.map(a => ({ id: a.id, tenantId: a.tenantId, unitId: a.unitId })),
+        activeAssignment: activeAssignment
+      })
+      
       if (activeAssignment) {
         // Récupérer les détails de l'unité
         const unitsResponse = await unitsService.getUnits()
@@ -212,7 +218,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                     <MapPin className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">Adresse complète</p>
-                      <p className="text-gray-900">{tenantUnit.address}</p>
+                      <p className="text-gray-900">{tenantUnit.unitAddress || tenantUnit.simpleTitle || 'Adresse non disponible'}</p>
                     </div>
                   </div>
                   
