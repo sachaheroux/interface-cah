@@ -820,14 +820,17 @@ class DatabaseService:
             tenant_id = assignment_data["tenantId"]
             print(f"🔍 DEBUG - tenant_id: {tenant_id}")
             
-            # Vérifier qu'il n'y a pas déjà une assignation active pour ce locataire
+            # Vérifier s'il y a déjà une assignation active pour ce locataire
             existing_assignment = session.query(Assignment).filter(
                 Assignment.tenant_id == tenant_id,
                 Assignment.move_out_date.is_(None)
             ).first()
             
             if existing_assignment:
-                raise ValueError(f"Le locataire {tenant_id} a déjà une assignation active")
+                print(f"🔄 DEBUG - Assignation existante trouvée pour le locataire {tenant_id}, suppression de l'ancienne")
+                # Supprimer l'ancienne assignation pour permettre la nouvelle
+                session.delete(existing_assignment)
+                session.commit()
             
             # Créer la nouvelle assignation
             print(f"🔍 DEBUG - Création de l'assignation avec unit_id: {assignment_data.get('unitId')}")
