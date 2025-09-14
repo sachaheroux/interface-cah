@@ -1084,8 +1084,6 @@ async def create_tenant_with_assignment(data: dict):
             "name": tenant_name,
             "email": tenant_email,
             "phone": tenant_phone,
-            "emergencyContact": data.get("emergencyContact", {}),
-            "financial": data.get("financial", {}),
             "notes": data.get("notes", "")
         }
         

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, UserCheck, Home, Search, AlertTriangle } from 'lucide-react'
-import { TenantStatus, getTenantStatusLabel, getRelationshipLabel } from '../types/tenant'
+import { X, Save, User, Mail, Phone, MapPin, DollarSign, FileText, Home, Search, AlertTriangle } from 'lucide-react'
+import { TenantStatus, getTenantStatusLabel } from '../types/tenant'
 import { unitsService, assignmentsService } from '../services/api'
 
 export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
@@ -21,39 +21,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       startDate: '',
       endDate: '',
       monthlyRent: 0,
-      paymentMethod: 'Virement bancaire',
-      leasePdf: '', // URL ou nom du fichier PDF
-      amenities: {
-        heating: false,
-        electricity: false,
-        wifi: false,
-        furnished: false,
-        parking: false,
-        laundry: false,
-        airConditioning: false,
-        balcony: false,
-        storage: false,
-        dishwasher: false,
-        washerDryer: false
-      }
-    },
-    
-    leaseRenewals: [], // Liste des renouvellements au lieu d'un seul
-    
-    emergencyContact: {
-      name: '',
-      phone: '',
-      email: '',
-      relationship: ''
-    },
-    
-    financial: {
-      monthlyIncome: 0,
-      creditScore: 0,
-      bankAccount: '',
-      employer: '',
-      employerPhone: '',
-      depositAmount: 0
+      paymentMethod: 'Virement bancaire'
     },
     
     notes: ''
@@ -431,15 +399,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
-  const handleNestedChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }))
-  }
 
   // Fonction de validation de date simple
   const isValidDate = (dateString) => {
@@ -665,13 +624,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }
   }
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-CA', {
-      style: 'currency',
-      currency: 'CAD',
-      minimumFractionDigits: 0
-    }).format(amount)
-  }
 
   if (!isOpen) return null
 
@@ -1185,189 +1137,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Conditions du Bail (Amenities) */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2" />
-              Conditions du Bail
-            </h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Cochez les conditions incluses dans le bail actuel. Ces conditions peuvent changer lors des renouvellements.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries(formData.lease?.amenities || {}).map(([amenity, checked]) => (
-                  <div key={amenity} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`amenity-${amenity}`}
-                      checked={checked}
-                      onChange={(e) => handleLeaseChange('amenities', {
-                        ...(formData.lease?.amenities || {}),
-                        [amenity]: e.target.checked
-                      })}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor={`amenity-${amenity}`} className="ml-2 block text-sm text-gray-900 capitalize">
-                      {amenity === 'wifi' ? 'WiFi' : 
-                       amenity === 'heating' ? 'Chauffage' :
-                       amenity === 'electricity' ? 'Électricité' :
-                       amenity === 'furnished' ? 'Meublé' :
-                       amenity === 'parking' ? 'Stationnement' :
-                       amenity === 'laundry' ? 'Buanderie' :
-                       amenity === 'airConditioning' ? 'Climatisation' :
-                       amenity === 'balcony' ? 'Balcon' :
-                       amenity === 'storage' ? 'Entreposage' :
-                       amenity === 'dishwasher' ? 'Lave-vaisselle' :
-                       amenity === 'washerDryer' ? 'Laveuse/Sécheuse' :
-                       amenity}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Contact d'urgence */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <UserCheck className="h-5 w-5 mr-2" />
-              Contact d'urgence
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom
-                </label>
-                <input
-                  type="text"
-                  value={formData.emergencyContact.name}
-                  onChange={(e) => handleNestedChange('emergencyContact', 'name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.emergencyContact.phone}
-                  onChange={(e) => handleNestedChange('emergencyContact', 'phone', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.emergencyContact.email}
-                  onChange={(e) => handleNestedChange('emergencyContact', 'email', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Relation
-                </label>
-                <select
-                  value={formData.emergencyContact.relationship}
-                  onChange={(e) => handleNestedChange('emergencyContact', 'relationship', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">Sélectionner...</option>
-                  <option value="parent">Parent</option>
-                  <option value="conjoint">Conjoint(e)</option>
-                  <option value="enfant">Enfant</option>
-                  <option value="frere_soeur">Frère/Sœur</option>
-                  <option value="ami">Ami(e)</option>
-                  <option value="collegue">Collègue</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Informations financières */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2" />
-              Informations financières
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Revenu mensuel
-                </label>
-                <input
-                  type="number"
-                  value={formData.financial.monthlyIncome}
-                  onChange={(e) => handleNestedChange('financial', 'monthlyIncome', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formatCurrency(formData.financial.monthlyIncome)}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cote de crédit
-                </label>
-                <input
-                  type="number"
-                  min="300"
-                  max="900"
-                  value={formData.financial.creditScore}
-                  onChange={(e) => handleNestedChange('financial', 'creditScore', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="700"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Compte bancaire
-                </label>
-                <input
-                  type="text"
-                  value={formData.financial.bankAccount}
-                  onChange={(e) => handleNestedChange('financial', 'bankAccount', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Banque Nationale - ****1234"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Employeur
-                </label>
-                <input
-                  type="text"
-                  value={formData.financial.employer}
-                  onChange={(e) => handleNestedChange('financial', 'employer', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Téléphone employeur
-                </label>
-                <input
-                  type="tel"
-                  value={formData.financial.employerPhone}
-                  onChange={(e) => handleNestedChange('financial', 'employerPhone', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Notes */}
           <div className="border-t pt-6">

@@ -219,26 +219,10 @@ class DatabaseService:
         print(f"🔍 DEBUG - create_tenant reçu: {tenant_data}")
         session = self.get_session()
         try:
-            # Extraire les données
-            emergency_contact = tenant_data.get("emergencyContact", {})
-            financial = tenant_data.get("financial", {})
-            personal_info = tenant_data.get("personalInfo", {})
-            
-            print(f"🔍 DEBUG - emergency_contact: {emergency_contact}")
-            print(f"🔍 DEBUG - financial: {financial}")
-            
             tenant = Tenant(
                 name=tenant_data["name"],
                 email=tenant_data.get("email"),
                 phone=tenant_data.get("phone"),
-                address_street=tenant_data.get("address", {}).get("street"),
-                address_city=tenant_data.get("address", {}).get("city"),
-                address_province=tenant_data.get("address", {}).get("province"),
-                address_postal_code=tenant_data.get("address", {}).get("postalCode"),
-                address_country=tenant_data.get("address", {}).get("country", "Canada"),
-                personal_info=json.dumps(personal_info),
-                emergency_contact=json.dumps(emergency_contact),
-                financial_info=json.dumps(financial),
                 notes=tenant_data.get("notes", "")
             )
             print(f"🔍 DEBUG - Tenant créé: {tenant}")
