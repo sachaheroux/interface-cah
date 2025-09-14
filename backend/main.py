@@ -1085,98 +1085,60 @@ async def create_tenant_with_assignment(data: dict):
     try:
         print(f"🔍 DEBUG - create_tenant_with_assignment reçu: {data}")
         
-        # Extraire les données du formulaire
-        tenant_name = data.get("name", "").strip()
-        tenant_email = data.get("email", "").strip()
-        tenant_phone = data.get("phone", "").strip()
-        unit_id = data.get("unitId")
+        # NOUVEAU FORMAT : data contient {tenant: {...}, assignment: {...}}
+        tenant_data = data.get("tenant", {})
+        assignment_data = data.get("assignment", {})
+        
+        # Fallback pour l'ancien format
+        if not tenant_data and not assignment_data:
+            tenant_data = {
+                "name": data.get("name", "").strip(),
+                "email": data.get("email", "").strip(),
+                "phone": data.get("phone", "").strip(),
+                "notes": data.get("notes", "")
+            }
+            assignment_data = {
+                "unitId": data.get("unitId"),
+                "moveInDate": data.get("moveInDate"),
+                "moveOutDate": data.get("moveOutDate"),
+                "rentAmount": data.get("rentAmount", 0),
+                "depositAmount": data.get("depositAmount", 0),
+                "leaseStartDate": data.get("leaseStartDate"),
+                "leaseEndDate": data.get("leaseEndDate"),
+                "rentDueDay": data.get("rentDueDay", 1),
+                "notes": data.get("notes", "")
+            }
         
         # Validation basique
-        if not tenant_name:
+        if not tenant_data.get("name", "").strip():
             raise HTTPException(status_code=400, detail="Le nom du locataire est obligatoire")
         
-        # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
-        print(f"📝 Création du locataire: {tenant_name}")
-        tenant_data = {
-            "name": tenant_name,
-            "email": tenant_email,
-            "phone": tenant_phone,
-            "notes": data.get("notes", "")
-        }
+        if not assignment_data.get("unitId"):
+            raise HTTPException(status_code=400, detail="L'unité est obligatoire")
         
+        # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
+        print(f"📝 Création du locataire: {tenant_data['name']}")
         created_tenant = db_service.create_tenant(tenant_data)
         tenant_id = created_tenant["id"]
         print(f"✅ Locataire créé avec ID: {tenant_id}")
         
-        # 2. CRÉER L'ASSIGNATION si une unité est sélectionnée
-        if unit_id:
-            print(f"🏠 Création de l'assignation pour l'unité: {unit_id}")
-            assignment_data = {
-                "tenantId": tenant_id,
-                "unitId": int(unit_id),
-                "moveInDate": data.get("lease", {}).get("startDate") or data.get("moveInDate"),
-                "moveOutDate": data.get("lease", {}).get("endDate") or data.get("moveOutDate"),
-                "rentAmount": data.get("lease", {}).get("monthlyRent") or data.get("rentAmount", 0),
-                "depositAmount": data.get("depositAmount", 0),
-                "leaseStartDate": data.get("lease", {}).get("startDate") or data.get("leaseStartDate"),
-                "leaseEndDate": data.get("lease", {}).get("endDate") or data.get("leaseEndDate"),
-                "rentDueDay": data.get("rentDueDay", 1),
-                "notes": data.get("notes", "")
+        # 2. CRÉER L'ASSIGNATION avec les données de bail
+        print(f"🏠 Création de l'assignation pour l'unité: {assignment_data['unitId']}")
+        assignment_data["tenantId"] = tenant_id
+        
+        # Supprimer les valeurs None/vides
+        assignment_data = {k: v for k, v in assignment_data.items() if v is not None and v != ""}
+        
+        created_assignment = db_service.create_assignment_with_validation(assignment_data)
+        print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
+        
+        return {
+            "data": {
+                "tenant": created_tenant,
+                "assignment": created_assignment,
+                "message": "Locataire et assignation créés avec succès"
             }
-            
-            # Supprimer les valeurs None/vides
-            assignment_data = {k: v for k, v in assignment_data.items() if v is not None and v != ""}
-            
-            created_assignment = db_service.create_assignment_with_validation(assignment_data)
-            print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
-            
-            # 3. CRÉER LES RENOUVELLEMENTS si présents
-            renewals = data.get("leaseRenewals", [])
-            created_renewals = []
-            
-            for renewal in renewals:
-                if renewal.get("startDate") and renewal.get("endDate"):
-                    print(f"🔄 Création du renouvellement: {renewal['startDate']} - {renewal['endDate']}")
-                    renewal_data = {
-                        "tenantId": tenant_id,
-                        "unitId": int(unit_id),
-                        "moveInDate": renewal.get("startDate"),
-                        "moveOutDate": renewal.get("endDate"),
-                        "rentAmount": renewal.get("monthlyRent", 0),
-                        "depositAmount": 0,
-                        "leaseStartDate": renewal.get("startDate"),
-                        "leaseEndDate": renewal.get("endDate"),
-                        "rentDueDay": 1,
-                        "notes": f"Renouvellement - {renewal.get('renewalPdf', '')}"
-                    }
-                    
-                    # Supprimer les valeurs None/vides
-                    renewal_data = {k: v for k, v in renewal_data.items() if v is not None and v != ""}
-                    
-                    try:
-                        created_renewal = db_service.create_assignment_with_validation(renewal_data)
-                        created_renewals.append(created_renewal)
-                        print(f"✅ Renouvellement créé avec ID: {created_renewal['id']}")
-                    except Exception as e:
-                        print(f"❌ Erreur création renouvellement: {e}")
-            
-            return {
-                "data": {
-                    "tenant": created_tenant,
-                    "assignment": created_assignment,
-                    "renewals": created_renewals,
-                    "message": f"Locataire, assignation et {len(created_renewals)} renouvellement(s) créés avec succès"
-                }
-            }
-        else:
-            print("ℹ️ Aucune unité sélectionnée, seul le locataire a été créé")
-            return {
-                "data": {
-                    "tenant": created_tenant,
-                    "assignment": None,
-                    "message": "Locataire créé avec succès (aucune unité assignée)"
-                }
-            }
+        }
         
     except HTTPException:
         raise
