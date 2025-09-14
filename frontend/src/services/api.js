@@ -474,8 +474,8 @@ export const unitsService = {
       
       // Préparer les données d'assignation avec les champs requis par le backend
       const assignmentData = {
-        unitId: parseInt(unitId),
-        tenantId: parseInt(tenantId),
+        unitId: parseInt(unitId), // S'assurer que c'est un INTEGER
+        tenantId: parseInt(tenantId), // S'assurer que c'est un INTEGER
         moveInDate: tenantData.moveInDate || new Date().toISOString().split('T')[0],
         moveOutDate: tenantData.moveOutDate || null,
         rentAmount: tenantData.monthlyRent || tenantData.rentAmount || 0,
@@ -639,17 +639,6 @@ export const assignmentsService = {
       const result = await response.json()
       console.log('✅ Assignment created successfully:', result)
       
-      // Mettre à jour aussi le localStorage pour la compatibilité
-      const existingAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const filteredAssignments = existingAssignments.filter(a => a.tenantId !== assignmentData.tenantId)
-      filteredAssignments.push({
-        unitId: assignmentData.unitId,
-        tenantId: assignmentData.tenantId,
-        tenantData: assignmentData.tenantData,
-        assignedAt: new Date().toISOString()
-      })
-      localStorage.setItem('unitTenantAssignments', JSON.stringify(filteredAssignments))
-      
       return result
     } catch (error) {
       console.error('❌ Error creating assignment:', error)
@@ -732,10 +721,7 @@ export const assignmentsService = {
       return result
     } catch (error) {
       console.error('Error getting unit assignments:', error)
-      // Fallback vers localStorage
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const unitAssignments = localAssignments.filter(a => a.unitId === unitId)
-      return { data: unitAssignments }
+      return { data: [] }
     }
   },
 
@@ -749,10 +735,7 @@ export const assignmentsService = {
       return result
     } catch (error) {
       console.error('Error getting tenant assignment:', error)
-      // Fallback vers localStorage
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      const assignment = localAssignments.find(a => a.tenantId === parseInt(tenantId))
-      return { data: assignment || null }
+      return { data: null }
     }
   },
 

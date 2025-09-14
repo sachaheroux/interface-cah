@@ -1007,6 +1007,35 @@ async def get_assignments():
         print(f"Erreur lors du chargement des assignations: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
+@app.post("/api/tenants/with-assignment")
+async def create_tenant_with_assignment(data: dict):
+    """Créer un locataire avec son assignation en une seule opération"""
+    try:
+        print(f"🔍 DEBUG - create_tenant_with_assignment reçu: {data}")
+        
+        tenant_data = data.get("tenant", {})
+        assignment_data = data.get("assignment", {})
+        
+        if not tenant_data or not assignment_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Données manquantes: tenant et assignment requis"
+            )
+        
+        # Créer le locataire et l'assignation en une seule opération atomique
+        result = db_service.create_tenant_with_assignment(tenant_data, assignment_data)
+        
+        print(f"✅ Locataire et assignation créés avec succès")
+        return {"data": result}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Erreur lors de la création locataire+assignation: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
+
 @app.post("/api/assignments")
 async def create_assignment(assignment_data: dict):
     """Créer une nouvelle assignation locataire-unité"""

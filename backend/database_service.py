@@ -223,10 +223,6 @@ class DatabaseService:
             emergency_contact = tenant_data.get("emergencyContact", {})
             print(f"🔍 DEBUG - emergency_contact: {emergency_contact}")
             
-            # Extraire les données de bail
-            lease_data = tenant_data.get("lease", {})
-            print(f"🔍 DEBUG - lease_data: {lease_data}")
-            
             tenant = Tenant(
                 name=tenant_data["name"],
                 email=tenant_data.get("email"),
@@ -234,8 +230,6 @@ class DatabaseService:
                 emergency_contact_name=emergency_contact.get("name"),
                 emergency_contact_phone=emergency_contact.get("phone"),
                 emergency_contact_relationship=emergency_contact.get("relationship"),
-                move_in_date=self._safe_parse_date(tenant_data.get("moveInDate") or lease_data.get("startDate")),
-                move_out_date=self._safe_parse_date(tenant_data.get("moveOutDate") or lease_data.get("endDate")),
                 financial_info=json.dumps(tenant_data.get("financial", {})),
                 notes=tenant_data.get("notes", "")
             )
@@ -821,6 +815,85 @@ class DatabaseService:
             return self.get_unit_invoices(assignment['unitId'])
         return []
     
+    def create_tenant_with_assignment(self, tenant_data: Dict, assignment_data: Dict) -> Dict:
+        """Créer un locataire ET son assignation en une seule opération atomique"""
+        print(f"🔍 DEBUG - create_tenant_with_assignment reçu:")
+        print(f"  tenant_data: {tenant_data}")
+        print(f"  assignment_data: {assignment_data}")
+        
+        session = self.get_session()
+        try:
+            # 1. Créer le locataire (sans données de bail)
+            emergency_contact = tenant_data.get("emergencyContact", {})
+            tenant = Tenant(
+                name=tenant_data["name"],
+                email=tenant_data.get("email"),
+                phone=tenant_data.get("phone"),
+                emergency_contact_name=emergency_contact.get("name"),
+                emergency_contact_phone=emergency_contact.get("phone"),
+                emergency_contact_relationship=emergency_contact.get("relationship"),
+                financial_info=json.dumps(tenant_data.get("financial", {})),
+                notes=tenant_data.get("notes", "")
+            )
+            
+            session.add(tenant)
+            session.flush()  # Pour obtenir l'ID du locataire
+            tenant_id = tenant.id
+            print(f"✅ Locataire créé avec ID: {tenant_id}")
+            
+            # 2. Vérifier qu'il n'y a pas d'assignation active pour ce locataire
+            existing_assignment = session.query(Assignment).filter(
+                Assignment.tenant_id == tenant_id,
+                Assignment.move_out_date.is_(None)
+            ).first()
+            
+            if existing_assignment:
+                print(f"🔄 Suppression de l'assignation existante pour le locataire {tenant_id}")
+                session.delete(existing_assignment)
+            
+            # 3. Vérifier que l'unité existe
+            unit = session.query(Unit).filter(Unit.id == assignment_data["unitId"]).first()
+            if not unit:
+                raise ValueError(f"L'unité avec l'ID {assignment_data['unitId']} n'existe pas")
+            
+            # 4. Créer l'assignation avec les données de bail
+            move_in_date = self._safe_parse_date(assignment_data.get("moveInDate"))
+            if not move_in_date:
+                move_in_date = datetime.now().date()
+            
+            assignment = Assignment(
+                tenant_id=tenant_id,
+                unit_id=assignment_data["unitId"],
+                building_id=unit.building_id,
+                move_in_date=move_in_date,
+                move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
+                rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
+                deposit_amount=self._safe_parse_float(assignment_data.get("depositAmount"), 0.0),
+                lease_start_date=self._safe_parse_date(assignment_data.get("leaseStartDate")),
+                lease_end_date=self._safe_parse_date(assignment_data.get("leaseEndDate")),
+                rent_due_day=assignment_data.get("rentDueDay", 1),
+                notes=assignment_data.get("notes", "")
+            )
+            
+            session.add(assignment)
+            session.commit()
+            session.refresh(assignment)
+            
+            print(f"✅ Assignation créée avec ID: {assignment.id}")
+            
+            # 5. Retourner les données complètes
+            return {
+                "tenant": tenant.to_dict(),
+                "assignment": assignment.to_dict()
+            }
+            
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la création locataire+assignation: {e}")
+            raise ValueError(f"Erreur lors de la création: {str(e)}")
+        finally:
+            session.close()
+
     def create_assignment_with_validation(self, assignment_data: Dict) -> Dict:
         """Créer une assignation avec validation des cardinalités"""
         print(f"🔍 DEBUG - create_assignment_with_validation reçu: {assignment_data}")

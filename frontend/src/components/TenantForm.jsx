@@ -76,7 +76,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === parseInt(tenantId) && !a.moveOutDate
+        parseInt(a.tenantId) === parseInt(tenantId) && 
+        (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '')
       )
       
       if (activeAssignment) {
@@ -137,7 +138,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === parseInt(tenantId) && !a.moveOutDate
+        parseInt(a.tenantId) === parseInt(tenantId) && 
+        (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '')
       )
       
       if (activeAssignment) {
@@ -601,43 +603,47 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       if (formData.unitId && formData.unitInfo) {
         try {
-          // Créer d'abord le locataire pour obtenir son vrai ID
-          console.log('📤 Envoi des données locataire au service...')
-          const savedTenant = await onSave(tenantData)
-          console.log('✅ Locataire sauvegardé avec succès')
-          
-          // Maintenant assigner avec le vrai ID du locataire créé
-          const realTenantId = savedTenant.data?.id || savedTenant.id
-          console.log(`🔗 Assignation du locataire ${realTenantId} à l'unité ${formData.unitId}`)
+          // Utiliser la nouvelle logique unifiée : créer locataire + assignation en une seule opération
+          console.log('📤 Création unifiée locataire + assignation...')
           
           const assignmentData = {
-            name: tenantData.name,
-            email: tenantData.email,
-            phone: tenantData.phone,
+            unitId: parseInt(formData.unitId),
             moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
             moveOutDate: formData.lease?.endDate || null,
-            monthlyRent: formData.lease?.monthlyRent || 0,
+            rentAmount: formData.lease?.monthlyRent || 0,
             depositAmount: formData.financial?.depositAmount || 0,
-            startDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
-            endDate: formData.lease?.endDate || null,
+            leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
+            leaseEndDate: formData.lease?.endDate || null,
             rentDueDay: 1,
             notes: formData.notes || ''
           }
           
-          console.log('🔍 DEBUG - Données d\'assignation envoyées:', {
-            formDataLease: formData.lease,
-            assignmentData: assignmentData
+          const unifiedData = {
+            tenant: tenantData,
+            assignment: assignmentData
+          }
+          
+          console.log('🔍 DEBUG - Données unifiées envoyées:', unifiedData)
+          
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/with-assignment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(unifiedData)
           })
           
-          await unitsService.assignTenantToUnit(
-            formData.unitId,
-            realTenantId,
-            assignmentData
-          )
-          console.log('✅ Tenant assigned to unit successfully')
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
+          }
+          
+          const result = await response.json()
+          console.log('✅ Locataire et assignation créés avec succès:', result)
+          
         } catch (assignError) {
-          console.error('❌ Error assigning tenant to unit:', assignError)
-          // Continuer même si l'assignation échoue
+          console.error('❌ Error creating tenant with assignment:', assignError)
+          throw assignError
         }
       } else {
         // Pas d'unité sélectionnée, juste sauvegarder le locataire

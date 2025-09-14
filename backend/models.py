@@ -103,8 +103,6 @@ class Tenant(Base):
     emergency_contact_name = Column(String(255))
     emergency_contact_phone = Column(String(50))
     emergency_contact_relationship = Column(String(100))
-    move_in_date = Column(Date)
-    move_out_date = Column(Date)
     financial_info = Column(Text)  # JSON string
     notes = Column(Text, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -125,14 +123,10 @@ class Tenant(Base):
                 "phone": self.emergency_contact_phone or "",
                 "relationship": self.emergency_contact_relationship or ""
             },
-            "moveInDate": self.move_in_date.isoformat() if self.move_in_date else None,
-            "moveOutDate": self.move_out_date.isoformat() if self.move_out_date else None,
             "financial": safe_json_loads(self.financial_info),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
-            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
-            # Ne pas retourner de données de bail par défaut - elles seront chargées depuis les assignations
-            "lease": None
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None
         }
 
 class Unit(Base):
