@@ -559,26 +559,78 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         const updatedTenant = await tenantResponse.json()
         console.log('✅ Locataire mis à jour:', updatedTenant)
         
-        // 2. Créer une nouvelle assignation avec les données de bail
-        console.log('🏠 Création d\'une nouvelle assignation...')
-        const assignmentResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            tenantId: tenant.id,
-            ...assignmentData
-          })
-        })
+        // 2. Gérer les assignations (bail de base + renouvellements)
+        console.log('🏠 Gestion des assignations...')
         
-        if (!assignmentResponse.ok) {
-          const errorText = await assignmentResponse.text()
-          throw new Error(`Erreur création assignation: ${assignmentResponse.status} - ${errorText}`)
+        // Récupérer les assignations existantes
+        const existingAssignmentsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`)
+        const existingAssignments = await existingAssignmentsResponse.json()
+        const tenantAssignments = existingAssignments.data.filter(a => parseInt(a.tenantId) === parseInt(tenant.id))
+        
+        console.log('📋 Assignations existantes:', tenantAssignments)
+        
+        // Mettre à jour le bail de base (première assignation)
+        if (tenantAssignments.length > 0) {
+          const baseAssignment = tenantAssignments[0]
+          console.log('🔄 Mise à jour du bail de base:', baseAssignment.id)
+          
+          const updateBaseResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments/${baseAssignment.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(assignmentData)
+          })
+          
+          if (!updateBaseResponse.ok) {
+            const errorText = await updateBaseResponse.text()
+            throw new Error(`Erreur mise à jour bail de base: ${updateBaseResponse.status} - ${errorText}`)
+          }
+          
+          console.log('✅ Bail de base mis à jour')
         }
         
-        const newAssignment = await assignmentResponse.json()
-        console.log('✅ Nouvelle assignation créée:', newAssignment)
+        // Supprimer les anciens renouvellements
+        const oldRenewals = tenantAssignments.slice(1)
+        for (const renewal of oldRenewals) {
+          console.log('🗑️ Suppression de l\'ancien renouvellement:', renewal.id)
+          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments/${renewal.id}`, {
+            method: 'DELETE'
+          })
+        }
+        
+        // Créer les nouveaux renouvellements
+        for (const renewal of formData.leaseRenewals) {
+          if (renewal.startDate && renewal.endDate) {
+            console.log('🔄 Création du renouvellement:', renewal)
+            
+            const renewalResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                tenantId: tenant.id,
+                unitId: parseInt(formData.unitId),
+                moveInDate: renewal.startDate,
+                moveOutDate: renewal.endDate,
+                rentAmount: renewal.monthlyRent || 0,
+                depositAmount: 0,
+                leaseStartDate: renewal.startDate,
+                leaseEndDate: renewal.endDate,
+                rentDueDay: 1,
+                notes: `Renouvellement de bail - ${renewal.renewalPdf || ''}`
+              })
+            })
+            
+            if (renewalResponse.ok) {
+              const renewalResult = await renewalResponse.json()
+              console.log('✅ Renouvellement créé:', renewalResult)
+            } else {
+              console.error('❌ Erreur création renouvellement:', await renewalResponse.text())
+            }
+          }
+        }
         
         // Retourner les données mises à jour (sans déclencher onSave pour éviter le double appel)
         console.log('✅ Locataire mis à jour avec succès:', updatedTenant.data || updatedTenant)
