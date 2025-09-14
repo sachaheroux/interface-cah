@@ -59,58 +59,48 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.log('📚 Historique des baux trouvé:', tenantAssignments)
       setLeaseHistory(tenantAssignments)
       
-      // Trouver l'assignation active pour ce locataire (la plus récente)
-      const activeAssignment = tenantAssignments.find(a => {
-        const today = new Date()
-        const moveOutDate = a.moveOutDate ? new Date(a.moveOutDate) : null
-        
-        // Une assignation est active si :
-        // 1. Elle n'a pas de moveOutDate OU
-        // 2. La moveOutDate est dans le futur (bail encore valide)
-        const isActive = !moveOutDate || moveOutDate > today
-        
-        console.log(`🔍 Vérification assignation active:`, {
-          id: a.id,
-          moveOutDate: a.moveOutDate,
-          moveOutDateParsed: moveOutDate,
-          today: today,
-          isActive: isActive
-        })
-        return isActive
-      })
+      // Le bail de base est toujours la première assignation (la plus ancienne)
+      const baseAssignment = tenantAssignments[0] // Première assignation = bail de base
       
-      // Préparer les renouvellements (toutes les assignations sauf la première)
-      const renewalsData = tenantAssignments.slice(1).map((assignment, index) => ({
-        id: `renewal_${assignment.id}`,
-        startDate: assignment.leaseStartDate || assignment.startDate || '',
-        endDate: assignment.leaseEndDate || assignment.endDate || '',
-        monthlyRent: assignment.rentAmount || 0,
-        paymentMethod: 'Virement bancaire', // Valeur par défaut
-        renewalPdf: ''
-      }))
+      console.log('🏠 Bail de base (première assignation):', baseAssignment)
+      
+      // Préparer les renouvellements (toutes les assignations SAUF la première)
+      // La première = bail de base, les suivantes = renouvellements
+      const renewalsData = tenantAssignments
+        .slice(1) // Prendre toutes les assignations sauf la première
+        .map((assignment, index) => ({
+          id: `renewal_${assignment.id}`,
+          startDate: assignment.leaseStartDate || assignment.startDate || '',
+          endDate: assignment.leaseEndDate || assignment.endDate || '',
+          monthlyRent: assignment.rentAmount || 0,
+          paymentMethod: 'Virement bancaire', // Valeur par défaut
+          renewalPdf: ''
+        }))
       
       console.log('🔄 Renouvellements préparés:', renewalsData)
+      console.log('🔍 DEBUG - Bail de base ID:', baseAssignment?.id)
+      console.log('🔍 DEBUG - Toutes les assignations:', tenantAssignments.map(a => ({ id: a.id, startDate: a.leaseStartDate, rentAmount: a.rentAmount })))
       
-      if (activeAssignment) {
-        console.log('✅ Assignation active trouvée:', activeAssignment)
+      if (baseAssignment) {
+        console.log('✅ Bail de base trouvé:', baseAssignment)
         
         // Récupérer les détails de l'unité
         const unitsResponse = await unitsService.getUnits()
         const allUnits = unitsResponse.data || []
-        const unit = allUnits.find(u => parseInt(u.id) === parseInt(activeAssignment.unitId))
+        const unit = allUnits.find(u => parseInt(u.id) === parseInt(baseAssignment.unitId))
         
         if (unit) {
           console.log('✅ Unité trouvée:', unit)
           
           const leaseData = {
-            startDate: activeAssignment.leaseStartDate || activeAssignment.startDate || '',
-            endDate: activeAssignment.leaseEndDate || activeAssignment.endDate || '',
-            monthlyRent: activeAssignment.rentAmount || 0,
+            startDate: baseAssignment.leaseStartDate || baseAssignment.startDate || '',
+            endDate: baseAssignment.leaseEndDate || baseAssignment.endDate || '',
+            monthlyRent: baseAssignment.rentAmount || 0,
             paymentMethod: 'Virement bancaire', // Valeur par défaut
             leasePdf: ''
           }
           
-          console.log('📋 Données de bail extraites:', leaseData)
+          console.log('📋 Données de bail de base extraites:', leaseData)
           
           return {
             unitData: unit,
@@ -118,10 +108,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             renewalsData: renewalsData
           }
         } else {
-          console.log('❌ Unité non trouvée pour l\'assignation:', activeAssignment.unitId)
+          console.log('❌ Unité non trouvée pour l\'assignation:', baseAssignment.unitId)
         }
       } else {
-        console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
+        console.log('❌ Aucune assignation trouvée pour le locataire:', tenantId)
       }
     } catch (error) {
       console.error('❌ Erreur lors du chargement des données d\'assignation:', error)
