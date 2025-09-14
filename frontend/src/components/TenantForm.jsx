@@ -438,46 +438,45 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    setLoading(true)
+    
+    // Préparer les données à sauvegarder avec inclusion explicite des données de bail
+    const tenantData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      notes: formData.notes,
+      id: tenant?.id || Date.now(),
+      createdAt: tenant?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      // S'assurer que les données de bail sont incluses
+      lease: formData.lease || {
+        startDate: '',
+        endDate: '',
+        monthlyRent: 0,
+        paymentMethod: 'Virement bancaire',
+        leasePdf: '' // URL ou nom du fichier PDF
+      },
+      leaseRenewals: formData.leaseRenewals || []
+    }
+
+    // Debug: Log des données qui vont être sauvegardées
+    console.log('💾 Données locataire à sauvegarder:', {
+      name: tenantData.name,
+      lease: tenantData.lease,
+      leaseRenewals: tenantData.leaseRenewals
+    })
+
+    // Si une unité est sélectionnée, assigner le locataire à l'unité
+    console.log('🔍 DEBUG - Vérification assignation:', {
+      unitId: formData.unitId,
+      unitInfo: formData.unitInfo,
+      hasUnitId: !!formData.unitId,
+      hasUnitInfo: !!formData.unitInfo
+    })
+    
+    // LOGIQUE : Création ou mise à jour selon si le locataire existe
     try {
-      setLoading(true)
-      
-      // Préparer les données à sauvegarder avec inclusion explicite des données de bail
-      const tenantData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        notes: formData.notes,
-        id: tenant?.id || Date.now(),
-        createdAt: tenant?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        // S'assurer que les données de bail sont incluses
-        lease: formData.lease || {
-          startDate: '',
-          endDate: '',
-          monthlyRent: 0,
-          paymentMethod: 'Virement bancaire',
-          leasePdf: '' // URL ou nom du fichier PDF
-        },
-        leaseRenewals: formData.leaseRenewals || []
-      }
-
-      // Debug: Log des données qui vont être sauvegardées
-      console.log('💾 Données locataire à sauvegarder:', {
-        name: tenantData.name,
-        lease: tenantData.lease,
-        leaseRenewals: tenantData.leaseRenewals
-      })
-
-      // Si une unité est sélectionnée, assigner le locataire à l'unité
-      console.log('🔍 DEBUG - Vérification assignation:', {
-        unitId: formData.unitId,
-        unitInfo: formData.unitInfo,
-        hasUnitId: !!formData.unitId,
-        hasUnitInfo: !!formData.unitInfo
-      })
-      
-      // LOGIQUE : Création ou mise à jour selon si le locataire existe
-      try {
         if (tenant?.id) {
           // MISE À JOUR du locataire existant
           console.log('📝 Mise à jour du locataire existant...')
@@ -574,14 +573,14 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           onSave(result.data.tenant)
         }
         
-      } catch (error) {
-        console.error('❌ Error saving tenant:', error)
-        alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
-      } finally {
-        setLoading(false)
-        onClose()
-      }
+    } catch (error) {
+      console.error('❌ Error saving tenant:', error)
+      alert('Erreur lors de la sauvegarde du locataire. Vérifiez la console pour plus de détails.')
+    } finally {
+      setLoading(false)
+      onClose()
     }
+  }
 
 
   if (!isOpen) return null
