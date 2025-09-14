@@ -565,6 +565,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           
           if (!response.ok) {
             const errorText = await response.text()
+            console.error('❌ Erreur backend:', errorText)
+            console.error('📤 Données envoyées:', requestData)
             throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
           }
           

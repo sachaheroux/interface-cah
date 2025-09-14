@@ -877,7 +877,6 @@ class DatabaseService:
             assignment = Assignment(
                 tenant_id=tenant_id,
                 unit_id=assignment_data["unitId"],
-                building_id=unit.building_id,
                 move_in_date=move_in_date,
                 move_out_date=self._safe_parse_date(assignment_data.get("moveOutDate")),
                 rent_amount=self._safe_parse_float(assignment_data.get("rentAmount"), 0.0),
