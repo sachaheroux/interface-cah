@@ -48,7 +48,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       creditScore: 0,
       bankAccount: '',
       employer: '',
-      employerPhone: ''
+      employerPhone: '',
+      depositAmount: 0
     },
     
     notes: ''
@@ -112,7 +113,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           creditScore: tenant.financial?.creditScore || 0,
           bankAccount: tenant.financial?.bankAccount || '',
           employer: tenant.financial?.employer || '',
-          employerPhone: tenant.financial?.employerPhone || ''
+          employerPhone: tenant.financial?.employerPhone || '',
+          depositAmount: tenant.financial?.depositAmount || 0
         },
         
         notes: tenant.notes || ''
@@ -157,7 +159,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           creditScore: 0,
           bankAccount: '',
           employer: '',
-          employerPhone: ''
+          employerPhone: '',
+          depositAmount: 0
         },
         notes: ''
       })
@@ -483,7 +486,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
               moveOutDate: formData.lease?.endDate || null,
               rentAmount: formData.lease?.monthlyRent || 0,
-              depositAmount: formData.financial?.deposit || formData.financial?.depositAmount || 0,
+              depositAmount: formData.financial?.depositAmount || 0,
               leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
               leaseEndDate: formData.lease?.endDate || null,
               rentDueDay: 1,
