@@ -525,7 +525,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Préparer les données à sauvegarder avec inclusion explicite des données de bail
       const tenantData = {
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        notes: formData.notes,
         id: tenant?.id || Date.now(),
         createdAt: tenant?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -557,9 +560,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.log('💾 Données locataire à sauvegarder:', {
         name: tenantData.name,
         lease: tenantData.lease,
-        leaseRenewals: tenantData.leaseRenewals,
-        emergencyContact: tenantData.emergencyContact,
-        financial: tenantData.financial
+        leaseRenewals: tenantData.leaseRenewals
       })
 
       // Si une unité est sélectionnée, assigner le locataire à l'unité
@@ -579,15 +580,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           name: tenantData.name,
           email: tenantData.email,
           phone: tenantData.phone,
-          emergencyContact: tenantData.emergencyContact,
-          financial: tenantData.financial,
           notes: tenantData.notes,
           unitId: formData.unitId || null,
           lease: formData.lease || {},
           moveInDate: formData.lease?.startDate,
           moveOutDate: formData.lease?.endDate,
           rentAmount: formData.lease?.monthlyRent,
-          depositAmount: formData.financial?.depositAmount,
           leaseStartDate: formData.lease?.startDate,
           leaseEndDate: formData.lease?.endDate,
           rentDueDay: 1
