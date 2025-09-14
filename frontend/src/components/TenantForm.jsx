@@ -601,55 +601,50 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         hasUnitInfo: !!formData.unitInfo
       })
       
-      if (formData.unitId && formData.unitInfo) {
-        try {
-          // Utiliser la nouvelle logique unifiée : créer locataire + assignation en une seule opération
-          console.log('📤 Création unifiée locataire + assignation...')
-          
-          const assignmentData = {
-            unitId: parseInt(formData.unitId),
-            moveInDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
-            moveOutDate: formData.lease?.endDate || null,
-            rentAmount: formData.lease?.monthlyRent || 0,
-            depositAmount: formData.financial?.depositAmount || 0,
-            leaseStartDate: formData.lease?.startDate || new Date().toISOString().split('T')[0],
-            leaseEndDate: formData.lease?.endDate || null,
-            rentDueDay: 1,
-            notes: formData.notes || ''
-          }
-          
-          const unifiedData = {
-            tenant: tenantData,
-            assignment: assignmentData
-          }
-          
-          console.log('🔍 DEBUG - Données unifiées envoyées:', unifiedData)
-          
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/with-assignment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(unifiedData)
-          })
-          
-          if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-          }
-          
-          const result = await response.json()
-          console.log('✅ Locataire et assignation créés avec succès:', result)
-          
-        } catch (assignError) {
-          console.error('❌ Error creating tenant with assignment:', assignError)
-          throw assignError
+      // LOGIQUE SIMPLE : Utiliser le nouvel endpoint unifié
+      try {
+        console.log('📤 Création locataire avec assignation...')
+        
+        // Préparer les données pour le nouvel endpoint
+        const requestData = {
+          name: tenantData.name,
+          email: tenantData.email,
+          phone: tenantData.phone,
+          emergencyContact: tenantData.emergencyContact,
+          financial: tenantData.financial,
+          notes: tenantData.notes,
+          unitId: formData.unitId || null,
+          lease: formData.lease || {},
+          moveInDate: formData.lease?.startDate,
+          moveOutDate: formData.lease?.endDate,
+          rentAmount: formData.lease?.monthlyRent,
+          depositAmount: formData.financial?.depositAmount,
+          leaseStartDate: formData.lease?.startDate,
+          leaseEndDate: formData.lease?.endDate,
+          rentDueDay: 1
         }
-      } else {
-        // Pas d'unité sélectionnée, juste sauvegarder le locataire
-        console.log('📤 Envoi des données locataire au service...')
-        await onSave(tenantData)
-        console.log('✅ Locataire sauvegardé avec succès')
+        
+        console.log('🔍 DEBUG - Données envoyées:', requestData)
+        
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-assignment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData)
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
+        }
+        
+        const result = await response.json()
+        console.log('✅ Création réussie:', result)
+        
+      } catch (error) {
+        console.error('❌ Error creating tenant with assignment:', error)
+        throw error
       }
       onClose()
     } catch (error) {

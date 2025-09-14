@@ -1007,31 +1007,80 @@ async def get_assignments():
         print(f"Erreur lors du chargement des assignations: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
-@app.post("/api/tenants/with-assignment")
+@app.post("/api/tenants/create-with-assignment")
 async def create_tenant_with_assignment(data: dict):
-    """Créer un locataire avec son assignation en une seule opération"""
+    """Créer un locataire avec son assignation - LOGIQUE SIMPLE ET FIABLE"""
     try:
         print(f"🔍 DEBUG - create_tenant_with_assignment reçu: {data}")
         
-        tenant_data = data.get("tenant", {})
-        assignment_data = data.get("assignment", {})
+        # Extraire les données du formulaire
+        tenant_name = data.get("name", "").strip()
+        tenant_email = data.get("email", "").strip()
+        tenant_phone = data.get("phone", "").strip()
+        unit_id = data.get("unitId")
         
-        if not tenant_data or not assignment_data:
-            raise HTTPException(
-                status_code=400,
-                detail="Données manquantes: tenant et assignment requis"
-            )
+        # Validation basique
+        if not tenant_name:
+            raise HTTPException(status_code=400, detail="Le nom du locataire est obligatoire")
         
-        # Créer le locataire et l'assignation en une seule opération atomique
-        result = db_service.create_tenant_with_assignment(tenant_data, assignment_data)
+        # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
+        print(f"📝 Création du locataire: {tenant_name}")
+        tenant_data = {
+            "name": tenant_name,
+            "email": tenant_email,
+            "phone": tenant_phone,
+            "emergencyContact": data.get("emergencyContact", {}),
+            "financial": data.get("financial", {}),
+            "notes": data.get("notes", "")
+        }
         
-        print(f"✅ Locataire et assignation créés avec succès")
-        return {"data": result}
+        created_tenant = db_service.create_tenant(tenant_data)
+        tenant_id = created_tenant["id"]
+        print(f"✅ Locataire créé avec ID: {tenant_id}")
+        
+        # 2. CRÉER L'ASSIGNATION si une unité est sélectionnée
+        if unit_id:
+            print(f"🏠 Création de l'assignation pour l'unité: {unit_id}")
+            assignment_data = {
+                "tenantId": tenant_id,
+                "unitId": int(unit_id),
+                "moveInDate": data.get("lease", {}).get("startDate") or data.get("moveInDate"),
+                "moveOutDate": data.get("lease", {}).get("endDate") or data.get("moveOutDate"),
+                "rentAmount": data.get("lease", {}).get("monthlyRent") or data.get("rentAmount", 0),
+                "depositAmount": data.get("financial", {}).get("depositAmount") or data.get("depositAmount", 0),
+                "leaseStartDate": data.get("lease", {}).get("startDate") or data.get("leaseStartDate"),
+                "leaseEndDate": data.get("lease", {}).get("endDate") or data.get("leaseEndDate"),
+                "rentDueDay": data.get("rentDueDay", 1),
+                "notes": data.get("notes", "")
+            }
+            
+            # Supprimer les valeurs None/vides
+            assignment_data = {k: v for k, v in assignment_data.items() if v is not None and v != ""}
+            
+            created_assignment = db_service.create_assignment_with_validation(assignment_data)
+            print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
+            
+            return {
+                "data": {
+                    "tenant": created_tenant,
+                    "assignment": created_assignment,
+                    "message": "Locataire et assignation créés avec succès"
+                }
+            }
+        else:
+            print("ℹ️ Aucune unité sélectionnée, seul le locataire a été créé")
+            return {
+                "data": {
+                    "tenant": created_tenant,
+                    "assignment": None,
+                    "message": "Locataire créé avec succès (aucune unité assignée)"
+                }
+            }
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Erreur lors de la création locataire+assignation: {e}")
+        print(f"❌ Erreur lors de la création: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
