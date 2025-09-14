@@ -592,6 +592,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       })
 
       // Si une unité est sélectionnée, assigner le locataire à l'unité
+      console.log('🔍 DEBUG - Vérification assignation:', {
+        unitId: formData.unitId,
+        unitInfo: formData.unitInfo,
+        hasUnitId: !!formData.unitId,
+        hasUnitInfo: !!formData.unitInfo
+      })
+      
       if (formData.unitId && formData.unitInfo) {
         try {
           // Créer d'abord le locataire pour obtenir son vrai ID
