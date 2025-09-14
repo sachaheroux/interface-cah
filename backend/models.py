@@ -176,9 +176,7 @@ class Unit(Base):
             "amenities": safe_json_loads(self.amenities),
             "notes": self.notes,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
-            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
-            # Données enrichies
-            "buildingData": self._get_building_data()
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None
         }
     
 
