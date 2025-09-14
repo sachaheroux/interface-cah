@@ -444,6 +444,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   // Fonction de validation de date simple
   const isValidDate = (dateString) => {
     if (!dateString) return true // Vide est valide
+    if (dateString.length < 4) return true // Trop court pour valider
     const regex = /^\d{4}-\d{2}-\d{2}$/
     if (!regex.test(dateString)) return false
     const date = new Date(dateString)
@@ -916,7 +917,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="min-h-[80px]">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de début (YYYY-MM-DD)
+                      Date de début
                     </label>
                     <input
                       type="text"
@@ -924,13 +925,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       onChange={(e) => handleLeaseChange('startDate', e.target.value)}
                       placeholder="2025-01-01"
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        formData.lease?.startDate && formData.lease.startDate.length > 0 && !isValidDate(formData.lease.startDate) 
+                        formData.lease?.startDate && formData.lease.startDate.length >= 4 && !isValidDate(formData.lease.startDate) 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-300'
                       }`}
                     />
                     <div className="h-4">
-                      {formData.lease?.startDate && !isValidDate(formData.lease.startDate) && (
+                      {formData.lease?.startDate && formData.lease.startDate.length >= 4 && !isValidDate(formData.lease.startDate) && (
                         <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
                       )}
                     </div>
@@ -938,7 +939,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   
                   <div className="min-h-[80px]">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de fin (YYYY-MM-DD)
+                      Date de fin
                     </label>
                     <input
                       type="text"
@@ -946,13 +947,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       onChange={(e) => handleLeaseChange('endDate', e.target.value)}
                       placeholder="2025-12-31"
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        formData.lease?.endDate && formData.lease.endDate.length > 0 && !isValidDate(formData.lease.endDate) 
+                        formData.lease?.endDate && formData.lease.endDate.length >= 4 && !isValidDate(formData.lease.endDate) 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-300'
                       }`}
                     />
                     <div className="h-4">
-                      {formData.lease?.endDate && !isValidDate(formData.lease.endDate) && (
+                      {formData.lease?.endDate && formData.lease.endDate.length >= 4 && !isValidDate(formData.lease.endDate) && (
                         <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
                       )}
                     </div>
