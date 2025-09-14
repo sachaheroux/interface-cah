@@ -58,9 +58,15 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       setLeaseHistory(tenantAssignments)
       
       // Trouver l'assignation active pour ce locataire
-      const activeAssignment = tenantAssignments.find(a => 
-        (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '')
-      )
+      const activeAssignment = tenantAssignments.find(a => {
+        const isActive = (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '' || a.moveOutDate === 'null')
+        console.log(`🔍 Vérification assignation active:`, {
+          id: a.id,
+          moveOutDate: a.moveOutDate,
+          isActive: isActive
+        })
+        return isActive
+      })
       
       if (activeAssignment) {
         console.log('✅ Assignation active trouvée:', activeAssignment)
