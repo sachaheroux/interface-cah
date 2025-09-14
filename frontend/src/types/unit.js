@@ -150,12 +150,23 @@ export const parseAddressAndGenerateUnits = (building) => {
     if (addressNumbers.includes('-')) {
       const numbers = addressNumbers.split('-')
       numbers.forEach((num, index) => {
+        // Construire l'adresse sans duplication
+        let unitAddress = `${num} ${streetName}`
+        
+        // Si l'adresse de l'immeuble contient déjà le numéro, éviter la duplication
+        if (streetName.includes(num)) {
+          // Extraire seulement la partie nom de rue après le numéro
+          const streetParts = streetName.split(' ')
+          const cleanStreetName = streetParts.filter(part => !part.includes(num)).join(' ')
+          unitAddress = `${num} ${cleanStreetName}`.trim()
+        }
+        
         units.push({
           id: `${building.id}-${index + 1}`,
           buildingId: building.id,
           buildingName: building.name,
           unitNumber: num,
-          address: `${num} ${streetName}`,
+          address: unitAddress,
           type: UnitType.FOUR_HALF, // Valeur par défaut
           area: 0,
           bedrooms: 2,

@@ -228,7 +228,7 @@ class Assignment(Base):
         return {
             "id": self.id,
             "tenantId": self.tenant_id,
-            "unitId": self.unit_id,
+            "unitId": int(self.unit_id),  # S'assurer que c'est un entier
             "buildingId": self.building.id if self.building else None,
             "unitNumber": self.unit.unit_number if self.unit else None,
             "unitAddress": self.unit.unit_address if self.unit else None,

@@ -333,11 +333,17 @@ class DatabaseService:
             if not building:
                 raise ValueError(f"L'immeuble avec l'ID {building_id} n'existe pas")
             
+            # Convertir le type d'unité du format frontend vers le format backend
+            unit_type = unit_data.get("type", "4 1/2")
+            if unit_type and '_' in unit_type:
+                # Convertir "3_1_2" en "3 1/2"
+                unit_type = unit_type.replace('_', ' ')
+            
             unit = Unit(
                 building_id=building_id,
                 unit_number=unit_data["unitNumber"],
                 unit_address=unit_data.get("unitAddress"),
-                type=unit_data.get("type", "4 1/2"),
+                type=unit_type,
                 area=unit_data.get("area", 0),
                 bedrooms=unit_data.get("bedrooms", 1),
                 bathrooms=unit_data.get("bathrooms", 1),
@@ -405,6 +411,9 @@ class DatabaseService:
                 if field in allowed_fields:
                     if field == 'amenities':
                         setattr(unit, field, json.dumps(value) if value else "{}")
+                    elif field == 'type' and value and '_' in value:
+                        # Convertir le type d'unité du format frontend vers le format backend
+                        setattr(unit, field, value.replace('_', ' '))
                     else:
                         setattr(unit, field, value)
             
