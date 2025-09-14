@@ -17,6 +17,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     unitId: '',
     unitInfo: null,
     
+    // Premier bail (cellules de base)
     lease: {
       startDate: '',
       endDate: '',
@@ -24,7 +25,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       paymentMethod: 'Virement bancaire'
     },
     
-    leaseRenewals: [], // Historique des renouvellements
+    // Renouvellements (baux supplémentaires)
+    leaseRenewals: [],
     
     notes: ''
   })
@@ -623,6 +625,45 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         // Retourner les données créées (sans déclencher onSave pour éviter le double appel)
         console.log('✅ Locataire créé avec succès:', result.data.tenant)
         
+        // 3. CRÉER LES RENOUVELLEMENTS si présents
+        if (formData.leaseRenewals && formData.leaseRenewals.length > 0) {
+          console.log('🔄 Création des renouvellements:', formData.leaseRenewals)
+          
+          for (const renewal of formData.leaseRenewals) {
+            if (renewal.startDate && renewal.endDate) {
+              try {
+                const renewalResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    tenantId: result.data.tenant.id,
+                    unitId: formData.unitId,
+                    moveInDate: renewal.startDate,
+                    moveOutDate: renewal.endDate,
+                    rentAmount: renewal.monthlyRent || 0,
+                    depositAmount: 0,
+                    leaseStartDate: renewal.startDate,
+                    leaseEndDate: renewal.endDate,
+                    rentDueDay: 1,
+                    notes: `Renouvellement de bail - ${renewal.renewalPdf || ''}`
+                  })
+                })
+                
+                if (renewalResponse.ok) {
+                  const renewalResult = await renewalResponse.json()
+                  console.log('✅ Renouvellement créé:', renewalResult)
+                } else {
+                  console.error('❌ Erreur création renouvellement:', await renewalResponse.text())
+                }
+              } catch (error) {
+                console.error('❌ Erreur lors de la création du renouvellement:', error)
+              }
+            }
+          }
+        }
+        
         // Déclencher l'événement de création de locataire
         window.dispatchEvent(new CustomEvent('tenantCreated', {
           detail: result.data.tenant
@@ -1028,38 +1069,23 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               {/* Renouvellement de bail */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-md font-medium text-gray-900">Renouvellement de Bail</h4>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="leaseRenewalActive"
-                      checked={formData.leaseRenewals.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            leaseRenewals: [{
-                              id: Date.now(), // Unique ID for each renewal
-                              startDate: '',
-                              endDate: '',
-                              monthlyRent: 0,
-                              renewalPdf: '', // PDF du renouvellement
-                              isActive: true
-                            }]
-                          }));
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            leaseRenewals: []
-                          }));
-                        }
-                      }}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="leaseRenewalActive" className="ml-2 block text-sm text-gray-900">
-                      Activer le renouvellement
-                    </label>
-                  </div>
+                  <h4 className="text-md font-medium text-gray-900">Renouvellements de Bail</h4>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      leaseRenewals: [...prev.leaseRenewals, {
+                        id: Date.now() + Math.random(), // Unique ID
+                        startDate: '',
+                        endDate: '',
+                        monthlyRent: 0,
+                        renewalPdf: '',
+                      }]
+                    }))}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    + Ajouter un renouvellement
+                  </button>
                 </div>
                 
                 {formData.leaseRenewals.length > 0 && (
@@ -1146,29 +1172,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       </div>
                     ))}
                     
-                    {/* Bouton pour ajouter un nouveau renouvellement */}
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        leaseRenewals: [...prev.leaseRenewals, {
-                          id: Date.now() + Math.random(), // Unique ID
-                          startDate: '',
-                          endDate: '',
-                          monthlyRent: 0,
-                          renewalPdf: '', // PDF du renouvellement
-                        }]
-                      }))}
-                      className="w-full py-2 px-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors text-sm"
-                    >
-                      + Ajouter un autre renouvellement
-                    </button>
                   </div>
                 )}
                 
                 {!formData.leaseRenewals.length && (
                   <p className="text-sm text-gray-600">
-                    Cochez la case ci-dessus pour configurer un renouvellement de bail avec de nouvelles conditions.
+                    Cliquez sur "Ajouter un renouvellement" pour créer un nouveau bail pour ce locataire.
                   </p>
                 )}
               </div>
