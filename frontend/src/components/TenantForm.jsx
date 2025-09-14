@@ -6,6 +6,7 @@ import { unitsService, assignmentsService } from '../services/api'
 export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   // État pour éviter le rechargement automatique des données de bail
   const [isLeaseDataManuallySet, setIsLeaseDataManuallySet] = useState(false)
+  const [hasLeaseDataBeenModified, setHasLeaseDataBeenModified] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -108,75 +109,81 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.log('📋 Chargement des données locataire existant:', {
         name: tenant.name,
         lease: tenant.lease,
-        leaseRenewal: tenant.leaseRenewal
+        leaseRenewal: tenant.leaseRenewal,
+        isLeaseDataManuallySet: isLeaseDataManuallySet
       })
       
       // Charger les données de bail depuis les assignations SEULEMENT si pas déjà définies manuellement
-      if (!isLeaseDataManuallySet) {
+      if (!isLeaseDataManuallySet && !hasLeaseDataBeenModified) {
+        console.log('🔄 Chargement des données de bail depuis les assignations...')
         loadLeaseDataFromAssignments(tenant.id).then(leaseData => {
-        const finalLeaseData = leaseData || tenant.lease || {
-          startDate: '',
-          endDate: '',
-          monthlyRent: 0,
-          paymentMethod: 'Virement bancaire',
-          leasePdf: '',
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false
+          const finalLeaseData = leaseData || tenant.lease || {
+            startDate: '',
+            endDate: '',
+            monthlyRent: 0,
+            paymentMethod: 'Virement bancaire',
+            leasePdf: '',
+            amenities: {
+              heating: false,
+              electricity: false,
+              wifi: false,
+              furnished: false,
+              parking: false,
+              laundry: false,
+              airConditioning: false,
+              balcony: false,
+              storage: false,
+              dishwasher: false,
+              washerDryer: false
+            }
           }
-        }
-        
-        setFormData({
-          name: tenant.name || '',
-          email: tenant.email || '',
-          phone: tenant.phone || '',
-          status: tenant.status || TenantStatus.ACTIVE,
           
-          unitId: tenant.unitId || '',
-          unitInfo: tenant.unitInfo || null,
+          console.log('📋 Données de bail chargées:', finalLeaseData)
           
-          lease: finalLeaseData,
-          
-          leaseRenewals: tenant.leaseRenewals || [],
-          
-          emergencyContact: {
-            name: tenant.emergencyContact?.name || '',
-            phone: tenant.emergencyContact?.phone || '',
-            email: tenant.emergencyContact?.email || '',
-            relationship: tenant.emergencyContact?.relationship || ''
-          },
-          
-          financial: {
-            monthlyIncome: tenant.financial?.monthlyIncome || 0,
-            creditScore: tenant.financial?.creditScore || 0,
-            bankAccount: tenant.financial?.bankAccount || '',
-            employer: tenant.financial?.employer || '',
-            employerPhone: tenant.financial?.employerPhone || '',
-            depositAmount: tenant.financial?.depositAmount || 0
-          },
-          
-          notes: tenant.notes || ''
-        })
+          setFormData({
+            name: tenant.name || '',
+            email: tenant.email || '',
+            phone: tenant.phone || '',
+            status: tenant.status || TenantStatus.ACTIVE,
+            
+            unitId: tenant.unitId || '',
+            unitInfo: tenant.unitInfo || null,
+            
+            lease: finalLeaseData,
+            
+            leaseRenewals: tenant.leaseRenewals || [],
+            
+            emergencyContact: {
+              name: tenant.emergencyContact?.name || '',
+              phone: tenant.emergencyContact?.phone || '',
+              email: tenant.emergencyContact?.email || '',
+              relationship: tenant.emergencyContact?.relationship || ''
+            },
+            
+            financial: {
+              monthlyIncome: tenant.financial?.monthlyIncome || 0,
+              creditScore: tenant.financial?.creditScore || 0,
+              bankAccount: tenant.financial?.bankAccount || '',
+              employer: tenant.financial?.employer || '',
+              employerPhone: tenant.financial?.employerPhone || '',
+              depositAmount: tenant.financial?.depositAmount || 0
+            },
+            
+            notes: tenant.notes || ''
+          })
         })
       } else {
+        console.log('🚫 Données de bail manuellement définies, pas de rechargement')
         // Charger seulement les autres données, pas les données de bail
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           name: tenant.name || '',
           email: tenant.email || '',
           phone: tenant.phone || '',
           status: tenant.status || TenantStatus.ACTIVE,
           unitId: tenant.unitId || '',
           unitInfo: tenant.unitInfo || null,
-          lease: formData.lease, // Garder les données actuelles
+          // Garder les données de bail actuelles
           leaseRenewals: tenant.leaseRenewals || [],
           emergencyContact: {
             name: tenant.emergencyContact?.name || '',
@@ -193,11 +200,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             depositAmount: tenant.financial?.depositAmount || 0
           },
           notes: tenant.notes || ''
-        })
+        }))
       }
     } else {
-      // Réinitialiser le flag pour un nouveau locataire
+      // Réinitialiser les flags pour un nouveau locataire
       setIsLeaseDataManuallySet(false)
+      setHasLeaseDataBeenModified(false)
       setFormData({
         name: '',
         email: '',
@@ -243,7 +251,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         notes: ''
       })
     }
-  }, [tenant, isOpen, isLeaseDataManuallySet])
+  }, [tenant, isOpen, isLeaseDataManuallySet, hasLeaseDataBeenModified])
 
   useEffect(() => {
     if (isOpen) {
@@ -397,7 +405,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
 
   const handleLeaseChange = (field, value) => {
     // Marquer les données de bail comme manuellement définies
+    console.log('🔧 Modification manuelle des données de bail:', field, value)
     setIsLeaseDataManuallySet(true)
+    setHasLeaseDataBeenModified(true)
     
     setFormData(prev => ({
       ...prev,
