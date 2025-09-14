@@ -89,7 +89,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
       
       // 3. Calculer le statut et ajouter les currentTenants à chaque unité
       const unitsWithStatus = unitsFromRender.map(unit => {
-        const unitAssignments = assignments.filter(a => a.unitId === unit.id)
+        const unitAssignments = assignments.filter(a => parseInt(a.unitId) === unit.id)
         
         console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.unitNumber}):`, {
           unitAssignments: unitAssignments,

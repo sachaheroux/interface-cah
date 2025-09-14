@@ -205,7 +205,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             // Récupérer les assignations depuis le backend
             const assignmentsResponse = await assignmentsService.getAssignments()
             const allAssignments = assignmentsResponse.data || []
-            const unitAssignments = allAssignments.filter(a => a.unitId === unit.id)
+            const unitAssignments = allAssignments.filter(a => parseInt(a.unitId) === unit.id)
             
             const currentTenants = unitAssignments.map(assignment => {
               // Le backend retourne les données dans tenantData
