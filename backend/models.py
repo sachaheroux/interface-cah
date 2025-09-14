@@ -100,11 +100,6 @@ class Tenant(Base):
     name = Column(String(255), nullable=False, index=True)
     email = Column(String(255), index=True)
     phone = Column(String(50))
-    address_street = Column(String(255))
-    address_city = Column(String(100))
-    address_province = Column(String(50))
-    address_postal_code = Column(String(10))
-    address_country = Column(String(50), default="Canada")
     personal_info = Column(Text)  # JSON string
     emergency_contact = Column(Text)  # JSON string
     financial_info = Column(Text)  # JSON string
@@ -122,13 +117,6 @@ class Tenant(Base):
             "name": self.name,
             "email": self.email,
             "phone": self.phone,
-            "address": {
-                "street": self.address_street or "",
-                "city": self.address_city or "",
-                "province": self.address_province or "",
-                "postalCode": self.address_postal_code or "",
-                "country": self.address_country or "Canada"
-            },
             "personalInfo": safe_json_loads(self.personal_info),
             "emergencyContact": safe_json_loads(self.emergency_contact),
             "financial": safe_json_loads(self.financial_info),
