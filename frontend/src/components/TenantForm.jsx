@@ -479,6 +479,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       assignment: assignmentData
     })
     
+    // Debug supplémentaire
+    console.log('🔍 DEBUG - Détails des données:')
+    console.log('  - tenantData keys:', Object.keys(tenantData))
+    console.log('  - assignmentData keys:', Object.keys(assignmentData))
+    console.log('  - unitId type:', typeof assignmentData.unitId, 'value:', assignmentData.unitId)
+    console.log('  - tenantId type:', typeof assignmentData.tenantId, 'value:', assignmentData.tenantId)
+    
     try {
       if (tenant?.id) {
         // MISE À JOUR du locataire existant
@@ -539,6 +546,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         // CRÉATION d'un nouveau locataire avec assignation
         console.log('📤 Création d\'un nouveau locataire avec assignation...')
         
+        console.log('📤 Envoi vers /api/tenants/create-with-assignment')
+        console.log('📤 Payload complet:', {
+          tenant: tenantData,
+          assignment: assignmentData
+        })
+        
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-assignment`, {
           method: 'POST',
           headers: {
@@ -548,6 +561,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             tenant: tenantData,
             assignment: assignmentData
           })
+        })
+        
+        console.log('📥 Réponse reçue:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
         })
         
         if (!response.ok) {
