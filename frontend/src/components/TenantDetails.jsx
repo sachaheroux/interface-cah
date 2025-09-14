@@ -15,7 +15,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { getTenantStatusLabel, getTenantStatusColor, getRelationshipLabel } from '../types/tenant'
-import { unitsService } from '../services/api'
+import { unitsService, assignmentsService } from '../services/api'
 
 export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelete }) {
   const [tenantUnit, setTenantUnit] = useState(null)
@@ -31,8 +31,37 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
   const loadTenantUnit = async () => {
     try {
       setLoadingUnit(true)
-      const response = await unitsService.getTenantUnit(tenant.id)
-      setTenantUnit(response.data)
+      // Récupérer les assignations depuis le backend
+      const assignmentsResponse = await assignmentsService.getAssignments()
+      const allAssignments = assignmentsResponse.data || []
+      
+      // Trouver l'assignation active pour ce locataire
+      const activeAssignment = allAssignments.find(a => 
+        parseInt(a.tenantId) === tenant.id && !a.moveOutDate
+      )
+      
+      if (activeAssignment) {
+        // Récupérer les détails de l'unité
+        const unitsResponse = await unitsService.getUnits()
+        const allUnits = unitsResponse.data || []
+        const unit = allUnits.find(u => u.id === parseInt(activeAssignment.unitId))
+        
+        if (unit) {
+          setTenantUnit({
+            ...unit,
+            assignment: activeAssignment,
+            rental: {
+              monthlyRent: activeAssignment.rentAmount || 0,
+              startDate: activeAssignment.leaseStartDate,
+              endDate: activeAssignment.leaseEndDate
+            }
+          })
+        } else {
+          setTenantUnit(null)
+        }
+      } else {
+        setTenantUnit(null)
+      }
     } catch (error) {
       console.error('Error loading tenant unit:', error)
       setTenantUnit(null)
@@ -114,7 +143,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                   <div className="flex items-center">
                     <Home className="h-4 w-4 text-gray-400 mr-2" />
                     <span className="text-sm text-gray-600">
-                      {tenantUnit ? tenantUnit.address : 'Aucune unité'}
+                      {tenantUnit ? (tenantUnit.unitAddress || tenantUnit.simpleTitle || 'Unité assignée') : 'Aucune unité'}
                     </span>
                   </div>
                 </div>
