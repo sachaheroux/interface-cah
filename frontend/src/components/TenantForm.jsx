@@ -441,11 +441,26 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
+  // Fonction de validation de date simple
+  const isValidDate = (dateString) => {
+    if (!dateString) return true // Vide est valide
+    const regex = /^\d{4}-\d{2}-\d{2}$/
+    if (!regex.test(dateString)) return false
+    const date = new Date(dateString)
+    return date instanceof Date && !isNaN(date)
+  }
+
   const handleLeaseChange = (field, value) => {
     // Marquer les données de bail comme manuellement définies
     console.log('🔧 Modification manuelle des données de bail:', field, value)
     setIsLeaseDataManuallySet(true)
     setHasLeaseDataBeenModified(true)
+    
+    // Validation spéciale pour les dates
+    if ((field === 'startDate' || field === 'endDate') && value && !isValidDate(value)) {
+      console.warn(`⚠️ Format de date invalide: ${value}. Utilisez YYYY-MM-DD`)
+      // On continue quand même, mais on affiche un avertissement
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -907,26 +922,42 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de début
+                      Date de début (YYYY-MM-DD)
                     </label>
                     <input
-                      type="date"
+                      type="text"
                       value={formData.lease?.startDate || ''}
                       onChange={(e) => handleLeaseChange('startDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="2025-01-01"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        formData.lease?.startDate && !isValidDate(formData.lease.startDate) 
+                          ? 'border-red-300 bg-red-50' 
+                          : 'border-gray-300'
+                      }`}
                     />
+                    {formData.lease?.startDate && !isValidDate(formData.lease.startDate) && (
+                      <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
+                    )}
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de fin
+                      Date de fin (YYYY-MM-DD)
                     </label>
                     <input
-                      type="date"
+                      type="text"
                       value={formData.lease?.endDate || ''}
                       onChange={(e) => handleLeaseChange('endDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="2025-12-31"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                        formData.lease?.endDate && !isValidDate(formData.lease.endDate) 
+                          ? 'border-red-300 bg-red-50' 
+                          : 'border-gray-300'
+                      }`}
                     />
+                    {formData.lease?.endDate && !isValidDate(formData.lease.endDate) && (
+                      <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
+                    )}
                   </div>
                   
                   <div>
