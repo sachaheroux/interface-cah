@@ -289,7 +289,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         notes: ''
       })
     }
-  }, [tenant, isOpen, isLeaseDataManuallySet, hasLeaseDataBeenModified])
+  }, [tenant, isOpen])
 
   useEffect(() => {
     if (isOpen) {
