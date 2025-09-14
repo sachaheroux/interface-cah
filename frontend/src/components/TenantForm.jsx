@@ -59,10 +59,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = tenantAssignments.find(a => {
-        const isActive = (!a.moveOutDate || a.moveOutDate === null || a.moveOutDate === '' || a.moveOutDate === 'null')
+        const today = new Date()
+        const moveOutDate = a.moveOutDate ? new Date(a.moveOutDate) : null
+        
+        // Une assignation est active si :
+        // 1. Elle n'a pas de moveOutDate OU
+        // 2. La moveOutDate est dans le futur (bail encore valide)
+        const isActive = !moveOutDate || moveOutDate > today
+        
         console.log(`🔍 Vérification assignation active:`, {
           id: a.id,
           moveOutDate: a.moveOutDate,
+          moveOutDateParsed: moveOutDate,
+          today: today,
           isActive: isActive
         })
         return isActive
