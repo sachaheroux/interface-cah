@@ -37,7 +37,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === tenant.id && !a.moveOutDate
+        parseInt(a.tenantId) === parseInt(tenant.id) && !a.moveOutDate
       )
       
       console.log('🔍 DEBUG - TenantDetails loadTenantUnit:', {

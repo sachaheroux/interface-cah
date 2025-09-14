@@ -76,7 +76,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === tenantId && !a.moveOutDate
+        parseInt(a.tenantId) === parseInt(tenantId) && !a.moveOutDate
       )
       
       if (activeAssignment) {
@@ -137,7 +137,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Trouver l'assignation active pour ce locataire
       const activeAssignment = allAssignments.find(a => 
-        parseInt(a.tenantId) === tenantId && !a.moveOutDate
+        parseInt(a.tenantId) === parseInt(tenantId) && !a.moveOutDate
       )
       
       if (activeAssignment) {
