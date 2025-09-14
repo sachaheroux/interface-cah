@@ -19,6 +19,27 @@ export default function Tenants() {
 
   useEffect(() => {
     fetchTenants()
+    
+    // Écouter les événements de création et mise à jour de locataires
+    const handleTenantCreated = (event) => {
+      console.log('📢 Tenants: Événement tenantCreated reçu:', event.detail)
+      console.log('🔄 Tenants: Rechargement de la liste des locataires...')
+      fetchTenants()
+    }
+    
+    const handleTenantUpdated = (event) => {
+      console.log('📢 Tenants: Événement tenantUpdated reçu:', event.detail)
+      console.log('🔄 Tenants: Rechargement de la liste des locataires...')
+      fetchTenants()
+    }
+    
+    window.addEventListener('tenantCreated', handleTenantCreated)
+    window.addEventListener('tenantUpdated', handleTenantUpdated)
+    
+    return () => {
+      window.removeEventListener('tenantCreated', handleTenantCreated)
+      window.removeEventListener('tenantUpdated', handleTenantUpdated)
+    }
   }, [])
 
   // Filtrer les locataires avec vérifications de sécurité renforcées
@@ -120,35 +141,9 @@ export default function Tenants() {
   }
 
   const handleSaveTenant = async (tenantData) => {
-    try {
-      if (tenantData.id && tenants.find(t => t.id === tenantData.id)) {
-        // Mise à jour d'un locataire existant
-        const response = await tenantsService.updateTenant(tenantData.id, tenantData)
-        const updatedTenants = tenants.map(tenant => 
-          tenant.id === tenantData.id ? response.data || tenantData : tenant
-        )
-        setTenants(updatedTenants)
-        return response // Retourner la réponse pour l'assignation
-      } else {
-        // Création d'un nouveau locataire
-        const response = await tenantsService.createTenant(tenantData)
-        setTenants(prev => [...prev, response.data || tenantData])
-        return response // Retourner la réponse pour l'assignation
-      }
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      // En cas d'erreur API, on met à jour localement quand même
-      if (tenantData.id && tenants.find(t => t.id === tenantData.id)) {
-        const updatedTenants = tenants.map(tenant => 
-          tenant.id === tenantData.id ? tenantData : tenant
-        )
-        setTenants(updatedTenants)
-        return { data: tenantData }
-      } else {
-        setTenants(prev => [...prev, tenantData])
-        return { data: tenantData }
-      }
-    }
+    // Cette fonction n'est plus utilisée car TenantForm gère directement les appels API
+    // Elle est gardée pour la compatibilité mais ne fait rien
+    console.log('⚠️ handleSaveTenant appelée mais ignorée (TenantForm gère directement les API)')
   }
 
   const handleDeleteTenant = async (tenant) => {

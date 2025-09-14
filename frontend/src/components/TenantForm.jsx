@@ -534,13 +534,16 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         const newAssignment = await assignmentResponse.json()
         console.log('✅ Nouvelle assignation créée:', newAssignment)
         
-        // Retourner les données mises à jour
-        onSave({
-          ...updatedTenant.data || updatedTenant,
-          unitId: formData.unitId,
-          unitInfo: formData.unitInfo,
-          lease: formData.lease
-        })
+        // Retourner les données mises à jour (sans déclencher onSave pour éviter le double appel)
+        console.log('✅ Locataire mis à jour avec succès:', updatedTenant.data || updatedTenant)
+        
+        // Déclencher l'événement de mise à jour de locataire
+        window.dispatchEvent(new CustomEvent('tenantUpdated', {
+          detail: updatedTenant.data || updatedTenant
+        }))
+        
+        // Fermer le formulaire
+        onClose()
         
       } else {
         // CRÉATION d'un nouveau locataire avec assignation
@@ -578,13 +581,16 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         const result = await response.json()
         console.log('✅ Création réussie:', result)
         
-        // Retourner les données créées
-        onSave({
-          ...result.data.tenant,
-          unitId: formData.unitId,
-          unitInfo: formData.unitInfo,
-          lease: formData.lease
-        })
+        // Retourner les données créées (sans déclencher onSave pour éviter le double appel)
+        console.log('✅ Locataire créé avec succès:', result.data.tenant)
+        
+        // Déclencher l'événement de création de locataire
+        window.dispatchEvent(new CustomEvent('tenantCreated', {
+          detail: result.data.tenant
+        }))
+        
+        // Fermer le formulaire
+        onClose()
       }
       
       // Afficher un message de succès
