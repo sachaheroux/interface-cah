@@ -924,17 +924,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       value={formData.lease?.startDate || ''}
                       onChange={(e) => handleLeaseChange('startDate', e.target.value)}
                       placeholder="2025-01-01"
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        formData.lease?.startDate && formData.lease.startDate.length >= 4 && !isValidDate(formData.lease.startDate) 
-                          ? 'border-red-300 bg-red-50' 
-                          : 'border-gray-300'
-                      }`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
-                    <div className="h-4">
-                      {formData.lease?.startDate && formData.lease.startDate.length >= 4 && !isValidDate(formData.lease.startDate) && (
-                        <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
-                      )}
-                    </div>
+                    <div className="h-4"></div>
                   </div>
                   
                   <div className="min-h-[80px]">
@@ -946,17 +938,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       value={formData.lease?.endDate || ''}
                       onChange={(e) => handleLeaseChange('endDate', e.target.value)}
                       placeholder="2025-12-31"
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        formData.lease?.endDate && formData.lease.endDate.length >= 4 && !isValidDate(formData.lease.endDate) 
-                          ? 'border-red-300 bg-red-50' 
-                          : 'border-gray-300'
-                      }`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
-                    <div className="h-4">
-                      {formData.lease?.endDate && formData.lease.endDate.length >= 4 && !isValidDate(formData.lease.endDate) && (
-                        <p className="text-red-500 text-xs mt-1">Format invalide. Utilisez YYYY-MM-DD</p>
-                      )}
-                    </div>
+                    <div className="h-4"></div>
                   </div>
                   
                   <div>
