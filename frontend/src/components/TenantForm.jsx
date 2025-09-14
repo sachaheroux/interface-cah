@@ -59,7 +59,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.log('📚 Historique des baux trouvé:', tenantAssignments)
       setLeaseHistory(tenantAssignments)
       
-      // Trouver l'assignation active pour ce locataire
+      // Trouver l'assignation active pour ce locataire (la plus récente)
       const activeAssignment = tenantAssignments.find(a => {
         const today = new Date()
         const moveOutDate = a.moveOutDate ? new Date(a.moveOutDate) : null
@@ -78,6 +78,18 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         })
         return isActive
       })
+      
+      // Préparer les renouvellements (toutes les assignations sauf la première)
+      const renewalsData = tenantAssignments.slice(1).map((assignment, index) => ({
+        id: `renewal_${assignment.id}`,
+        startDate: assignment.leaseStartDate || assignment.startDate || '',
+        endDate: assignment.leaseEndDate || assignment.endDate || '',
+        monthlyRent: assignment.rentAmount || 0,
+        paymentMethod: 'Virement bancaire', // Valeur par défaut
+        renewalPdf: ''
+      }))
+      
+      console.log('🔄 Renouvellements préparés:', renewalsData)
       
       if (activeAssignment) {
         console.log('✅ Assignation active trouvée:', activeAssignment)
@@ -102,7 +114,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           
           return {
             unitData: unit,
-            leaseData: leaseData
+            leaseData: leaseData,
+            renewalsData: renewalsData
           }
         } else {
           console.log('❌ Unité non trouvée pour l\'assignation:', activeAssignment.unitId)
@@ -114,7 +127,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       console.error('❌ Erreur lors du chargement des données d\'assignation:', error)
     }
     
-    return { unitData: null, leaseData: null }
+    return { unitData: null, leaseData: null, renewalsData: [] }
   }
 
   // Charger les données de bail depuis les assignations
@@ -161,8 +174,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       })
       
       // Charger l'unité assignée et les données de bail depuis les assignations
-      loadTenantAssignmentAndLeaseData(tenant.id).then(({ unitData, leaseData }) => {
-        console.log('📋 Résultat du chargement:', { unitData, leaseData })
+      loadTenantAssignmentAndLeaseData(tenant.id).then(({ unitData, leaseData, renewalsData }) => {
+        console.log('📋 Résultat du chargement:', { unitData, leaseData, renewalsData })
         
         // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
         const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
@@ -176,6 +189,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         console.log('📋 Données finales chargées:', { 
           unitData, 
           leaseData: finalLeaseData,
+          renewalsData: renewalsData,
           unitId: unitData?.id || tenant.unitId || '',
           unitInfo: unitData || tenant.unitInfo || null
         })
@@ -191,7 +205,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           
           lease: finalLeaseData,
           
-          leaseRenewals: tenant.leaseRenewals || [],
+          leaseRenewals: renewalsData || [],
           
           notes: tenant.notes || ''
         })
@@ -199,7 +213,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         console.log('✅ FormData mis à jour avec:', {
           name: tenant.name || '',
           unitId: unitData?.id || tenant.unitId || '',
-          lease: finalLeaseData
+          lease: finalLeaseData,
+          renewals: renewalsData
         })
       }).catch(error => {
         console.error('❌ Erreur lors du chargement des données:', error)
@@ -673,8 +688,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         onClose()
       }
       
-      // Afficher un message de succès
-      alert('Locataire sauvegardé avec succès!')
+      // Message de succès supprimé pour éviter les interruptions
       
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde:', error)
