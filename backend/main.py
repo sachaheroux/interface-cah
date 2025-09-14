@@ -1041,6 +1041,27 @@ async def create_assignment(assignment_data: dict):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'assignation: {str(e)}")
 
+@app.delete("/api/assignments/{assignment_id}")
+async def delete_assignment_by_id(assignment_id: int):
+    """Supprimer une assignation par son ID"""
+    try:
+        print(f"🗑️ Suppression de l'assignation {assignment_id}")
+        
+        # Supprimer via le service SQLite
+        success = db_service.delete_assignment(assignment_id)
+        
+        if success:
+            print(f"✅ Assignation {assignment_id} supprimée")
+            return {"message": f"Assignation {assignment_id} supprimée avec succès"}
+        else:
+            raise HTTPException(status_code=404, detail=f"Assignation {assignment_id} non trouvée")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Erreur lors de la suppression de l'assignation {assignment_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
 @app.delete("/api/assignments/tenant/{tenant_id}")
 async def remove_tenant_assignment(tenant_id: int):
     """Retirer un locataire de toute unité"""
