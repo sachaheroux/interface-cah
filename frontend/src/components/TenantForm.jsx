@@ -455,16 +455,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
-  const handleLeaseRenewalChange = (id, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      leaseRenewals: prev.leaseRenewals.map(renewal => 
-        renewal.id === id 
-          ? { ...renewal, [field]: value }
-          : renewal
-      )
-    }))
-  }
 
   // Nouvelle fonction pour uploader un PDF
   const uploadPdfFile = async (file, type = 'lease') => {
@@ -516,26 +506,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }
   }
 
-  // Fonction pour gérer l'upload du PDF de renouvellement
-  const handleRenewalPdfUpload = async (event, renewalId) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      alert('Seuls les fichiers PDF sont acceptés')
-      return
-    }
-
-    // Afficher un message de chargement
-    handleLeaseRenewalChange(renewalId, 'renewalPdf', `Upload en cours: ${file.name}...`)
-
-    const uploadedFilename = await uploadPdfFile(file, 'renewal')
-    if (uploadedFilename) {
-      handleLeaseRenewalChange(renewalId, 'renewalPdf', uploadedFilename)
-    } else {
-      handleLeaseRenewalChange(renewalId, 'renewalPdf', '')
-    }
-  }
 
   const handleUnitSelection = (unit) => {
     setFormData(prev => ({
