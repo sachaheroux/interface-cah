@@ -671,6 +671,61 @@ async def root():
 async def health_check():
     return {"status": "healthy", "message": "API fonctionnelle"}
 
+@app.post("/api/migrate/tenants")
+async def migrate_tenants_table():
+    """Migration de la table tenants - Ajouter les colonnes manquantes"""
+    try:
+        import sqlite3
+        import os
+        
+        # Chemin de la base de données
+        if os.environ.get("ENVIRONMENT") == "development" or os.name == 'nt':
+            db_path = "./data/cah_database.db"
+        else:
+            db_path = "/opt/render/project/src/data/cah_database.db"
+        
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Colonnes à ajouter
+        columns_to_add = [
+            "address_street TEXT",
+            "address_city TEXT", 
+            "address_province TEXT",
+            "address_postal_code TEXT",
+            "address_country TEXT DEFAULT 'Canada'"
+        ]
+        
+        # Vérifier quelles colonnes existent déjà
+        cursor.execute("PRAGMA table_info(tenants)")
+        existing_columns = [col[1] for col in cursor.fetchall()]
+        
+        added_columns = []
+        for col_def in columns_to_add:
+            col_name = col_def.split()[0]
+            if col_name not in existing_columns:
+                try:
+                    cursor.execute(f"ALTER TABLE tenants ADD COLUMN {col_def}")
+                    added_columns.append(col_name)
+                    print(f"✅ Colonne ajoutée: {col_name}")
+                except Exception as e:
+                    print(f"❌ Erreur ajout colonne {col_name}: {e}")
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            "success": True,
+            "message": f"Migration terminée. Colonnes ajoutées: {added_columns}",
+            "added_columns": added_columns
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 # Routes temporaires pour les modules (à développer plus tard)
 @app.get("/api/dashboard")
 async def get_dashboard_data():
