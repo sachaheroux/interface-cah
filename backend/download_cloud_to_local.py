@@ -267,7 +267,13 @@ def download_cloud_to_local():
             print(f"   📊 Type: {type(tenants)}")
             
             for tenant in tenants:
-                print(f"   👥 Insertion: {tenant.get('firstName', 'N/A')} {tenant.get('lastName', 'N/A')}")
+                # Diviser le nom en prénom et nom de famille
+                full_name = tenant.get('name', '')
+                name_parts = full_name.split(' ', 1)
+                first_name = name_parts[0] if len(name_parts) > 0 else ''
+                last_name = name_parts[1] if len(name_parts) > 1 else ''
+                
+                print(f"   👥 Insertion: {first_name} {last_name}")
                 cursor.execute("""
                     INSERT OR REPLACE INTO tenants (
                         id, first_name, last_name, email, phone,
@@ -277,8 +283,8 @@ def download_cloud_to_local():
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     tenant['id'],
-                    tenant['firstName'],
-                    tenant['lastName'],
+                    first_name,
+                    last_name,
                     tenant.get('email', ''),
                     tenant.get('phone', ''),
                     tenant.get('address', {}).get('street', ''),

@@ -33,6 +33,7 @@ def clean_render_test_data():
                     print(f"✅ Assignation {assignment_id} supprimée")
                 else:
                     print(f"❌ Erreur lors de la suppression de l'assignation {assignment_id}: {delete_response.status_code}")
+                    print(f"   Détails: {delete_response.text}")
         
         # 3. Vérifier que tout est nettoyé
         print("🔍 Vérification du nettoyage...")
