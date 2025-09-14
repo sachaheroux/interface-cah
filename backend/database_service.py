@@ -1106,6 +1106,37 @@ class DatabaseService:
         finally:
             session.close()
     
+    def remove_tenant_assignments(self, tenant_id: int) -> bool:
+        """Supprimer toutes les assignations d'un locataire"""
+        session = self.get_session()
+        try:
+            # Vérifier que le locataire existe
+            tenant = session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            if not tenant:
+                print(f"⚠️ Le locataire avec l'ID {tenant_id} n'existe pas")
+                return False
+            
+            # Supprimer toutes les assignations du locataire
+            assignments = session.query(Assignment).filter(Assignment.tenant_id == tenant_id).all()
+            
+            if not assignments:
+                print(f"⚠️ Aucune assignation trouvée pour le locataire {tenant_id}")
+                return False
+            
+            for assignment in assignments:
+                session.delete(assignment)
+                print(f"🗑️ Assignation {assignment.id} supprimée")
+            
+            session.commit()
+            print(f"✅ {len(assignments)} assignation(s) supprimée(s) pour le locataire {tenant_id}")
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Erreur lors de la suppression des assignations: {e}")
+            raise ValueError(f"Erreur lors de la suppression des assignations: {str(e)}")
+        finally:
+            session.close()
 
 # Instance globale du service
 db_service = DatabaseService()

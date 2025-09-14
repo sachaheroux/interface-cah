@@ -2150,5 +2150,45 @@ async def migrate_schema():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur migration: {str(e)}")
 
+@app.post("/api/migrate-remove-building-id")
+async def migrate_remove_building_id():
+    """Supprimer la colonne building_id de la table assignments"""
+    try:
+        from migrate_remove_building_id import migrate_remove_building_id
+        
+        print("🔄 Début de la migration: suppression de building_id")
+        success = migrate_remove_building_id()
+        
+        if success:
+            print("✅ Migration building_id terminée avec succès")
+            return {"message": "Migration building_id terminée avec succès"}
+        else:
+            print("❌ Migration building_id échouée")
+            raise HTTPException(status_code=500, detail="Migration building_id échouée")
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de la migration building_id: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur migration building_id: {str(e)}")
+
+@app.delete("/api/assignments/tenant/{tenant_id}")
+async def remove_tenant_assignments(tenant_id: int):
+    """Supprimer toutes les assignations d'un locataire"""
+    try:
+        print(f"🗑️ Suppression des assignations pour le locataire {tenant_id}")
+        
+        # Supprimer toutes les assignations du locataire
+        success = db_service.remove_tenant_assignments(tenant_id)
+        
+        if success:
+            print(f"✅ Assignations supprimées pour le locataire {tenant_id}")
+            return {"message": f"Assignations supprimées pour le locataire {tenant_id}"}
+        else:
+            print(f"⚠️ Aucune assignation trouvée pour le locataire {tenant_id}")
+            return {"message": f"Aucune assignation trouvée pour le locataire {tenant_id}"}
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de la suppression des assignations: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression des assignations: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
