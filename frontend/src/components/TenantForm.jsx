@@ -39,16 +39,20 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   // Charger l'unité assignée et les données de bail depuis les assignations
   const loadTenantAssignmentAndLeaseData = async (tenantId) => {
     try {
+      console.log('🔍 DEBUG - Chargement des données pour le locataire ID:', tenantId, 'Type:', typeof tenantId)
+      
       const assignmentsResponse = await assignmentsService.getAssignments()
       const allAssignments = assignmentsResponse.data || []
       
+      console.log('📋 Toutes les assignations disponibles:', allAssignments)
       console.log('🔍 Recherche d\'assignations pour le locataire:', tenantId)
-      console.log('📋 Toutes les assignations:', allAssignments)
       
       // Trouver TOUTES les assignations pour ce locataire (historique complet)
-      const tenantAssignments = allAssignments.filter(a => 
-        parseInt(a.tenantId) === parseInt(tenantId)
-      ).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) // Plus récent en premier
+      const tenantAssignments = allAssignments.filter(a => {
+        const tenantIdMatch = parseInt(a.tenantId) === parseInt(tenantId)
+        console.log(`🔍 Comparaison: ${a.tenantId} (${typeof a.tenantId}) === ${tenantId} (${typeof tenantId}) = ${tenantIdMatch}`)
+        return tenantIdMatch
+      }).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) // Plus récent en premier
       
       console.log('📚 Historique des baux trouvé:', tenantAssignments)
       setLeaseHistory(tenantAssignments)
@@ -69,15 +73,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         if (unit) {
           console.log('✅ Unité trouvée:', unit)
           
+          const leaseData = {
+            startDate: activeAssignment.leaseStartDate || activeAssignment.startDate || '',
+            endDate: activeAssignment.leaseEndDate || activeAssignment.endDate || '',
+            monthlyRent: activeAssignment.rentAmount || 0,
+            paymentMethod: 'Virement bancaire', // Valeur par défaut
+            leasePdf: ''
+          }
+          
+          console.log('📋 Données de bail extraites:', leaseData)
+          
           return {
             unitData: unit,
-            leaseData: {
-              startDate: activeAssignment.leaseStartDate || '',
-              endDate: activeAssignment.leaseEndDate || '',
-              monthlyRent: activeAssignment.rentAmount || 0,
-              paymentMethod: 'Virement bancaire', // Valeur par défaut
-              leasePdf: ''
-            }
+            leaseData: leaseData
           }
         } else {
           console.log('❌ Unité non trouvée pour l\'assignation:', activeAssignment.unitId)
@@ -86,7 +94,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des données d\'assignation:', error)
+      console.error('❌ Erreur lors du chargement des données d\'assignation:', error)
     }
     
     return { unitData: null, leaseData: null }
@@ -128,6 +136,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   useEffect(() => {
     if (tenant) {
       console.log('📋 Chargement des données locataire existant:', {
+        id: tenant.id,
         name: tenant.name,
         lease: tenant.lease,
         leaseRenewal: tenant.leaseRenewal,
@@ -136,6 +145,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       
       // Charger l'unité assignée et les données de bail depuis les assignations
       loadTenantAssignmentAndLeaseData(tenant.id).then(({ unitData, leaseData }) => {
+        console.log('📋 Résultat du chargement:', { unitData, leaseData })
+        
         // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
         const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
           startDate: '',
@@ -145,7 +156,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           leasePdf: '',
         })
         
-        console.log('📋 Données chargées:', { unitData, leaseData: finalLeaseData })
+        console.log('📋 Données finales chargées:', { 
+          unitData, 
+          leaseData: finalLeaseData,
+          unitId: unitData?.id || tenant.unitId || '',
+          unitInfo: unitData || tenant.unitInfo || null
+        })
         
         setFormData({
           name: tenant.name || '',
@@ -162,6 +178,14 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           
           notes: tenant.notes || ''
         })
+        
+        console.log('✅ FormData mis à jour avec:', {
+          name: tenant.name || '',
+          unitId: unitData?.id || tenant.unitId || '',
+          lease: finalLeaseData
+        })
+      }).catch(error => {
+        console.error('❌ Erreur lors du chargement des données:', error)
       })
     } else {
       // Réinitialiser les flags pour un nouveau locataire
