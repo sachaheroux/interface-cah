@@ -76,20 +76,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               endDate: activeAssignment.leaseEndDate || '',
               monthlyRent: activeAssignment.rentAmount || 0,
               paymentMethod: 'Virement bancaire', // Valeur par défaut
-              leasePdf: '',
-              amenities: {
-                heating: false,
-                electricity: false,
-                wifi: false,
-                furnished: false,
-                parking: false,
-                laundry: false,
-                airConditioning: false,
-                balcony: false,
-                storage: false,
-                dishwasher: false,
-                washerDryer: false
-              }
+              leasePdf: ''
             }
           }
         } else {
@@ -128,19 +115,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           monthlyRent: activeAssignment.rentAmount || 0,
           paymentMethod: 'Virement bancaire', // Valeur par défaut
           leasePdf: '',
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false
-          }
         }
       } else {
         console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
@@ -169,19 +143,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           monthlyRent: 0,
           paymentMethod: 'Virement bancaire',
           leasePdf: '',
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false
-          }
         })
         
         console.log('📋 Données chargées:', { unitData, leaseData: finalLeaseData })
@@ -198,22 +159,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           lease: finalLeaseData,
           
           leaseRenewals: tenant.leaseRenewals || [],
-          
-          emergencyContact: {
-            name: tenant.emergencyContact?.name || '',
-            phone: tenant.emergencyContact?.phone || '',
-            email: tenant.emergencyContact?.email || '',
-            relationship: tenant.emergencyContact?.relationship || ''
-          },
-          
-          financial: {
-            monthlyIncome: tenant.financial?.monthlyIncome || 0,
-            creditScore: tenant.financial?.creditScore || 0,
-            bankAccount: tenant.financial?.bankAccount || '',
-            employer: tenant.financial?.employer || '',
-            employerPhone: tenant.financial?.employerPhone || '',
-            depositAmount: tenant.financial?.depositAmount || 0
-          },
           
           notes: tenant.notes || ''
         })
@@ -235,35 +180,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           monthlyRent: 0,
           paymentMethod: 'Virement bancaire',
           leasePdf: '', // URL ou nom du fichier PDF
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false
-          }
         },
         leaseRenewals: [],
-        emergencyContact: {
-          name: '',
-          phone: '',
-          email: '',
-          relationship: ''
-        },
-        financial: {
-          monthlyIncome: 0,
-          creditScore: 0,
-          bankAccount: '',
-          employer: '',
-          employerPhone: '',
-          depositAmount: 0
-        },
         notes: ''
       })
     }
@@ -538,20 +456,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           endDate: '',
           monthlyRent: 0,
           paymentMethod: 'Virement bancaire',
-          leasePdf: '', // URL ou nom du fichier PDF
-          amenities: {
-            heating: false,
-            electricity: false,
-            wifi: false,
-            furnished: false,
-            parking: false,
-            laundry: false,
-            airConditioning: false,
-            balcony: false,
-            storage: false,
-            dishwasher: false,
-            washerDryer: false
-          }
+          leasePdf: '' // URL ou nom du fichier PDF
         },
         leaseRenewals: formData.leaseRenewals || []
       }
@@ -1022,7 +927,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               endDate: '',
                               monthlyRent: 0,
                               renewalPdf: '', // PDF du renouvellement
-                              amenities: { ...formData.lease.amenities }, // Copier les conditions du bail actuel
                               isActive: true
                             }]
                           }));
@@ -1066,9 +970,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               Date de début
                             </label>
                             <input
-                              type="date"
+                              type="text"
                               value={renewal.startDate}
                               onChange={(e) => handleLeaseRenewalChange(renewal.id, 'startDate', e.target.value)}
+                              placeholder="YYYY-MM-DD"
                               className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
                             />
                           </div>
@@ -1077,9 +982,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               Date de fin
                             </label>
                             <input
-                              type="date"
+                              type="text"
                               value={renewal.endDate}
                               onChange={(e) => handleLeaseRenewalChange(renewal.id, 'endDate', e.target.value)}
+                              placeholder="YYYY-MM-DD"
                               className="w-full px-2 py-1 border border-gray-200 rounded text-sm"
                             />
                           </div>
@@ -1120,40 +1026,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                           </div>
                         </div>
                         
-                        {/* Conditions du renouvellement */}
-                        <div className="border-t pt-3">
-                          <h6 className="text-xs font-medium text-gray-700 mb-2">Conditions du renouvellement</h6>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {Object.entries(renewal.amenities || formData.lease.amenities).map(([amenity, checked]) => (
-                              <div key={amenity} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  id={`renewal-${renewal.id}-${amenity}`}
-                                  checked={checked}
-                                  onChange={(e) => handleLeaseRenewalChange(renewal.id, 'amenities', {
-                                    ...(renewal.amenities || formData.lease.amenities),
-                                    [amenity]: e.target.checked
-                                  })}
-                                  className="h-3 w-3 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                />
-                                <label htmlFor={`renewal-${renewal.id}-${amenity}`} className="ml-1 block text-xs text-gray-900 capitalize">
-                                  {amenity === 'wifi' ? 'WiFi' : 
-                                   amenity === 'heating' ? 'Chauffage' :
-                                   amenity === 'electricity' ? 'Électricité' :
-                                   amenity === 'furnished' ? 'Meublé' :
-                                   amenity === 'parking' ? 'Stationnement' :
-                                   amenity === 'laundry' ? 'Buanderie' :
-                                   amenity === 'airConditioning' ? 'Climatisation' :
-                                   amenity === 'balcony' ? 'Balcon' :
-                                   amenity === 'storage' ? 'Entreposage' :
-                                   amenity === 'dishwasher' ? 'Lave-vaisselle' :
-                                   amenity === 'washerDryer' ? 'Laveuse/Sécheuse' :
-                                   amenity}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     ))}
                     
@@ -1168,7 +1040,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                           endDate: '',
                           monthlyRent: 0,
                           renewalPdf: '', // PDF du renouvellement
-                          amenities: { ...formData.lease.amenities } // Copier les conditions du bail actuel
                         }]
                       }))}
                       className="w-full py-2 px-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors text-sm"

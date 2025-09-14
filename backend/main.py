@@ -1100,7 +1100,7 @@ async def create_tenant_with_assignment(data: dict):
                 "moveInDate": data.get("lease", {}).get("startDate") or data.get("moveInDate"),
                 "moveOutDate": data.get("lease", {}).get("endDate") or data.get("moveOutDate"),
                 "rentAmount": data.get("lease", {}).get("monthlyRent") or data.get("rentAmount", 0),
-                "depositAmount": data.get("financial", {}).get("depositAmount") or data.get("depositAmount", 0),
+                "depositAmount": data.get("depositAmount", 0),
                 "leaseStartDate": data.get("lease", {}).get("startDate") or data.get("leaseStartDate"),
                 "leaseEndDate": data.get("lease", {}).get("endDate") or data.get("leaseEndDate"),
                 "rentDueDay": data.get("rentDueDay", 1),
@@ -1113,11 +1113,42 @@ async def create_tenant_with_assignment(data: dict):
             created_assignment = db_service.create_assignment_with_validation(assignment_data)
             print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
             
+            # 3. CRÉER LES RENOUVELLEMENTS si présents
+            renewals = data.get("leaseRenewals", [])
+            created_renewals = []
+            
+            for renewal in renewals:
+                if renewal.get("startDate") and renewal.get("endDate"):
+                    print(f"🔄 Création du renouvellement: {renewal['startDate']} - {renewal['endDate']}")
+                    renewal_data = {
+                        "tenantId": tenant_id,
+                        "unitId": int(unit_id),
+                        "moveInDate": renewal.get("startDate"),
+                        "moveOutDate": renewal.get("endDate"),
+                        "rentAmount": renewal.get("monthlyRent", 0),
+                        "depositAmount": 0,
+                        "leaseStartDate": renewal.get("startDate"),
+                        "leaseEndDate": renewal.get("endDate"),
+                        "rentDueDay": 1,
+                        "notes": f"Renouvellement - {renewal.get('renewalPdf', '')}"
+                    }
+                    
+                    # Supprimer les valeurs None/vides
+                    renewal_data = {k: v for k, v in renewal_data.items() if v is not None and v != ""}
+                    
+                    try:
+                        created_renewal = db_service.create_assignment_with_validation(renewal_data)
+                        created_renewals.append(created_renewal)
+                        print(f"✅ Renouvellement créé avec ID: {created_renewal['id']}")
+                    except Exception as e:
+                        print(f"❌ Erreur création renouvellement: {e}")
+            
             return {
                 "data": {
                     "tenant": created_tenant,
                     "assignment": created_assignment,
-                    "message": "Locataire et assignation créés avec succès"
+                    "renewals": created_renewals,
+                    "message": f"Locataire, assignation et {len(created_renewals)} renouvellement(s) créés avec succès"
                 }
             }
         else:
