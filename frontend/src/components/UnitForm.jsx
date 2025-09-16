@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, User, Home, Calendar, Phone, Mail, UserCheck, Plus, Search, Trash2, Edit } from 'lucide-react'
-import { UnitStatus, UnitType, getUnitTypeLabel, getUnitStatusLabel } from '../types/unit'
+import { getUnitTypeLabel } from '../types/unit'
 import { unitsService } from '../services/api'
 
 export default function UnitForm({ unit, isOpen, onClose, onSave }) {

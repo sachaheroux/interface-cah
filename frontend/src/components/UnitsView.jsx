@@ -4,7 +4,7 @@ import {
   Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus
 } from 'lucide-react'
 import { parseAddressAndGenerateUnits } from '../types/unit'
-import { calculateUnitStatus, getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
+import { getUnitTypeLabel } from '../types/unit'
 import { assignmentsService, unitsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
@@ -174,7 +174,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           unitNumber: unit.unitNumber,
           // Titre simple pour l'en-tête de la carte (sans ville/code postal)
           simpleTitle: simpleAddress,
-          status: calculateUnitStatus(unit, assignments),
+          status: unit.currentTenants?.length > 0 ? 'occupied' : 'vacant',
           currentTenants: currentTenants
         }
       })
@@ -463,8 +463,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                     <p className="text-sm text-gray-600">{unit.buildingName}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUnitStatusColor(unit.currentTenants?.length > 0 ? 'occupied' : unit.status || 'vacant')}`}>
-                  {getUnitStatusLabel(unit.currentTenants?.length > 0 ? 'occupied' : unit.status || 'vacant')}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.currentTenants?.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {unit.currentTenants?.length > 0 ? 'Occupée' : 'Libre'}
                 </span>
               </div>
 

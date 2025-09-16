@@ -1,6 +1,6 @@
 import React from 'react'
 import { X, Building2, MapPin, Users, DollarSign, Home, Phone, FileText, Trash2 } from 'lucide-react'
-import { getBuildingTypeLabel } from '../types/building'
+// import { getBuildingTypeLabel } from '../types/building' // Fonction supprimée
 
 export default function BuildingDetails({ building, isOpen, onClose, onDelete }) {
   if (!isOpen || !building) return null
@@ -46,7 +46,7 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
                   </span>
                 )}
               </div>
-              <p className="text-gray-600">{getBuildingTypeLabel(building.type)}</p>
+              <p className="text-gray-600">{building.type || 'Non spécifié'}</p>
             </div>
           </div>
           <button

@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { geocodeBuildings, calculateBounds } from '../services/geocoding'
 import { buildingsService } from '../services/api'
 import { Building2, MapPin, DollarSign, Users, X, Eye, Edit } from 'lucide-react'
-import { getBuildingTypeLabel } from '../types/building'
+// import { getBuildingTypeLabel } from '../types/building' // Fonction supprimée
 
 // Corriger l'icône par défaut de Leaflet
 delete Icon.Default.prototype._getIconUrl

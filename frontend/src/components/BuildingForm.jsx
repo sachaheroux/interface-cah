@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, MapPin, DollarSign, Home, Users, FileText } from 'lucide-react'
-import { defaultBuilding, BuildingTypes, getBuildingTypeLabel } from '../types/building'
+import { defaultBuilding } from '../types/building'
 
 export default function BuildingForm({ building = null, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState(defaultBuilding)

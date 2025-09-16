@@ -14,7 +14,7 @@ import {
   Calendar,
   AlertTriangle
 } from 'lucide-react'
-import { getTenantStatusLabel, getTenantStatusColor, getRelationshipLabel } from '../types/tenant'
+import { getTenantStatusLabel, getTenantStatusColor } from '../types/tenant'
 import { unitsService, assignmentsService } from '../services/api'
 
 export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelete }) {
@@ -291,7 +291,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                   {tenant.emergencyContact.relationship && (
                     <div>
                       <p className="text-sm text-gray-500">Relation</p>
-                      <p className="text-gray-900">{getRelationshipLabel(tenant.emergencyContact.relationship)}</p>
+                      <p className="text-gray-900">{tenant.emergencyContact.relationship || 'Non spécifié'}</p>
                     </div>
                   )}
                   

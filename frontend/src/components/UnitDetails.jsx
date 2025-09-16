@@ -12,7 +12,7 @@ import {
   MapPin,
   UserCheck
 } from 'lucide-react'
-import { getUnitStatusLabel, getUnitStatusColor, getUnitTypeLabel } from '../types/unit'
+import { getUnitTypeLabel } from '../types/unit'
 
 export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete }) {
   if (!isOpen || !unit) return null
@@ -76,8 +76,8 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
 
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="mx-auto mb-2 w-8 h-8 flex items-center justify-center">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getUnitStatusColor(unit.status)}`}>
-                  {getUnitStatusLabel(unit.status)}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${unit.status === 'occupied' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {unit.status === 'occupied' ? 'Occupée' : 'Libre'}
                 </span>
               </div>
               <h3 className="text-sm font-medium text-gray-700">Statut</h3>

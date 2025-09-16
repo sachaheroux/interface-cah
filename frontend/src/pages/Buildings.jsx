@@ -20,7 +20,7 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import BuildingFilters from '../components/BuildingFilters'
 import MapView from '../components/MapView'
 import UnitsView from '../components/UnitsView'
-import { getBuildingTypeLabel } from '../types/building'
+// import { getBuildingTypeLabel } from '../types/building' // Fonction supprimée
 
 export default function Buildings() {
   const [buildings, setBuildings] = useState([])
@@ -470,7 +470,7 @@ export default function Buildings() {
                     </div>
                     <div className="ml-3">
                       <h4 className="text-lg font-semibold text-gray-900">{building.name}</h4>
-                      <p className="text-sm text-gray-600">{getBuildingTypeLabel(building.type)}</p>
+                      <p className="text-sm text-gray-600">{building.type || 'Non spécifié'}</p>
                     </div>
                   </div>
                 </div>
