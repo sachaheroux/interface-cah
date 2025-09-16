@@ -277,21 +277,22 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             // Récupérer les assignations depuis le backend
             const assignmentsResponse = await assignmentsService.getAssignments()
             const allAssignments = assignmentsResponse.data || []
-            const unitAssignments = allAssignments.filter(a => parseInt(a.unitId) === unit.id)
+            const unitAssignments = allAssignments.filter(a => parseInt(a.unitId) === unit.id_unite)
             
             const currentTenants = unitAssignments.map(assignment => {
               // Le backend retourne les données dans tenantData
               const tenantData = assignment.tenantData || assignment.tenant
               return {
                 id: assignment.tenantId,
-                name: tenantData?.name || 'Locataire inconnu',
+                nom: tenantData?.nom || 'Locataire inconnu',
+                prenom: tenantData?.prenom || '',
                 email: tenantData?.email || '',
-                phone: tenantData?.phone || ''
+                telephone: tenantData?.telephone || ''
               }
             })
             
-            // Nettoyer l'adresse pour éviter la duplication
-            let cleanAddress = unit.unitAddress || `${unit.unitNumber}`
+            // Utiliser l'adresse de l'unité
+            let cleanAddress = unit.adresse_unite || 'Adresse non spécifiée'
             
             // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
             if (cleanAddress && cleanAddress.includes(' ')) {
@@ -314,7 +315,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             
             // Fallback si l'adresse est vide ou invalide
             if (!cleanAddress || cleanAddress.trim() === '') {
-              cleanAddress = `Unité ${unit.unitNumber || unit.id}`
+              cleanAddress = `Unité ${unit.id_unite}`
             }
             
             return {
@@ -359,9 +360,9 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     const searchLower = unitSearchTerm.toLowerCase()
     const filtered = availableUnits.filter(unit => {
       return (
-        unit.buildingName?.toLowerCase().includes(searchLower) ||
+        unit.adresse_unite?.toLowerCase().includes(searchLower) ||
         unit.address?.toLowerCase().includes(searchLower) ||
-        unit.unitNumber?.toString().toLowerCase().includes(searchLower) ||
+        unit.id_unite?.toString().toLowerCase().includes(searchLower) ||
         unit.type?.toLowerCase().includes(searchLower)
       )
     })
@@ -477,10 +478,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const handleUnitSelection = (unit) => {
     setFormData(prev => ({
       ...prev,
-      id_unite: unit?.id || '',
+      id_unite: unit?.id_unite || '',
       unitInfo: unit || null,
-      building: unit?.buildingName || '',
-      unit: unit?.unitNumber || ''
+      building: unit?.adresse_unite || '',
+      unit: unit?.type || ''
     }))
   }
 
@@ -844,10 +845,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       <div className="divide-y divide-gray-200">
                         {filteredUnits.map(unit => (
                           <div
-                            key={unit.id}
+                            key={unit.id_unite}
                             onClick={() => handleUnitSelection(unit)}
                             className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                              formData.id_unite === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                              formData.id_unite === unit.id_unite ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                             }`}
                           >
                             <div className="flex items-start justify-between">
@@ -857,7 +858,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                   <span className="font-medium text-gray-900">
                                     {unit.address}
                                   </span>
-                                  {formData.id_unite === unit.id && (
+                                  {formData.id_unite === unit.id_unite && (
                                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                       Sélectionnée
                                     </span>
@@ -914,11 +915,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-blue-800"><strong>Adresse:</strong> {formData.unitInfo.address}</p>
-                          <p className="text-blue-800"><strong>Immeuble:</strong> {formData.unitInfo.buildingName}</p>
                           <p className="text-blue-800"><strong>Type:</strong> {formData.unitInfo.type || 'N/A'}</p>
+                          <p className="text-blue-800"><strong>Chambres:</strong> {formData.unitInfo.nbr_chambre || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-blue-800"><strong>Superficie:</strong> {formData.unitInfo.area ? `${formData.unitInfo.area} pi²` : 'N/A'}</p>
+                          <p className="text-blue-800"><strong>Salles de bain:</strong> {formData.unitInfo.nbr_salle_de_bain || 'N/A'}</p>
                           {formData.unitInfo.rental?.monthlyRent && (
                             <p className="text-blue-800"><strong>Loyer:</strong> {formData.unitInfo.rental.monthlyRent} $/mois</p>
                           )}
