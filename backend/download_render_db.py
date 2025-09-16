@@ -113,7 +113,14 @@ def get_data_from_api(endpoint):
         if response.status_code == 200:
             data = response.json()
             print(f"🔍 DEBUG - {endpoint}: {type(data)} - {data[:2] if isinstance(data, list) and len(data) > 0 else data}")
-            return data
+            
+            # Gérer le cas où l'API retourne {'data': []}
+            if isinstance(data, dict) and 'data' in data:
+                return data['data']
+            elif isinstance(data, list):
+                return data
+            else:
+                return []
         else:
             print(f"⚠️  Erreur {response.status_code} pour {endpoint}")
             return []

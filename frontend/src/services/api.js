@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { parseAddressAndGenerateUnits } from '../types/unit.js'
 
 // Configuration de base pour axios
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -571,6 +570,29 @@ export const unitsService = {
     } catch (error) {
       console.error('Error getting unit with tenants:', error)
       return { data: null }
+    }
+  },
+
+  createUnit: async (unitData) => {
+    try {
+      console.log('📤 Creating new unit with data:', unitData)
+      
+      const response = await api.post('/api/units', unitData)
+      console.log('📥 Create unit response:', response)
+      
+      // Extraire les données créées
+      if (response.data?.unit) {
+        console.log('✅ Unit créée avec succès (response.data.unit):', response.data.unit)
+        return { data: response.data.unit }
+      } else if (response.data) {
+        console.log('✅ Unit créée avec succès (response.data):', response.data)
+        return { data: response.data }
+      }
+      
+      throw new Error('No data in create response')
+    } catch (error) {
+      console.error('❌ Error creating unit:', error)
+      throw error
     }
   },
 

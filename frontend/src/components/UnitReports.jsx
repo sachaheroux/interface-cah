@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Users, DollarSign, Eye, Search } from 'lucide-react'
 import { buildingsService, assignmentsService, tenantsService } from '../services/api'
-import { parseAddressAndGenerateUnits } from '../types/unit'
 import { useNavigate } from 'react-router-dom'
 
 export default function UnitReports({ selectedYear }) {
@@ -26,18 +25,8 @@ export default function UnitReports({ selectedYear }) {
       const buildingsData = response.data || []
       setBuildings(buildingsData)
       
-      // Générer les unités pour tous les immeubles
-      const allUnits = []
-      buildingsData.forEach(building => {
-        try {
-          const buildingUnits = parseAddressAndGenerateUnits(building)
-          allUnits.push(...buildingUnits)
-        } catch (error) {
-          console.error('Error parsing building units:', error)
-        }
-      })
-      
-      setUnits(allUnits)
+      // Pour l'instant, utiliser un tableau vide car on n'a pas encore de vraies unités
+      setUnits([])
     } catch (error) {
       console.error('Error loading buildings:', error)
     }

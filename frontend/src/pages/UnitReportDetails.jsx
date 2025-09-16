@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Building2, FileText, Calendar, DollarSign, Users, Eye } from 'lucide-react'
 import { buildingsService, assignmentsService, tenantsService } from '../services/api'
-import { parseAddressAndGenerateUnits } from '../types/unit'
 
 // Configuration de l'API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -45,29 +44,9 @@ export default function UnitReportDetails() {
       const buildings = response.data || []
       console.log('🏢 UnitReportDetails: Immeubles chargés:', buildings.length)
       
+      // Pour l'instant, utiliser une unité fictive car on n'a pas encore de vraies unités
       let targetUnit = null
-      for (const building of buildings) {
-        try {
-          const buildingUnits = parseAddressAndGenerateUnits(building)
-          console.log(`🏠 Building "${building.name}" - unités générées:`, buildingUnits.map(u => ({
-            id: u.id,
-            unitNumber: u.unitNumber,
-            buildingName: u.buildingName
-          })))
-          
-          targetUnit = buildingUnits.find(u => u.id === unitId)
-          if (targetUnit) {
-            console.log('✅ UnitReportDetails: Unité trouvée:', {
-              id: targetUnit.id,
-              buildingName: targetUnit.buildingName,
-              unitNumber: targetUnit.unitNumber
-            })
-            break
-          }
-        } catch (error) {
-          console.error('Error parsing building units:', error)
-        }
-      }
+      console.log('⚠️ UnitReportDetails: Recherche d\'unité non implémentée - utilisation d\'une unité fictive')
       
       if (targetUnit) {
         setUnit(targetUnit)

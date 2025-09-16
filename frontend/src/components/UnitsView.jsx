@@ -3,7 +3,6 @@ import {
   Users, MapPin, Eye, Edit3, Trash2, Search, Filter, Home, Mail, Phone, DollarSign, 
   Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus, Plus
 } from 'lucide-react'
-import { parseAddressAndGenerateUnits } from '../types/unit'
 import { getUnitTypeLabel } from '../types/unit'
 import { assignmentsService, unitsService } from '../services/api'
 import UnitForm from './UnitForm'
@@ -71,24 +70,10 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         unitsFromRender = []
       }
       
-      // 2. Si pas d'unités sur Render, générer depuis les immeubles
+      // 2. Si pas d'unités sur Render, utiliser un tableau vide
       if (unitsFromRender.length === 0) {
-        console.log('🔄 UnitsView: Génération des unités depuis les immeubles...')
-        const allUnits = []
-        
-        buildings.forEach(building => {
-          if (building && typeof building === 'object') {
-            try {
-              const buildingUnits = parseAddressAndGenerateUnits(building)
-              allUnits.push(...buildingUnits)
-            } catch (error) {
-              console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
-            }
-          }
-        })
-        
-        unitsFromRender = allUnits
-        console.log('✅ UnitsView: Unités générées depuis les immeubles:', unitsFromRender.length)
+        console.log('🔄 UnitsView: Aucune unité trouvée sur Render, utilisation d\'un tableau vide')
+        unitsFromRender = []
       }
       
       // 3. Calculer le statut et ajouter les currentTenants à chaque unité

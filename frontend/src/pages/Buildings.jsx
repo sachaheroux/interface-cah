@@ -13,7 +13,6 @@ import {
   BarChart3
 } from 'lucide-react'
 import { buildingsService, assignmentsService } from '../services/api'
-import { parseAddressAndGenerateUnits } from '../types/unit'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
@@ -331,38 +330,10 @@ export default function Buildings() {
   const totalUnits = filteredBuildings.reduce((sum, b) => sum + b.units, 0)
   const totalValue = filteredBuildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
   
-  // Calculer le vrai taux d'occupation basé sur les unités générées
+  // Calculer le taux d'occupation basé sur les données réelles
   const calculateOccupancyRate = () => {
-    // Utiliser les assignations du backend au lieu du localStorage
-    const allUnits = []
-    filteredBuildings.forEach(building => {
-      try {
-        const buildingUnits = parseAddressAndGenerateUnits(building)
-        
-        // Ajouter les currentTenants à chaque unité
-        const unitsWithTenants = buildingUnits.map(unit => ({
-          ...unit,
-          currentTenants: assignments
-            .filter(a => a.unitId === unit.id)
-            .map(a => a.tenantData)
-        }))
-        
-        allUnits.push(...unitsWithTenants)
-      } catch (error) {
-        console.error('Erreur lors de la génération des unités pour l\'immeuble:', building, error)
-      }
-    })
-    
-    if (allUnits.length === 0) return 0
-    
-    // Compter les unités occupées (qui ont des currentTenants OU status 'occupied')
-    const occupiedUnits = allUnits.filter(unit => 
-      unit.currentTenants?.length > 0 || unit.status === 'occupied'
-    ).length
-    
-    const rate = Math.round((occupiedUnits / allUnits.length) * 100)
-    
-    return rate
+    // Pour l'instant, retourner 0 car on n'a pas encore de vraies unités
+    return 0
   }
   
   const occupancyRate = calculateOccupancyRate()
