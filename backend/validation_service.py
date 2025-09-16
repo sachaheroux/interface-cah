@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from database import db_manager
-from database_service import db_service
+from database_service_francais import db_service_francais as db_service
 
 class ValidationLevel(Enum):
     """Niveaux de validation"""

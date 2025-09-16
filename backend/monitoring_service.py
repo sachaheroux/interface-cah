@@ -14,7 +14,7 @@ import threading
 import json
 
 from database import db_manager, DATABASE_PATH
-from database_service import db_service
+from database_service_francais import db_service_francais as db_service
 from validation_service import data_validator, ValidationLevel
 
 class HealthStatus(Enum):

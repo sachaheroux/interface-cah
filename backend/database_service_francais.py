@@ -19,7 +19,7 @@ class DatabaseServiceFrancais:
     """Service principal pour les opérations de base de données en français"""
     
     def __init__(self):
-        self.engine = db_manager.get_engine()
+        self.engine = db_manager.engine
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
     
     def get_session(self):
