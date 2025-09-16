@@ -219,8 +219,6 @@ class DatabaseServiceFrancais:
                     unit.nbr_chambre = update_data['nbr_chambre']
                 if 'nbr_salle_de_bain' in update_data:
                     unit.nbr_salle_de_bain = update_data['nbr_salle_de_bain']
-                if 'notes' in update_data:
-                    unit.notes = update_data['notes']
                 if 'id_immeuble' in update_data:
                     unit.id_immeuble = update_data['id_immeuble']
                 

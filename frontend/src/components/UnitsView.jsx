@@ -498,7 +498,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredUnits.map((unit) => (
-            <div key={unit.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={unit.id_unite} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               {/* En-tête de l'unité */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
@@ -506,8 +506,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                     <Home className="h-5 w-5 text-primary-600" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="font-semibold text-gray-900">{unit.simpleTitle}</h4>
-                    <p className="text-sm text-gray-600">{unit.buildingName}</p>
+                    <h4 className="font-semibold text-gray-900">{unit.adresse_unite}</h4>
+                    <p className="text-sm text-gray-600">{unit.type}</p>
                   </div>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.currentTenants?.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -515,16 +515,12 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                 </span>
               </div>
 
-              {/* Adresse */}
+              {/* Informations de base */}
               <div className="flex items-center text-gray-600 mb-3">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span className="text-sm">{unit.address}</span>
-              </div>
-
-              {/* Type et superficie */}
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                <span>{getUnitTypeLabel(unit.type)}</span>
-                {unit.area > 0 && <span>{unit.area} pi²</span>}
+                <Bed className="h-4 w-4 mr-2" />
+                <span className="text-sm">{unit.nbr_chambre} chambre{unit.nbr_chambre > 1 ? 's' : ''}</span>
+                <Bath className="h-4 w-4 mr-1 ml-4" />
+                <span className="text-sm">{unit.nbr_salle_de_bain} salle{unit.nbr_salle_de_bain > 1 ? 's' : ''} de bain</span>
               </div>
 
               {/* Loyer */}
@@ -552,17 +548,17 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                       <div key={tenantIndex} className="bg-white rounded-md p-2 border border-gray-200">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="font-medium text-sm text-gray-900">{tenant.name}</div>
+                            <div className="font-medium text-sm text-gray-900">{tenant.nom} {tenant.prenom}</div>
                             {tenant.email && (
                               <div className="flex items-center mt-1">
                                 <Mail className="h-3 w-3 mr-2 text-gray-400" />
                                 <span className="text-xs text-gray-600">{tenant.email}</span>
                               </div>
                             )}
-                            {tenant.phone && (
+                            {tenant.telephone && (
                               <div className="flex items-center mt-1">
                                 <Phone className="h-3 w-3 mr-2 text-gray-400" />
-                                <span className="text-xs text-gray-600">{tenant.phone}</span>
+                                <span className="text-xs text-gray-600">{tenant.telephone}</span>
                               </div>
                             )}
                           </div>
@@ -570,14 +566,14 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                           {/* Bouton pour retirer ce locataire de cette unité */}
                           <button
                             onClick={(event) => handleRemoveFromUnit(
-                              tenant.id, 
-                              unit.id, 
-                              tenant.name, 
-                              `${unit.buildingName} - ${unit.unitNumber}`,
+                              tenant.id_locataire, 
+                              unit.id_unite, 
+                              `${tenant.nom} ${tenant.prenom}`, 
+                              `${unit.adresse_unite}`,
                               event
                             )}
                             className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                            title={`Retirer ${tenant.name} de cette unité`}
+                            title={`Retirer ${tenant.nom} ${tenant.prenom} de cette unité`}
                           >
                             <UserMinus className="h-4 w-4" />
                           </button>

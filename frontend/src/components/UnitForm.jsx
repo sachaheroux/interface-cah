@@ -9,8 +9,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
     adresse_unite: '',
     type: '4 1/2',
     nbr_chambre: 1,
-    nbr_salle_de_bain: 1,
-    notes: ''
+    nbr_salle_de_bain: 1
   })
 
   const [loading, setLoading] = useState(false)
@@ -66,7 +65,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         type: unit.type || '4 1/2',
         nbr_chambre: unit.nbr_chambre || unit.bedrooms || 1,
         nbr_salle_de_bain: unit.nbr_salle_de_bain || unit.bathrooms || 1,
-        notes: unit.notes || ''
       })
       
       console.log('✅ UnitForm: FormData chargé')
@@ -78,7 +76,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         type: '4 1/2',
         nbr_chambre: 1,
         nbr_salle_de_bain: 1,
-        notes: ''
       })
     } else {
       // Création d'une nouvelle unité (sans immeuble pré-sélectionné)
@@ -88,7 +85,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         type: '4 1/2',
         nbr_chambre: 1,
         nbr_salle_de_bain: 1,
-        notes: ''
       })
     }
   }, [unit, selectedBuilding])
@@ -384,26 +380,6 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
             )}
           </div>
 
-          {/* Notes */}
-          <div className="space-y-4">
-            <div className="flex items-center mb-4">
-              <Calendar className="h-5 w-5 text-primary-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes et commentaires
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                rows="4"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Notes sur l'unité, réparations nécessaires, etc."
-              />
-            </div>
-          </div>
 
           {/* Boutons d'action */}
           <div className="flex justify-end space-x-3 pt-6 border-t">

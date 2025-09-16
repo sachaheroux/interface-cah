@@ -9,10 +9,6 @@ export const defaultUnit = {
   nbr_chambre: 1,
   nbr_salle_de_bain: 1,
   
-  
-  // Notes et commentaires
-  notes: '',
-  
   // Métadonnées
   date_creation: null,
   date_modification: null
