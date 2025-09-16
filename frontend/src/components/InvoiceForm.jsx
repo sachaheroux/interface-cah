@@ -4,30 +4,19 @@ import { unitsService } from '../services/api';
 
 const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) => {
   const [formData, setFormData] = useState({
-    invoiceNumber: '',
-    category: '',
-    source: '',
+    no_facture: '',
+    categorie: '',
+    montant: 0,
     date: new Date().toISOString().split('T')[0],
-    amount: 0,
-    paymentType: '',
-    buildingId: buildingId || '',
-    unitId: unitId || '',
-    pdfFilename: '',
+    source: '',
+    pdf_facture: '',
+    type_paiement: '',
     notes: '',
-    type: 'rental_building'
+    buildingId: buildingId || ''
   });
 
   const [buildings, setBuildings] = useState([]);
-  const [units, setUnits] = useState([]);
-  const [filteredBuildings, setFilteredBuildings] = useState([]);
-  const [buildingSearchTerm, setBuildingSearchTerm] = useState('');
-  const [showBuildingDropdown, setShowBuildingDropdown] = useState(false);
-  const [selectedBuildingName, setSelectedBuildingName] = useState('');
   const [currency, setCurrency] = useState('CAD');
-  const [filteredUnits, setFilteredUnits] = useState([]);
-  const [unitSearchTerm, setUnitSearchTerm] = useState('');
-  const [showUnitDropdown, setShowUnitDropdown] = useState(false);
-  const [selectedUnitName, setSelectedUnitName] = useState('');
   const [constants, setConstants] = useState({
     categories: {
       "municipal_taxes": "Taxes municipales",
@@ -293,7 +282,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
     if (file) {
       setFormData(prev => ({
         ...prev,
-        pdfFilename: file.name
+        pdf_facture: file.name
       }));
     }
   };
@@ -305,21 +294,21 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
 
     try {
       // Validation
-      if (!formData.invoiceNumber.trim()) {
+      if (!formData.no_facture.trim()) {
         throw new Error('Le numéro de facture est requis');
       }
-      if (!formData.category) {
+      if (!formData.categorie) {
         throw new Error('La catégorie est requise');
       }
       if (!formData.date) {
         throw new Error('La date est requise');
       }
       // Convertir le montant en nombre pour la validation
-      const amount = parseFloat(formData.amount.toString().replace(',', '.'));
+      const amount = parseFloat(formData.montant.toString().replace(',', '.'));
       if (isNaN(amount) || amount <= 0) {
         throw new Error('Le montant doit être un nombre supérieur à 0');
       }
-      if (!formData.paymentType) {
+      if (!formData.type_paiement) {
         throw new Error('Le type de paiement est requis');
       }
       if (!formData.buildingId) {
@@ -329,9 +318,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
       // Préparer les données
       const invoiceData = {
         ...formData,
-        amount: amount, // Utiliser le montant converti
-        buildingId: parseInt(formData.buildingId),
-        unitId: formData.unitId || null
+        montant: amount, // Utiliser le montant converti
+        buildingId: parseInt(formData.buildingId)
       };
 
       // Créer la facture
@@ -403,8 +391,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               </label>
               <input
                 type="text"
-                name="invoiceNumber"
-                value={formData.invoiceNumber}
+                name="no_facture"
+                value={formData.no_facture}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ex: FAC-2024-001"
@@ -417,8 +405,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 Catégorie *
               </label>
               <select
-                name="category"
-                value={formData.category}
+                name="categorie"
+                value={formData.categorie}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
@@ -431,7 +419,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Source (d'où vient la facture)
+              Source (ex: Hydro Québec)
             </label>
             <input
               type="text"
@@ -439,7 +427,7 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               value={formData.source}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ex: Ville de Montréal, Hydro-Québec, etc."
+              placeholder="Ex: Hydro Québec, Ville de Montréal, etc."
             />
           </div>
 
@@ -474,8 +462,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
                 </select>
                 <input
                   type="text"
-                  name="amount"
-                  value={formData.amount}
+                  name="montant"
+                  value={formData.montant}
                   onChange={handleInputChange}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-24"
                   placeholder="0,00"
@@ -491,8 +479,8 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               Type de paiement *
             </label>
             <select
-              name="paymentType"
-              value={formData.paymentType}
+              name="type_paiement"
+              value={formData.type_paiement}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -502,142 +490,21 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
             </select>
           </div>
 
-          {/* Immeuble et unité */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative building-search">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Immeuble *
-              </label>
-              <input
-                type="text"
-                value={buildingSearchTerm}
-                onChange={(e) => handleBuildingSearch(e.target.value)}
-                onFocus={() => setShowBuildingDropdown(true)}
-                placeholder="Rechercher un immeuble..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              
-              {/* Dropdown des immeubles filtrés */}
-              {showBuildingDropdown && filteredBuildings.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {filteredBuildings.map(building => (
-                    <div
-                      key={building.id}
-                      onClick={() => selectBuilding(building)}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="font-medium text-gray-900">{building.name}</div>
-                      <div className="text-sm text-gray-500">{building.address?.street}, {building.address?.city}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Message si aucun immeuble trouvé */}
-              {showBuildingDropdown && buildingSearchTerm.length > 0 && filteredBuildings.length === 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    Aucun immeuble trouvé
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="relative unit-search">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Unité (optionnel)
-              </label>
-              <input
-                type="text"
-                value={unitSearchTerm}
-                onChange={(e) => handleUnitSearch(e.target.value)}
-                onFocus={() => formData.buildingId && setShowUnitDropdown(true)}
-                placeholder={formData.buildingId ? "Rechercher une unité..." : "Sélectionnez d'abord un immeuble"}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                disabled={!formData.buildingId}
-              />
-              
-              {/* Dropdown des unités filtrées */}
-              {showUnitDropdown && formData.buildingId && filteredUnits.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  <div
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, unitId: '' }));
-                      setSelectedUnitName('');
-                      setUnitSearchTerm('');
-                      setShowUnitDropdown(false);
-                    }}
-                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100"
-                  >
-                    <div className="font-medium text-gray-900">Tout l'immeuble</div>
-                    <div className="text-sm text-gray-500">Facture pour l'ensemble de l'immeuble</div>
-                  </div>
-                  {filteredUnits.map(unit => (
-                    <div
-                      key={unit.id}
-                      onClick={() => selectUnit(unit)}
-                      className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                        formData.unitId === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <span className="font-medium text-gray-900">
-                              {unit.address}
-                            </span>
-                            {formData.unitId === unit.id && (
-                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                Sélectionnée
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{unit.buildingName}</p>
-                          {unit.unitNumber && (
-                            <p className="text-xs text-gray-500">Unité: {unit.unitNumber}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Message si aucune unité trouvée */}
-              {showUnitDropdown && formData.buildingId && unitSearchTerm.length > 0 && filteredUnits.length === 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  <div className="px-3 py-2 text-gray-500 text-sm">
-                    Aucune unité trouvée
-                  </div>
-                </div>
-              )}
-              
-              {/* Messages d'état */}
-              {formData.buildingId && units.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">Aucune unité disponible pour cet immeuble</p>
-              )}
-              {formData.buildingId && units.length > 0 && (
-                <p className="text-xs text-green-600 mt-1">{units.length} unité(s) disponible(s)</p>
-              )}
-              
-              {/* Bouton pour désélectionner */}
-              {formData.unitId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData(prev => ({ ...prev, unitId: '' }));
-                    setSelectedUnitName('');
-                    setUnitSearchTerm('');
-                    setShowUnitDropdown(false);
-                  }}
-                  className="text-sm text-red-600 hover:text-red-700 flex items-center mt-2"
-                >
-                  <span className="mr-1">×</span>
-                  Désélectionner l'unité
-                </button>
-              )}
-            </div>
+          {/* Immeuble seulement */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Immeuble *
+            </label>
+            <select
+              name="buildingId"
+              value={formData.buildingId}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Sélectionner un immeuble</option>
+              {buildingOptions}
+            </select>
           </div>
 
           {/* Upload PDF */}
@@ -651,9 +518,9 @@ const InvoiceForm = ({ onClose, onSuccess, buildingId = null, unitId = null }) =
               onChange={handleFileChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {formData.pdfFilename && (
+            {formData.pdf_facture && (
               <p className="mt-1 text-sm text-gray-600">
-                Fichier sélectionné: {formData.pdfFilename}
+                Fichier sélectionné: {formData.pdf_facture}
               </p>
             )}
           </div>

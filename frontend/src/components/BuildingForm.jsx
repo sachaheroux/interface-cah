@@ -151,28 +151,6 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     {errors.nom_immeuble && <p className="text-red-500 text-sm mt-1">{errors.nom_immeuble}</p>}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Type d'immeuble
-                    </label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => handleInputChange('type', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      <option value="">Sélectionnez...</option>
-                      <option value="3 1/2">3 1/2</option>
-                      <option value="4 1/2">4 1/2</option>
-                      <option value="5 1/2">5 1/2</option>
-                      <option value="6 1/2">6 1/2</option>
-                      <option value="7 1/2">7 1/2</option>
-                      <option value="8 1/2">8 1/2</option>
-                      <option value="9 1/2">9 1/2</option>
-                      <option value="10 1/2">10 1/2</option>
-                      <option value="11 1/2">11 1/2</option>
-                      <option value="12 1/2">12 1/2</option>
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

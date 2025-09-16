@@ -10,7 +10,7 @@ from datetime import datetime, date
 import json
 
 from database import db_manager
-from models import Building, Tenant, Unit, Assignment, BuildingReport, UnitReport, Invoice
+from models_francais import Immeuble, Locataire, Unite, Bail, Facture
 
 class DatabaseService:
     """Service principal pour les opérations de base de données"""

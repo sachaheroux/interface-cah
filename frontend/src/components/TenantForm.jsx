@@ -9,20 +9,21 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const [hasLeaseDataBeenModified, setHasLeaseDataBeenModified] = useState(false)
   
   const [formData, setFormData] = useState({
-    name: '',
+    nom: '',
+    prenom: '',
     email: '',
-    phone: '',
-    status: TenantStatus.ACTIVE,
+    telephone: '',
+    statut: TenantStatus.ACTIVE,
     
-    unitId: '',
+    id_unite: '',
     unitInfo: null,
     
     // Premier bail (cellules de base)
     lease: {
-      startDate: '',
-      endDate: '',
-      monthlyRent: 0,
-      paymentMethod: 'Virement bancaire'
+      date_debut: '',
+      date_fin: '',
+      prix_loyer: 0,
+      methode_paiement: 'Virement bancaire'
     },
     
     // Renouvellements (baux supplémentaires)
@@ -169,11 +170,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
         const finalLeaseData = leaseData || (tenant.lease && tenant.lease !== null ? tenant.lease : {
-          startDate: '',
-          endDate: '',
-          monthlyRent: 0,
-          paymentMethod: 'Virement bancaire',
-          leasePdf: '',
+          date_debut: '',
+          date_fin: '',
+          prix_loyer: 0,
+          methode_paiement: 'Virement bancaire',
+          pdf_bail: '',
         })
         
         console.log('📋 Données finales chargées:', { 
@@ -185,12 +186,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         })
         
         setFormData({
-          name: tenant.name || '',
+          nom: tenant.nom || tenant.name?.split(' ')[0] || '',
+          prenom: tenant.prenom || tenant.name?.split(' ').slice(1).join(' ') || '',
           email: tenant.email || '',
-          phone: tenant.phone || '',
-          status: tenant.status || TenantStatus.ACTIVE,
+          telephone: tenant.telephone || tenant.phone || '',
+          statut: tenant.statut || tenant.status || TenantStatus.ACTIVE,
           
-          unitId: unitData?.id || tenant.unitId || '',
+          id_unite: unitData?.id || tenant.unitId || tenant.id_unite || '',
           unitInfo: unitData || tenant.unitInfo || null,
           
           lease: finalLeaseData,
@@ -214,18 +216,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       setIsLeaseDataManuallySet(false)
       setHasLeaseDataBeenModified(false)
       setFormData({
-        name: '',
+        nom: '',
+        prenom: '',
         email: '',
-        phone: '',
-        status: TenantStatus.ACTIVE,
-        unitId: '',
+        telephone: '',
+        statut: TenantStatus.ACTIVE,
+        id_unite: '',
         unitInfo: null,
         lease: {
-          startDate: '',
-          endDate: '',
-          monthlyRent: 0,
-          paymentMethod: 'Virement bancaire',
-          leasePdf: '', // URL ou nom du fichier PDF
+          date_debut: '',
+          date_fin: '',
+          prix_loyer: 0,
+          methode_paiement: 'Virement bancaire',
+          pdf_bail: '', // URL ou nom du fichier PDF
         },
         leaseRenewals: [],
         notes: ''
@@ -389,7 +392,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     if (file) {
       // Simuler l'upload (à implémenter selon vos besoins)
       const fileName = `renewal_${renewalId}_${file.name}`
-      handleLeaseRenewalChange(renewalId, 'renewalPdf', fileName)
+      handleLeaseRenewalChange(renewalId, 'pdf_bail', fileName)
     }
   }
 
@@ -460,13 +463,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }
 
     // Afficher un message de chargement
-    handleLeaseChange('leasePdf', `Upload en cours: ${file.name}...`)
+    handleLeaseChange('pdf_bail', `Upload en cours: ${file.name}...`)
 
     const uploadedFilename = await uploadPdfFile(file, 'lease')
     if (uploadedFilename) {
-      handleLeaseChange('leasePdf', uploadedFilename)
+      handleLeaseChange('pdf_bail', uploadedFilename)
     } else {
-      handleLeaseChange('leasePdf', '')
+      handleLeaseChange('pdf_bail', '')
     }
   }
 
@@ -474,7 +477,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   const handleUnitSelection = (unit) => {
     setFormData(prev => ({
       ...prev,
-      unitId: unit?.id || '',
+      id_unite: unit?.id || '',
       unitInfo: unit || null,
       building: unit?.buildingName || '',
       unit: unit?.unitNumber || ''
@@ -487,13 +490,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     setLoading(true)
     
     // Validation des champs obligatoires
-    if (!formData.name.trim()) {
+    if (!formData.nom.trim()) {
       alert('Le nom du locataire est obligatoire')
       setLoading(false)
       return
     }
     
-    if (!formData.unitId) {
+    if (!formData.id_unite) {
       alert('Veuillez sélectionner une unité')
       setLoading(false)
       return
@@ -501,15 +504,17 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     
     // Préparer les données du locataire (SEULEMENT les infos personnelles)
     const tenantData = {
-      name: formData.name.trim(),
+      nom: formData.nom.trim(),
+      prenom: formData.prenom.trim(),
       email: formData.email.trim(),
-      phone: formData.phone.trim(),
+      telephone: formData.telephone.trim(),
+      statut: formData.statut,
       notes: formData.notes.trim()
     }
     
     // Préparer les données d'assignation (TOUTES les données de bail)
     const assignmentData = {
-      unitId: parseInt(formData.unitId),
+      unitId: parseInt(formData.id_unite),
       moveInDate: formData.lease?.startDate || null,
       moveOutDate: formData.lease?.endDate || null,
       rentAmount: parseFloat(formData.lease?.monthlyRent) || 0,
@@ -733,17 +738,29 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               <User className="h-5 w-5 mr-2" />
               Informations personnelles
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom complet *
+                  Nom *
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={formData.nom}
+                  onChange={(e) => handleInputChange('nom', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Prénom
+                </label>
+                <input
+                  type="text"
+                  value={formData.prenom}
+                  onChange={(e) => handleInputChange('prenom', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
 
@@ -765,8 +782,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 </label>
                 <input
                   type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  value={formData.telephone}
+                  onChange={(e) => handleInputChange('telephone', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="(514) 555-0123"
                 />
@@ -777,8 +794,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   Statut
                 </label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  value={formData.statut}
+                  onChange={(e) => handleInputChange('statut', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   {Object.values(TenantStatus).map(status => (
@@ -830,7 +847,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                             key={unit.id}
                             onClick={() => handleUnitSelection(unit)}
                             className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                              formData.unitId === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                              formData.id_unite === unit.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                             }`}
                           >
                             <div className="flex items-start justify-between">
@@ -840,7 +857,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                   <span className="font-medium text-gray-900">
                                     {unit.address}
                                   </span>
-                                  {formData.unitId === unit.id && (
+                                  {formData.id_unite === unit.id && (
                                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                       Sélectionnée
                                     </span>
@@ -911,7 +928,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   )}
                   
                   {/* Bouton pour désélectionner */}
-                  {formData.unitId && (
+                  {formData.id_unite && (
                     <button
                       type="button"
                       onClick={() => handleUnitSelection(null)}
@@ -952,8 +969,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     </label>
                     <input
                       type="text"
-                      value={formData.lease?.startDate || ''}
-                      onChange={(e) => handleLeaseChange('startDate', e.target.value)}
+                      value={formData.lease?.date_debut || ''}
+                      onChange={(e) => handleLeaseChange('date_debut', e.target.value)}
                       placeholder="2025-01-01"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
@@ -966,8 +983,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     </label>
                     <input
                       type="text"
-                      value={formData.lease?.endDate || ''}
-                      onChange={(e) => handleLeaseChange('endDate', e.target.value)}
+                      value={formData.lease?.date_fin || ''}
+                      onChange={(e) => handleLeaseChange('date_fin', e.target.value)}
                       placeholder="2025-12-31"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
@@ -976,13 +993,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Loyer mensuel (CAD)
+                      Prix du loyer (CAD)
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      value={formData.lease?.monthlyRent || 0}
-                      onChange={(e) => handleLeaseChange('monthlyRent', parseFloat(e.target.value) || 0)}
+                      value={formData.lease?.prix_loyer || 0}
+                      onChange={(e) => handleLeaseChange('prix_loyer', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="0.00"
                     />
@@ -993,8 +1010,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       Méthode de paiement
                     </label>
                     <select
-                      value={formData.lease?.paymentMethod || 'Virement bancaire'}
-                      onChange={(e) => handleLeaseChange('paymentMethod', e.target.value)}
+                      value={formData.lease?.methode_paiement || 'Virement bancaire'}
+                      onChange={(e) => handleLeaseChange('methode_paiement', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="Virement bancaire">Virement bancaire</option>
@@ -1016,15 +1033,15 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       onChange={handleLeasePdfUpload}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
-                    {formData.lease.leasePdf && (
+                    {formData.lease.pdf_bail && (
                       <p className={`text-xs mt-1 ${
-                        formData.lease.leasePdf.startsWith('Upload en cours') 
+                        formData.lease.pdf_bail.startsWith('Upload en cours') 
                           ? 'text-blue-600' 
                           : 'text-green-600'
                       }`}>
-                        {formData.lease.leasePdf.startsWith('Upload en cours') 
-                          ? '⏳ ' + formData.lease.leasePdf
-                          : '✓ ' + formData.lease.leasePdf
+                        {formData.lease.pdf_bail.startsWith('Upload en cours') 
+                          ? '⏳ ' + formData.lease.pdf_bail
+                          : '✓ ' + formData.lease.pdf_bail
                         }
                       </p>
                     )}
@@ -1043,11 +1060,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                       ...prev,
                       leaseRenewals: [...prev.leaseRenewals, {
                         id: Date.now() + Math.random(), // Unique ID
-                        startDate: '',
-                        endDate: '',
-                        monthlyRent: 0,
-                        paymentMethod: 'Virement bancaire',
-                        renewalPdf: '',
+                        date_debut: '',
+                        date_fin: '',
+                        prix_loyer: 0,
+                        methode_paiement: 'Virement bancaire',
+                        pdf_bail: '',
                       }]
                     }))}
                     className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -1082,8 +1099,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                             </label>
                             <input
                               type="text"
-                              value={renewal.startDate}
-                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'startDate', e.target.value)}
+                              value={renewal.date_debut}
+                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'date_debut', e.target.value)}
                               placeholder="2025-01-01"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
@@ -1096,8 +1113,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                             </label>
                             <input
                               type="text"
-                              value={renewal.endDate}
-                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'endDate', e.target.value)}
+                              value={renewal.date_fin}
+                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'date_fin', e.target.value)}
                               placeholder="2025-12-31"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
@@ -1106,13 +1123,13 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                           
                           <div className="min-h-[80px]">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Loyer mensuel (CAD)
+                              Prix du loyer (CAD)
                             </label>
                             <input
                               type="number"
                               step="0.01"
-                              value={renewal.monthlyRent}
-                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'monthlyRent', parseFloat(e.target.value) || 0)}
+                              value={renewal.prix_loyer}
+                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'prix_loyer', parseFloat(e.target.value) || 0)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
                             <div className="h-4"></div>
@@ -1123,8 +1140,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               Méthode de paiement
                             </label>
                             <select
-                              value={renewal.paymentMethod || 'Virement bancaire'}
-                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'paymentMethod', e.target.value)}
+                              value={renewal.methode_paiement || 'Virement bancaire'}
+                              onChange={(e) => handleLeaseRenewalChange(renewal.id, 'methode_paiement', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             >
                               <option value="Virement bancaire">Virement bancaire</option>
@@ -1148,15 +1165,15 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                               onChange={(e) => handleRenewalPdfUpload(e, renewal.id)}
                               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                             />
-                            {renewal.renewalPdf && (
+                            {renewal.pdf_bail && (
                               <span className={`text-sm ${
-                                renewal.renewalPdf.startsWith('Upload en cours') 
+                                renewal.pdf_bail.startsWith('Upload en cours') 
                                   ? 'text-blue-600' 
                                   : 'text-green-600'
                               }`}>
-                                {renewal.renewalPdf.startsWith('Upload en cours') 
-                                  ? '⏳ ' + renewal.renewalPdf
-                                  : '✓ ' + renewal.renewalPdf
+                                {renewal.pdf_bail.startsWith('Upload en cours') 
+                                  ? '⏳ ' + renewal.pdf_bail
+                                  : '✓ ' + renewal.pdf_bail
                                 }
                               </span>
                             )}

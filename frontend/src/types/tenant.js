@@ -9,52 +9,25 @@ export const TenantStatus = {
 
 export const defaultTenant = {
   id: null,
-  name: '',
+  nom: '',
+  prenom: '',
   email: '',
-  phone: '',
-  status: TenantStatus.ACTIVE,
+  telephone: '',
+  statut: TenantStatus.ACTIVE,
   
   // Référence à l'unité assignée
-  unitId: null,
+  id_unite: null,
   unitInfo: null,
   
   // Champs legacy pour compatibilité
   building: '',
   unit: '',
   
-  // Contact d'urgence
-  emergencyContact: {
-    name: '',
-    phone: '',
-    email: '',
-    relationship: ''
-  },
-  
-  // Informations financières
-  financial: {
-    monthlyIncome: 0,
-    creditScore: 0,
-    bankAccount: '',
-    employer: '',
-    employerPhone: ''
-  },
-  
-  // Historique de location
-  rentalHistory: [],
-  
-  // Documents
-  documents: {
-    idCopy: null,
-    proofOfIncome: null,
-    references: [],
-    lease: null
-  },
-  
   notes: '',
   
   // Métadonnées
-  createdAt: null,
-  updatedAt: null
+  date_creation: null,
+  date_modification: null
 }
 
 export const getTenantStatusLabel = (status) => {
@@ -87,36 +60,16 @@ export const getTenantStatusColor = (status) => {
   }
 }
 
-export const getRelationshipLabel = (relationship) => {
-  switch (relationship) {
-    case 'parent':
-      return 'Parent'
-    case 'conjoint':
-      return 'Conjoint(e)'
-    case 'enfant':
-      return 'Enfant'
-    case 'frere_soeur':
-      return 'Frère/Sœur'
-    case 'ami':
-      return 'Ami(e)'
-    case 'collegue':
-      return 'Collègue'
-    case 'autre':
-      return 'Autre'
-    default:
-      return relationship
-  }
-}
-
 // Fonction pour créer un locataire de base à partir des données minimales
-export const createBasicTenant = (name, email = '', phone = '') => {
+export const createBasicTenant = (nom, prenom, email = '', telephone = '') => {
   return {
     ...defaultTenant,
     id: `temp-${Date.now()}`,
-    name,
+    nom,
+    prenom,
     email,
-    phone,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    telephone,
+    date_creation: new Date().toISOString(),
+    date_modification: new Date().toISOString()
   }
 } 

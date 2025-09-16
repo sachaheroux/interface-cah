@@ -1,118 +1,31 @@
 // Types et modèles pour les unités d'immeubles
 
-// Types d'unités selon le format québécois
-export const UnitType = {
-  ONE_HALF: '1_1_2',
-  TWO_HALF: '2_1_2',
-  THREE_HALF: '3_1_2',
-  FOUR_HALF: '4_1_2', 
-  FIVE_HALF: '5_1_2',
-  SIX_HALF: '6_1_2',
-  SEVEN_HALF: '7_1_2'
-}
-
-// Statut d'unité (calculé dynamiquement)
-export const UnitStatus = {
-  VACANT: 'vacant',
-  OCCUPIED: 'occupied'
-}
-
 export const defaultUnit = {
   id: null,
-  buildingId: null,
-  buildingName: '',
-  unitNumber: '',
-  address: '',
-  type: UnitType.ONE_BEDROOM,
-  status: UnitStatus.VACANT,
-  area: 0, // en pieds carrés
-  bedrooms: 1,
-  bathrooms: 1,
-  
-  
-  // Services inclus
-  amenities: {
-    heating: false,        // chauffage inclus
-    electricity: false,    // électricité incluse
-    wifi: false,          // wifi inclus
-    furnished: false,     // meublé
-    parking: false,       // stationnement inclus
-    laundry: false,       // buanderie incluse
-    airConditioning: false, // climatisation
-    balcony: false,       // balcon
-    storage: false,       // rangement
-    dishwasher: false,    // lave-vaisselle
-    washerDryer: false,   // laveuse-sécheuse
-  },
-  
-  // Référence au locataire (ID du système de gestion des locataires)
-  tenantId: null,
-  
-  // Informations du locataire (copiées pour affichage, source de vérité dans le système locataires)
-  tenant: {
-    name: '',
-    email: '',
-    phone: '',
-    emergencyContact: {
-      name: '',
-      phone: '',
-      relationship: ''
-    },
-    moveInDate: null,
-    moveOutDate: null,
-  },
+  id_immeuble: null,
+  nom_immeuble: '',
+  adresse_unite: '',
+  type: '1 1/2',
+  nbr_chambre: 1,
+  nbr_salle_de_bain: 1,
   
   
   // Notes et commentaires
   notes: '',
   
   // Métadonnées
-  createdAt: null,
-  updatedAt: null
+  date_creation: null,
+  date_modification: null
 }
 
+// Fonction pour obtenir le label du type d'unité
 export const getUnitTypeLabel = (type) => {
-  const labels = {
-    [UnitType.ONE_HALF]: '1 1/2',
-    [UnitType.TWO_HALF]: '2 1/2',
-    [UnitType.THREE_HALF]: '3 1/2',
-    [UnitType.FOUR_HALF]: '4 1/2', 
-    [UnitType.FIVE_HALF]: '5 1/2',
-    [UnitType.SIX_HALF]: '6 1/2',
-    [UnitType.SEVEN_HALF]: '7 1/2'
-  }
-  return labels[type] || type
-}
-
-export const getUnitStatusLabel = (status) => {
-  const labels = {
-    [UnitStatus.VACANT]: 'Libre',
-    [UnitStatus.OCCUPIED]: 'Occupée'
-  }
-  return labels[status] || status
-}
-
-export const getUnitStatusColor = (status) => {
-  const colors = {
-    [UnitStatus.VACANT]: 'bg-red-100 text-red-800',
-    [UnitStatus.OCCUPIED]: 'bg-green-100 text-green-800'
-  }
-  return colors[status] || 'bg-gray-100 text-gray-800'
-}
-
-// Fonction pour calculer le statut dynamiquement
-export const calculateUnitStatus = (unit, assignments = []) => {
-  if (!assignments || assignments.length === 0) {
-    return UnitStatus.VACANT
-  }
-  
-  const unitAssignments = assignments.filter(a => a.unitId === unit.id)
-  return unitAssignments.length > 0 ? UnitStatus.OCCUPIED : UnitStatus.VACANT
+  return type || '1 1/2'
 }
 
 // Fonction pour parser une adresse et générer des unités
 export const parseAddressAndGenerateUnits = (building) => {
-  if (!building || !building.address) {
+  if (!building || !building.adresse) {
     console.warn('Immeuble sans adresse:', building)
     return []
   }
@@ -120,24 +33,10 @@ export const parseAddressAndGenerateUnits = (building) => {
   const units = []
   
   // Gérer les différents formats d'adresse
-  let address = ''
-  try {
-    if (typeof building.address === 'string') {
-      address = building.address.trim()
-    } else if (typeof building.address === 'object' && building.address.street) {
-      // Format objet avec street, city, etc.
-      address = building.address.street.trim()
-    } else {
-      console.warn('Format d\'adresse non supporté pour l\'immeuble:', building)
-      return []
-    }
-    
-    if (!address) {
-      console.warn('Adresse vide pour l\'immeuble:', building)
-      return []
-    }
-  } catch (error) {
-    console.error('Erreur lors du traitement de l\'adresse:', building, error)
+  let address = building.adresse.trim()
+  
+  if (!address) {
+    console.warn('Adresse vide pour l\'immeuble:', building)
     return []
   }
   
@@ -163,17 +62,15 @@ export const parseAddressAndGenerateUnits = (building) => {
         
         units.push({
           id: `${building.id}-${index + 1}`,
-          buildingId: building.id,
-          buildingName: building.name,
-          unitNumber: num,
-          address: unitAddress,
-          type: UnitType.FOUR_HALF, // Valeur par défaut
-          area: 0,
-          bedrooms: 2,
-          bathrooms: 1,
+          id_immeuble: building.id,
+          nom_immeuble: building.nom_immeuble,
+          adresse_unite: unitAddress,
+          type: '4 1/2', // Valeur par défaut
+          nbr_chambre: 2,
+          nbr_salle_de_bain: 1,
           notes: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          date_creation: new Date().toISOString(),
+          date_modification: new Date().toISOString()
         })
       })
     }
@@ -193,17 +90,15 @@ export const parseAddressAndGenerateUnits = (building) => {
         numbers.forEach((num, index) => {
           units.push({
             id: `${building.id}-${index + 1}`,
-            buildingId: building.id,
-            buildingName: building.name,
-            unitNumber: num,
-            address: `${baseAddress} Unité ${num}, ${streetName}`,
-            type: UnitType.FOUR_HALF, // Valeur par défaut
-            area: 0,
-            bedrooms: 2,
-            bathrooms: 1,
+            id_immeuble: building.id,
+            nom_immeuble: building.nom_immeuble,
+            adresse_unite: `${baseAddress} Unité ${num}, ${streetName}`,
+            type: '4 1/2', // Valeur par défaut
+            nbr_chambre: 2,
+            nbr_salle_de_bain: 1,
             notes: '',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            date_creation: new Date().toISOString(),
+            date_modification: new Date().toISOString()
           })
         })
       }
@@ -212,60 +107,18 @@ export const parseAddressAndGenerateUnits = (building) => {
   
   // Format 3: Adresse simple (une seule unité)
   else {
-    // Construire l'adresse complète si c'est un objet
-    let fullAddress = address
-    if (typeof building.address === 'object') {
-      const parts = [
-        building.address.street,
-        building.address.city,
-        building.address.province,
-        building.address.postalCode
-      ].filter(Boolean)
-      fullAddress = parts.join(', ')
-    }
-    
     units.push({
       id: `${building.id}-1`,
-      buildingId: building.id,
-      buildingName: building.name,
-      unitNumber: '1',
-      address: fullAddress,
-      type: UnitType.FOUR_HALF, // Valeur par défaut
-      area: 0,
-      bedrooms: 2,
-      bathrooms: 1,
+      id_immeuble: building.id,
+      nom_immeuble: building.nom_immeuble,
+      adresse_unite: address,
+      type: '4 1/2', // Valeur par défaut
+      nbr_chambre: 2,
+      nbr_salle_de_bain: 1,
       notes: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      date_creation: new Date().toISOString(),
+      date_modification: new Date().toISOString()
     })
-  }
-
-  // Merger avec les données personnalisées des unités si elles existent
-  if (building.unitData && typeof building.unitData === 'object') {
-    console.log(`🔄 Unit.js: Merging avec données personnalisées pour immeuble ${building.id}:`, building.unitData)
-    
-    units.forEach(unit => {
-      const customData = building.unitData[unit.id]
-      if (customData) {
-        console.log(`✅ Unit.js: Données personnalisées trouvées pour unité ${unit.id}:`, customData)
-        
-        // Merger les données personnalisées avec les données par défaut
-        Object.assign(unit, {
-          type: customData.type || unit.type,
-          area: customData.area || unit.area,
-          bedrooms: customData.bedrooms || unit.bedrooms,
-          bathrooms: customData.bathrooms || unit.bathrooms,
-          notes: customData.notes || unit.notes,
-          updatedAt: customData.updatedAt || unit.updatedAt
-        })
-        
-        console.log(`🎉 Unit.js: Unité ${unit.id} mergée avec succès`)
-      } else {
-        console.log(`⚪ Unit.js: Aucune donnée personnalisée pour unité ${unit.id}`)
-      }
-    })
-  } else {
-    console.log(`⚪ Unit.js: Aucune donnée personnalisée pour immeuble ${building.id}`)
   }
 
   return units

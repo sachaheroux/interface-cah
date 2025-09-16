@@ -5,10 +5,10 @@ import { unitsService } from '../services/api'
 
 export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
+    adresse_unite: '',
     type: UnitType.FOUR_HALF,
-    area: 0,
-    bedrooms: 1,
-    bathrooms: 1,
+    nbr_chambre: 1,
+    nbr_salle_de_bain: 1,
     notes: ''
   })
 
@@ -60,10 +60,10 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       })
       
       setFormData({
+        adresse_unite: unit.adresse_unite || unit.unitAddress || '',
         type: unit.type || UnitType.FOUR_HALF,
-        area: unit.area || 0,
-        bedrooms: unit.bedrooms || 1,
-        bathrooms: unit.bathrooms || 1,
+        nbr_chambre: unit.nbr_chambre || unit.bedrooms || 1,
+        nbr_salle_de_bain: unit.nbr_salle_de_bain || unit.bathrooms || 1,
         notes: unit.notes || ''
       })
       
@@ -181,7 +181,20 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
               <h3 className="text-lg font-semibold text-gray-900">Informations de Base</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Adresse de l'unité *
+              </label>
+              <input
+                type="text"
+                value={formData.adresse_unite}
+                onChange={(e) => handleInputChange('adresse_unite', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Ex: 56 rue Vachon, Apt 101"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Type d'unité
@@ -191,54 +204,46 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
                   onChange={(e) => handleInputChange('type', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
-                  {Object.values(UnitType).map(type => (
-                    <option key={type} value={type}>
-                      {getUnitTypeLabel(type)}
-                    </option>
-                  ))}
+                  <option value="1 1/2">1 1/2</option>
+                  <option value="2 1/2">2 1/2</option>
+                  <option value="3 1/2">3 1/2</option>
+                  <option value="4 1/2">4 1/2</option>
+                  <option value="5 1/2">5 1/2</option>
+                  <option value="6 1/2">6 1/2</option>
+                  <option value="7 1/2">7 1/2</option>
+                  <option value="8 1/2">8 1/2</option>
+                  <option value="9 1/2">9 1/2</option>
+                  <option value="10 1/2">10 1/2</option>
+                  <option value="11 1/2">11 1/2</option>
+                  <option value="12 1/2">12 1/2</option>
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Superficie (pi²)
-                </label>
-                <input
-                  type="number"
-                  value={formData.area}
-                  onChange={(e) => handleInputChange('area', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="800"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Chambres
+                  Nombre de chambres
                 </label>
                 <input
                   type="number"
                   min="0"
                   max="10"
-                  value={formData.bedrooms}
-                  onChange={(e) => handleInputChange('bedrooms', parseInt(e.target.value) || 1)}
+                  value={formData.nbr_chambre}
+                  onChange={(e) => handleInputChange('nbr_chambre', parseInt(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Salles de bain
+                  Nombre de salles de bain
                 </label>
                 <input
                   type="number"
                   min="1"
                   max="5"
                   step="0.5"
-                  value={formData.bathrooms}
-                  onChange={(e) => handleInputChange('bathrooms', parseFloat(e.target.value) || 1)}
+                  value={formData.nbr_salle_de_bain}
+                  onChange={(e) => handleInputChange('nbr_salle_de_bain', parseFloat(e.target.value) || 1)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
