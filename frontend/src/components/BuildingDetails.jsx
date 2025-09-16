@@ -13,9 +13,9 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
     }).format(amount)
   }
 
-  const formatAddress = (address) => {
-    if (typeof address === 'string') return address
-    return `${address.street}, ${address.city}, ${address.province} ${address.postalCode}, ${address.country}`
+  const formatAddress = (building) => {
+    // Utiliser le format français des données
+    return `${building.adresse}, ${building.ville}, ${building.province} ${building.code_postal}, ${building.pays}`
   }
 
   const isUserCreatedBuilding = () => {
@@ -39,14 +39,14 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
             </div>
             <div className="ml-4">
               <div className="flex items-center space-x-2">
-                <h2 className="text-2xl font-bold text-gray-900">{building.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{building.nom_immeuble}</h2>
                 {isUserCreatedBuilding() && (
                   <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                     Créé par vous
                   </span>
                 )}
               </div>
-              <p className="text-gray-600">{building.type || 'Non spécifié'}</p>
+              <p className="text-gray-600">Immeuble</p>
             </div>
           </div>
           <button
@@ -68,22 +68,12 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Nombre d'unités</p>
-                <p className="text-lg font-semibold text-gray-900">{building.units}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Nombre d'étages</p>
-                <p className="text-lg font-semibold text-gray-900">{building.floors}</p>
+                <p className="text-lg font-semibold text-gray-900">{building.nbr_unite}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Année de construction</p>
-                <p className="text-lg font-semibold text-gray-900">{building.yearBuilt}</p>
+                <p className="text-lg font-semibold text-gray-900">{building.annee_construction}</p>
               </div>
-              {building.totalArea && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Superficie totale</p>
-                  <p className="text-lg font-semibold text-gray-900">{building.totalArea} pi²</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -94,134 +84,72 @@ export default function BuildingDetails({ building, isOpen, onClose, onDelete })
               Adresse
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-900">{formatAddress(building.address)}</p>
+              <p className="text-gray-900">{formatAddress(building)}</p>
             </div>
           </div>
 
-          {/* Caractéristiques */}
-          {building.characteristics && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Building2 className="h-5 w-5 mr-2 text-primary-600" />
-                Caractéristiques
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Places de parking</p>
-                      <p className="text-lg font-semibold text-gray-900">{building.characteristics.parking || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Balcons</p>
-                      <p className="text-lg font-semibold text-gray-900">{building.characteristics.balconies || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Chauffage</p>
-                      <p className="text-lg font-semibold text-gray-900 capitalize">
-                        {building.characteristics.heating === 'electric' ? 'Électrique' :
-                         building.characteristics.heating === 'gas' ? 'Gaz' :
-                         building.characteristics.heating === 'oil' ? 'Mazout' :
-                         building.characteristics.heating === 'heat_pump' ? 'Thermopompe' :
-                         building.characteristics.heating || '-'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-3">Équipements</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'elevator', label: 'Ascenseur' },
-                      { key: 'storage', label: 'Rangement' },
-                      { key: 'laundry', label: 'Buanderie' },
-                      { key: 'airConditioning', label: 'Climatisation' },
-                      { key: 'internet', label: 'Internet inclus' },
-                      { key: 'security', label: 'Sécurité' }
-                    ].map(item => (
-                      <div key={item.key} className="flex items-center">
-                        <div className={`w-2 h-2 rounded-full mr-2 ${
-                          building.characteristics[item.key] ? 'bg-green-500' : 'bg-gray-300'
-                        }`}></div>
-                        <span className={`text-sm ${
-                          building.characteristics[item.key] ? 'text-gray-900' : 'text-gray-500'
-                        }`}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Informations financières */}
-          {building.financials && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-primary-600" />
-                Informations Financières
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <p className="text-sm text-green-700">Prix d'achat</p>
-                  <p className="text-lg font-semibold text-green-900">
-                    {formatCurrency(building.financials.purchasePrice)}
-                  </p>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-700">Mise de fond</p>
-                  <p className="text-lg font-semibold text-blue-900">
-                    {formatCurrency(building.financials.downPayment)}
-                  </p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <p className="text-sm text-purple-700">Taux d'intérêt</p>
-                  <p className="text-lg font-semibold text-purple-900">
-                    {building.financials.interestRate}%
-                  </p>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <p className="text-sm text-yellow-700">Valeur actuelle</p>
-                  <p className="text-lg font-semibold text-yellow-900">
-                    {formatCurrency(building.financials.currentValue)}
-                  </p>
-                </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <DollarSign className="h-5 w-5 mr-2 text-primary-600" />
+              Informations Financières
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <p className="text-sm text-green-700">Prix d'achat</p>
+                <p className="text-lg font-semibold text-green-900">
+                  {formatCurrency(building.prix_achete)}
+                </p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-700">Mise de fond</p>
+                <p className="text-lg font-semibold text-blue-900">
+                  {formatCurrency(building.mise_de_fond)}
+                </p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <p className="text-sm text-purple-700">Taux d'intérêt</p>
+                <p className="text-lg font-semibold text-purple-900">
+                  {building.taux_interet}%
+                </p>
+              </div>
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-700">Valeur actuelle</p>
+                <p className="text-lg font-semibold text-yellow-900">
+                  {formatCurrency(building.valeur_actuel)}
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Contacts */}
-          {building.contacts && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Phone className="h-5 w-5 mr-2 text-primary-600" />
-                Contacts
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {building.contacts.owner && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 font-medium">Propriétaire</p>
-                    <p className="text-gray-900 mt-1">{building.contacts.owner}</p>
-                  </div>
-                )}
-                {building.contacts.bank && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 font-medium">Banque</p>
-                    <p className="text-gray-900 mt-1">{building.contacts.bank}</p>
-                  </div>
-                )}
-                {building.contacts.contractor && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600 font-medium">Entrepreneur</p>
-                    <p className="text-gray-900 mt-1">{building.contacts.contractor}</p>
-                  </div>
-                )}
-              </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Phone className="h-5 w-5 mr-2 text-primary-600" />
+              Contacts
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {building.proprietaire && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 font-medium">Propriétaire</p>
+                  <p className="text-gray-900 mt-1">{building.proprietaire}</p>
+                </div>
+              )}
+              {building.banque && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 font-medium">Banque</p>
+                  <p className="text-gray-900 mt-1">{building.banque}</p>
+                </div>
+              )}
+              {building.contracteur && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 font-medium">Entrepreneur</p>
+                  <p className="text-gray-900 mt-1">{building.contracteur}</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Notes */}
           {building.notes && (

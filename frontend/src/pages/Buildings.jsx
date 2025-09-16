@@ -469,8 +469,8 @@ export default function Buildings() {
                       <Building2 className="h-6 w-6 text-primary-600" />
                     </div>
                     <div className="ml-3">
-                      <h4 className="text-lg font-semibold text-gray-900">{building.name}</h4>
-                      <p className="text-sm text-gray-600">{building.type || 'Non spécifié'}</p>
+                      <h4 className="text-lg font-semibold text-gray-900">{building.nom_immeuble}</h4>
+                      <p className="text-sm text-gray-600">Immeuble</p>
                     </div>
                   </div>
                 </div>
@@ -479,16 +479,13 @@ export default function Buildings() {
                   <div className="flex items-center text-gray-600">
                     <MapPin className="h-4 w-4 mr-2" />
                     <span className="text-sm">
-                      {typeof building.address === 'string' 
-                        ? building.address 
-                        : `${building.address?.street || ''}, ${building.address?.city || ''}`
-                      }
+                      {building.adresse}, {building.ville}
                     </span>
                   </div>
                   
                   <div className="flex items-center text-gray-600">
                     <Users className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{building.units} unités</span>
+                    <span className="text-sm">{building.nbr_unite} unités</span>
                   </div>
                 </div>
 

@@ -538,8 +538,13 @@ async def get_building(building_id: int):
 async def create_building(building_data: BuildingCreateFrancais):
     """Créer un nouvel immeuble avec le format français"""
     try:
+        # Debug: Afficher les données reçues
+        print(f"🔍 DEBUG - Données reçues: {building_data}")
+        print(f"🔍 DEBUG - Type: {type(building_data)}")
+        
         # Convertir en dictionnaire pour le service
         building_dict = building_data.dict()
+        print(f"🔍 DEBUG - Dictionnaire: {building_dict}")
         
         # Créer l'immeuble via le service SQLite
         new_building = db_service.create_building(building_dict)
@@ -547,6 +552,9 @@ async def create_building(building_data: BuildingCreateFrancais):
         return new_building
     except Exception as e:
         print(f"❌ Erreur lors de la création de l'immeuble: {e}")
+        print(f"❌ Type d'erreur: {type(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'immeuble: {str(e)}")
 
 @app.put("/api/buildings/{building_id}")

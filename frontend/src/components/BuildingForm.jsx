@@ -76,6 +76,11 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
         ...formData,
         updatedAt: new Date().toISOString()
       }
+      
+      // Debug: Afficher les données avant envoi
+      console.log('🔍 DEBUG - Données du formulaire:', formData)
+      console.log('🔍 DEBUG - Données à envoyer:', buildingData)
+      
       await onSave(buildingData)
       onClose()
     } catch (error) {
