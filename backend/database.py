@@ -318,11 +318,17 @@ def get_database():
 
 def init_database():
     """Initialiser la base de données (créer les tables)"""
-    if db_manager.connect():
-        success = db_manager.create_tables()
-        db_manager.disconnect()
-        return success
-    return False
+    try:
+        # Importer les modèles français
+        from models_francais import Base
+        
+        # Créer toutes les tables avec SQLAlchemy
+        Base.metadata.create_all(bind=engine)
+        print("✅ Tables françaises créées avec succès")
+        return True
+    except Exception as e:
+        print(f"❌ Erreur lors de la création des tables françaises: {e}")
+        return False
 
 if __name__ == "__main__":
     print("🚀 Initialisation de la base de données SQLite...")

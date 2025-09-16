@@ -14,7 +14,7 @@ import re
 
 # Imports pour SQLite
 from database import db_manager, init_database
-from database_service import db_service
+from database_service_francais import db_service_francais as db_service
 from backup_service import backup_service
 from validation_service import data_validator, consistency_checker, ValidationLevel
 from monitoring_service import database_monitor
