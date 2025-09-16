@@ -54,6 +54,12 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
   }, [isOpen, unit])
 
   useEffect(() => {
+    console.log('🔄 UnitForm: Initialisation du formulaire')
+    console.log('  - unit:', unit)
+    console.log('  - selectedBuilding:', selectedBuilding)
+    console.log('  - buildings:', buildings)
+    console.log('  - buildings.length:', buildings?.length)
+    
     if (unit) {
       console.log('🔄 UnitForm: Chargement des données unité:', {
         unitId: unit.id
@@ -70,8 +76,9 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
       console.log('✅ UnitForm: FormData chargé')
     } else if (selectedBuilding) {
       // Création d'une nouvelle unité pour un immeuble spécifique
+      console.log('🔄 UnitForm: Création d\'une unité pour immeuble spécifique:', selectedBuilding)
       setFormData({
-        id_immeuble: selectedBuilding.id,
+        id_immeuble: selectedBuilding.id_immeuble,
         adresse_unite: '',
         type: '4 1/2',
         nbr_chambre: 1,
@@ -79,6 +86,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
       })
     } else {
       // Création d'une nouvelle unité (sans immeuble pré-sélectionné)
+      console.log('🔄 UnitForm: Création d\'une unité sans immeuble pré-sélectionné')
       setFormData({
         id_immeuble: null,
         adresse_unite: '',
@@ -87,7 +95,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         nbr_salle_de_bain: 1,
       })
     }
-  }, [unit, selectedBuilding])
+  }, [unit, selectedBuilding, buildings])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -224,7 +232,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
                 >
                   <option value="">Sélectionner un immeuble</option>
                   {buildings.map(building => (
-                    <option key={building.id} value={building.id}>
+                    <option key={building.id_immeuble} value={building.id_immeuble}>
                       {building.nom_immeuble || building.name} - {building.adresse || building.address?.street || ''}
                     </option>
                   ))}
