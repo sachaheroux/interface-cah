@@ -19,7 +19,6 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
   const tabs = [
     { id: 'general', name: 'Général', icon: Home },
     { id: 'address', name: 'Adresse', icon: MapPin },
-    { id: 'characteristics', name: 'Caractéristiques', icon: Users },
     { id: 'financials', name: 'Financier', icon: DollarSign },
     { id: 'contacts', name: 'Contacts', icon: Users },
     { id: 'notes', name: 'Notes', icon: FileText }
@@ -48,21 +47,19 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
   const validateForm = () => {
     const newErrors = {}
     
-    if (!formData.name.trim()) newErrors.name = 'Le nom est requis'
-    if (!formData.address.street.trim()) newErrors.street = 'L\'adresse est requise'
-    if (!formData.address.city.trim()) newErrors.city = 'La ville est requise'
-    if (!formData.address.province.trim()) newErrors.province = 'La province est requise'
-    if (!formData.address.postalCode.trim()) {
-      newErrors.postalCode = 'Le code postal est requis'
-    } else if (!/^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/.test(formData.address.postalCode)) {
-      newErrors.postalCode = 'Format de code postal invalide (ex: H1H 1H1)'
+    if (!formData.nom_immeuble?.trim()) newErrors.nom_immeuble = 'Le nom est requis'
+    if (!formData.adresse?.trim()) newErrors.adresse = 'L\'adresse est requise'
+    if (!formData.ville?.trim()) newErrors.ville = 'La ville est requise'
+    if (!formData.province?.trim()) newErrors.province = 'La province est requise'
+    if (!formData.code_postal?.trim()) {
+      newErrors.code_postal = 'Le code postal est requis'
+    } else if (!/^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/.test(formData.code_postal)) {
+      newErrors.code_postal = 'Format de code postal invalide (ex: H1H 1H1)'
     }
     // Convertir en nombres pour la validation
-    const units = parseInt(formData.units) || 0
-    const floors = parseInt(formData.floors) || 0
+    const units = parseInt(formData.nbr_unite) || 0
     
-    if (units <= 0) newErrors.units = 'Le nombre d\'unités doit être supérieur à 0'
-    if (floors <= 0) newErrors.floors = 'Le nombre d\'étages doit être supérieur à 0'
+    if (units <= 0) newErrors.nbr_unite = 'Le nombre d\'unités doit être supérieur à 0'
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -144,14 +141,14 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="text"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      value={formData.nom_immeuble || formData.name}
+                      onChange={(e) => handleInputChange('nom_immeuble', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        errors.name ? 'border-red-500' : 'border-gray-300'
+                        errors.nom_immeuble ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Ex: Immeuble Maple"
                     />
-                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                    {errors.nom_immeuble && <p className="text-red-500 text-sm mt-1">{errors.nom_immeuble}</p>}
                   </div>
 
                   <div>
@@ -163,15 +160,19 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                       onChange={(e) => handleInputChange('type', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
-                      {Object.values(BuildingTypes).map(type => (
-                        <option key={type} value={type}>
-                          {getBuildingTypeLabel(type)}
-                        </option>
-                      ))}
+                      <option value="">Sélectionnez...</option>
+                      <option value="3 1/2">3 1/2</option>
+                      <option value="4 1/2">4 1/2</option>
+                      <option value="5 1/2">5 1/2</option>
+                      <option value="6 1/2">6 1/2</option>
+                      <option value="7 1/2">7 1/2</option>
+                      <option value="8 1/2">8 1/2</option>
+                      <option value="9 1/2">9 1/2</option>
+                      <option value="10 1/2">10 1/2</option>
+                      <option value="11 1/2">11 1/2</option>
+                      <option value="12 1/2">12 1/2</option>
                     </select>
                   </div>
-
-
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -179,8 +180,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="number"
-                      value={formData.yearBuilt}
-                      onChange={(e) => handleInputChange('yearBuilt', parseInt(e.target.value))}
+                      value={formData.annee_construction || formData.yearBuilt}
+                      onChange={(e) => handleInputChange('annee_construction', parseInt(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="1800"
                       max={new Date().getFullYear() + 5}
@@ -193,43 +194,14 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="number"
-                      value={formData.units}
-                      onChange={(e) => handleInputChange('units', parseInt(e.target.value))}
+                      value={formData.nbr_unite || formData.units}
+                      onChange={(e) => handleInputChange('nbr_unite', parseInt(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        errors.units ? 'border-red-500' : 'border-gray-300'
+                        errors.nbr_unite ? 'border-red-500' : 'border-gray-300'
                       }`}
                       min="1"
                     />
-                    {errors.units && <p className="text-red-500 text-sm mt-1">{errors.units}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre d'étages *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.floors}
-                      onChange={(e) => handleInputChange('floors', parseInt(e.target.value))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        errors.floors ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      min="1"
-                    />
-                    {errors.floors && <p className="text-red-500 text-sm mt-1">{errors.floors}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Superficie totale (pi²)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.totalArea}
-                      onChange={(e) => handleInputChange('totalArea', parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                    />
+                    {errors.nbr_unite && <p className="text-red-500 text-sm mt-1">{errors.nbr_unite}</p>}
                   </div>
                 </div>
               </div>
@@ -244,14 +216,14 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                   </label>
                   <input
                     type="text"
-                    value={formData.address.street}
-                    onChange={(e) => handleInputChange('street', e.target.value, 'address')}
+                    value={formData.adresse || formData.address?.street}
+                    onChange={(e) => handleInputChange('adresse', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                      errors.street ? 'border-red-500' : 'border-gray-300'
+                      errors.adresse ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="123 Rue Example"
+                    placeholder="56 rue Vachon"
                   />
-                  {errors.street && <p className="text-red-500 text-sm mt-1">{errors.street}</p>}
+                  {errors.adresse && <p className="text-red-500 text-sm mt-1">{errors.adresse}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,14 +233,14 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="text"
-                      value={formData.address.city}
-                      onChange={(e) => handleInputChange('city', e.target.value, 'address')}
+                      value={formData.ville || formData.address?.city}
+                      onChange={(e) => handleInputChange('ville', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        errors.city ? 'border-red-500' : 'border-gray-300'
+                        errors.ville ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Montréal"
                     />
-                    {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                    {errors.ville && <p className="text-red-500 text-sm mt-1">{errors.ville}</p>}
                   </div>
 
                   <div>
@@ -276,8 +248,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                       Province *
                     </label>
                     <select
-                      value={formData.address.province}
-                      onChange={(e) => handleInputChange('province', e.target.value, 'address')}
+                      value={formData.province || formData.address?.province}
+                      onChange={(e) => handleInputChange('province', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                         errors.province ? 'border-red-500' : 'border-gray-300'
                       }`}
@@ -306,15 +278,15 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="text"
-                      value={formData.address.postalCode}
-                      onChange={(e) => handleInputChange('postalCode', e.target.value.toUpperCase(), 'address')}
+                      value={formData.code_postal || formData.address?.postalCode}
+                      onChange={(e) => handleInputChange('code_postal', e.target.value.toUpperCase())}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                        errors.postalCode ? 'border-red-500' : 'border-gray-300'
+                        errors.code_postal ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="H1A 1A1"
                       maxLength="7"
                     />
-                    {errors.postalCode && <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>}
+                    {errors.code_postal && <p className="text-red-500 text-sm mt-1">{errors.code_postal}</p>}
                   </div>
 
                   <div>
@@ -323,8 +295,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="text"
-                      value={formData.address.country}
-                      onChange={(e) => handleInputChange('country', e.target.value, 'address')}
+                      value={formData.pays || formData.address?.country || 'Canada'}
+                      onChange={(e) => handleInputChange('pays', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
@@ -332,78 +304,6 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
               </div>
             )}
 
-            {/* Characteristics Tab */}
-            {activeTab === 'characteristics' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Places de stationnement
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.characteristics.parking}
-                      onChange={(e) => handleInputChange('parking', parseInt(e.target.value) || 0, 'characteristics')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Balcons
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.characteristics.balconies}
-                      onChange={(e) => handleInputChange('balconies', parseInt(e.target.value) || 0, 'characteristics')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Type de chauffage
-                    </label>
-                    <select
-                      value={formData.characteristics.heating}
-                      onChange={(e) => handleInputChange('heating', e.target.value, 'characteristics')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      <option value="electric">Électrique</option>
-                      <option value="gas">Gaz</option>
-                      <option value="oil">Mazout</option>
-                      <option value="heat_pump">Thermopompe</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Équipements</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {[
-                      { key: 'elevator', label: 'Ascenseur' },
-                      { key: 'storage', label: 'Rangement' },
-                      { key: 'laundry', label: 'Buanderie' },
-                      { key: 'airConditioning', label: 'Climatisation' },
-                      { key: 'internet', label: 'Internet inclus' },
-                      { key: 'security', label: 'Système de sécurité' }
-                    ].map(item => (
-                      <label key={item.key} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.characteristics[item.key]}
-                          onChange={(e) => handleInputChange(item.key, e.target.checked, 'characteristics')}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        <span className="text-sm text-gray-700">{item.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Financials Tab */}
             {activeTab === 'financials' && (
@@ -415,8 +315,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="number"
-                      value={formData.financials.purchasePrice}
-                      onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value) || 0, 'financials')}
+                      value={formData.prix_achete || formData.financials?.purchasePrice}
+                      onChange={(e) => handleInputChange('prix_achete', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="0"
                       step="0.01"
@@ -429,8 +329,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="number"
-                      value={formData.financials.downPayment}
-                      onChange={(e) => handleInputChange('downPayment', parseFloat(e.target.value) || 0, 'financials')}
+                      value={formData.mise_de_fond || formData.financials?.downPayment}
+                      onChange={(e) => handleInputChange('mise_de_fond', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="0"
                       step="0.01"
@@ -439,12 +339,12 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Taux d'intérêt actuel (%)
+                      Taux d'intérêt (%)
                     </label>
                     <input
                       type="number"
-                      value={formData.financials.interestRate}
-                      onChange={(e) => handleInputChange('interestRate', parseFloat(e.target.value) || 0, 'financials')}
+                      value={formData.taux_interet || formData.financials?.interestRate}
+                      onChange={(e) => handleInputChange('taux_interet', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="0"
                       max="100"
@@ -458,8 +358,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                     </label>
                     <input
                       type="number"
-                      value={formData.financials.currentValue}
-                      onChange={(e) => handleInputChange('currentValue', parseFloat(e.target.value) || 0, 'financials')}
+                      value={formData.valeur_actuel || formData.financials?.currentValue}
+                      onChange={(e) => handleInputChange('valeur_actuel', parseFloat(e.target.value) || 0)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       min="0"
                       step="0.01"
@@ -478,8 +378,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                   </label>
                   <input
                     type="text"
-                    value={formData.contacts.owner}
-                    onChange={(e) => handleInputChange('owner', e.target.value, 'contacts')}
+                    value={formData.proprietaire || formData.contacts?.owner}
+                    onChange={(e) => handleInputChange('proprietaire', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Nom et coordonnées du propriétaire"
                   />
@@ -491,8 +391,8 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                   </label>
                   <input
                     type="text"
-                    value={formData.contacts.bank}
-                    onChange={(e) => handleInputChange('bank', e.target.value, 'contacts')}
+                    value={formData.banque || formData.contacts?.bank}
+                    onChange={(e) => handleInputChange('banque', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Nom de la banque et détails du prêt"
                   />
@@ -500,14 +400,14 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Entrepreneur
+                    Contracteur
                   </label>
                   <input
                     type="text"
-                    value={formData.contacts.contractor}
-                    onChange={(e) => handleInputChange('contractor', e.target.value, 'contacts')}
+                    value={formData.contracteur || formData.contacts?.contractor}
+                    onChange={(e) => handleInputChange('contracteur', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Nom et coordonnées de l'entrepreneur"
+                    placeholder="Nom et coordonnées du contracteur"
                   />
                 </div>
               </div>
