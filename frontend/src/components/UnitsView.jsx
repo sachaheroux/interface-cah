@@ -23,6 +23,10 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   const [showDetails, setShowDetails] = useState(false)
   const [assignments, setAssignments] = useState([])
   const [loadingAssignments, setLoadingAssignments] = useState(true)
+  
+  // États pour la création d'unité
+  const [showAddUnitForm, setShowAddUnitForm] = useState(false)
+  const [selectedBuildingForUnit, setSelectedBuildingForUnit] = useState(null)
 
   // Charger les assignations depuis le backend
   const loadAssignments = async () => {
@@ -317,6 +321,45 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
     setSelectedUnit(null)
   }
 
+  // Gestionnaires pour la création d'unité
+  const handleAddUnit = () => {
+    setSelectedBuildingForUnit(null)
+    setShowAddUnitForm(true)
+  }
+
+  const handleAddUnitToBuilding = (building) => {
+    setSelectedBuildingForUnit(building)
+    setShowAddUnitForm(true)
+  }
+
+  const handleSaveNewUnit = async (unitData) => {
+    try {
+      console.log('💾 UnitsView: Sauvegarde nouvelle unité:', unitData)
+      
+      // Créer l'unité via l'API
+      const response = await unitsService.createUnit(unitData)
+      console.log('✅ UnitsView: Unité créée via API:', response.data)
+      
+      // Recharger les unités
+      await reloadUnits()
+      
+      // Fermer le formulaire
+      setShowAddUnitForm(false)
+      setSelectedBuildingForUnit(null)
+      
+      console.log('✅ UnitsView: Interface mise à jour avec succès')
+      
+    } catch (error) {
+      console.error('❌ UnitsView: Erreur lors de la création de l\'unité:', error)
+      throw error
+    }
+  }
+
+  const handleCloseAddUnitForm = () => {
+    setShowAddUnitForm(false)
+    setSelectedBuildingForUnit(null)
+  }
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CA', {
       style: 'currency',
@@ -385,6 +428,10 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Filtres et Recherche</h3>
+          <button onClick={handleAddUnit} className="btn-primary flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter une Unité
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -589,6 +636,16 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           onClose={handleCloseDetails}
           onEdit={handleEditUnit}
           onDelete={handleDeleteUnit}
+        />
+      )}
+      {showAddUnitForm && (
+        <UnitForm
+          unit={null}
+          isOpen={showAddUnitForm}
+          onSave={handleSaveNewUnit}
+          onClose={handleCloseAddUnitForm}
+          buildings={buildings}
+          selectedBuilding={selectedBuildingForUnit}
         />
       )}
     </div>

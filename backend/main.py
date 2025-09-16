@@ -34,18 +34,6 @@ async def startup_event():
     
     if init_database():
         print("✅ Base de données initialisée avec succès")
-        
-        # Migration automatique pour Render
-        try:
-            from migrate_render_database import migrate_render_database
-            print("🔄 Exécution de la migration Render...")
-            if migrate_render_database():
-                print("✅ Migration Render terminée avec succès")
-            else:
-                print("⚠️  Migration Render échouée, mais l'application continue")
-        except Exception as e:
-            print(f"⚠️  Erreur lors de la migration Render: {e}")
-            print("ℹ️  L'application continue sans migration")
     else:
         print("❌ Erreur lors de l'initialisation de la base de données")
         raise Exception("Impossible d'initialiser la base de données")
@@ -319,348 +307,15 @@ class InvoiceUpdate(BaseModel):
     notes: Optional[str] = None
     type: Optional[str] = None
 
-# Système de persistance avec fichier JSON
-# Utilisation du répertoire recommandé par Render : /opt/render/project/src/data
-# En local, utiliser un répertoire relatif pour éviter les problèmes de permissions
+# Configuration du répertoire de données pour les documents
 if platform.system() == "Windows" or os.environ.get("ENVIRONMENT") == "development":
-    # En local (Windows) ou développement, utiliser un répertoire relatif
     DATA_DIR = os.environ.get("DATA_DIR", "./data")
 else:
-    # Sur Render ou production Linux, utiliser le répertoire recommandé
     DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
-
-# Chemins des fichiers de données
-BUILDINGS_DATA_FILE = os.path.join(DATA_DIR, "buildings_data.json")
-TENANTS_DATA_FILE = os.path.join(DATA_DIR, "tenants_data.json")
-ASSIGNMENTS_DATA_FILE = os.path.join(DATA_DIR, "assignments_data.json")
-BUILDING_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "building_reports_data.json")
-UNIT_REPORTS_DATA_FILE = os.path.join(DATA_DIR, "unit_reports_data.json")
-INVOICES_DATA_FILE = os.path.join(DATA_DIR, "invoices_data.json")
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# DEBUGGING - Afficher les informations de persistance
-print("=" * 60)
-print("🔧 DIAGNOSTIC DISQUE PERSISTANT")
-print("=" * 60)
-print(f"📂 DATA_DIR (env): {os.environ.get('DATA_DIR', 'NON DÉFINIE')}")
-print(f"📂 DATA_DIR (utilisé): {DATA_DIR}")
-print(f"📄 Fichier immeubles: {BUILDINGS_DATA_FILE}")
-print(f"📄 Fichier locataires: {TENANTS_DATA_FILE}")
-print(f"📄 Fichier assignations: {ASSIGNMENTS_DATA_FILE}")
-print(f"📁 Répertoire existe: {os.path.exists(DATA_DIR)}")
-print(f"📝 Fichier immeubles existe: {os.path.exists(BUILDINGS_DATA_FILE)}")
-print(f"📝 Fichier locataires existe: {os.path.exists(TENANTS_DATA_FILE)}")
-print(f"📝 Fichier assignations existe: {os.path.exists(ASSIGNMENTS_DATA_FILE)}")
-print(f"🔒 Permissions lecture: {os.access(DATA_DIR, os.R_OK)}")
-print(f"🔒 Permissions écriture: {os.access(DATA_DIR, os.W_OK)}")
-print(f"💾 Répertoire de travail: {os.getcwd()}")
-print(f"🗂️  Contenu DATA_DIR: {os.listdir(DATA_DIR) if os.path.exists(DATA_DIR) else 'N/A'}")
-
-if os.path.exists(ASSIGNMENTS_DATA_FILE):
-    print(f"📁 Fichier assignments trouvé: {ASSIGNMENTS_DATA_FILE}")
-else:
-    print(f"📁 Création du fichier assignments: {ASSIGNMENTS_DATA_FILE}")
-
-if os.path.exists(BUILDING_REPORTS_DATA_FILE):
-    print(f"📁 Fichier rapports immeubles trouvé: {BUILDING_REPORTS_DATA_FILE}")
-else:
-    print(f"📁 Création du fichier rapports immeubles: {BUILDING_REPORTS_DATA_FILE}")
-
-if os.path.exists(UNIT_REPORTS_DATA_FILE):
-    print(f"📁 Fichier rapports unités trouvé: {UNIT_REPORTS_DATA_FILE}")
-else:
-    print(f"📁 Création du fichier rapports unités: {UNIT_REPORTS_DATA_FILE}")
-
-print("=" * 60)
-
-# Cache pour les données
-buildings_cache = None
-tenants_cache = None
-assignments_cache = None
-building_reports_cache = None
-unit_reports_cache = None
-invoices_cache = None
-
-def get_buildings_cache():
-    """Obtenir les données des immeubles avec cache"""
-    global buildings_cache
-    if buildings_cache is None:
-        buildings_cache = load_buildings_data()
-    return buildings_cache
-
-def get_tenants_cache():
-    """Obtenir les données des locataires avec cache"""
-    global tenants_cache
-    if tenants_cache is None:
-        tenants_cache = load_tenants_data()
-    return tenants_cache
-
-def get_assignments_cache():
-    """Obtenir les données des assignations avec cache"""
-    global assignments_cache
-    if assignments_cache is None:
-        assignments_cache = load_assignments_data()
-    return assignments_cache
-
-def get_building_reports_cache():
-    """Obtenir les données des rapports d'immeubles avec cache"""
-    global building_reports_cache
-    if building_reports_cache is None:
-        building_reports_cache = load_building_reports_data()
-    return building_reports_cache
-
-def get_unit_reports_cache():
-    """Obtenir les données des rapports d'unités avec cache"""
-    global unit_reports_cache
-    if unit_reports_cache is None:
-        unit_reports_cache = load_unit_reports_data()
-    return unit_reports_cache
-
-def get_invoices_cache():
-    """Obtenir les données des factures avec cache"""
-    global invoices_cache
-    if invoices_cache is None:
-        invoices_cache = load_invoices_data()
-    return invoices_cache
-
-def invalidate_caches():
-    """Invalider tous les caches"""
-    global buildings_cache, tenants_cache, assignments_cache, building_reports_cache, unit_reports_cache, invoices_cache
-    buildings_cache = None
-    tenants_cache = None
-    assignments_cache = None
-    building_reports_cache = None
-    unit_reports_cache = None
-    invoices_cache = None
-
-def load_buildings_data():
-    """Charger les données depuis le fichier JSON"""
-    try:
-        if os.path.exists(BUILDINGS_DATA_FILE):
-            with open(BUILDINGS_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données immeubles chargées: {len(data.get('buildings', []))} immeubles")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données immeubles depuis fichier: {e}")
-    
-    # Retourner structure vide si pas de fichier ou erreur
-    return {"buildings": [], "next_id": 1}
-
-def save_buildings_data(data):
-    """Sauvegarder les données dans le fichier JSON"""
-    try:
-        with open(BUILDINGS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données immeubles sauvegardées: {len(data.get('buildings', []))} immeubles")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde immeubles: {e}")
-        return False
-
-def load_tenants_data():
-    """Charger les données des locataires depuis le fichier JSON"""
-    try:
-        if os.path.exists(TENANTS_DATA_FILE):
-            with open(TENANTS_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données locataires chargées: {len(data.get('tenants', []))} locataires")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données locataires depuis fichier: {e}")
-    
-    # Retourner structure vide avec quelques locataires fictifs pour commencer
-    default_data = {
-        "tenants": [
-            {
-                "id": 1,
-                "name": "Jean Dupont",
-                "email": "jean.dupont@email.com",
-                "phone": "(514) 555-0123",
-                "status": "active",
-                "building": "Immeuble A",
-                "unit": "A-101",
-                "createdAt": "2024-01-15T10:00:00Z",
-                "updatedAt": "2024-01-15T10:00:00Z"
-            },
-            {
-                "id": 2,
-                "name": "Marie Martin",
-                "email": "marie.martin@email.com",
-                "phone": "(514) 555-0124",
-                "status": "active",
-                "building": "Immeuble A",
-                "unit": "A-102",
-                "createdAt": "2024-01-20T14:30:00Z",
-                "updatedAt": "2024-01-20T14:30:00Z"
-            },
-            {
-                "id": 3,
-                "name": "Pierre Durand",
-                "email": "pierre.durand@email.com",
-                "phone": "(514) 555-0125",
-                "status": "pending",
-                "building": "Immeuble B",
-                "unit": "B-201",
-                "createdAt": "2024-02-01T09:15:00Z",
-                "updatedAt": "2024-02-01T09:15:00Z"
-            }
-        ],
-        "next_id": 4
-    }
-    
-    # Sauvegarder les données par défaut
-    save_tenants_data(default_data)
-    return default_data
-
-def save_tenants_data(data):
-    """Sauvegarder les données des locataires dans le fichier JSON"""
-    try:
-        with open(TENANTS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données locataires sauvegardées: {len(data.get('tenants', []))} locataires")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde locataires: {e}")
-        return False
-
-def load_assignments_data():
-    """Charger les données des assignations depuis le fichier JSON"""
-    try:
-        if os.path.exists(ASSIGNMENTS_DATA_FILE):
-            with open(ASSIGNMENTS_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données assignations chargées: {len(data.get('assignments', []))} assignations")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données assignations depuis fichier: {e}")
-    
-    # Retourner structure vide si pas de fichier ou erreur
-    return {"assignments": [], "next_id": 1}
-
-def save_assignments_data(data):
-    """Sauvegarder les données des assignations dans le fichier JSON"""
-    try:
-        with open(ASSIGNMENTS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données assignations sauvegardées: {len(data.get('assignments', []))} assignations")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde assignations: {e}")
-        return False
-
-def load_building_reports_data():
-    """Charger les données des rapports d'immeubles depuis le fichier JSON"""
-    try:
-        if os.path.exists(BUILDING_REPORTS_DATA_FILE):
-            with open(BUILDING_REPORTS_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données rapports immeubles chargées: {len(data.get('reports', []))} rapports")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données rapports immeubles depuis fichier: {e}")
-    
-    # Retourner structure vide si pas de fichier ou erreur
-    return {"reports": [], "next_id": 1}
-
-def save_building_reports_data(data):
-    """Sauvegarder les données des rapports d'immeubles dans le fichier JSON"""
-    try:
-        with open(BUILDING_REPORTS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données rapports immeubles sauvegardées: {len(data.get('reports', []))} rapports")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde rapports immeubles: {e}")
-        return False
-
-def load_unit_reports_data():
-    """Charger les données des rapports d'unités depuis le fichier JSON"""
-    try:
-        if os.path.exists(UNIT_REPORTS_DATA_FILE):
-            with open(UNIT_REPORTS_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données rapports unités chargées: {len(data.get('reports', []))} rapports")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données rapports unités depuis fichier: {e}")
-    
-    # Retourner structure vide si pas de fichier ou erreur
-    return {"reports": [], "next_id": 1}
-
-def save_unit_reports_data(data):
-    """Sauvegarder les données des rapports d'unités dans le fichier JSON"""
-    try:
-        with open(UNIT_REPORTS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données rapports unités sauvegardées: {len(data.get('reports', []))} rapports")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde rapports unités: {e}")
-        return False
-
-def load_invoices_data():
-    """Charger les données des factures depuis le fichier JSON"""
-    try:
-        if os.path.exists(INVOICES_DATA_FILE):
-            with open(INVOICES_DATA_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                print(f"Données factures chargées: {len(data.get('invoices', []))} factures")
-                return data
-    except Exception as e:
-        print(f"Erreur chargement données factures depuis fichier: {e}")
-    
-    # Retourner structure vide si pas de fichier ou erreur
-    return {"invoices": [], "next_id": 1}
-
-def save_invoices_data(data):
-    """Sauvegarder les données des factures dans le fichier JSON"""
-    try:
-        with open(INVOICES_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Données factures sauvegardées: {len(data.get('invoices', []))} factures")
-        return True
-    except Exception as e:
-        print(f"Erreur sauvegarde factures: {e}")
-        return False
-
-def update_buildings_cache(data):
-    """Mettre à jour le cache mémoire des immeubles"""
-    global buildings_cache
-    buildings_cache = data
-    save_buildings_data(data)
-
-def update_tenants_cache(data):
-    """Mettre à jour le cache mémoire des locataires"""
-    global tenants_cache
-    tenants_cache = data
-    save_tenants_data(data)
-
-def update_assignments_cache(data):
-    """Mettre à jour le cache mémoire des assignations"""
-    global assignments_cache
-    assignments_cache = data
-    save_assignments_data(data)
-
-def update_building_reports_cache(data):
-    """Mettre à jour le cache mémoire des rapports d'immeubles"""
-    global building_reports_cache
-    building_reports_cache = data
-    save_building_reports_data(data)
-
-def update_unit_reports_cache(data):
-    """Mettre à jour le cache mémoire des rapports d'unités"""
-    global unit_reports_cache
-    unit_reports_cache = data
-    save_unit_reports_data(data)
-
-def update_invoices_cache(data):
-    """Mettre à jour le cache mémoire des factures"""
-    global invoices_cache
-    invoices_cache = data
-    save_invoices_data(data)
 
 # Route de test de base
 @app.get("/")
@@ -672,83 +327,25 @@ async def root():
 async def health_check():
     return {"status": "healthy", "message": "API fonctionnelle"}
 
-@app.post("/api/migrate/tenants")
-async def migrate_tenants_table():
-    """Migration de la table tenants - Ajouter les colonnes manquantes"""
-    try:
-        import sqlite3
-        import os
-        
-        # Chemin de la base de données
-        if os.environ.get("ENVIRONMENT") == "development" or os.name == 'nt':
-            db_path = "./data/cah_database.db"
-        else:
-            db_path = "/opt/render/project/src/data/cah_database.db"
-        
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Colonnes à ajouter
-        columns_to_add = [
-            "address_street TEXT",
-            "address_city TEXT", 
-            "address_province TEXT",
-            "address_postal_code TEXT",
-            "address_country TEXT DEFAULT 'Canada'"
-        ]
-        
-        # Vérifier quelles colonnes existent déjà
-        cursor.execute("PRAGMA table_info(tenants)")
-        existing_columns = [col[1] for col in cursor.fetchall()]
-        
-        added_columns = []
-        for col_def in columns_to_add:
-            col_name = col_def.split()[0]
-            if col_name not in existing_columns:
-                try:
-                    cursor.execute(f"ALTER TABLE tenants ADD COLUMN {col_def}")
-                    added_columns.append(col_name)
-                    print(f"✅ Colonne ajoutée: {col_name}")
-                except Exception as e:
-                    print(f"❌ Erreur ajout colonne {col_name}: {e}")
-        
-        conn.commit()
-        conn.close()
-        
-        return {
-            "success": True,
-            "message": f"Migration terminée. Colonnes ajoutées: {added_columns}",
-            "added_columns": added_columns
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
 
 # Routes temporaires pour les modules (à développer plus tard)
 @app.get("/api/dashboard")
 async def get_dashboard_data():
     """Retourner les données du tableau de bord calculées à partir des vrais immeubles"""
     try:
-        # Récupérer tous les immeubles du cache
-        data = get_buildings_cache()
-        buildings = data.get("buildings", [])
+        # Récupérer tous les immeubles via le service SQLite
+        buildings = db_service.get_buildings()
         
         # Calculer les statistiques réelles
         total_buildings = len(buildings)
-        total_units = sum(building.get("units", 0) for building in buildings)
-        total_portfolio_value = sum(
-            building.get("financials", {}).get("currentValue", 0) 
-            for building in buildings
-        )
+        total_units = sum(building.get("nbr_unite", 0) for building in buildings)
+        total_portfolio_value = sum(building.get("valeur_actuel", 0) for building in buildings)
         
         # Calculer le taux d'occupation (simulation : 85-95% d'occupation selon l'âge)
         occupied_units = 0
         for building in buildings:
-            units = building.get("units", 0)
-            year_built = building.get("yearBuilt", 2020)
+            units = building.get("nbr_unite", 0)
+            year_built = building.get("annee_construction", 2020)
             current_year = 2024
             building_age = current_year - year_built
             
@@ -809,71 +406,6 @@ async def get_dashboard_data():
         }
 
 # Routes CRUD pour les immeubles avec SQLite
-def generate_units_from_address(building):
-    """Générer automatiquement les unités basées sur l'adresse de l'immeuble"""
-    try:
-        address = building.get('address', {})
-        if not address:
-            return []
-        
-        street = address.get('street', '')
-        if not street:
-            return []
-        
-        # Parser l'adresse pour extraire les numéros d'unités
-        # Format attendu: "56-58-60-62 rue Vachon" ou "56 rue Vachon"
-        unit_numbers = []
-        street_name = street
-        
-        # Chercher des numéros séparés par des tirets
-        if '-' in street:
-            # Extraire tous les numéros avant le premier espace
-            street_part = street.split(' ')[0]
-            numbers = street_part.split('-')
-            for num in numbers:
-                if num.strip().isdigit():
-                    unit_numbers.append(num.strip())
-            
-            # Extraire le nom de la rue (tout après le premier espace)
-            street_parts = street.split(' ', 1)
-            if len(street_parts) > 1:
-                street_name = street_parts[1]  # "rue Vachon"
-        else:
-            # Adresse simple, une seule unité
-            unit_numbers = ['1']
-        
-        # Si pas de numéros trouvés, utiliser le nombre d'unités spécifié
-        if not unit_numbers:
-            units_count = building.get('units', 1)
-            unit_numbers = [str(i) for i in range(1, units_count + 1)]
-        
-        # Créer les unités
-        created_units = []
-        for i, unit_num in enumerate(unit_numbers):
-            unit_data = {
-                "buildingId": building['id'],
-                "unitNumber": unit_num,
-                "unitAddress": f"{unit_num} {street_name}",
-                "type": "4 1/2",  # Type par défaut pour les nouvelles unités
-                "area": 0,
-                "bedrooms": 1,
-                "bathrooms": 1,
-                "amenities": "{}",
-                "notes": ""
-            }
-            
-            try:
-                created_unit = db_service.create_unit(unit_data)
-                created_units.append(created_unit)
-                print(f"   ✅ Unité {unit_num} créée (ID: {created_unit.get('id')})")
-            except Exception as e:
-                print(f"   ❌ Erreur création unité {unit_num}: {e}")
-        
-        return created_units
-        
-    except Exception as e:
-        print(f"❌ Erreur génération unités: {e}")
-        return []
 
 @app.get("/api/buildings")
 async def get_buildings():
@@ -907,12 +439,6 @@ async def create_building(building_data: BuildingCreate):
         
         # Créer l'immeuble via le service SQLite
         new_building = db_service.create_building(building_dict)
-        
-        # Générer automatiquement les unités basées sur l'adresse
-        if new_building and new_building.get('id'):
-            units_generated = generate_units_from_address(new_building)
-            if units_generated:
-                print(f"✅ {len(units_generated)} unités générées automatiquement pour l'immeuble {new_building['id']}")
         
         return new_building
     except Exception as e:
@@ -968,14 +494,10 @@ async def get_tenants():
 async def get_tenant(tenant_id: int):
     """Récupérer un locataire spécifique par ID"""
     try:
-        data = get_tenants_cache()
-        tenants = data.get("tenants", [])
-        
-        for tenant in tenants:
-            if tenant.get("id") == tenant_id:
-                return {"data": tenant}
-        
-        raise HTTPException(status_code=404, detail="Locataire non trouvé")
+        tenant = db_service.get_tenant(tenant_id)
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Locataire non trouvé")
+        return {"data": tenant}
     except HTTPException:
         raise
     except Exception as e:
@@ -1268,13 +790,9 @@ async def remove_specific_assignment(tenant_id: int, unit_id: str):
 async def get_unit_assignments(unit_id: str):
     """Récupérer toutes les assignations pour une unité spécifique"""
     try:
-        data = get_assignments_cache()
-        assignments = data.get("assignments", [])
-        
-        # Filtrer les assignations pour cette unité
-        unit_assignments = [a for a in assignments if a.get("unitId") == unit_id]
-        
-        return {"data": unit_assignments}
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table assignations
+        # Dans le nouveau système, les locataires sont directement liés aux unités
+        return {"data": []}
     except Exception as e:
         print(f"Erreur lors du chargement des assignations d'unité: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des assignations d'unité: {str(e)}")
@@ -1283,13 +801,9 @@ async def get_unit_assignments(unit_id: str):
 async def get_tenant_assignment(tenant_id: int):
     """Récupérer l'assignation d'un locataire spécifique"""
     try:
-        data = get_assignments_cache()
-        assignments = data.get("assignments", [])
-        
-        # Trouver l'assignation pour ce locataire
-        tenant_assignment = next((a for a in assignments if a.get("tenantId") == tenant_id), None)
-        
-        return {"data": tenant_assignment}
+        # Pour l'instant, retourner null car nous n'avons pas encore de table assignations
+        # Dans le nouveau système, les locataires sont directement liés aux unités
+        return {"data": None}
     except Exception as e:
         print(f"Erreur lors du chargement de l'assignation du locataire: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement de l'assignation du locataire: {str(e)}")
@@ -1321,10 +835,8 @@ async def get_building_reports():
 async def get_building_report(building_id: int):
     """Récupérer le rapport d'un immeuble spécifique"""
     try:
-        data = get_building_reports_cache()
-        reports = data.get("reports", [])
-        building_report = next((r for r in reports if r.get("buildingId") == building_id), None)
-        return {"data": building_report}
+        # Pour l'instant, retourner null car nous n'avons pas encore de table rapports
+        return {"data": None}
     except Exception as e:
         print(f"Erreur lors du chargement du rapport d'immeuble: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement du rapport d'immeuble: {str(e)}")
@@ -1389,10 +901,8 @@ async def get_unit_reports():
 async def get_unit_report(unit_id: str):
     """Récupérer tous les rapports d'une unité spécifique"""
     try:
-        data = get_unit_reports_cache()
-        reports = data.get("reports", [])
-        unit_reports = [r for r in reports if r.get("unitId") == unit_id]
-        return {"data": unit_reports}
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table rapports
+        return {"data": []}
     except Exception as e:
         print(f"Erreur lors du chargement des rapports d'unité: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'unité: {str(e)}")
@@ -1566,44 +1076,13 @@ async def get_document(filename: str):
 async def clean_invalid_assignments():
     """Nettoyer les assignations avec des tenantId invalides"""
     try:
-        data = get_assignments_cache()
-        tenants_data = get_tenants_cache()
-        
-        # Récupérer les IDs valides des locataires
-        valid_tenant_ids = {t.get("id") for t in tenants_data.get("tenants", [])}
-        
-        # Analyser les assignations
-        assignments = data.get("assignments", [])
-        original_count = len(assignments)
-        
-        invalid_assignments = []
-        valid_assignments = []
-        
-        for assignment in assignments:
-            tenant_id = assignment.get("tenantId")
-            
-            # Vérifier si l'ID est valide
-            if tenant_id in valid_tenant_ids:
-                valid_assignments.append(assignment)
-            else:
-                invalid_assignments.append(assignment)
-        
-        # Sauvegarder les assignations valides seulement
-        data["assignments"] = valid_assignments
-        update_assignments_cache(data)
-        
+        # Pour l'instant, retourner un message car nous n'avons pas encore de table assignations
         return {
-            "message": "Nettoyage terminé",
-            "removed_count": len(invalid_assignments),
-            "kept_count": len(valid_assignments),
-            "total_original": original_count,
-            "invalid_assignments": [
-                {
-                    "id": a.get("id"),
-                    "tenantId": a.get("tenantId"),
-                    "unitId": a.get("unitId")
-                } for a in invalid_assignments
-            ]
+            "message": "Nettoyage non nécessaire - Nouveau système en place",
+            "removed_count": 0,
+            "kept_count": 0,
+            "total_original": 0,
+            "invalid_assignments": []
         }
     except Exception as e:
         print(f"Erreur lors du nettoyage des assignations: {e}")
@@ -1770,13 +1249,8 @@ async def delete_invoice(invoice_id: int):
 async def get_building_invoices(building_id: int):
     """Récupérer toutes les factures d'un immeuble spécifique"""
     try:
-        data = get_invoices_cache()
-        invoices = data.get("invoices", [])
-        
-        # Filtrer les factures pour cet immeuble
-        building_invoices = [inv for inv in invoices if inv.get("buildingId") == building_id]
-        
-        return {"data": building_invoices}
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table factures
+        return {"data": []}
     except Exception as e:
         print(f"Erreur lors du chargement des factures d'immeuble: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures d'immeuble: {str(e)}")
@@ -1785,16 +1259,8 @@ async def get_building_invoices(building_id: int):
 async def get_building_category_invoices(building_id: int, category: str):
     """Récupérer toutes les factures d'une catégorie spécifique pour un immeuble"""
     try:
-        data = get_invoices_cache()
-        invoices = data.get("invoices", [])
-        
-        # Filtrer les factures pour cet immeuble et cette catégorie
-        category_invoices = [
-            inv for inv in invoices 
-            if inv.get("buildingId") == building_id and inv.get("category") == category
-        ]
-        
-        return {"data": category_invoices}
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table factures
+        return {"data": []}
     except Exception as e:
         print(f"Erreur lors du chargement des factures de catégorie: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures de catégorie: {str(e)}")
@@ -2075,70 +1541,6 @@ async def get_monitoring_status():
         print(f"Erreur lors de la récupération du statut: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du statut: {str(e)}")
 
-@app.post("/api/migrate-schema")
-async def migrate_schema():
-    """Migrer le schéma de la base de données"""
-    try:
-        from sqlalchemy import text
-        
-        session = db_service.get_session()
-        try:
-            # Recréer complètement la table unit_reports avec le bon schéma
-            print("🔄 Recréation de la table unit_reports...")
-            
-            # Supprimer l'ancienne table
-            session.execute(text("DROP TABLE IF EXISTS unit_reports"))
-            
-            # Créer la nouvelle table avec le bon schéma
-            session.execute(text("""
-                CREATE TABLE unit_reports (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    unit_id INTEGER NOT NULL,
-                    year INTEGER NOT NULL,
-                    month INTEGER,
-                    tenant_name TEXT,
-                    payment_method TEXT,
-                    is_heated_lit BOOLEAN DEFAULT 0,
-                    is_furnished BOOLEAN DEFAULT 0,
-                    wifi_included BOOLEAN DEFAULT 0,
-                    rent_amount REAL DEFAULT 0.0,
-                    start_date TEXT,
-                    end_date TEXT,
-                    notes TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE CASCADE
-                )
-            """))
-            
-            session.commit()
-            print("✅ Table unit_reports recréée avec le bon schéma")
-            
-            return {"message": "Migration du schéma réussie - Table unit_reports recréée"}
-        finally:
-            session.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur migration: {str(e)}")
-
-@app.post("/api/migrate-remove-building-id")
-async def migrate_remove_building_id():
-    """Supprimer la colonne building_id de la table assignments"""
-    try:
-        from migrate_remove_building_id import migrate_remove_building_id
-        
-        print("🔄 Début de la migration: suppression de building_id")
-        success = migrate_remove_building_id()
-        
-        if success:
-            print("✅ Migration building_id terminée avec succès")
-            return {"message": "Migration building_id terminée avec succès"}
-        else:
-            print("❌ Migration building_id échouée")
-            raise HTTPException(status_code=500, detail="Migration building_id échouée")
-            
-    except Exception as e:
-        print(f"❌ Erreur lors de la migration building_id: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur migration building_id: {str(e)}")
 
 @app.get("/api/test-endpoint")
 async def test_endpoint():

@@ -3,10 +3,11 @@ import { X, Save, User, Home, Calendar, Phone, Mail, UserCheck, Plus, Search, Tr
 import { getUnitTypeLabel } from '../types/unit'
 import { unitsService } from '../services/api'
 
-export default function UnitForm({ unit, isOpen, onClose, onSave }) {
+export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = [], selectedBuilding = null }) {
   const [formData, setFormData] = useState({
+    id_immeuble: null,
     adresse_unite: '',
-    type: UnitType.FOUR_HALF,
+    type: '4 1/2',
     nbr_chambre: 1,
     nbr_salle_de_bain: 1,
     notes: ''
@@ -60,16 +61,37 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       })
       
       setFormData({
+        id_immeuble: unit.id_immeuble || unit.buildingId || null,
         adresse_unite: unit.adresse_unite || unit.unitAddress || '',
-        type: unit.type || UnitType.FOUR_HALF,
+        type: unit.type || '4 1/2',
         nbr_chambre: unit.nbr_chambre || unit.bedrooms || 1,
         nbr_salle_de_bain: unit.nbr_salle_de_bain || unit.bathrooms || 1,
         notes: unit.notes || ''
       })
       
       console.log('✅ UnitForm: FormData chargé')
+    } else if (selectedBuilding) {
+      // Création d'une nouvelle unité pour un immeuble spécifique
+      setFormData({
+        id_immeuble: selectedBuilding.id,
+        adresse_unite: '',
+        type: '4 1/2',
+        nbr_chambre: 1,
+        nbr_salle_de_bain: 1,
+        notes: ''
+      })
+    } else {
+      // Création d'une nouvelle unité (sans immeuble pré-sélectionné)
+      setFormData({
+        id_immeuble: null,
+        adresse_unite: '',
+        type: '4 1/2',
+        nbr_chambre: 1,
+        nbr_salle_de_bain: 1,
+        notes: ''
+      })
     }
-  }, [unit])
+  }, [unit, selectedBuilding])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -105,12 +127,23 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    // Validation pour la création d'unité
+    if (!unit && !formData.id_immeuble) {
+      alert('Veuillez sélectionner un immeuble')
+      return
+    }
+    
+    if (!formData.adresse_unite.trim()) {
+      alert('Veuillez saisir l\'adresse de l\'unité')
+      return
+    }
+    
     try {
       setLoading(true)
       const unitData = {
         ...formData,
         id: unit?.id || Date.now(),
-        buildingId: unit?.buildingId,
+        buildingId: unit?.buildingId || formData.id_immeuble,
         buildingName: unit?.buildingName,
         address: unit?.address,
         createdAt: unit?.createdAt || new Date().toISOString(),
@@ -163,7 +196,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-gray-900">
-            {unit ? `Modifier l'Unité ${unit.unitNumber}` : 'Nouvelle Unité'}
+            {unit ? `Modifier l'Unité ${unit.unitNumber || unit.adresse_unite}` : 'Nouvelle Unité'}
           </h2>
           <button
             onClick={onClose}
@@ -181,6 +214,28 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
               <h3 className="text-lg font-semibold text-gray-900">Informations de Base</h3>
             </div>
             
+            {/* Sélection d'immeuble (seulement pour la création) */}
+            {!unit && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Immeuble *
+                </label>
+                <select
+                  value={formData.id_immeuble || ''}
+                  onChange={(e) => handleInputChange('id_immeuble', parseInt(e.target.value) || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  required
+                >
+                  <option value="">Sélectionner un immeuble</option>
+                  {buildings.map(building => (
+                    <option key={building.id} value={building.id}>
+                      {building.nom_immeuble || building.name} - {building.adresse || building.address?.street || ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Adresse de l'unité *
@@ -191,6 +246,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave }) {
                 onChange={(e) => handleInputChange('adresse_unite', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Ex: 56 rue Vachon, Apt 101"
+                required
               />
             </div>
 

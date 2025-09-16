@@ -153,22 +153,22 @@ class DatabaseMonitor:
         
         try:
             # Tables principales
-            tables = ['buildings', 'tenants', 'assignments', 'building_reports', 'unit_reports', 'invoices']
+            tables = ['immeubles', 'unites', 'locataires', 'factures', 'baux', 'rapports_immeuble']
             
             for table in tables:
                 try:
-                    if table == 'buildings':
+                    if table == 'immeubles':
                         records = db_service.get_buildings()
-                    elif table == 'tenants':
+                    elif table == 'locataires':
                         records = db_service.get_tenants()
-                    elif table == 'assignments':
-                        records = db_service.get_assignments()
-                    elif table == 'building_reports':
-                        records = db_service.get_building_reports()
-                    elif table == 'unit_reports':
-                        records = db_service.get_unit_reports()
-                    elif table == 'invoices':
+                    elif table == 'unites':
+                        records = db_service.get_units()
+                    elif table == 'factures':
                         records = db_service.get_invoices()
+                    elif table == 'baux':
+                        records = []  # Pas encore implémenté
+                    elif table == 'rapports_immeuble':
+                        records = db_service.get_building_reports()
                     else:
                         records = []
                     

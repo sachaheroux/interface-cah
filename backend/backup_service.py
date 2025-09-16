@@ -214,7 +214,7 @@ class BackupService:
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
                 
-                expected_tables = ['buildings', 'tenants', 'assignments', 'building_reports', 'unit_reports', 'invoices']
+                expected_tables = ['immeubles', 'unites', 'locataires', 'factures', 'baux', 'rapports_immeuble']
                 
                 if all(table in tables for table in expected_tables):
                     print("✅ Tables de base de données vérifiées")
