@@ -41,15 +41,9 @@ async def startup_event():
 # Configuration CORS pour permettre les requêtes du frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:3000",
-        "https://interface-cahs.vercel.app"
-    ],  # Frontend local (différents ports) et Vercel
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],  # Autoriser toutes les origines pour éviter les problèmes CORS
+    allow_credentials=False,  # Doit être False quand allow_origins=["*"]
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -152,6 +146,116 @@ class Building(BaseModel):
     unitData: Optional[dict] = None  # Données personnalisées des unités
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
+
+# Modèles Pydantic français pour toutes les entités
+
+class BuildingCreateFrancais(BaseModel):
+    nom_immeuble: str
+    adresse: str
+    ville: str
+    province: str
+    code_postal: str
+    pays: str = "Canada"
+    nbr_unite: int
+    annee_construction: int
+    prix_achete: float = 0
+    mise_de_fond: float = 0
+    taux_interet: float = 0
+    valeur_actuel: float = 0
+    proprietaire: str = ""
+    banque: str = ""
+    contracteur: str = ""
+    notes: str = ""
+
+class BuildingUpdateFrancais(BaseModel):
+    nom_immeuble: Optional[str] = None
+    adresse: Optional[str] = None
+    ville: Optional[str] = None
+    province: Optional[str] = None
+    code_postal: Optional[str] = None
+    pays: Optional[str] = None
+    nbr_unite: Optional[int] = None
+    annee_construction: Optional[int] = None
+    prix_achete: Optional[float] = None
+    mise_de_fond: Optional[float] = None
+    taux_interet: Optional[float] = None
+    valeur_actuel: Optional[float] = None
+    proprietaire: Optional[str] = None
+    banque: Optional[str] = None
+    contracteur: Optional[str] = None
+    notes: Optional[str] = None
+
+class UnitCreateFrancais(BaseModel):
+    id_immeuble: int
+    adresse_unite: str
+    type: str
+    nbr_chambre: int
+    nbr_salle_de_bain: float
+    notes: str = ""
+
+class UnitUpdateFrancais(BaseModel):
+    id_immeuble: Optional[int] = None
+    adresse_unite: Optional[str] = None
+    type: Optional[str] = None
+    nbr_chambre: Optional[int] = None
+    nbr_salle_de_bain: Optional[float] = None
+    notes: Optional[str] = None
+
+class TenantCreateFrancais(BaseModel):
+    id_unite: int
+    nom: str
+    prenom: str
+    email: str = ""
+    telephone: str = ""
+    statut: str = "actif"
+    notes: str = ""
+
+class TenantUpdateFrancais(BaseModel):
+    id_unite: Optional[int] = None
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    email: Optional[str] = None
+    telephone: Optional[str] = None
+    statut: Optional[str] = None
+    notes: Optional[str] = None
+
+class InvoiceCreateFrancais(BaseModel):
+    id_immeuble: int
+    categorie: str
+    montant: float
+    date: str
+    no_facture: str = ""
+    source: str = ""
+    pdf_facture: str = ""
+    type_paiement: str = ""
+    notes: str = ""
+
+class InvoiceUpdateFrancais(BaseModel):
+    id_immeuble: Optional[int] = None
+    categorie: Optional[str] = None
+    montant: Optional[float] = None
+    date: Optional[str] = None
+    no_facture: Optional[str] = None
+    source: Optional[str] = None
+    pdf_facture: Optional[str] = None
+    type_paiement: Optional[str] = None
+    notes: Optional[str] = None
+
+class LeaseCreateFrancais(BaseModel):
+    id_locataire: int
+    date_debut: str
+    date_fin: str
+    prix_loyer: float
+    methode_paiement: str = "Virement bancaire"
+    pdf_bail: str = ""
+
+class LeaseUpdateFrancais(BaseModel):
+    id_locataire: Optional[int] = None
+    date_debut: Optional[str] = None
+    date_fin: Optional[str] = None
+    prix_loyer: Optional[float] = None
+    methode_paiement: Optional[str] = None
+    pdf_bail: Optional[str] = None
 
 class BuildingCreate(BaseModel):
     name: str
@@ -431,8 +535,8 @@ async def get_building(building_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de l'immeuble: {str(e)}")
 
 @app.post("/api/buildings")
-async def create_building(building_data: BuildingCreate):
-    """Créer un nouvel immeuble"""
+async def create_building(building_data: BuildingCreateFrancais):
+    """Créer un nouvel immeuble avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         building_dict = building_data.dict()
@@ -442,11 +546,12 @@ async def create_building(building_data: BuildingCreate):
         
         return new_building
     except Exception as e:
+        print(f"❌ Erreur lors de la création de l'immeuble: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'immeuble: {str(e)}")
 
 @app.put("/api/buildings/{building_id}")
-async def update_building(building_id: int, building_data: BuildingUpdate):
-    """Mettre à jour un immeuble existant"""
+async def update_building(building_id: int, building_data: BuildingUpdateFrancais):
+    """Mettre à jour un immeuble existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         update_dict = building_data.dict(exclude_unset=True)
@@ -504,8 +609,8 @@ async def get_tenant(tenant_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du locataire: {str(e)}")
 
 @app.post("/api/tenants")
-async def create_tenant(tenant_data: TenantCreate):
-    """Créer un nouveau locataire"""
+async def create_tenant(tenant_data: TenantCreateFrancais):
+    """Créer un nouveau locataire avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         tenant_dict = tenant_data.dict()
@@ -519,8 +624,8 @@ async def create_tenant(tenant_data: TenantCreate):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création du locataire: {str(e)}")
 
 @app.put("/api/tenants/{tenant_id}")
-async def update_tenant(tenant_id: int, tenant_data: TenantUpdate):
-    """Mettre à jour un locataire existant"""
+async def update_tenant(tenant_id: int, tenant_data: TenantUpdateFrancais):
+    """Mettre à jour un locataire existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         update_dict = tenant_data.dict(exclude_unset=True)
@@ -1124,10 +1229,11 @@ async def get_units_by_building(building_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
 
 @app.post("/api/units")
-async def create_unit(unit_data: Dict[str, Any]):
-    """Créer une nouvelle unité"""
+async def create_unit(unit_data: UnitCreateFrancais):
+    """Créer une nouvelle unité avec le format français"""
     try:
-        unit = db_service.create_unit(unit_data)
+        unit_dict = unit_data.dict()
+        unit = db_service.create_unit(unit_dict)
         return {"unit": unit, "message": "Unité créée avec succès"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1135,10 +1241,11 @@ async def create_unit(unit_data: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'unité: {str(e)}")
 
 @app.put("/api/units/{unit_id}")
-async def update_unit(unit_id: int, unit_data: Dict[str, Any]):
-    """Mettre à jour une unité"""
+async def update_unit(unit_id: int, unit_data: UnitUpdateFrancais):
+    """Mettre à jour une unité avec le format français"""
     try:
-        unit = db_service.update_unit(unit_id, unit_data)
+        unit_dict = unit_data.dict(exclude_unset=True)
+        unit = db_service.update_unit(unit_id, unit_dict)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"unit": unit, "message": "Unité mise à jour avec succès"}
@@ -1191,8 +1298,8 @@ async def get_invoice(invoice_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la facture: {str(e)}")
 
 @app.post("/api/invoices")
-async def create_invoice(invoice_data: InvoiceCreate):
-    """Créer une nouvelle facture"""
+async def create_invoice(invoice_data: InvoiceCreateFrancais):
+    """Créer une nouvelle facture avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         invoice_dict = invoice_data.dict()
@@ -1208,8 +1315,8 @@ async def create_invoice(invoice_data: InvoiceCreate):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la facture: {str(e)}")
 
 @app.put("/api/invoices/{invoice_id}")
-async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdate):
-    """Mettre à jour une facture existante"""
+async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdateFrancais):
+    """Mettre à jour une facture existante avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
         update_dict = invoice_data.dict(exclude_unset=True)

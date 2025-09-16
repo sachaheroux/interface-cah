@@ -54,23 +54,23 @@ class DatabaseServiceFrancais:
         """Créer un nouvel immeuble"""
         try:
             with self.get_session() as session:
-                # Convertir les données du frontend vers le modèle français
+                # Utiliser directement les données françaises du frontend
                 building = Immeuble(
-                    nom_immeuble=building_data.get('name', ''),
-                    adresse=building_data.get('address', {}).get('street', '') if isinstance(building_data.get('address'), dict) else building_data.get('address', ''),
-                    ville=building_data.get('address', {}).get('city', '') if isinstance(building_data.get('address'), dict) else '',
-                    province=building_data.get('address', {}).get('province', '') if isinstance(building_data.get('address'), dict) else '',
-                    code_postal=building_data.get('address', {}).get('postalCode', '') if isinstance(building_data.get('address'), dict) else '',
-                    pays=building_data.get('address', {}).get('country', 'Canada') if isinstance(building_data.get('address'), dict) else 'Canada',
-                    nbr_unite=building_data.get('units', 1),
-                    annee_construction=building_data.get('yearBuilt'),
-                    prix_achete=building_data.get('financials', {}).get('purchasePrice', 0) if isinstance(building_data.get('financials'), dict) else 0,
-                    mise_de_fond=building_data.get('financials', {}).get('downPayment', 0) if isinstance(building_data.get('financials'), dict) else 0,
-                    taux_interet=building_data.get('financials', {}).get('interestRate', 0) if isinstance(building_data.get('financials'), dict) else 0,
-                    valeur_actuel=building_data.get('financials', {}).get('currentValue', 0) if isinstance(building_data.get('financials'), dict) else 0,
-                    proprietaire=building_data.get('contacts', {}).get('owner', '') if isinstance(building_data.get('contacts'), dict) else '',
-                    banque=building_data.get('contacts', {}).get('bank', '') if isinstance(building_data.get('contacts'), dict) else '',
-                    contracteur=building_data.get('contacts', {}).get('contractor', '') if isinstance(building_data.get('contacts'), dict) else '',
+                    nom_immeuble=building_data.get('nom_immeuble', ''),
+                    adresse=building_data.get('adresse', ''),
+                    ville=building_data.get('ville', ''),
+                    province=building_data.get('province', ''),
+                    code_postal=building_data.get('code_postal', ''),
+                    pays=building_data.get('pays', 'Canada'),
+                    nbr_unite=building_data.get('nbr_unite', 1),
+                    annee_construction=building_data.get('annee_construction'),
+                    prix_achete=building_data.get('prix_achete', 0),
+                    mise_de_fond=building_data.get('mise_de_fond', 0),
+                    taux_interet=building_data.get('taux_interet', 0),
+                    valeur_actuel=building_data.get('valeur_actuel', 0),
+                    proprietaire=building_data.get('proprietaire', ''),
+                    banque=building_data.get('banque', ''),
+                    contracteur=building_data.get('contracteur', ''),
                     notes=building_data.get('notes', '')
                 )
                 
@@ -185,11 +185,11 @@ class DatabaseServiceFrancais:
         try:
             with self.get_session() as session:
                 unit = Unite(
-                    id_immeuble=unit_data.get('buildingId'),
-                    adresse_unite=unit_data.get('unitAddress', ''),
+                    id_immeuble=unit_data.get('id_immeuble'),
+                    adresse_unite=unit_data.get('adresse_unite', ''),
                     type=unit_data.get('type', '4 1/2'),
-                    nbr_chambre=unit_data.get('bedrooms', 1),
-                    nbr_salle_de_bain=unit_data.get('bathrooms', 1),
+                    nbr_chambre=unit_data.get('nbr_chambre', 1),
+                    nbr_salle_de_bain=unit_data.get('nbr_salle_de_bain', 1),
                     notes=unit_data.get('notes', '')
                 )
                 
@@ -211,17 +211,19 @@ class DatabaseServiceFrancais:
                 if not unit:
                     return None
                 
-                # Mettre à jour les champs
-                if 'unitAddress' in update_data:
-                    unit.adresse_unite = update_data['unitAddress']
+                # Mettre à jour les champs avec le format français
+                if 'adresse_unite' in update_data:
+                    unit.adresse_unite = update_data['adresse_unite']
                 if 'type' in update_data:
                     unit.type = update_data['type']
-                if 'bedrooms' in update_data:
-                    unit.nbr_chambre = update_data['bedrooms']
-                if 'bathrooms' in update_data:
-                    unit.nbr_salle_de_bain = update_data['bathrooms']
+                if 'nbr_chambre' in update_data:
+                    unit.nbr_chambre = update_data['nbr_chambre']
+                if 'nbr_salle_de_bain' in update_data:
+                    unit.nbr_salle_de_bain = update_data['nbr_salle_de_bain']
                 if 'notes' in update_data:
                     unit.notes = update_data['notes']
+                if 'id_immeuble' in update_data:
+                    unit.id_immeuble = update_data['id_immeuble']
                 
                 unit.date_modification = datetime.utcnow()
                 session.commit()
@@ -277,19 +279,14 @@ class DatabaseServiceFrancais:
         """Créer un nouveau locataire"""
         try:
             with self.get_session() as session:
-                # Diviser le nom complet en nom et prénom
-                full_name = tenant_data.get('name', '')
-                name_parts = full_name.split(' ', 1)
-                nom = name_parts[0] if name_parts else ''
-                prenom = name_parts[1] if len(name_parts) > 1 else ''
-                
+                # Utiliser directement les données françaises du frontend
                 tenant = Locataire(
-                    id_unite=tenant_data.get('unitId'),
-                    nom=nom,
-                    prenom=prenom,
+                    id_unite=tenant_data.get('id_unite'),
+                    nom=tenant_data.get('nom', ''),
+                    prenom=tenant_data.get('prenom', ''),
                     email=tenant_data.get('email', ''),
-                    telephone=tenant_data.get('phone', ''),
-                    statut=tenant_data.get('status', 'actif'),
+                    telephone=tenant_data.get('telephone', ''),
+                    statut=tenant_data.get('statut', 'actif'),
                     notes=tenant_data.get('notes', '')
                 )
                 
@@ -311,20 +308,21 @@ class DatabaseServiceFrancais:
                 if not tenant:
                     return None
                 
-                # Mettre à jour les champs
-                if 'name' in update_data:
-                    full_name = update_data['name']
-                    name_parts = full_name.split(' ', 1)
-                    tenant.nom = name_parts[0] if name_parts else ''
-                    tenant.prenom = name_parts[1] if len(name_parts) > 1 else ''
+                # Mettre à jour les champs avec le format français
+                if 'nom' in update_data:
+                    tenant.nom = update_data['nom']
+                if 'prenom' in update_data:
+                    tenant.prenom = update_data['prenom']
                 if 'email' in update_data:
                     tenant.email = update_data['email']
-                if 'phone' in update_data:
-                    tenant.telephone = update_data['phone']
-                if 'status' in update_data:
-                    tenant.statut = update_data['status']
+                if 'telephone' in update_data:
+                    tenant.telephone = update_data['telephone']
+                if 'statut' in update_data:
+                    tenant.statut = update_data['statut']
                 if 'notes' in update_data:
                     tenant.notes = update_data['notes']
+                if 'id_unite' in update_data:
+                    tenant.id_unite = update_data['id_unite']
                 
                 tenant.date_modification = datetime.utcnow()
                 session.commit()
@@ -381,14 +379,14 @@ class DatabaseServiceFrancais:
         try:
             with self.get_session() as session:
                 invoice = Facture(
-                    id_immeuble=invoice_data.get('buildingId'),
-                    categorie=invoice_data.get('category', ''),
-                    montant=invoice_data.get('amount', 0),
+                    id_immeuble=invoice_data.get('id_immeuble'),
+                    categorie=invoice_data.get('categorie', ''),
+                    montant=invoice_data.get('montant', 0),
                     date=datetime.strptime(invoice_data.get('date', ''), '%Y-%m-%d').date() if invoice_data.get('date') else datetime.now().date(),
-                    no_facture=invoice_data.get('invoiceNumber', ''),
+                    no_facture=invoice_data.get('no_facture', ''),
                     source=invoice_data.get('source', ''),
-                    pdf_facture=invoice_data.get('pdfFilename', ''),
-                    type_paiement=invoice_data.get('paymentType', ''),
+                    pdf_facture=invoice_data.get('pdf_facture', ''),
+                    type_paiement=invoice_data.get('type_paiement', ''),
                     notes=invoice_data.get('notes', '')
                 )
                 
@@ -410,23 +408,25 @@ class DatabaseServiceFrancais:
                 if not invoice:
                     return None
                 
-                # Mettre à jour les champs
-                if 'category' in update_data:
-                    invoice.categorie = update_data['category']
-                if 'amount' in update_data:
-                    invoice.montant = update_data['amount']
+                # Mettre à jour les champs avec le format français
+                if 'categorie' in update_data:
+                    invoice.categorie = update_data['categorie']
+                if 'montant' in update_data:
+                    invoice.montant = update_data['montant']
                 if 'date' in update_data:
                     invoice.date = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
-                if 'invoiceNumber' in update_data:
-                    invoice.no_facture = update_data['invoiceNumber']
+                if 'no_facture' in update_data:
+                    invoice.no_facture = update_data['no_facture']
                 if 'source' in update_data:
                     invoice.source = update_data['source']
-                if 'pdfFilename' in update_data:
-                    invoice.pdf_facture = update_data['pdfFilename']
-                if 'paymentType' in update_data:
-                    invoice.type_paiement = update_data['paymentType']
+                if 'pdf_facture' in update_data:
+                    invoice.pdf_facture = update_data['pdf_facture']
+                if 'type_paiement' in update_data:
+                    invoice.type_paiement = update_data['type_paiement']
                 if 'notes' in update_data:
                     invoice.notes = update_data['notes']
+                if 'id_immeuble' in update_data:
+                    invoice.id_immeuble = update_data['id_immeuble']
                 
                 invoice.date_modification = datetime.utcnow()
                 session.commit()
