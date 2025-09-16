@@ -265,33 +265,30 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   }
 
   const handleDeleteUnit = async (unit) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'unité #${unit.unitNumber} ?`)) {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'unité "${unit.adresse_unite}" ?`)) {
       try {
-        console.log(`🗑️ Suppression de l'unité: ${unit.unitNumber} (ID: ${unit.id})`)
+        console.log(`🗑️ Suppression de l'unité: ${unit.adresse_unite} (ID: ${unit.id_unite})`)
         
         // Supprimer via l'API
-        await apiService.delete(`/api/units/${unit.id}`)
+        await unitsService.deleteUnit(unit.id_unite)
         
-        // Supprimer de l'état local
-        const updatedUnits = units.filter(u => u.id !== unit.id)
-        setUnits(updatedUnits)
+        // Recharger les unités
+        await reloadUnits()
+        
+        // Fermer les modales
         setShowDetails(false)
+        setSelectedUnit(null)
         
-        console.log(`✅ Unité ${unit.unitNumber} supprimée avec succès`)
+        console.log(`✅ Unité ${unit.adresse_unite} supprimée avec succès`)
         
         // Déclencher un événement pour actualiser les autres vues
         window.dispatchEvent(new CustomEvent('unitDeleted', { 
-          detail: { unitId: unit.id, unitNumber: unit.unitNumber } 
+          detail: { unitId: unit.id_unite, unitAddress: unit.adresse_unite } 
         }))
         
       } catch (error) {
         console.error('❌ Erreur lors de la suppression:', error)
-        alert(`Erreur lors de la suppression de l'unité #${unit.unitNumber}. Vérifiez la console pour plus de détails.`)
-        
-        // En cas d'erreur API, on supprime localement quand même
-        const updatedUnits = units.filter(u => u.id !== unit.id)
-        setUnits(updatedUnits)
-        setShowDetails(false)
+        alert(`Erreur lors de la suppression de l'unité "${unit.adresse_unite}". Vérifiez la console pour plus de détails.`)
       }
     }
   }
@@ -579,6 +576,13 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                   <Edit3 className="h-4 w-4 mr-1" />
                   Modifier
                 </button>
+                <button 
+                  onClick={() => handleDeleteUnit(unit)} 
+                  className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm"
+                  title="Supprimer l'unité"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -616,7 +620,6 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           isOpen={showDetails}
           onClose={handleCloseDetails}
           onEdit={handleEditUnit}
-          onDelete={handleDeleteUnit}
         />
       )}
       {showAddUnitForm && (

@@ -617,6 +617,25 @@ export const unitsService = {
       console.error('❌ Error updating unit:', error)
       throw error
     }
+  },
+
+  deleteUnit: async (unitId) => {
+    try {
+      console.log('📤 Deleting unit with ID:', unitId)
+      
+      const response = await api.delete(`/api/units/${unitId}`)
+      console.log('📥 Delete unit response:', response)
+      
+      if (response.data?.message) {
+        console.log('✅ Unit supprimée avec succès:', response.data.message)
+        return { success: true, message: response.data.message }
+      }
+      
+      return { success: true, message: 'Unité supprimée avec succès' }
+    } catch (error) {
+      console.error('❌ Error deleting unit:', error)
+      throw error
+    }
   }
 }
 

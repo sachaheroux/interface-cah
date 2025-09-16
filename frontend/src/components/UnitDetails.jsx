@@ -2,7 +2,6 @@ import React from 'react'
 import { 
   X, 
   Edit, 
-  Trash2, 
   Home, 
   MapPin,
   Bed,
@@ -10,7 +9,7 @@ import {
   Calendar
 } from 'lucide-react'
 
-export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete }) {
+export default function UnitDetails({ unit, isOpen, onClose, onEdit }) {
   if (!isOpen || !unit) return null
 
   const formatDate = (dateString) => {
@@ -146,13 +145,6 @@ export default function UnitDetails({ unit, isOpen, onClose, onEdit, onDelete })
           >
             <Edit className="h-4 w-4 mr-2" />
             Modifier
-          </button>
-          <button
-            onClick={() => onDelete(unit)}
-            className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
           </button>
         </div>
       </div>
