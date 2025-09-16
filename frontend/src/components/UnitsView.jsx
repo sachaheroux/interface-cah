@@ -131,8 +131,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         })
         
         // Trouver l'immeuble parent pour obtenir le nom et l'adresse complète
-        const parentBuilding = buildings.find(b => b.id === unit.buildingId)
-        const buildingName = parentBuilding?.name || ''
+        const parentBuilding = buildings.find(b => b.id_immeuble === unit.id_immeuble)
+        const buildingName = parentBuilding?.nom_immeuble || ''
         
         // Nettoyer l'adresse pour éviter la duplication (titre simple)
         let simpleAddress = unit.unitAddress || `${unit.unitNumber}`
@@ -468,8 +468,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           >
             <option value="">Tous les immeubles</option>
             {buildings.map(building => (
-              <option key={building.id} value={building.id.toString()}>
-                {building.name}
+              <option key={building.id_immeuble} value={building.id_immeuble.toString()}>
+                {building.nom_immeuble}
               </option>
             ))}
           </select>

@@ -189,8 +189,7 @@ class DatabaseServiceFrancais:
                     adresse_unite=unit_data.get('adresse_unite', ''),
                     type=unit_data.get('type', '4 1/2'),
                     nbr_chambre=unit_data.get('nbr_chambre', 1),
-                    nbr_salle_de_bain=unit_data.get('nbr_salle_de_bain', 1),
-                    notes=unit_data.get('notes', '')
+                    nbr_salle_de_bain=unit_data.get('nbr_salle_de_bain', 1)
                 )
                 
                 session.add(unit)
