@@ -7,6 +7,7 @@ import './utils/cleanupMigration'
 import Dashboard from './pages/Dashboard'
 import Buildings from './pages/Buildings'
 import Tenants from './pages/Tenants'
+import Leases from './pages/Leases'
 import Maintenance from './pages/Maintenance'
 import Billing from './pages/Billing'
 import Employees from './pages/Employees'
@@ -40,6 +41,7 @@ function AppContent() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/buildings" element={<Buildings />} />
             <Route path="/tenants" element={<Tenants />} />
+            <Route path="/leases" element={<Leases />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/contractors" element={<Contractors />} />

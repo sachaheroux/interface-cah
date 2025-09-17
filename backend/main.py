@@ -235,6 +235,68 @@ async def health_check():
     return {"status": "healthy", "message": "API fonctionnelle"}
 
 
+# ========================================
+# ROUTES POUR LES BAUX
+# ========================================
+
+@app.get("/api/leases")
+async def get_leases():
+    """Récupérer tous les baux"""
+    try:
+        leases = db_service.get_leases()
+        return {"data": leases}
+    except Exception as e:
+        print(f"Erreur lors de la récupération des baux: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.get("/api/leases/{lease_id}")
+async def get_lease(lease_id: int):
+    """Récupérer un bail par ID"""
+    try:
+        lease = db_service.get_lease(lease_id)
+        if not lease:
+            raise HTTPException(status_code=404, detail="Bail non trouvé")
+        return {"data": lease}
+    except Exception as e:
+        print(f"Erreur lors de la récupération du bail: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.post("/api/leases")
+async def create_lease(lease_data: LeaseCreateFrancais):
+    """Créer un nouveau bail"""
+    try:
+        lease_dict = lease_data.dict()
+        created_lease = db_service.create_lease(lease_dict)
+        return {"data": created_lease, "message": "Bail créé avec succès"}
+    except Exception as e:
+        print(f"Erreur lors de la création du bail: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.put("/api/leases/{lease_id}")
+async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
+    """Mettre à jour un bail"""
+    try:
+        lease_dict = lease_data.dict(exclude_unset=True)
+        updated_lease = db_service.update_lease(lease_id, lease_dict)
+        if not updated_lease:
+            raise HTTPException(status_code=404, detail="Bail non trouvé")
+        return {"data": updated_lease, "message": "Bail mis à jour avec succès"}
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du bail: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+@app.delete("/api/leases/{lease_id}")
+async def delete_lease(lease_id: int):
+    """Supprimer un bail"""
+    try:
+        success = db_service.delete_lease(lease_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Bail non trouvé")
+        return {"message": "Bail supprimé avec succès"}
+    except Exception as e:
+        print(f"Erreur lors de la suppression du bail: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
 # Routes temporaires pour les modules (à développer plus tard)
 @app.get("/api/dashboard")
 async def get_dashboard_data():

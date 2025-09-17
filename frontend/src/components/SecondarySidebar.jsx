@@ -38,8 +38,18 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Actifs', icon: List },
         { name: 'En attente', icon: Clock },
         { name: 'Ajouter locataire', icon: Plus },
-        { name: 'Contrats', icon: FileText },
+        { name: 'Gérer les baux', icon: FileText, href: '/leases' },
         { name: 'Paiements', icon: DollarSign },
+      ]
+    
+    case '/leases':
+      return [
+        { name: 'Tous les baux', icon: FileText, active: true },
+        { name: 'Actifs', icon: List },
+        { name: 'Expirés', icon: Clock },
+        { name: 'À venir', icon: Calendar },
+        { name: 'Nouveau bail', icon: Plus },
+        { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
       ]
     
     case '/billing':

@@ -453,6 +453,26 @@ class DatabaseServiceFrancais:
     
     # === MÉTHODES POUR LES BAUX ===
     
+    def get_leases(self) -> List[Dict[str, Any]]:
+        """Récupérer tous les baux"""
+        try:
+            with self.get_session() as session:
+                leases = session.query(Bail).all()
+                return [lease.to_dict() for lease in leases]
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération des baux: {e}")
+            raise e
+    
+    def get_lease(self, lease_id: int) -> Optional[Dict[str, Any]]:
+        """Récupérer un bail par ID"""
+        try:
+            with self.get_session() as session:
+                lease = session.query(Bail).filter(Bail.id_bail == lease_id).first()
+                return lease.to_dict() if lease else None
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération du bail: {e}")
+            raise e
+
     def create_lease(self, lease_data: Dict[str, Any]) -> Dict[str, Any]:
         """Créer un nouveau bail"""
         try:
@@ -475,6 +495,52 @@ class DatabaseServiceFrancais:
                 return lease.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création du bail: {e}")
+            raise e
+    
+    def update_lease(self, lease_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Mettre à jour un bail"""
+        try:
+            with self.get_session() as session:
+                lease = session.query(Bail).filter(Bail.id_bail == lease_id).first()
+                if not lease:
+                    return None
+                
+                # Mettre à jour les champs
+                if 'date_debut' in update_data:
+                    lease.date_debut = datetime.strptime(update_data['date_debut'], '%Y-%m-%d').date()
+                if 'date_fin' in update_data:
+                    lease.date_fin = datetime.strptime(update_data['date_fin'], '%Y-%m-%d').date()
+                if 'prix_loyer' in update_data:
+                    lease.prix_loyer = update_data['prix_loyer']
+                if 'methode_paiement' in update_data:
+                    lease.methode_paiement = update_data['methode_paiement']
+                if 'pdf_bail' in update_data:
+                    lease.pdf_bail = update_data['pdf_bail']
+                
+                lease.date_modification = datetime.utcnow()
+                session.commit()
+                
+                print(f"✅ Bail mis à jour: {lease.prix_loyer}$/mois (ID: {lease.id_bail})")
+                return lease.to_dict()
+        except Exception as e:
+            print(f"❌ Erreur lors de la mise à jour du bail: {e}")
+            raise e
+    
+    def delete_lease(self, lease_id: int) -> bool:
+        """Supprimer un bail"""
+        try:
+            with self.get_session() as session:
+                lease = session.query(Bail).filter(Bail.id_bail == lease_id).first()
+                if not lease:
+                    return False
+                
+                session.delete(lease)
+                session.commit()
+                
+                print(f"✅ Bail supprimé (ID: {lease_id})")
+                return True
+        except Exception as e:
+            print(f"❌ Erreur lors de la suppression du bail: {e}")
             raise e
     
     # ========================================
