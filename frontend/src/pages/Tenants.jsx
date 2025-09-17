@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, Phone, Mail, Home, Eye, Edit, Trash2, Search, FileText } from 'lucide-react'
+import { Users, Plus, Phone, Mail, Home, Eye, Edit, Trash2, Search } from 'lucide-react'
 import { tenantsService, assignmentsService } from '../services/api'
 import { getTenantStatusLabel, getTenantStatusColor } from '../types/tenant'
 import TenantForm from '../components/TenantForm'
@@ -144,11 +144,6 @@ export default function Tenants() {
     // Cette fonction n'est plus utilisée car TenantForm gère directement les appels API
     // Elle est gardée pour la compatibilité mais ne fait rien
     console.log('⚠️ handleSaveTenant appelée mais ignorée (TenantForm gère directement les API)')
-  }
-
-  const handleManageLeases = (tenant) => {
-    // Rediriger vers la page des baux avec le locataire sélectionné
-    window.location.href = `/leases?tenant=${tenant.id_locataire}`
   }
 
   const handleDeleteTenant = async (tenant) => {
@@ -331,14 +326,6 @@ export default function Tenants() {
                 >
                   <Edit className="h-4 w-4 mr-1" />
                   Modifier
-                </button>
-                <button 
-                  onClick={() => handleManageLeases(tenant)}
-                  className="flex-1 btn-primary text-sm py-2"
-                  title="Gérer les baux de ce locataire"
-                >
-                  <FileText className="h-4 w-4 mr-1" />
-                  Baux
                 </button>
                 <button 
                   onClick={() => handleDeleteTenant(tenant)}
