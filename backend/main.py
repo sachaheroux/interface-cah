@@ -579,7 +579,7 @@ async def create_tenant_with_lease(data: dict):
         }
         print(f"📝 Création du locataire: {tenant_data_francais['nom']} {tenant_data_francais['prenom']}")
         created_tenant = db_service.create_tenant(tenant_data_francais)
-        tenant_id = created_tenant["id"]
+        tenant_id = created_tenant["id_locataire"]
         print(f"✅ Locataire créé avec ID: {tenant_id}")
         
         # 2. CRÉER LE BAIL avec les données de bail
