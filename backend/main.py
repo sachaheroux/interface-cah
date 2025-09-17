@@ -1303,7 +1303,7 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
 # ENDPOINTS POUR LES TRANSACTIONS
 # ========================================
 
-@app.get("/api/transactions/constants")
+@app.get("/api/transactions-constants")
 async def get_transaction_constants():
     """Récupérer les constantes pour les transactions"""
     try:

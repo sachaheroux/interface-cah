@@ -219,7 +219,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
               <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
               <input
                 type="text"
-                value={buildingSearch || getSelectedBuilding()?.nom_immeuble + ' - ' + getSelectedBuilding()?.adresse || ''}
+                value={buildingSearch || (getSelectedBuilding() ? `${getSelectedBuilding().nom_immeuble} - ${getSelectedBuilding().adresse}` : '')}
                 onChange={(e) => handleBuildingSearch(e.target.value)}
                 onFocus={() => setShowBuildingDropdown(true)}
                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${

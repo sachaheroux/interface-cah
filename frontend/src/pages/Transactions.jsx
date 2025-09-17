@@ -43,7 +43,7 @@ export default function Transactions() {
 
   const loadConstants = async () => {
     try {
-      const response = await api.get('/api/transactions/constants')
+      const response = await api.get('/api/transactions-constants')
       setConstants(response.data)
     } catch (error) {
       console.error('Erreur lors du chargement des constantes:', error)
