@@ -7,21 +7,10 @@ export default function Leases() {
   const [filteredLeases, setFilteredLeases] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedTenantId, setSelectedTenantId] = useState(null)
-  
   // États pour les modales
   const [selectedLease, setSelectedLease] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
-
-  // Récupérer l'ID du locataire depuis l'URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const tenantId = urlParams.get('tenant')
-    if (tenantId) {
-      setSelectedTenantId(tenantId)
-    }
-  }, [])
 
   useEffect(() => {
     fetchLeases()
@@ -39,12 +28,8 @@ export default function Leases() {
       )
     }
 
-    if (selectedTenantId) {
-      filtered = filtered.filter(lease => lease.id_locataire === parseInt(selectedTenantId))
-    }
-
     setFilteredLeases(filtered)
-  }, [leases, searchTerm, selectedTenantId])
+  }, [leases, searchTerm])
 
   const fetchLeases = async () => {
     try {
@@ -135,10 +120,7 @@ export default function Leases() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gestion des Baux</h1>
             <p className="text-gray-600">
-              {selectedTenantId 
-                ? `Baux du locataire sélectionné` 
-                : 'Gérez tous les baux de vos locataires'
-              }
+              Gérez tous les baux de vos locataires
             </p>
           </div>
         </div>
@@ -166,17 +148,6 @@ export default function Leases() {
               />
             </div>
           </div>
-          {selectedTenantId && (
-            <button
-              onClick={() => {
-                setSelectedTenantId(null)
-                window.history.replaceState({}, '', '/leases')
-              }}
-              className="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              Voir tous les baux
-            </button>
-          )}
         </div>
       </div>
 
