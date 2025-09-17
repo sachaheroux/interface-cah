@@ -73,7 +73,6 @@ TRANSACTION_STATUSES = [
     "annule"
 ]
 
-
 # ========================================
 # ENDPOINT POUR LES CONSTANTES (défini tôt pour éviter les erreurs)
 # ========================================
@@ -93,7 +92,6 @@ async def get_transaction_constants():
         raise HTTPException(status_code=500, detail="Erreur interne du serveur")
 
 # Modèles Pydantic pour la validation des données
-
 
 # Modèles Pydantic français pour toutes les entités
 
@@ -205,11 +203,6 @@ class LeaseUpdate_transactionFrancais(BaseModel):
     methode_paiement: Optional[str] = None
     pdf_bail: Optional[str] = None
 
-
-
-
-
-
 # Configuration du répertoire de données pour les documents
 if platform.system() == "Windows" or os.environ.get("ENVIRONMENT") == "development":
     DATA_DIR = os.environ.get("DATA_DIR", "./data")
@@ -218,7 +211,6 @@ else:
 
 # Créer le répertoire de données s'il n'existe pas
 os.makedirs(DATA_DIR, exist_ok=True)
-
 
 # Route de test de base
 @app.get("/")
@@ -229,7 +221,6 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "message": "API fonctionnelle"}
-
 
 # ========================================
 # ROUTES POUR LES BAUX
@@ -530,23 +521,6 @@ async def delete_tenant(tenant_id: int):
         print(f"Erreur lors de la suppression du locataire: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
-@app.delete("/api/assignments/tenant/{tenant_id}")
-async def delete_tenant_assignments(tenant_id: int):
-    """Supprimer toutes les assignations d'un locataire"""
-    try:
-        # Supprimer toutes les assignations du locataire
-        success = db_service.delete_tenant_assignments(tenant_id)
-        
-        if not success:
-            raise HTTPException(status_code=404, detail="Aucune assignation trouvée pour ce locataire")
-        
-        return {"message": f"Assignations du locataire {tenant_id} supprimées avec succès"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Erreur lors de la suppression des assignations: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
 @app.get("/api/maintenance")
 async def get_maintenance():
     """Liste des entretiens"""
@@ -566,16 +540,6 @@ async def get_employees():
     ]
 
 # Routes CRUD pour les assignations locataires-unités avec persistance
-@app.get("/api/assignments")
-async def get_assignments():
-    """Récupérer toutes les assignations locataires-unités"""
-    try:
-        assignments = db_service.get_assignments()
-        return {"data": assignments}
-    except Exception as e:
-        print(f"Erreur lors du chargement des assignations: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
 @app.post("/api/tenants/create-with-lease")
 async def create_tenant_with_lease(data: dict):
     """Créer un locataire avec son bail - LOGIQUE SIMPLE ET FIABLE"""
@@ -697,136 +661,6 @@ async def create_tenant_with_lease(data: dict):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
 
-@app.post("/api/assignments")
-async def create_assignment(assignment_data: dict):
-    """Créer une nouvelle assignation locataire-unité"""
-    try:
-        print(f"🔍 DEBUG - create_assignment reçu: {assignment_data}")
-        tenant_id = assignment_data.get("tenantId")
-        unit_id = assignment_data.get("unitId")
-        print(f"🔍 DEBUG - tenant_id: {tenant_id}, unit_id: {unit_id}")
-        
-        # Validation : Vérifier que le locataire existe
-        tenant = db_service.get_tenant(tenant_id)
-        if not tenant:
-            print(f"❌ Assignation rejetée: Locataire {tenant_id} n'existe pas")
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Le locataire avec l'ID {tenant_id} n'existe pas dans la base de données"
-            )
-        
-        print(f"✅ Locataire trouvé: {tenant}")
-        
-        # Créer la nouvelle assignation via le service SQLite
-        # Le service gère automatiquement la validation des assignations actives
-        new_assignment = db_service.create_assignment_with_validation(assignment_data)
-        
-        print(f"✅ Assignation créée: Locataire {tenant_id} → Unité {unit_id}")
-        return {"data": new_assignment}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Erreur lors de la création de l'assignation: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'assignation: {str(e)}")
-
-@app.delete("/api/assignments/{assignment_id}")
-async def delete_assignment_by_id(assignment_id: int):
-    """Supprimer une assignation par son ID"""
-    try:
-        print(f"🗑️ Suppression de l'assignation {assignment_id}")
-        
-        # Supprimer via le service SQLite
-        success = db_service.delete_assignment(assignment_id)
-        
-        if success:
-            print(f"✅ Assignation {assignment_id} supprimée")
-            return {"message": f"Assignation {assignment_id} supprimée avec succès"}
-        else:
-            raise HTTPException(status_code=404, detail=f"Assignation {assignment_id} non trouvée")
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Erreur lors de la suppression de l'assignation {assignment_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
-@app.delete("/api/assignments/tenant/{tenant_id}")
-async def remove_tenant_assignment(tenant_id: int):
-    """Retirer un locataire de toute unité"""
-    try:
-        # Supprimer via le service SQLite
-        assignments = db_service.get_assignments()
-        tenant_assignments = [a for a in assignments if a.get("tenantId") == tenant_id]
-        
-        if not tenant_assignments:
-            raise HTTPException(status_code=404, detail="Aucune assignation trouvée pour ce locataire")
-        
-        # Supprimer chaque assignation
-        for assignment in tenant_assignments:
-            db_service.delete_assignment(assignment["id"])
-        
-        print(f"Assignation supprimée pour le locataire {tenant_id}")
-        return {"message": f"Locataire retiré de son unité ({len(tenant_assignments)} assignation(s) supprimée(s))"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Erreur lors de la suppression de l'assignation: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
-@app.delete("/api/assignments/tenant/{tenant_id}/unit/{unit_id}")
-async def remove_specific_assignment(tenant_id: int, unit_id: str):
-    """Retirer un locataire d'une unité spécifique (ne supprime que cette assignation)"""
-    try:
-        # Supprimer via le service SQLite
-        assignments = db_service.get_assignments()
-        specific_assignment = None
-        
-        for assignment in assignments:
-            if (assignment.get("tenantId") == tenant_id and 
-                assignment.get("unitId") == unit_id):
-                specific_assignment = assignment
-                break
-        
-        if not specific_assignment:
-            raise HTTPException(status_code=404, detail="Assignation non trouvée pour ce locataire et cette unité")
-        
-        # Supprimer l'assignation spécifique
-        db_service.delete_assignment(specific_assignment["id"])
-        
-        print(f"Assignation spécifique supprimée: Locataire {tenant_id} retiré de l'unité {unit_id}")
-        return {"message": f"Locataire {tenant_id} retiré de l'unité {unit_id} avec succès"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Erreur lors de la suppression de l'assignation spécifique: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
-@app.get("/api/assignments/unit/{unit_id}")
-async def get_unit_assignments(unit_id: str):
-    """Récupérer toutes les assignations pour une unité spécifique"""
-    try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table assignations
-        # Dans le nouveau système, les locataires sont directement liés aux unités
-        return {"data": []}
-    except Exception as e:
-        print(f"Erreur lors du chargement des assignations d'unité: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des assignations d'unité: {str(e)}")
-
-@app.get("/api/assignments/tenant/{tenant_id}")
-async def get_tenant_assignment(tenant_id: int):
-    """Récupérer l'assignation d'un locataire spécifique"""
-    try:
-        # Pour l'instant, retourner null car nous n'avons pas encore de table assignations
-        # Dans le nouveau système, les locataires sont directement liés aux unités
-        return {"data": None}
-    except Exception as e:
-        print(f"Erreur lors du chargement de l'assignation du locataire: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement de l'assignation du locataire: {str(e)}")
-
 @app.get("/api/projects")
 async def get_projects():
     """Liste des projets de construction"""
@@ -839,26 +673,6 @@ async def get_projects():
 # ========================================
 # ROUTES POUR LES RAPPORTS D'IMMEUBLES
 # ========================================
-
-@app.get("/api/building-reports")
-async def get_building_reports():
-    """Récupérer tous les rapports d'immeubles"""
-    try:
-        reports = db_service.get_building_reports()
-        return {"data": reports}
-    except Exception as e:
-        print(f"Erreur lors du chargement des rapports d'immeubles: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
-@app.get("/api/building-reports/{building_id}")
-async def get_building_report(building_id: int):
-    """Récupérer le rapport d'un immeuble spécifique"""
-    try:
-        # Pour l'instant, retourner null car nous n'avons pas encore de table rapports
-        return {"data": None}
-    except Exception as e:
-        print(f"Erreur lors du chargement du rapport d'immeuble: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement du rapport d'immeuble: {str(e)}")
 
 @app.post("/api/building-reports")
 async def create_building_report(report_data: dict):
@@ -905,26 +719,6 @@ async def delete_building_report(report_id: int):
 # ========================================
 # ROUTES POUR LES RAPPORTS D'UNITÉS
 # ========================================
-
-@app.get("/api/unit-reports")
-async def get_unit_reports():
-    """Récupérer tous les rapports d'unités"""
-    try:
-        reports = db_service.get_unit_reports()
-        return {"data": reports}
-    except Exception as e:
-        print(f"Erreur lors du chargement des rapports d'unités: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
-
-@app.get("/api/unit-reports/{unit_id}")
-async def get_unit_report(unit_id: str):
-    """Récupérer tous les rapports d'une unité spécifique"""
-    try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table rapports
-        return {"data": []}
-    except Exception as e:
-        print(f"Erreur lors du chargement des rapports d'unité: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des rapports d'unité: {str(e)}")
 
 @app.post("/api/unit-reports")
 async def create_unit_report(report_data: dict):
@@ -1090,26 +884,6 @@ async def get_document(filename: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du document: {str(e)}")
-
-@app.get("/api/assignments/clean")
-async def clean_invalid_assignments():
-    """Nettoyer les assignations avec des tenantId invalides"""
-    try:
-        # Pour l'instant, retourner un message car nous n'avons pas encore de table assignations
-        return {
-            "message": "Nettoyage non nécessaire - Nouveau système en place",
-            "removed_count": 0,
-            "kept_count": 0,
-            "total_original": 0,
-            "invalid_assignments": []
-        }
-    except Exception as e:
-        print(f"Erreur lors du nettoyage des assignations: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du nettoyage: {str(e)}")
-
-# ========================================
-# ROUTES POUR LES UNITÉS
-# ========================================
 
 @app.get("/api/units")
 async def get_units(skip: int = 0, limit: int = 100):
@@ -1562,7 +1336,6 @@ async def get_monitoring_status():
         print(f"Erreur lors de la récupération du statut: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du statut: {str(e)}")
 
-
 @app.put("/api/leases/{lease_id}")
 async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transactionFrancais):
     """Mettre à jour un bail existant"""
@@ -1684,7 +1457,6 @@ async def delete_transaction(transaction_id: int):
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
     return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
