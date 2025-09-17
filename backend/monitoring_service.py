@@ -164,7 +164,7 @@ class DatabaseMonitor:
                     elif table == 'unites':
                         records = db_service.get_units()
                     elif table == 'factures':
-                        records = db_service.get_invoices()
+                        records = db_service.get_transactions()
                     elif table == 'baux':
                         records = []  # Pas encore implémenté
                     elif table == 'rapports_immeuble':

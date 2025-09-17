@@ -47,7 +47,7 @@ class DataValidator:
         self._validate_assignments()
         self._validate_building_reports()
         self._validate_unit_reports()
-        self._validate_invoices()
+        self._validate_transactions()
         
         # Valider les relations entre tables
         self._validate_relationships()
