@@ -34,6 +34,8 @@ export default function Buildings() {
   const [deleting, setDeleting] = useState(false)
   const [viewMode, setViewMode] = useState('list') // 'list', 'map', 'units'
   const [assignments, setAssignments] = useState([])
+  const [totalUnits, setTotalUnits] = useState(0)
+  const [occupiedUnits, setOccupiedUnits] = useState(0)
 
   useEffect(() => {
     fetchBuildings()
@@ -325,13 +327,6 @@ export default function Buildings() {
     )
   }
 
-  // Statistiques pour le tableau de bord des immeubles (basées sur les immeubles filtrés)
-  const totalBuildings = filteredBuildings.length
-  
-  // Calculer le total des unités depuis la base de données
-  const [totalUnits, setTotalUnits] = useState(0)
-  const [occupiedUnits, setOccupiedUnits] = useState(0)
-  
   // Charger les statistiques des unités
   useEffect(() => {
     const loadUnitsStats = async () => {
@@ -353,6 +348,9 @@ export default function Buildings() {
     
     loadUnitsStats()
   }, [])
+
+  // Statistiques pour le tableau de bord des immeubles (basées sur les immeubles filtrés)
+  const totalBuildings = filteredBuildings.length
   
   // Calculer la valeur totale du portfolio (somme des valeurs actuelles)
   const totalValue = filteredBuildings.reduce((sum, building) => sum + (building.valeur_actuel || 0), 0)
