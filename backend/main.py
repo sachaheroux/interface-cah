@@ -966,7 +966,7 @@ async def get_transactions():
     """Récupérer toutes les transactions"""
     try:
         transactions = db_service.get_transactions()
-        return {"data": invoices}
+        return {"data": transactions}
     except Exception as e:
         print(f"Erreur lors du chargement des transactions: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions: {str(e)}")
@@ -995,7 +995,7 @@ async def create_transaction(transaction_data: InvoiceCreateFrancais):
         # Créer la transaction via le service SQLite
         new_transaction = db_service.create_transaction(invoice_dict)
         
-        return {"data": new_invoice}
+        return {"data": new_transaction}
     except HTTPException:
         raise
     except Exception as e:
@@ -1040,25 +1040,6 @@ async def delete_transaction(transaction_id: int):
         print(f"Erreur lors de la suppression de la transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
-@app.get("/api/transactions/building/{building_id}")
-async def get_building_invoices(building_id: int):
-    """Récupérer toutes les transactions d'un immeuble spécifique"""
-    try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table transactions
-        return {"data": []}
-    except Exception as e:
-        print(f"Erreur lors du chargement des transactions d'immeuble: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions d'immeuble: {str(e)}")
-
-@app.get("/api/transactions/building/{building_id}/category/{category}")
-async def get_building_category_invoices(building_id: int, category: str):
-    """Récupérer toutes les transactions d'une catégorie spécifique pour un immeuble"""
-    try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table transactions
-        return {"data": []}
-    except Exception as e:
-        print(f"Erreur lors du chargement des transactions de catégorie: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions de catégorie: {str(e)}")
 
 # ========================================
 # ENDPOINTS DE SAUVEGARDE
