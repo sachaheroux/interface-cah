@@ -188,16 +188,9 @@ export default function Leases() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Home className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <span className="text-gray-600">
-                            {lease.unite?.adresse_unite}
-                          </span>
-                          {lease.unite?.immeuble?.nom_immeuble && (
-                            <span className="text-xs text-gray-500 ml-2">
-                              ({lease.unite.immeuble.nom_immeuble})
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-gray-600">
+                          {lease.unite?.adresse_unite}
+                        </span>
                       </div>
                     </div>
                     
