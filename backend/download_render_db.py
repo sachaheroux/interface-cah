@@ -163,6 +163,9 @@ def insert_buildings(cursor, buildings):
 
 def insert_units(cursor, units):
     """Insérer les unités dans la base locale"""
+    # Vider la table avant d'insérer les nouvelles données
+    cursor.execute("DELETE FROM unites")
+    
     for unit in units:
         # Vérifier que unit est un dictionnaire
         if not isinstance(unit, dict):
@@ -170,7 +173,7 @@ def insert_units(cursor, units):
             continue
             
         cursor.execute("""
-            INSERT OR REPLACE INTO unites (
+            INSERT INTO unites (
                 id_unite, id_immeuble, adresse_unite, type, nbr_chambre,
                 nbr_salle_de_bain, date_creation, date_modification
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)

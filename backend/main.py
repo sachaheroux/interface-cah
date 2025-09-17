@@ -97,55 +97,7 @@ async def get_invoice_constants():
         raise HTTPException(status_code=500, detail="Erreur interne du serveur")
 
 # Modèles Pydantic pour la validation des données
-class Address(BaseModel):
-    street: str
-    city: str
-    province: str
-    postalCode: str
-    country: str = "Canada"
-    
-    class Config:
-        # Validation personnalisée
-        validate_assignment = True
 
-class Characteristics(BaseModel):
-    parking: int = 0
-    elevator: bool = False
-    balconies: int = 0
-    storage: bool = False
-    laundry: bool = False
-    airConditioning: bool = False
-    heating: str = "electric"
-    internet: bool = False
-    security: bool = False
-
-class Financials(BaseModel):
-    purchasePrice: float = 0
-    downPayment: float = 0
-    interestRate: float = 0
-    currentValue: float = 0
-
-class Contacts(BaseModel):
-    owner: str = ""
-    bank: str = ""
-    contractor: str = ""
-
-class Building(BaseModel):
-    id: Optional[int] = None
-    name: str
-    address: Address
-    type: str
-    units: int
-    floors: int
-    yearBuilt: int
-    totalArea: Optional[int] = None
-    characteristics: Optional[Characteristics] = None
-    financials: Optional[Financials] = None
-    contacts: Optional[Contacts] = None
-    notes: str = ""
-    unitData: Optional[dict] = None  # Données personnalisées des unités
-    createdAt: Optional[str] = None
-    updatedAt: Optional[str] = None
 
 # Modèles Pydantic français pour toutes les entités
 
@@ -257,159 +209,10 @@ class LeaseUpdateFrancais(BaseModel):
     methode_paiement: Optional[str] = None
     pdf_bail: Optional[str] = None
 
-class BuildingCreate(BaseModel):
-    name: str
-    address: Address
-    type: str
-    units: int
-    floors: int
-    yearBuilt: int
-    totalArea: Optional[int] = None
-    characteristics: Optional[Characteristics] = None
-    financials: Optional[Financials] = None
-    contacts: Optional[Contacts] = None
-    notes: str = ""
-    unitData: Optional[dict] = None  # Données personnalisées des unités
 
-class BuildingUpdate(BaseModel):
-    name: Optional[str] = None
-    address: Optional[Address] = None
-    type: Optional[str] = None
-    units: Optional[int] = None
-    floors: Optional[int] = None
-    yearBuilt: Optional[int] = None
-    totalArea: Optional[int] = None
-    characteristics: Optional[Characteristics] = None
-    financials: Optional[Financials] = None
-    contacts: Optional[Contacts] = None
-    notes: Optional[str] = None
-    unitData: Optional[dict] = None  # Données personnalisées des unités
 
-# Modèles pour les locataires
-class PersonalAddress(BaseModel):
-    street: str = ""
-    city: str = ""
-    province: str = "QC"
-    postalCode: str = ""
-    country: str = "Canada"
 
-class EmergencyContact(BaseModel):
-    name: str = ""
-    phone: str = ""
-    email: str = ""
-    relationship: str = ""
 
-class TenantFinancial(BaseModel):
-    monthlyIncome: int = 0
-    creditScore: int = 0
-    bankAccount: str = ""
-    employer: str = ""
-    employerPhone: str = ""
-
-# Modèles pour les données de bail (définis avant Tenant)
-class LeaseInfo(BaseModel):
-    startDate: str = ""
-    endDate: str = ""
-    monthlyRent: float = 0
-    paymentMethod: str = "Virement bancaire"
-    leasePdf: str = ""  # URL ou nom du fichier PDF
-    amenities: Optional[dict] = None  # Conditions du bail (wifi, heating, etc.)
-
-class LeaseRenewal(BaseModel):
-    isActive: bool = False
-    startDate: str = ""
-    endDate: str = ""
-    monthlyRent: float = 0
-    renewalPdf: str = ""  # URL ou nom du fichier PDF
-    amenities: Optional[dict] = None  # Conditions du renouvellement
-
-class Tenant(BaseModel):
-    id: Optional[int] = None
-    name: str
-    email: str = ""
-    phone: str = ""
-    status: str = "active"  # active, pending, inactive, former
-    personalAddress: Optional[PersonalAddress] = None
-    emergencyContact: Optional[EmergencyContact] = None
-    financial: Optional[TenantFinancial] = None
-    lease: Optional[LeaseInfo] = None
-    leaseRenewals: Optional[list] = None  # Liste des renouvellements au lieu d'un seul
-    building: str = ""
-    unit: str = ""
-    notes: str = ""
-    createdAt: Optional[str] = None
-    updatedAt: Optional[str] = None
-
-class TenantCreate(BaseModel):
-    name: str
-    email: str = ""
-    phone: str = ""
-    status: str = "active"
-    personalAddress: Optional[PersonalAddress] = None
-    emergencyContact: Optional[EmergencyContact] = None
-    financial: Optional[TenantFinancial] = None
-    lease: Optional[LeaseInfo] = None
-    leaseRenewals: Optional[list] = None  # Liste des renouvellements
-    building: str = ""
-    unit: str = ""
-    notes: str = ""
-
-class TenantUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    status: Optional[str] = None
-    personalAddress: Optional[PersonalAddress] = None
-    emergencyContact: Optional[EmergencyContact] = None
-    financial: Optional[TenantFinancial] = None
-    lease: Optional[LeaseInfo] = None
-    leaseRenewals: Optional[list] = None  # Liste des renouvellements
-    building: Optional[str] = None
-    unit: Optional[str] = None
-    notes: Optional[str] = None
-
-# Modèles pour les factures
-class Invoice(BaseModel):
-    id: Optional[int] = None
-    invoiceNumber: str
-    category: str  # municipal_taxes, school_taxes, insurance, etc.
-    source: str = ""  # D'où vient la facture (texte libre)
-    date: str  # Format YYYY-MM-DD
-    amount: float
-    paymentType: str  # bank_transfer, check, cash
-    buildingId: Optional[int] = None
-    unitId: Optional[str] = None  # null si facture pour tout l'immeuble
-    pdfFilename: str = ""
-    notes: str = ""
-    type: str = "rental_building"  # rental_building ou construction_project
-    createdAt: Optional[str] = None
-    updatedAt: Optional[str] = None
-
-class InvoiceCreate(BaseModel):
-    invoiceNumber: str
-    category: str
-    source: str = ""
-    date: str
-    amount: float
-    paymentType: str
-    buildingId: Optional[int] = None
-    unitId: Optional[str] = None
-    pdfFilename: str = ""
-    notes: str = ""
-    type: str = "rental_building"
-
-class InvoiceUpdate(BaseModel):
-    invoiceNumber: Optional[str] = None
-    category: Optional[str] = None
-    source: Optional[str] = None
-    date: Optional[str] = None
-    amount: Optional[float] = None
-    paymentType: Optional[str] = None
-    buildingId: Optional[int] = None
-    unitId: Optional[str] = None
-    pdfFilename: Optional[str] = None
-    notes: Optional[str] = None
-    type: Optional[str] = None
 
 # Configuration du répertoire de données pour les documents
 if platform.system() == "Windows" or os.environ.get("ENVIRONMENT") == "development":
@@ -745,16 +548,37 @@ async def create_tenant_with_assignment(data: dict):
                 "notes": data.get("notes", "")
             }
         
-        # Validation basique
-        if not tenant_data.get("name", "").strip():
-            raise HTTPException(status_code=400, detail="Le nom du locataire est obligatoire")
+        # Validation basique - accepter le format français
+        nom = tenant_data.get("nom", "").strip()
+        prenom = tenant_data.get("prenom", "").strip()
+        name = tenant_data.get("name", "").strip()
+        
+        print(f"🔍 DEBUG - Validation: nom='{nom}', prenom='{prenom}', name='{name}'")
+        
+        # Si on a nom et prenom, les combiner en name
+        if nom and prenom:
+            tenant_data["name"] = f"{nom} {prenom}"
+            print(f"✅ Nom combiné: {tenant_data['name']}")
+        elif not name and not (nom and prenom):
+            print(f"❌ Validation échouée: nom='{nom}', prenom='{prenom}', name='{name}'")
+            raise HTTPException(status_code=400, detail="Le nom et prénom du locataire sont obligatoires")
         
         if not assignment_data.get("unitId"):
             raise HTTPException(status_code=400, detail="L'unité est obligatoire")
         
         # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
-        print(f"📝 Création du locataire: {tenant_data['name']}")
-        created_tenant = db_service.create_tenant(tenant_data)
+        # Mapper les champs anglais vers français pour le service
+        tenant_data_francais = {
+            "id_unite": assignment_data.get("unitId"),
+            "nom": tenant_data.get("nom", ""),
+            "prenom": tenant_data.get("prenom", ""),
+            "email": tenant_data.get("email", ""),
+            "telephone": tenant_data.get("telephone", ""),
+            "statut": tenant_data.get("statut", "actif"),
+            "notes": tenant_data.get("notes", "")
+        }
+        print(f"📝 Création du locataire: {tenant_data_francais['nom']} {tenant_data_francais['prenom']}")
+        created_tenant = db_service.create_tenant(tenant_data_francais)
         tenant_id = created_tenant["id"]
         print(f"✅ Locataire créé avec ID: {tenant_id}")
         
