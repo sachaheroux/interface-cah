@@ -64,15 +64,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
       ]
     
-    case '/billing':
-      return [
-        { name: 'Vue d\'ensemble', icon: DollarSign, active: true },
-        { name: 'Factures', icon: FileText },
-        { name: 'Paiements', icon: List },
-        { name: 'Dépenses', icon: BarChart3 },
-        { name: 'Rapports', icon: Download },
-        { name: 'Nouvelle facture', icon: Plus },
-      ]
     
     case '/employees':
       return [
@@ -176,7 +167,8 @@ export default function SecondarySidebar() {
         <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
           {location.pathname === '/buildings' && 'Gestion Immeubles'}
           {location.pathname === '/tenants' && 'Gestion Locataires'}
-          {location.pathname === '/billing' && 'Facturation & Dépenses'}
+          {location.pathname === '/leases' && 'Gestion des Baux'}
+          {location.pathname === '/transactions' && 'Transactions Financières'}
           {location.pathname === '/employees' && 'Employés & Temps'}
           {location.pathname === '/contractors' && 'Sous-traitants'}
           {location.pathname === '/projects' && 'Projets Construction'}

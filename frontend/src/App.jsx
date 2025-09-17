@@ -10,7 +10,6 @@ import Tenants from './pages/Tenants'
 import Leases from './pages/Leases'
 import Transactions from './pages/Transactions'
 import Maintenance from './pages/Maintenance'
-import Billing from './pages/Billing'
 import Employees from './pages/Employees'
 import Contractors from './pages/Contractors'
 import Projects from './pages/Projects'
@@ -44,7 +43,6 @@ function AppContent() {
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/leases" element={<Leases />} />
             <Route path="/transactions" element={<Transactions />} />
-            <Route path="/billing" element={<Billing />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/contractors" element={<Contractors />} />
             <Route path="/projects" element={<Projects />} />

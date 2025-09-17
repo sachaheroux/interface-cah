@@ -17,7 +17,7 @@ import clsx from 'clsx'
 const navigation = [
   { name: 'Immeubles', href: '/buildings', icon: Building2 },
   { name: 'Locataires', href: '/tenants', icon: Users },
-  { name: 'Facturation', href: '/billing', icon: Receipt },
+  { name: 'Transactions', href: '/transactions', icon: Receipt },
   { name: 'Employés', href: '/employees', icon: UserCheck },
   { name: 'Sous-traitants', href: '/contractors', icon: Truck },
   { name: 'Projets', href: '/projects', icon: Hammer },
