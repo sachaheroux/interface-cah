@@ -18,7 +18,9 @@ import {
   Truck,
   Hammer,
   Upload,
-  Download
+  Download,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react'
 
 const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buildings') => {
