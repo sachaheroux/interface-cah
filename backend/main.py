@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import uvicorn
-from date_transactiontime import date_transactiontime
+from datetime import datetime
 import json
 import os
 import platform
@@ -1042,7 +1042,7 @@ async def list_documents():
                     files.append({
                         "filename": filename,
                         "size": os.path.getsize(file_path),
-                        "uploaded_at": date_transactiontime.fromtimestamp(os.path.getctime(file_path)).isoformat()
+                        "uploaded_at": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat()
                     })
         
         return {"documents": files}
@@ -1583,10 +1583,107 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
 
+# ========================================
+# ENDPOINTS POUR LES TRANSACTIONS
+# ========================================
+
+@app.get("/api/transactions/constants")
+async def get_transaction_constants():
+    """Récupérer les constantes pour les transactions"""
+    try:
+        return {
+            "types": [
+                "loyer",
+                "facture", 
+                "maintenance",
+                "revenus",
+                "depenses",
+                "investissement",
+                "frais",
+                "autre"
+            ],
+            "payment_methods": [
+                "virement",
+                "cheque", 
+                "especes",
+                "carte",
+                "autre"
+            ],
+            "statuses": [
+                "en_attente",
+                "paye",
+                "annule"
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des constantes: {str(e)}")
+
+@app.get("/api/transactions")
+async def get_transactions():
+    """Récupérer toutes les transactions"""
+    try:
+        transactions = db_service.get_transactions()
+        return {"data": transactions}
+    except Exception as e:
+        print(f"Erreur lors du chargement des transactions: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions: {str(e)}")
+
+@app.get("/api/transactions/{transaction_id}")
+async def get_transaction(transaction_id: int):
+    """Récupérer une transaction par ID"""
+    try:
+        transaction = db_service.get_transaction(transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
+        return {"data": transaction}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors du chargement de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement de la transaction: {str(e)}")
+
+@app.post("/api/transactions")
+async def create_transaction(transaction_data: dict):
+    """Créer une nouvelle transaction"""
+    try:
+        created_transaction = db_service.create_transaction(transaction_data)
+        return {"data": created_transaction, "message": "Transaction créée avec succès"}
+    except Exception as e:
+        print(f"Erreur lors de la création de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
+
+@app.put("/api/transactions/{transaction_id}")
+async def update_transaction(transaction_id: int, transaction_data: dict):
+    """Mettre à jour une transaction"""
+    try:
+        updated_transaction = db_service.update_transaction(transaction_id, transaction_data)
+        if not updated_transaction:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
+        return {"data": updated_transaction, "message": "Transaction mise à jour avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la transaction: {str(e)}")
+
+@app.delete("/api/transactions/{transaction_id}")
+async def delete_transaction(transaction_id: int):
+    """Supprimer une transaction"""
+    try:
+        success = db_service.delete_transaction(transaction_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
+        return {"message": "Transaction supprimée avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Erreur lors de la suppression de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la transaction: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
-    return {"message": "Test endpoint fonctionne", "timestamp": date_transactiontime.now().isoformat()}
+    return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
 
 
 if __name__ == "__main__":
