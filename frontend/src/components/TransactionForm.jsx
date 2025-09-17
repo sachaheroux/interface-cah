@@ -130,8 +130,12 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       newErrors.categorie = 'La catégorie est obligatoire'
     }
 
-    if (!formData.montant || formData.montant <= 0) {
-      newErrors.montant = 'Le montant doit être supérieur à 0'
+    if (!formData.montant || formData.montant === 0) {
+      newErrors.montant = 'Le montant est obligatoire'
+    } else if (formData.type === 'revenu' && formData.montant <= 0) {
+      newErrors.montant = 'Le montant doit être positif pour un revenu'
+    } else if (formData.type === 'depense' && formData.montant >= 0) {
+      newErrors.montant = 'Le montant doit être négatif pour une dépense'
     }
 
     if (!formData.date_de_transaction) {
@@ -354,6 +358,11 @@ export default function TransactionForm({ transaction, buildings, constants, onS
               }`}
               placeholder="0.00"
             />
+            {formData.montant !== 0 && (
+              <p className="text-sm text-gray-600 mt-1">
+                Montant final: {formData.montant < 0 ? '-' : '+'}${Math.abs(formData.montant).toFixed(2)}
+              </p>
+            )}
             {errors.montant && (
               <p className="text-red-500 text-sm mt-1">{errors.montant}</p>
             )}
