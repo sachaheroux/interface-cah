@@ -588,25 +588,36 @@ async def create_tenant_with_lease(data: dict):
         
         # Debug des données avant nettoyage
         print(f"🔍 DEBUG - lease_data avant nettoyage: {lease_data}")
+        print(f"🔍 DEBUG - leaseStartDate: {lease_data.get('leaseStartDate')}")
+        print(f"🔍 DEBUG - leaseEndDate: {lease_data.get('leaseEndDate')}")
         
-        # Supprimer les valeurs None/vides
-        lease_data = {k: v for k, v in lease_data.items() if v is not None and v != ""}
+        # Supprimer les valeurs None/vides SAUF pour les dates obligatoires
+        lease_data_cleaned = {k: v for k, v in lease_data.items() if v is not None and v != ""}
         
         # Debug des données après nettoyage
-        print(f"🔍 DEBUG - lease_data après nettoyage: {lease_data}")
+        print(f"🔍 DEBUG - lease_data après nettoyage: {lease_data_cleaned}")
+        
+        # Vérifier que les dates obligatoires sont présentes
+        if not lease_data_cleaned.get('leaseStartDate'):
+            print(f"❌ ERREUR: leaseStartDate manquant dans lease_data")
+            raise HTTPException(status_code=400, detail="La date de début du bail est obligatoire")
+        
+        if not lease_data_cleaned.get('leaseEndDate'):
+            print(f"❌ ERREUR: leaseEndDate manquant dans lease_data")
+            raise HTTPException(status_code=400, detail="La date de fin du bail est obligatoire")
         
         # Créer le bail via le service
         lease_data_francais = {
             "id_locataire": tenant_id,
-            "date_debut": lease_data.get("leaseStartDate"),
-            "date_fin": lease_data.get("leaseEndDate"),
-            "prix_loyer": lease_data.get("rentAmount", 0),
-            "methode_paiement": lease_data.get("paymentMethod", "Virement bancaire"),
-            "pdf_bail": lease_data.get("pdfLease", "")
+            "date_debut": lease_data_cleaned.get("leaseStartDate"),
+            "date_fin": lease_data_cleaned.get("leaseEndDate"),
+            "prix_loyer": lease_data_cleaned.get("rentAmount", 0),
+            "methode_paiement": lease_data_cleaned.get("paymentMethod", "Virement bancaire"),
+            "pdf_bail": lease_data_cleaned.get("pdfLease", "")
         }
         
         created_lease = db_service.create_lease(lease_data_francais)
-        print(f"✅ Bail créé avec ID: {created_lease['id']}")
+        print(f"✅ Bail créé avec ID: {created_lease['id_bail']}")
         print(f"🔍 DEBUG - Bail créé complet: {created_lease}")
         
         return {
