@@ -552,9 +552,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: tenantData.name,
+            nom: tenantData.nom,
+            prenom: tenantData.prenom,
             email: tenantData.email,
-            phone: tenantData.phone,
+            telephone: tenantData.telephone,
+            statut: tenantData.statut,
             notes: tenantData.notes
           })
         })
@@ -566,6 +568,19 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         const updatedTenant = await tenantResponse.json()
         console.log('✅ Locataire mis à jour:', updatedTenant)
+        
+        // Mettre à jour les données de bail dans le formulaire
+        setFormData(prev => ({
+          ...prev,
+          lease: {
+            date_debut: formData.lease.date_debut || '',
+            date_fin: formData.lease.date_fin || '',
+            prix_loyer: formData.lease.prix_loyer || 0,
+            methode_paiement: formData.lease.methode_paiement || 'Virement bancaire',
+            pdf_bail: formData.lease.pdf_bail || ''
+          }
+        }))
+        console.log('✅ Données de bail mises à jour dans le formulaire')
         
         // 2. Créer les renouvellements (chaque renouvellement = 1 ligne dans assignments)
         console.log('🏠 Création des renouvellements...')
@@ -648,6 +663,21 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         const result = await response.json()
         console.log('✅ Création réussie:', result)
+        
+        // Mettre à jour les données de bail dans le formulaire avec les données retournées
+        if (result.data.lease) {
+          setFormData(prev => ({
+            ...prev,
+            lease: {
+              date_debut: result.data.lease.date_debut || '',
+              date_fin: result.data.lease.date_fin || '',
+              prix_loyer: result.data.lease.prix_loyer || 0,
+              methode_paiement: result.data.lease.methode_paiement || 'Virement bancaire',
+              pdf_bail: result.data.lease.pdf_bail || ''
+            }
+          }))
+          console.log('✅ Données de bail mises à jour dans le formulaire')
+        }
         
         // Retourner les données créées (sans déclencher onSave pour éviter le double appel)
         console.log('✅ Locataire créé avec succès:', result.data.tenant)
