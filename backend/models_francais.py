@@ -174,14 +174,13 @@ class Transaction(Base):
     
     id_transaction = Column(Integer, primary_key=True, index=True)
     id_immeuble = Column(Integer, ForeignKey("immeubles.id_immeuble", ondelete="CASCADE"), nullable=False, index=True)
-    type_transaction = Column(String(100), nullable=False)  # 'loyer', 'facture', 'maintenance', 'revenus', 'depenses'
+    categorie = Column(String(50), nullable=False)  # 'revenu', 'depense'
     montant = Column(DECIMAL(12, 2), nullable=False)
-    description = Column(Text, nullable=True)
-    date_transaction = Column(Date, nullable=False, index=True)
-    methode_paiement = Column(String(50), nullable=True)  # 'virement', 'cheque', 'especes', 'carte'
-    statut = Column(String(50), default="en_attente")  # 'en_attente', 'paye', 'annule'
+    date_de_transaction = Column(Date, nullable=False, index=True)
+    methode_de_paiement = Column(String(50), nullable=True)  # 'virement', 'cheque', 'especes', 'carte'
     reference = Column(String(100), nullable=True)  # numero de facture, reference de paiement
-    pdf_document = Column(String(255), nullable=True)  # nom du fichier PDF
+    source = Column(String(255), nullable=True)  # compagnie qui a émis la facture
+    pdf_transaction = Column(String(255), nullable=True)  # nom du fichier PDF
     notes = Column(Text, default="")
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -194,14 +193,13 @@ class Transaction(Base):
         return {
             "id_transaction": self.id_transaction,
             "id_immeuble": self.id_immeuble,
-            "type_transaction": self.type_transaction,
+            "categorie": self.categorie,
             "montant": float(self.montant) if self.montant else 0.0,
-            "description": self.description,
-            "date_transaction": self.date_transaction.isoformat() if self.date_transaction else None,
-            "methode_paiement": self.methode_paiement,
-            "statut": self.statut,
+            "date_de_transaction": self.date_de_transaction.isoformat() if self.date_de_transaction else None,
+            "methode_de_paiement": self.methode_de_paiement,
             "reference": self.reference,
-            "pdf_document": self.pdf_document,
+            "source": self.source,
+            "pdf_transaction": self.pdf_transaction,
             "notes": self.notes,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None

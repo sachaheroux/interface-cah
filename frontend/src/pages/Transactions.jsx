@@ -9,8 +9,7 @@ export default function Transactions() {
   const [showForm, setShowForm] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
   const [buildings, setBuildings] = useState([])
   const [constants, setConstants] = useState({})
 
@@ -22,7 +21,7 @@ export default function Transactions() {
 
   useEffect(() => {
     filterTransactions()
-  }, [transactions, searchTerm, filterType, filterStatus])
+  }, [transactions, searchTerm, filterCategory])
 
   const loadTransactions = async () => {
     try {
@@ -56,18 +55,14 @@ export default function Transactions() {
 
     if (searchTerm) {
       filtered = filtered.filter(transaction =>
-        transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.type_transaction?.toLowerCase().includes(searchTerm.toLowerCase())
+        transaction.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.categorie?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
-    if (filterType) {
-      filtered = filtered.filter(transaction => transaction.type_transaction === filterType)
-    }
-
-    if (filterStatus) {
-      filtered = filtered.filter(transaction => transaction.statut === filterStatus)
+    if (filterCategory) {
+      filtered = filtered.filter(transaction => transaction.categorie === filterCategory)
     }
 
     setFilteredTransactions(filtered)
@@ -129,41 +124,25 @@ export default function Transactions() {
     return building ? building.nom_immeuble : `Immeuble ${buildingId}`
   }
 
-  const getTypeLabel = (type) => {
-    const typeLabels = {
-      'loyer': 'Loyer',
-      'facture': 'Facture',
-      'maintenance': 'Maintenance',
-      'revenus': 'Revenus',
-      'depenses': 'Dépenses',
-      'investissement': 'Investissement',
-      'frais': 'Frais',
-      'autre': 'Autre'
+  const getCategoryLabel = (category) => {
+    const categoryLabels = {
+      'revenu': 'Revenu',
+      'depense': 'Dépense'
     }
-    return typeLabels[type] || type
+    return categoryLabels[category] || category
   }
 
-  const getStatusLabel = (status) => {
-    const statusLabels = {
-      'en_attente': 'En attente',
-      'paye': 'Payé',
-      'annule': 'Annulé'
-    }
-    return statusLabels[status] || status
-  }
-
-  const getStatusColor = (status) => {
+  const getCategoryColor = (category) => {
     const colors = {
-      'en_attente': 'text-yellow-600 bg-yellow-100',
-      'paye': 'text-green-600 bg-green-100',
-      'annule': 'text-red-600 bg-red-100'
+      'revenu': 'text-green-600 bg-green-100',
+      'depense': 'text-red-600 bg-red-100'
     }
-    return colors[status] || 'text-gray-600 bg-gray-100'
+    return colors[category] || 'text-gray-600 bg-gray-100'
   }
 
   const totalAmount = transactions.reduce((sum, t) => sum + (t.montant || 0), 0)
   const thisMonthTransactions = transactions.filter(t => {
-    const transactionDate = new Date(t.date_transaction)
+    const transactionDate = new Date(t.date_de_transaction)
     const now = new Date()
     return transactionDate.getMonth() === now.getMonth() && 
            transactionDate.getFullYear() === now.getFullYear()
@@ -247,7 +226,7 @@ export default function Transactions() {
               <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
               <input
                 type="text"
-                placeholder="Description, référence..."
+                placeholder="Référence, source..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -256,29 +235,15 @@ export default function Transactions() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Tous les types</option>
-              {constants.types?.map(type => (
-                <option key={type} value={type}>{getTypeLabel(type)}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Tous les statuts</option>
-              {constants.statuses?.map(status => (
-                <option key={status} value={status}>{getStatusLabel(status)}</option>
+              <option value="">Toutes les catégories</option>
+              {constants.categories?.map(category => (
+                <option key={category} value={category}>{getCategoryLabel(category)}</option>
               ))}
             </select>
           </div>
@@ -287,8 +252,7 @@ export default function Transactions() {
             <button
               onClick={() => {
                 setSearchTerm('')
-                setFilterType('')
-                setFilterStatus('')
+                setFilterCategory('')
               }}
               className="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
@@ -326,25 +290,27 @@ export default function Transactions() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {transaction.description || 'Transaction sans description'}
+                      {transaction.reference || 'Transaction sans référence'}
                     </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.statut)}`}>
-                      {getStatusLabel(transaction.statut)}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(transaction.categorie)}`}>
+                      {getCategoryLabel(transaction.categorie)}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                     <div>
-                      <span className="font-medium">Type:</span>
-                      <span className="ml-1">{getTypeLabel(transaction.type_transaction)}</span>
+                      <span className="font-medium">Catégorie:</span>
+                      <span className="ml-1">{getCategoryLabel(transaction.categorie)}</span>
                     </div>
                     <div>
                       <span className="font-medium">Montant:</span>
-                      <span className="ml-1 font-semibold text-gray-900">{formatAmount(transaction.montant)}</span>
+                      <span className={`ml-1 font-semibold ${transaction.montant >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatAmount(transaction.montant)}
+                      </span>
                     </div>
                     <div>
                       <span className="font-medium">Date:</span>
-                      <span className="ml-1">{formatDate(transaction.date_transaction)}</span>
+                      <span className="ml-1">{formatDate(transaction.date_de_transaction)}</span>
                     </div>
                     <div>
                       <span className="font-medium">Immeuble:</span>
@@ -352,10 +318,10 @@ export default function Transactions() {
                     </div>
                   </div>
                   
-                  {transaction.reference && (
+                  {transaction.source && (
                     <div className="mt-2 text-sm text-gray-500">
-                      <span className="font-medium">Référence:</span>
-                      <span className="ml-1">{transaction.reference}</span>
+                      <span className="font-medium">Source:</span>
+                      <span className="ml-1">{transaction.source}</span>
                     </div>
                   )}
                   

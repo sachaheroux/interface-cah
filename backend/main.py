@@ -1346,15 +1346,9 @@ async def get_transaction_constants():
     """Récupérer les constantes pour les transactions"""
     try:
         return {
-            "types": [
-                "loyer",
-                "facture", 
-                "maintenance",
-                "revenus",
-                "depenses",
-                "investissement",
-                "frais",
-                "autre"
+            "categories": [
+                "revenu",
+                "depense"
             ],
             "payment_methods": [
                 "virement",
@@ -1362,11 +1356,6 @@ async def get_transaction_constants():
                 "especes",
                 "carte",
                 "autre"
-            ],
-            "statuses": [
-                "en_attente",
-                "paye",
-                "annule"
             ]
         }
     except Exception as e:

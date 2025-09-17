@@ -408,14 +408,13 @@ class DatabaseServiceFrancais:
             with self.get_session() as session:
                 transaction = Transaction(
                     id_immeuble=transaction_data.get('id_immeuble'),
-                    type_transaction=transaction_data.get('type_transaction', ''),
+                    categorie=transaction_data.get('categorie', ''),
                     montant=transaction_data.get('montant', 0),
-                    description=transaction_data.get('description', ''),
-                    date_transaction=datetime.strptime(transaction_data.get('date_transaction', ''), '%Y-%m-%d').date() if transaction_data.get('date_transaction') else datetime.now().date(),
-                    methode_paiement=transaction_data.get('methode_paiement', ''),
-                    statut=transaction_data.get('statut', 'en_attente'),
+                    date_de_transaction=datetime.strptime(transaction_data.get('date_de_transaction', ''), '%Y-%m-%d').date() if transaction_data.get('date_de_transaction') else datetime.now().date(),
+                    methode_de_paiement=transaction_data.get('methode_de_paiement', ''),
                     reference=transaction_data.get('reference', ''),
-                    pdf_document=transaction_data.get('pdf_document', ''),
+                    source=transaction_data.get('source', ''),
+                    pdf_transaction=transaction_data.get('pdf_transaction', ''),
                     notes=transaction_data.get('notes', '')
                 )
                 
@@ -423,7 +422,7 @@ class DatabaseServiceFrancais:
                 session.commit()
                 session.refresh(transaction)
                 
-                print(f"✅ Transaction créée: {transaction.type_transaction} (ID: {transaction.id_transaction})")
+                print(f"✅ Transaction créée: {transaction.categorie} (ID: {transaction.id_transaction})")
                 return transaction.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création de la transaction: {e}")
@@ -438,22 +437,20 @@ class DatabaseServiceFrancais:
                     return None
                 
                 # Mettre à jour les champs avec le format français
-                if 'type_transaction' in update_data:
-                    transaction.type_transaction = update_data['type_transaction']
+                if 'categorie' in update_data:
+                    transaction.categorie = update_data['categorie']
                 if 'montant' in update_data:
                     transaction.montant = update_data['montant']
-                if 'description' in update_data:
-                    transaction.description = update_data['description']
-                if 'date_transaction' in update_data:
-                    transaction.date_transaction = datetime.strptime(update_data['date_transaction'], '%Y-%m-%d').date()
-                if 'methode_paiement' in update_data:
-                    transaction.methode_paiement = update_data['methode_paiement']
-                if 'statut' in update_data:
-                    transaction.statut = update_data['statut']
+                if 'date_de_transaction' in update_data:
+                    transaction.date_de_transaction = datetime.strptime(update_data['date_de_transaction'], '%Y-%m-%d').date()
+                if 'methode_de_paiement' in update_data:
+                    transaction.methode_de_paiement = update_data['methode_de_paiement']
                 if 'reference' in update_data:
                     transaction.reference = update_data['reference']
-                if 'pdf_document' in update_data:
-                    transaction.pdf_document = update_data['pdf_document']
+                if 'source' in update_data:
+                    transaction.source = update_data['source']
+                if 'pdf_transaction' in update_data:
+                    transaction.pdf_transaction = update_data['pdf_transaction']
                 if 'notes' in update_data:
                     transaction.notes = update_data['notes']
                 if 'id_immeuble' in update_data:
@@ -462,7 +459,7 @@ class DatabaseServiceFrancais:
                 transaction.date_modification = datetime.utcnow()
                 session.commit()
                 
-                print(f"✅ Transaction mise à jour: {transaction.type_transaction} (ID: {transaction.id_transaction})")
+                print(f"✅ Transaction mise à jour: {transaction.categorie} (ID: {transaction.id_transaction})")
                 return transaction.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la mise à jour de la transaction {transaction_id}: {e}")
@@ -479,7 +476,7 @@ class DatabaseServiceFrancais:
                 session.delete(transaction)
                 session.commit()
                 
-                print(f"✅ Transaction supprimée: {transaction.type_transaction} (ID: {transaction.id_transaction})")
+                print(f"✅ Transaction supprimée: {transaction.categorie} (ID: {transaction.id_transaction})")
                 return True
         except Exception as e:
             print(f"❌ Erreur lors de la suppression de la transaction {transaction_id}: {e}")
