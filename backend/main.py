@@ -616,7 +616,10 @@ async def create_tenant_with_lease(data: dict):
             "pdf_bail": lease_data_cleaned.get("pdfLease", "")
         }
         
+        print(f"🔍 DEBUG - Données envoyées au service create_lease: {lease_data_francais}")
         created_lease = db_service.create_lease(lease_data_francais)
+        print(f"🔍 DEBUG - Type de created_lease: {type(created_lease)}")
+        print(f"🔍 DEBUG - Contenu de created_lease: {created_lease}")
         print(f"✅ Bail créé avec ID: {created_lease['id_bail']}")
         print(f"🔍 DEBUG - Bail créé complet: {created_lease}")
         
