@@ -1,37 +1,33 @@
 import React, { useState, useEffect } from 'react'
-import { X, Calendar, DollarSign, FileText, Save, AlertCircle } from 'lucide-react'
+import { X, Save, FileText, Calendar, DollarSign, User, Home } from 'lucide-react'
 
-const LeaseForm = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  tenant, 
-  unit, 
-  lease = null 
-}) => {
+export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
+    id_locataire: '',
     date_debut: '',
     date_fin: '',
     prix_loyer: 0,
     methode_paiement: 'Virement bancaire',
     pdf_bail: ''
   })
-  
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState({})
 
-  // Méthodes de paiement disponibles
-  const paymentMethods = [
-    'Virement bancaire',
-    'Chèque',
-    'Espèces',
-    'Prélèvement automatique'
-  ]
+  const [loading, setLoading] = useState(false)
+  const [availableTenants, setAvailableTenants] = useState([])
+  const [availableUnits, setAvailableUnits] = useState([])
+
+  // Charger les données
+  useEffect(() => {
+    if (isOpen) {
+      loadTenants()
+      loadUnits()
+    }
+  }, [isOpen])
 
   // Initialiser le formulaire
   useEffect(() => {
     if (lease) {
       setFormData({
+        id_locataire: lease.id_locataire || '',
         date_debut: lease.date_debut || '',
         date_fin: lease.date_fin || '',
         prix_loyer: lease.prix_loyer || 0,
@@ -40,6 +36,7 @@ const LeaseForm = ({
       })
     } else {
       setFormData({
+        id_locataire: '',
         date_debut: '',
         date_fin: '',
         prix_loyer: 0,
@@ -47,75 +44,76 @@ const LeaseForm = ({
         pdf_bail: ''
       })
     }
-    setErrors({})
   }, [lease, isOpen])
+
+  const loadTenants = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants`)
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableTenants(data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des locataires:', error)
+    }
+  }
+
+  const loadUnits = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableUnits(data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des unités:', error)
+    }
+  }
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
-    
-    // Effacer l'erreur du champ modifié
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }))
-    }
   }
 
   const validateForm = () => {
-    const newErrors = {}
+    const errors = {}
     
-    if (!formData.date_debut.trim()) {
-      newErrors.date_debut = 'La date de début est obligatoire'
-    }
+    if (!formData.id_locataire) errors.id_locataire = 'Le locataire est obligatoire'
+    if (!formData.date_debut) errors.date_debut = 'La date de début est obligatoire'
+    if (!formData.date_fin) errors.date_fin = 'La date de fin est obligatoire'
+    if (!formData.prix_loyer || formData.prix_loyer <= 0) errors.prix_loyer = 'Le prix du loyer doit être supérieur à 0'
     
-    if (!formData.date_fin.trim()) {
-      newErrors.date_fin = 'La date de fin est obligatoire'
-    }
-    
-    if (formData.date_debut && formData.date_fin) {
-      const startDate = new Date(formData.date_debut)
-      const endDate = new Date(formData.date_fin)
-      
-      if (startDate >= endDate) {
-        newErrors.date_fin = 'La date de fin doit être après la date de début'
-      }
-    }
-    
-    if (formData.prix_loyer <= 0) {
-      newErrors.prix_loyer = 'Le prix du loyer doit être supérieur à 0'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return errors
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!validateForm()) {
+    const errors = validateForm()
+    if (Object.keys(errors).length > 0) {
+      console.error('Erreurs de validation:', errors)
+      alert('Veuillez corriger les erreurs dans le formulaire')
       return
     }
-    
+
     setLoading(true)
     
     try {
       const leaseData = {
-        id_locataire: tenant.id_locataire,
+        id_locataire: parseInt(formData.id_locataire),
         date_debut: formData.date_debut,
         date_fin: formData.date_fin,
         prix_loyer: parseFloat(formData.prix_loyer),
         methode_paiement: formData.methode_paiement,
         pdf_bail: formData.pdf_bail
       }
-      
-      console.log('💾 Données de bail à sauvegarder:', leaseData)
-      
-      if (lease) {
-        // Mise à jour d'un bail existant
+
+      console.log('💾 Données du bail à sauvegarder:', leaseData)
+
+      if (lease?.id_bail) {
+        // MISE À JOUR du bail existant
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases/${lease.id_bail}`, {
           method: 'PUT',
           headers: {
@@ -133,7 +131,7 @@ const LeaseForm = ({
         console.log('✅ Bail mis à jour:', result)
         
       } else {
-        // Création d'un nouveau bail
+        // CRÉATION d'un nouveau bail
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases`, {
           method: 'POST',
           headers: {
@@ -156,7 +154,7 @@ const LeaseForm = ({
       
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde:', error)
-      setErrors({ submit: error.message })
+      alert(`Erreur lors de la sauvegarde: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -176,7 +174,7 @@ const LeaseForm = ({
                 {lease ? 'Modifier le bail' : 'Nouveau bail'}
               </h2>
               <p className="text-sm text-gray-600">
-                {tenant?.nom} {tenant?.prenom} - {unit?.adresse_unite}
+                {lease ? 'Modifiez les informations du bail' : 'Créez un nouveau bail'}
               </p>
             </div>
           </div>
@@ -190,8 +188,29 @@ const LeaseForm = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Sélection du locataire */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="h-4 w-4 inline mr-2" />
+              Locataire *
+            </label>
+            <select
+              value={formData.id_locataire}
+              onChange={(e) => handleChange('id_locataire', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              required
+            >
+              <option value="">Sélectionner un locataire</option>
+              {availableTenants.map((tenant) => (
+                <option key={tenant.id_locataire} value={tenant.id_locataire}>
+                  {tenant.nom} {tenant.prenom}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dates du bail */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="h-4 w-4 inline mr-2" />
@@ -201,18 +220,11 @@ const LeaseForm = ({
                 type="date"
                 value={formData.date_debut}
                 onChange={(e) => handleChange('date_debut', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  errors.date_debut ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
               />
-              {errors.date_debut && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.date_debut}
-                </p>
-              )}
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="h-4 w-4 inline mr-2" />
@@ -222,21 +234,14 @@ const LeaseForm = ({
                 type="date"
                 value={formData.date_fin}
                 onChange={(e) => handleChange('date_fin', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  errors.date_fin ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
               />
-              {errors.date_fin && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.date_fin}
-                </p>
-              )}
             </div>
           </div>
 
           {/* Prix et méthode de paiement */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <DollarSign className="h-4 w-4 inline mr-2" />
@@ -248,19 +253,12 @@ const LeaseForm = ({
                 min="0"
                 value={formData.prix_loyer}
                 onChange={(e) => handleChange('prix_loyer', parseFloat(e.target.value) || 0)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  errors.prix_loyer ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="0.00"
+                required
               />
-              {errors.prix_loyer && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {errors.prix_loyer}
-                </p>
-              )}
             </div>
-
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Méthode de paiement
@@ -270,11 +268,12 @@ const LeaseForm = ({
                 onChange={(e) => handleChange('methode_paiement', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                {paymentMethods.map(method => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
+                <option value="Virement bancaire">Virement bancaire</option>
+                <option value="Chèque">Chèque</option>
+                <option value="Comptant">Comptant</option>
+                <option value="Carte de crédit">Carte de crédit</option>
+                <option value="Prélèvement automatique">Prélèvement automatique</option>
+                <option value="Autre">Autre</option>
               </select>
             </div>
           </div>
@@ -282,27 +281,25 @@ const LeaseForm = ({
           {/* PDF du bail */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <FileText className="h-4 w-4 inline mr-2" />
-              PDF du bail (optionnel)
+              PDF du bail
             </label>
             <input
-              type="text"
-              value={formData.pdf_bail}
-              onChange={(e) => handleChange('pdf_bail', e.target.value)}
+              type="file"
+              accept=".pdf"
+              onChange={(e) => {
+                const file = e.target.files[0]
+                if (file) {
+                  handleChange('pdf_bail', file.name)
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="Nom du fichier PDF"
             />
+            {formData.pdf_bail && (
+              <p className="text-sm text-green-600 mt-1">
+                ✓ {formData.pdf_bail}
+              </p>
+            )}
           </div>
-
-          {/* Erreur générale */}
-          {errors.submit && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                <p className="text-sm text-red-600">{errors.submit}</p>
-              </div>
-            </div>
-          )}
 
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -336,5 +333,3 @@ const LeaseForm = ({
     </div>
   )
 }
-
-export default LeaseForm

@@ -1,154 +1,121 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Calendar, DollarSign, FileText, AlertCircle, Home, User } from 'lucide-react'
+import { FileText, Plus, Search, Calendar, DollarSign, User, Home, Edit, Trash2 } from 'lucide-react'
 import LeaseForm from '../components/LeaseForm'
 
-const Leases = () => {
+export default function Leases() {
   const [leases, setLeases] = useState([])
-  const [tenants, setTenants] = useState([])
-  const [units, setUnits] = useState([])
+  const [filteredLeases, setFilteredLeases] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [selectedLease, setSelectedLease] = useState(null)
-  const [selectedTenant, setSelectedTenant] = useState(null)
-  const [selectedUnit, setSelectedUnit] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [selectedTenantId, setSelectedTenantId] = useState(null)
+  
+  // États pour les modales
+  const [selectedLease, setSelectedLease] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
 
-  // Charger les données
+  // Récupérer l'ID du locataire depuis l'URL
   useEffect(() => {
-    loadData()
+    const urlParams = new URLSearchParams(window.location.search)
+    const tenantId = urlParams.get('tenant')
+    if (tenantId) {
+      setSelectedTenantId(tenantId)
+    }
   }, [])
 
-  const loadData = async () => {
-    setLoading(true)
+  useEffect(() => {
+    fetchLeases()
+  }, [])
+
+  // Filtrer les baux
+  useEffect(() => {
+    let filtered = leases
+
+    if (searchTerm) {
+      filtered = filtered.filter(lease => 
+        lease.locataire?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lease.locataire?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lease.unite?.adresse_unite?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (selectedTenantId) {
+      filtered = filtered.filter(lease => lease.id_locataire === parseInt(selectedTenantId))
+    }
+
+    setFilteredLeases(filtered)
+  }, [leases, searchTerm, selectedTenantId])
+
+  const fetchLeases = async () => {
     try {
-      const [leasesRes, tenantsRes, unitsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants`),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
-      ])
-
-      const [leasesData, tenantsData, unitsData] = await Promise.all([
-        leasesRes.json(),
-        tenantsRes.json(),
-        unitsRes.json()
-      ])
-
-      setLeases(leasesData.data || [])
-      setTenants(tenantsData.data || [])
-      setUnits(unitsData.data || [])
+      setLoading(true)
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases`)
+      if (response.ok) {
+        const data = await response.json()
+        setLeases(data.data || [])
+      }
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error)
+      console.error('Erreur lors du chargement des baux:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Filtrer les baux
-  const filteredLeases = leases.filter(lease => {
-    const tenant = tenants.find(t => t.id_locataire === lease.id_locataire)
-    const unit = units.find(u => u.id_unite === lease.id_unite)
-    
-    const matchesSearch = !searchTerm || 
-      (tenant && `${tenant.nom} ${tenant.prenom}`.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (unit && unit.adresse_unite.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesStatus = filterStatus === 'all' || 
-      (filterStatus === 'active' && isLeaseActive(lease)) ||
-      (filterStatus === 'expired' && isLeaseExpired(lease)) ||
-      (filterStatus === 'upcoming' && isLeaseUpcoming(lease))
-    
-    return matchesSearch && matchesStatus
-  })
-
-  // Vérifier si un bail est actif
-  const isLeaseActive = (lease) => {
-    const now = new Date()
-    const startDate = new Date(lease.date_debut)
-    const endDate = new Date(lease.date_fin)
-    return startDate <= now && endDate >= now
+  const handleViewLease = (lease) => {
+    setSelectedLease(lease)
+    setShowDetails(true)
   }
 
-  // Vérifier si un bail est expiré
-  const isLeaseExpired = (lease) => {
-    const now = new Date()
-    const endDate = new Date(lease.date_fin)
-    return endDate < now
+  const handleEditLease = (lease) => {
+    setSelectedLease(lease)
+    setShowForm(true)
   }
 
-  // Vérifier si un bail est à venir
-  const isLeaseUpcoming = (lease) => {
-    const now = new Date()
-    const startDate = new Date(lease.date_debut)
-    return startDate > now
+  const handleSaveLease = () => {
+    fetchLeases()
+    setShowForm(false)
+    setSelectedLease(null)
   }
 
-  // Obtenir le statut d'un bail
-  const getLeaseStatus = (lease) => {
-    if (isLeaseActive(lease)) return { text: 'Actif', color: 'bg-green-100 text-green-800' }
-    if (isLeaseExpired(lease)) return { text: 'Expiré', color: 'bg-red-100 text-red-800' }
-    if (isLeaseUpcoming(lease)) return { text: 'À venir', color: 'bg-blue-100 text-blue-800' }
-    return { text: 'Inconnu', color: 'bg-gray-100 text-gray-800' }
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setSelectedLease(null)
   }
 
-  // Formater une date
+  const handleCloseDetails = () => {
+    setShowDetails(false)
+    setSelectedLease(null)
+  }
+
+  const handleDeleteLease = async (lease) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ce bail ?`)) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases/${lease.id_bail}`, {
+          method: 'DELETE'
+        })
+        
+        if (response.ok) {
+          setLeases(prev => prev.filter(l => l.id_bail !== lease.id_bail))
+          console.log('✅ Bail supprimé avec succès')
+        } else {
+          console.error('❌ Erreur lors de la suppression du bail')
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression:', error)
+      }
+    }
+  }
+
   const formatDate = (dateString) => {
+    if (!dateString) return 'Non spécifié'
     return new Date(dateString).toLocaleDateString('fr-CA')
   }
 
-  // Formater un montant
-  const formatAmount = (amount) => {
+  const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-CA', {
       style: 'currency',
       currency: 'CAD'
-    }).format(amount)
-  }
-
-  // Ouvrir le formulaire de création
-  const handleCreateLease = () => {
-    setSelectedLease(null)
-    setSelectedTenant(null)
-    setSelectedUnit(null)
-    setShowForm(true)
-  }
-
-  // Ouvrir le formulaire de modification
-  const handleEditLease = (lease) => {
-    const tenant = tenants.find(t => t.id_locataire === lease.id_locataire)
-    const unit = units.find(u => u.id_unite === lease.id_unite)
-    
-    setSelectedLease(lease)
-    setSelectedTenant(tenant)
-    setSelectedUnit(unit)
-    setShowForm(true)
-  }
-
-  // Supprimer un bail
-  const handleDeleteLease = async (lease) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce bail ?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases/${lease.id_bail}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        setLeases(prev => prev.filter(l => l.id_bail !== lease.id_bail))
-        console.log('✅ Bail supprimé avec succès')
-      } else {
-        console.error('❌ Erreur lors de la suppression')
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de la suppression:', error)
-    }
-  }
-
-  // Sauvegarder un bail
-  const handleSaveLease = () => {
-    loadData()
-    setShowForm(false)
+    }).format(amount || 0)
   }
 
   if (loading) {
@@ -163,13 +130,21 @@ const Leases = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des baux</h1>
-          <p className="text-gray-600">Gérez les baux de vos locataires</p>
+        <div className="flex items-center space-x-3">
+          <FileText className="h-8 w-8 text-primary-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestion des Baux</h1>
+            <p className="text-gray-600">
+              {selectedTenantId 
+                ? `Baux du locataire sélectionné` 
+                : 'Gérez tous les baux de vos locataires'
+              }
+            </p>
+          </div>
         </div>
         <button
-          onClick={handleCreateLease}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center space-x-2"
+          onClick={() => setShowForm(true)}
+          className="btn-primary flex items-center space-x-2"
         >
           <Plus className="h-5 w-5" />
           <span>Nouveau bail</span>
@@ -178,34 +153,30 @@ const Leases = () => {
 
       {/* Filtres */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rechercher
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Nom du locataire ou adresse..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Rechercher par locataire ou unité..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Statut
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          {selectedTenantId && (
+            <button
+              onClick={() => {
+                setSelectedTenantId(null)
+                window.history.replaceState({}, '', '/leases')
+              }}
+              className="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
-              <option value="all">Tous les baux</option>
-              <option value="active">Actifs</option>
-              <option value="expired">Expirés</option>
-              <option value="upcoming">À venir</option>
-            </select>
-          </div>
+              Voir tous les baux
+            </button>
+          )}
         </div>
       </div>
 
@@ -214,102 +185,104 @@ const Leases = () => {
         {filteredLeases.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun bail trouvé</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {leases.length === 0 ? 'Aucun bail' : 'Aucun bail correspondant aux filtres'}
+            </h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'Aucun bail ne correspond à vos critères de recherche.'
-                : 'Commencez par créer votre premier bail.'
+              {leases.length === 0
+                ? 'Commencez par créer votre premier bail.'
+                : 'Essayez de modifier vos critères de recherche.'
               }
             </p>
-            {!searchTerm && filterStatus === 'all' && (
-              <button
-                onClick={handleCreateLease}
-                className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-              >
-                Créer un bail
-              </button>
-            )}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Créer un bail
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {filteredLeases.map((lease) => {
-              const tenant = tenants.find(t => t.id_locataire === lease.id_locataire)
-              const unit = units.find(u => u.id_unite === lease.id_unite)
-              const status = getLeaseStatus(lease)
-
-              return (
-                <div key={lease.id_bail} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {tenant ? `${tenant.nom} ${tenant.prenom}` : 'Locataire inconnu'}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
-                          {status.text}
+            {filteredLeases.map((lease) => (
+              <div key={lease.id_bail} className="p-6 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-4 mb-2">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium text-gray-900">
+                          {lease.locataire?.nom} {lease.locataire?.prenom}
                         </span>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Home className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{unit ? unit.adresse_unite : 'Unité inconnue'}</span>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{formatDate(lease.date_debut)} - {formatDate(lease.date_fin)}</span>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{formatAmount(lease.prix_loyer)}/mois</span>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{lease.methode_paiement}</span>
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <Home className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-600">
+                          {lease.unite?.adresse_unite}
+                        </span>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2 ml-4">
-                      <button
-                        onClick={() => handleEditLease(lease)}
-                        className="text-primary-600 hover:text-primary-700 p-2 rounded-lg hover:bg-primary-50"
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLease(lease)}
-                        className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {formatDate(lease.date_debut)} - {formatDate(lease.date_fin)}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-medium">
+                          {formatCurrency(lease.prix_loyer)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">
+                          {lease.methode_paiement || 'Non spécifié'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleViewLease(lease)}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Voir les détails"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEditLease(lease)}
+                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Modifier"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteLease(lease)}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Formulaire de bail */}
+      {/* Modales */}
       {showForm && (
         <LeaseForm
-          isOpen={showForm}
-          onClose={() => setShowForm(false)}
-          onSave={handleSaveLease}
-          tenant={selectedTenant}
-          unit={selectedUnit}
           lease={selectedLease}
+          isOpen={showForm}
+          onClose={handleCloseForm}
+          onSave={handleSaveLease}
         />
       )}
     </div>
   )
 }
-
-export default Leases
