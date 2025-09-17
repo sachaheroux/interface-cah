@@ -174,7 +174,8 @@ class Transaction(Base):
     
     id_transaction = Column(Integer, primary_key=True, index=True)
     id_immeuble = Column(Integer, ForeignKey("immeubles.id_immeuble", ondelete="CASCADE"), nullable=False, index=True)
-    categorie = Column(String(50), nullable=False)  # 'revenu', 'depense'
+    type = Column(String(50), nullable=False)  # 'revenu', 'depense'
+    categorie = Column(String(100), nullable=False)  # 'taxes_scolaires', 'taxes_municipales', 'electricite', 'entretien', 'reparation', etc.
     montant = Column(DECIMAL(12, 2), nullable=False)
     date_de_transaction = Column(Date, nullable=False, index=True)
     methode_de_paiement = Column(String(50), nullable=True)  # 'virement', 'cheque', 'especes', 'carte'
@@ -193,6 +194,7 @@ class Transaction(Base):
         return {
             "id_transaction": self.id_transaction,
             "id_immeuble": self.id_immeuble,
+            "type": self.type,
             "categorie": self.categorie,
             "montant": float(self.montant) if self.montant else 0.0,
             "date_de_transaction": self.date_de_transaction.isoformat() if self.date_de_transaction else None,

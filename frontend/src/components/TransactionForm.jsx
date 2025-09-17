@@ -5,6 +5,7 @@ import api from '../services/api'
 export default function TransactionForm({ transaction, buildings, constants, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     id_immeuble: '',
+    type: '',
     categorie: '',
     montant: '',
     date_de_transaction: '',
@@ -24,6 +25,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
     if (transaction) {
       setFormData({
         id_immeuble: transaction.id_immeuble || '',
+        type: transaction.type || '',
         categorie: transaction.categorie || '',
         montant: transaction.montant || '',
         date_de_transaction: transaction.date_de_transaction || '',
@@ -120,6 +122,10 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       newErrors.id_immeuble = 'L\'immeuble est obligatoire'
     }
 
+    if (!formData.type) {
+      newErrors.type = 'Le type est obligatoire'
+    }
+
     if (!formData.categorie) {
       newErrors.categorie = 'La catégorie est obligatoire'
     }
@@ -148,6 +154,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       // Utiliser le nouveau format français
       const transactionData = {
         id_immeuble: formData.id_immeuble,
+        type: formData.type,
         categorie: formData.categorie,
         montant: parseFloat(formData.montant),
         date_de_transaction: formData.date_de_transaction,
@@ -178,10 +185,26 @@ export default function TransactionForm({ transaction, buildings, constants, onS
     }
   }
 
-  const getCategoryLabel = (category) => {
-    const categoryLabels = {
+  const getTypeLabel = (type) => {
+    const typeLabels = {
       'revenu': 'Revenu',
       'depense': 'Dépense'
+    }
+    return typeLabels[type] || type
+  }
+
+  const getCategoryLabel = (category) => {
+    const categoryLabels = {
+      'taxes_scolaires': 'Taxes scolaires',
+      'taxes_municipales': 'Taxes municipales',
+      'electricite': 'Électricité',
+      'gaz': 'Gaz',
+      'eau': 'Eau',
+      'entretien': 'Entretien',
+      'reparation': 'Réparation',
+      'assurance': 'Assurance',
+      'loyer': 'Loyer',
+      'autre': 'Autre'
     }
     return categoryLabels[category] || category
   }
@@ -260,8 +283,30 @@ export default function TransactionForm({ transaction, buildings, constants, onS
             )}
           </div>
 
-          {/* Catégorie et Montant */}
+          {/* Type et Catégorie */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Tag className="h-4 w-4 inline mr-1" />
+                Type *
+              </label>
+              <select
+                value={formData.type}
+                onChange={(e) => handleChange('type', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.type ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Sélectionner un type</option>
+                {constants?.types?.map(type => (
+                  <option key={type} value={type}>{getTypeLabel(type)}</option>
+                ))}
+              </select>
+              {errors.type && (
+                <p className="text-red-500 text-sm mt-1">{errors.type}</p>
+              )}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Tag className="h-4 w-4 inline mr-1" />
@@ -283,34 +328,35 @@ export default function TransactionForm({ transaction, buildings, constants, onS
                 <p className="text-red-500 text-sm mt-1">{errors.categorie}</p>
               )}
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <DollarSign className="h-4 w-4 inline mr-1" />
-                Montant *
-                {formData.categorie === 'depense' && (
-                  <span className="text-red-600 text-xs ml-2">(sera automatiquement négatif)</span>
-                )}
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={Math.abs(formData.montant) || ''}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0
-                  const finalValue = formData.categorie === 'depense' ? -value : value
-                  handleChange('montant', finalValue)
-                }}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.montant ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0.00"
-              />
-              {errors.montant && (
-                <p className="text-red-500 text-sm mt-1">{errors.montant}</p>
+          {/* Montant */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <DollarSign className="h-4 w-4 inline mr-1" />
+              Montant *
+              {formData.type === 'depense' && (
+                <span className="text-red-600 text-xs ml-2">(sera automatiquement négatif)</span>
               )}
-            </div>
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={Math.abs(formData.montant) || ''}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0
+                const finalValue = formData.type === 'depense' ? -value : value
+                handleChange('montant', finalValue)
+              }}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.montant ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="0.00"
+            />
+            {errors.montant && (
+              <p className="text-red-500 text-sm mt-1">{errors.montant}</p>
+            )}
           </div>
 
           {/* Date et Méthode de paiement */}

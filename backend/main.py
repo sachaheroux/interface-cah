@@ -1308,9 +1308,21 @@ async def get_transaction_constants():
     """Récupérer les constantes pour les transactions"""
     try:
         return {
-            "categories": [
+            "types": [
                 "revenu",
                 "depense"
+            ],
+            "categories": [
+                "taxes_scolaires",
+                "taxes_municipales", 
+                "electricite",
+                "gaz",
+                "eau",
+                "entretien",
+                "reparation",
+                "assurance",
+                "loyer",
+                "autre"
             ],
             "payment_methods": [
                 "virement",

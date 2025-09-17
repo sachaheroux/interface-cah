@@ -408,6 +408,7 @@ class DatabaseServiceFrancais:
             with self.get_session() as session:
                 transaction = Transaction(
                     id_immeuble=transaction_data.get('id_immeuble'),
+                    type=transaction_data.get('type', ''),
                     categorie=transaction_data.get('categorie', ''),
                     montant=transaction_data.get('montant', 0),
                     date_de_transaction=datetime.strptime(transaction_data.get('date_de_transaction', ''), '%Y-%m-%d').date() if transaction_data.get('date_de_transaction') else datetime.now().date(),
