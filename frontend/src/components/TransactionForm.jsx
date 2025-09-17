@@ -145,9 +145,17 @@ export default function TransactionForm({ transaction, buildings, constants, onS
 
     setLoading(true)
     try {
+      // Utiliser le nouveau format français
       const transactionData = {
-        ...formData,
-        montant: parseFloat(formData.montant)
+        id_immeuble: formData.id_immeuble,
+        categorie: formData.categorie,
+        montant: parseFloat(formData.montant),
+        date_de_transaction: formData.date_de_transaction,
+        methode_de_paiement: formData.methode_de_paiement,
+        reference: formData.reference,
+        source: formData.source,
+        pdf_transaction: formData.pdf_transaction,
+        notes: formData.notes
       }
 
       let savedTransaction
@@ -193,6 +201,11 @@ export default function TransactionForm({ transaction, buildings, constants, onS
     return buildings.find(b => b.id_immeuble === formData.id_immeuble)
   }
 
+  const getBuildingDisplayName = (building) => {
+    if (!building) return ''
+    return `${building.nom_immeuble} - ${building.adresse}`
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -219,7 +232,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
               <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
               <input
                 type="text"
-                value={buildingSearch || (getSelectedBuilding() ? `${getSelectedBuilding().nom_immeuble} - ${getSelectedBuilding().adresse}` : '')}
+                value={buildingSearch || getBuildingDisplayName(getSelectedBuilding())}
                 onChange={(e) => handleBuildingSearch(e.target.value)}
                 onFocus={() => setShowBuildingDropdown(true)}
                 className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -262,7 +275,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
                 }`}
               >
                 <option value="">Sélectionner une catégorie</option>
-                {constants.categories?.map(category => (
+                {constants?.categories?.map(category => (
                   <option key={category} value={category}>{getCategoryLabel(category)}</option>
                 ))}
               </select>
