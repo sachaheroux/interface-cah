@@ -515,8 +515,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       notes: formData.notes.trim()
     }
     
-    // Préparer les données d'assignation (TOUTES les données de bail)
-    const assignmentData = {
+    // Préparer les données de bail
+    const leaseData = {
       unitId: parseInt(formData.id_unite),
       moveInDate: formData.lease?.startDate || null,
       moveOutDate: formData.lease?.endDate || null,
@@ -530,18 +530,18 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     
     console.log('💾 Données à sauvegarder:', {
       tenant: tenantData,
-      assignment: assignmentData
+      lease: leaseData
     })
     
     // Debug supplémentaire
     console.log('🔍 DEBUG - Détails des données:')
     console.log('  - tenantData keys:', Object.keys(tenantData))
-    console.log('  - assignmentData keys:', Object.keys(assignmentData))
-    console.log('  - unitId type:', typeof assignmentData.unitId, 'value:', assignmentData.unitId)
-    console.log('  - tenantId type:', typeof assignmentData.tenantId, 'value:', assignmentData.tenantId)
+    console.log('  - leaseData keys:', Object.keys(leaseData))
+    console.log('  - unitId type:', typeof leaseData.unitId, 'value:', leaseData.unitId)
+    console.log('  - tenantId type:', typeof leaseData.tenantId, 'value:', leaseData.tenantId)
     
     try {
-      if (tenant?.id) {
+      if (tenant?.id_locataire) {
         // MISE À JOUR du locataire existant
         console.log('📝 Mise à jour du locataire existant...')
         
@@ -614,23 +614,23 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         onClose()
         
       } else {
-        // CRÉATION d'un nouveau locataire avec assignation
-        console.log('📤 Création d\'un nouveau locataire avec assignation...')
+        // CRÉATION d'un nouveau locataire avec bail
+        console.log('📤 Création d\'un nouveau locataire avec bail...')
         
-        console.log('📤 Envoi vers /api/tenants/create-with-assignment')
+        console.log('📤 Envoi vers /api/tenants/create-with-lease')
         console.log('📤 Payload complet:', {
           tenant: tenantData,
-          assignment: assignmentData
+          lease: leaseData
         })
         
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-assignment`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/create-with-lease`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             tenant: tenantData,
-            assignment: assignmentData
+            lease: leaseData
           })
         })
         
