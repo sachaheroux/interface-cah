@@ -327,16 +327,38 @@ export default function Buildings() {
 
   // Statistiques pour le tableau de bord des immeubles (basées sur les immeubles filtrés)
   const totalBuildings = filteredBuildings.length
-  const totalUnits = filteredBuildings.reduce((sum, b) => sum + b.units, 0)
-  const totalValue = filteredBuildings.reduce((sum, b) => sum + (b.financials?.currentValue || 0), 0)
   
-  // Calculer le taux d'occupation basé sur les données réelles
-  const calculateOccupancyRate = () => {
-    // Pour l'instant, retourner 0 car on n'a pas encore de vraies unités
-    return 0
-  }
+  // Calculer le total des unités depuis la base de données
+  const [totalUnits, setTotalUnits] = useState(0)
+  const [occupiedUnits, setOccupiedUnits] = useState(0)
   
-  const occupancyRate = calculateOccupancyRate()
+  // Charger les statistiques des unités
+  useEffect(() => {
+    const loadUnitsStats = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
+        if (response.ok) {
+          const data = await response.json()
+          const units = data.data || []
+          setTotalUnits(units.length)
+          
+          // Compter les unités occupées (qui ont au moins un locataire)
+          const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
+          setOccupiedUnits(occupied)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des statistiques des unités:', error)
+      }
+    }
+    
+    loadUnitsStats()
+  }, [])
+  
+  // Calculer la valeur totale du portfolio (somme des valeurs actuelles)
+  const totalValue = filteredBuildings.reduce((sum, building) => sum + (building.valeur_actuel || 0), 0)
+  
+  // Calculer le taux d'occupation
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0
 
   return (
     <div className="space-y-4 lg:space-y-6">
