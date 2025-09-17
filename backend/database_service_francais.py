@@ -291,7 +291,7 @@ class DatabaseServiceFrancais:
                 session.commit()
                 session.refresh(tenant)
                 
-                print(f"✅ Locataire créé: {nom} {prenom} (ID: {tenant.id_locataire})")
+                print(f"✅ Locataire créé: {tenant.nom} {tenant.prenom} (ID: {tenant.id_locataire})")
                 return tenant.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création du locataire: {e}")
