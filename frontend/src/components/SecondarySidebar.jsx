@@ -178,6 +178,12 @@ export default function SecondarySidebar() {
             const Icon = item.icon
             
             const handleClick = () => {
+              // Si l'item a un href, naviguer vers cette page
+              if (item.href) {
+                navigate(item.href)
+                return
+              }
+              
               // Gestion spéciale pour la page Buildings
               if (location.pathname === '/buildings') {
                 if (item.name === 'Vue carte') {
@@ -207,6 +213,38 @@ export default function SecondarySidebar() {
                 } else if (item.name === 'Filtrer par année') {
                   // TODO: Implémenter le filtre par année
                   console.log('Filtre par année')
+                }
+              }
+              
+              // Gestion spéciale pour la page Tenants
+              if (location.pathname === '/tenants') {
+                if (item.name === 'Tous les locataires') {
+                  // Déclencher un événement pour recharger la liste
+                  window.dispatchEvent(new CustomEvent('tenantsViewChange', { detail: 'all' }))
+                } else if (item.name === 'Actifs') {
+                  window.dispatchEvent(new CustomEvent('tenantsViewChange', { detail: 'active' }))
+                } else if (item.name === 'En attente') {
+                  window.dispatchEvent(new CustomEvent('tenantsViewChange', { detail: 'pending' }))
+                } else if (item.name === 'Ajouter locataire') {
+                  window.dispatchEvent(new CustomEvent('addTenant'))
+                } else if (item.name === 'Paiements') {
+                  // TODO: Implémenter la gestion des paiements
+                  console.log('Gestion des paiements')
+                }
+              }
+              
+              // Gestion spéciale pour la page Leases
+              if (location.pathname === '/leases') {
+                if (item.name === 'Tous les baux') {
+                  window.dispatchEvent(new CustomEvent('leasesViewChange', { detail: 'all' }))
+                } else if (item.name === 'Actifs') {
+                  window.dispatchEvent(new CustomEvent('leasesViewChange', { detail: 'active' }))
+                } else if (item.name === 'Expirés') {
+                  window.dispatchEvent(new CustomEvent('leasesViewChange', { detail: 'expired' }))
+                } else if (item.name === 'À venir') {
+                  window.dispatchEvent(new CustomEvent('leasesViewChange', { detail: 'upcoming' }))
+                } else if (item.name === 'Nouveau bail') {
+                  window.dispatchEvent(new CustomEvent('addLease'))
                 }
               }
             }
