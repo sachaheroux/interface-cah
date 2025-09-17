@@ -188,13 +188,20 @@ export default function Leases() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Home className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">
-                          {lease.unite?.adresse_unite}
-                        </span>
+                        <div>
+                          <span className="text-gray-600">
+                            {lease.unite?.adresse_unite}
+                          </span>
+                          {lease.unite?.immeuble?.nom_immeuble && (
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({lease.unite.immeuble.nom_immeuble})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
                         <span>
@@ -210,6 +217,12 @@ export default function Leases() {
                       <div>
                         <span className="text-gray-500">
                           {lease.methode_paiement || 'Non spécifié'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-gray-500">
+                          {lease.pdf_bail ? 'PDF disponible' : 'Aucun PDF'}
                         </span>
                       </div>
                     </div>

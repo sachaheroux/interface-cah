@@ -454,21 +454,93 @@ class DatabaseServiceFrancais:
     # === MÉTHODES POUR LES BAUX ===
     
     def get_leases(self) -> List[Dict[str, Any]]:
-        """Récupérer tous les baux"""
+        """Récupérer tous les baux avec les informations des locataires et unités"""
         try:
             with self.get_session() as session:
-                leases = session.query(Bail).all()
-                return [lease.to_dict() for lease in leases]
+                # Faire une jointure pour récupérer les informations complètes
+                leases = session.query(Bail).join(Locataire, Bail.id_locataire == Locataire.id_locataire).join(Unite, Locataire.id_unite == Unite.id_unite).all()
+                
+                result = []
+                for lease in leases:
+                    lease_dict = lease.to_dict()
+                    
+                    # Ajouter les informations du locataire
+                    if lease.locataire:
+                        lease_dict['locataire'] = {
+                            'id_locataire': lease.locataire.id_locataire,
+                            'nom': lease.locataire.nom,
+                            'prenom': lease.locataire.prenom,
+                            'email': lease.locataire.email,
+                            'telephone': lease.locataire.telephone,
+                            'statut': lease.locataire.statut
+                        }
+                    
+                    # Ajouter les informations de l'unité
+                    if lease.locataire and lease.locataire.unite:
+                        lease_dict['unite'] = {
+                            'id_unite': lease.locataire.unite.id_unite,
+                            'adresse_unite': lease.locataire.unite.adresse_unite,
+                            'type': lease.locataire.unite.type,
+                            'nbr_chambre': lease.locataire.unite.nbr_chambre,
+                            'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain
+                        }
+                        
+                        # Ajouter les informations de l'immeuble
+                        if lease.locataire.unite.immeuble:
+                            lease_dict['unite']['immeuble'] = {
+                                'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
+                                'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
+                                'adresse': lease.locataire.unite.immeuble.adresse
+                            }
+                    
+                    result.append(lease_dict)
+                
+                return result
         except Exception as e:
             print(f"❌ Erreur lors de la récupération des baux: {e}")
             raise e
     
     def get_lease(self, lease_id: int) -> Optional[Dict[str, Any]]:
-        """Récupérer un bail par ID"""
+        """Récupérer un bail par ID avec les informations des locataires et unités"""
         try:
             with self.get_session() as session:
-                lease = session.query(Bail).filter(Bail.id_bail == lease_id).first()
-                return lease.to_dict() if lease else None
+                lease = session.query(Bail).join(Locataire, Bail.id_locataire == Locataire.id_locataire).join(Unite, Locataire.id_unite == Unite.id_unite).filter(Bail.id_bail == lease_id).first()
+                
+                if not lease:
+                    return None
+                
+                lease_dict = lease.to_dict()
+                
+                # Ajouter les informations du locataire
+                if lease.locataire:
+                    lease_dict['locataire'] = {
+                        'id_locataire': lease.locataire.id_locataire,
+                        'nom': lease.locataire.nom,
+                        'prenom': lease.locataire.prenom,
+                        'email': lease.locataire.email,
+                        'telephone': lease.locataire.telephone,
+                        'statut': lease.locataire.statut
+                    }
+                
+                # Ajouter les informations de l'unité
+                if lease.locataire and lease.locataire.unite:
+                    lease_dict['unite'] = {
+                        'id_unite': lease.locataire.unite.id_unite,
+                        'adresse_unite': lease.locataire.unite.adresse_unite,
+                        'type': lease.locataire.unite.type,
+                        'nbr_chambre': lease.locataire.unite.nbr_chambre,
+                        'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain
+                    }
+                    
+                    # Ajouter les informations de l'immeuble
+                    if lease.locataire.unite.immeuble:
+                        lease_dict['unite']['immeuble'] = {
+                            'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
+                            'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
+                            'adresse': lease.locataire.unite.immeuble.adresse
+                        }
+                
+                return lease_dict
         except Exception as e:
             print(f"❌ Erreur lors de la récupération du bail: {e}")
             raise e
