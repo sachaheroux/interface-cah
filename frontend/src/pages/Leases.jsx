@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FileText, Plus, Search, Calendar, DollarSign, User, Home, Edit, Trash2, Eye } from 'lucide-react'
+import { FileText, Plus, Search, Calendar, DollarSign, User, Home, Edit, Trash2, Eye, Download, ExternalLink } from 'lucide-react'
 import LeaseForm from '../components/LeaseForm'
 
 export default function Leases() {
@@ -88,6 +88,16 @@ export default function Leases() {
       } catch (error) {
         console.error('❌ Erreur lors de la suppression:', error)
       }
+    }
+  }
+
+  const handleViewPdf = (lease) => {
+    if (lease.pdf_bail) {
+      // Si c'est un nom de fichier, essayer de l'ouvrir depuis le serveur
+      const pdfUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${lease.pdf_bail}`
+      window.open(pdfUrl, '_blank')
+    } else {
+      alert('Aucun PDF disponible pour ce bail')
     }
   }
 
@@ -214,9 +224,18 @@ export default function Leases() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4" />
-                        <span className="text-gray-500">
-                          {lease.pdf_bail ? 'PDF disponible' : 'Aucun PDF'}
-                        </span>
+                        {lease.pdf_bail ? (
+                          <button
+                            onClick={() => handleViewPdf(lease)}
+                            className="text-blue-600 hover:text-blue-800 hover:underline flex items-center space-x-1"
+                            title="Ouvrir le PDF du bail"
+                          >
+                            <span>PDF disponible</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-500">Aucun PDF</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -229,6 +248,15 @@ export default function Leases() {
                     >
                       <Eye className="h-4 w-4" />
                     </button>
+                    {lease.pdf_bail && (
+                      <button
+                        onClick={() => handleViewPdf(lease)}
+                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                        title="Ouvrir le PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleEditLease(lease)}
                       className="p-2 text-gray-400 hover:text-blue-600 transition-colors"

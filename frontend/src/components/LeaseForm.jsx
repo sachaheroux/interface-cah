@@ -120,6 +120,39 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     }))
   }
 
+  const handlePdfUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Seuls les fichiers PDF sont acceptés')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        handleChange('pdf_bail', result.filename)
+        console.log('✅ PDF uploadé:', result.filename)
+      } else {
+        const error = await response.json()
+        console.error('❌ Erreur upload PDF:', error)
+        alert(`Erreur lors de l'upload: ${error.detail || 'Erreur inconnue'}`)
+      }
+    } catch (error) {
+      console.error('❌ Erreur upload PDF:', error)
+      alert('Erreur de connexion lors de l\'upload')
+    }
+  }
+
   const handleTenantSearch = (value) => {
     setTenantSearchTerm(value)
     setShowTenantDropdown(value.length > 0)
@@ -400,18 +433,23 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
             <input
               type="file"
               accept=".pdf"
-              onChange={(e) => {
-                const file = e.target.files[0]
-                if (file) {
-                  handleChange('pdf_bail', file.name)
-                }
-              }}
+              onChange={handlePdfUpload}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
             {formData.pdf_bail && (
-              <p className="text-sm text-green-600 mt-1">
-                ✓ {formData.pdf_bail}
-              </p>
+              <div className="mt-2 flex items-center space-x-2">
+                <span className="text-sm text-green-600">✓ {formData.pdf_bail}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pdfUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${formData.pdf_bail}`
+                    window.open(pdfUrl, '_blank')
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm underline"
+                >
+                  Ouvrir le PDF
+                </button>
+              </div>
             )}
           </div>
 
