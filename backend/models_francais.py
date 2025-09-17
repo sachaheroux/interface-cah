@@ -47,8 +47,7 @@ class Immeuble(Base):
     
     # Relations
     unites = relationship("Unite", back_populates="immeuble", lazy="select", cascade="all, delete-orphan")
-    factures = relationship("Facture", back_populates="immeuble", lazy="select", cascade="all, delete-orphan")
-    rapports_immeuble = relationship("RapportImmeuble", back_populates="immeuble", lazy="select", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="immeuble", lazy="select", cascade="all, delete-orphan")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -169,75 +168,42 @@ class Bail(Base):
             "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }
 
-class Facture(Base):
-    """Modèle pour les factures"""
-    __tablename__ = "factures"
+class Transaction(Base):
+    """Modèle pour les transactions financières"""
+    __tablename__ = "transactions"
     
-    id_facture = Column(Integer, primary_key=True, index=True)
+    id_transaction = Column(Integer, primary_key=True, index=True)
     id_immeuble = Column(Integer, ForeignKey("immeubles.id_immeuble", ondelete="CASCADE"), nullable=False, index=True)
-    categorie = Column(String(100), nullable=False)  # taxes municipales, taxes scolaires, électricité, etc.
+    type_transaction = Column(String(100), nullable=False)  # 'loyer', 'facture', 'maintenance', 'revenus', 'depenses'
     montant = Column(DECIMAL(12, 2), nullable=False)
-    date = Column(Date, nullable=False, index=True)
-    no_facture = Column(String(100), nullable=False, index=True)
-    source = Column(String(255), nullable=True)  # ex: Hydro Québec
-    pdf_facture = Column(String(255), nullable=True)  # nom du fichier PDF
-    type_paiement = Column(String(50), nullable=True)  # virement, chèque, etc.
+    description = Column(Text, nullable=True)
+    date_transaction = Column(Date, nullable=False, index=True)
+    methode_paiement = Column(String(50), nullable=True)  # 'virement', 'cheque', 'especes', 'carte'
+    statut = Column(String(50), default="en_attente")  # 'en_attente', 'paye', 'annule'
+    reference = Column(String(100), nullable=True)  # numero de facture, reference de paiement
+    pdf_document = Column(String(255), nullable=True)  # nom du fichier PDF
     notes = Column(Text, default="")
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations
-    immeuble = relationship("Immeuble", back_populates="factures", lazy="select")
+    immeuble = relationship("Immeuble", back_populates="transactions", lazy="select")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
         return {
-            "id_facture": self.id_facture,
+            "id_transaction": self.id_transaction,
             "id_immeuble": self.id_immeuble,
-            "categorie": self.categorie,
+            "type_transaction": self.type_transaction,
             "montant": float(self.montant) if self.montant else 0.0,
-            "date": self.date.isoformat() if self.date else None,
-            "no_facture": self.no_facture,
-            "source": self.source,
-            "pdf_facture": self.pdf_facture,
-            "type_paiement": self.type_paiement,
+            "description": self.description,
+            "date_transaction": self.date_transaction.isoformat() if self.date_transaction else None,
+            "methode_paiement": self.methode_paiement,
+            "statut": self.statut,
+            "reference": self.reference,
+            "pdf_document": self.pdf_document,
             "notes": self.notes,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }
 
-class RapportImmeuble(Base):
-    """Modèle pour les rapports de rentabilité des immeubles"""
-    __tablename__ = "rapports_immeuble"
-    
-    id_rapport = Column(Integer, primary_key=True, index=True)
-    id_immeuble = Column(Integer, ForeignKey("immeubles.id_immeuble", ondelete="CASCADE"), nullable=False, index=True)
-    annee = Column(Integer, nullable=False, index=True)
-    mois = Column(Integer, nullable=False, index=True)  # 1-12
-    revenus_totaux = Column(DECIMAL(12, 2), default=0)
-    depenses_totales = Column(DECIMAL(12, 2), default=0)
-    marge_nette = Column(DECIMAL(12, 2), default=0)
-    notes = Column(Text, default="")
-    date_creation = Column(DateTime, default=datetime.utcnow)
-    date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relations
-    immeuble = relationship("Immeuble", back_populates="rapports_immeuble", lazy="select")
-    
-    # Contrainte unique
-    __table_args__ = (UniqueConstraint('id_immeuble', 'annee', 'mois', name='unique_immeuble_annee_mois'),)
-    
-    def to_dict(self):
-        """Convertir en dictionnaire pour l'API"""
-        return {
-            "id_rapport": self.id_rapport,
-            "id_immeuble": self.id_immeuble,
-            "annee": self.annee,
-            "mois": self.mois,
-            "revenus_totaux": float(self.revenus_totaux) if self.revenus_totaux else 0.0,
-            "depenses_totales": float(self.depenses_totales) if self.depenses_totales else 0.0,
-            "marge_nette": float(self.marge_nette) if self.marge_nette else 0.0,
-            "notes": self.notes,
-            "date_creation": self.date_creation.isoformat() if self.date_creation else None,
-            "date_modification": self.date_modification.isoformat() if self.date_modification else None
-        }

@@ -13,7 +13,7 @@ import os
 import platform
 
 from database import db_manager
-from models_francais import Immeuble, Locataire, Unite, Bail, Facture, RapportImmeuble
+from models_francais import Immeuble, Locataire, Unite, Bail, Transaction
 
 class DatabaseServiceFrancais:
     """Service principal pour les opérations de base de données en français"""
@@ -382,104 +382,107 @@ class DatabaseServiceFrancais:
     # OPÉRATIONS POUR LES FACTURES
     # ========================================
     
-    def get_invoices(self) -> List[Dict[str, Any]]:
-        """Récupérer toutes les factures"""
+    def get_transactions(self) -> List[Dict[str, Any]]:
+        """Récupérer toutes les transactions"""
         try:
             with self.get_session() as session:
-                invoices = session.query(Facture).all()
-                return [invoice.to_dict() for invoice in invoices]
+                transactions = session.query(Transaction).all()
+                return [transaction.to_dict() for transaction in transactions]
         except Exception as e:
-            print(f"❌ Erreur lors de la récupération des factures: {e}")
+            print(f"❌ Erreur lors de la récupération des transactions: {e}")
             raise e
     
-    def get_invoice(self, invoice_id: int) -> Optional[Dict[str, Any]]:
-        """Récupérer une facture par ID"""
+    def get_transaction(self, transaction_id: int) -> Optional[Dict[str, Any]]:
+        """Récupérer une transaction par ID"""
         try:
             with self.get_session() as session:
-                invoice = session.query(Facture).filter(Facture.id_facture == invoice_id).first()
-                return invoice.to_dict() if invoice else None
+                transaction = session.query(Transaction).filter(Transaction.id_transaction == transaction_id).first()
+                return transaction.to_dict() if transaction else None
         except Exception as e:
-            print(f"❌ Erreur lors de la récupération de la facture {invoice_id}: {e}")
+            print(f"❌ Erreur lors de la récupération de la transaction {transaction_id}: {e}")
             raise e
     
-    def create_invoice(self, invoice_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Créer une nouvelle facture"""
+    def create_transaction(self, transaction_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Créer une nouvelle transaction"""
         try:
             with self.get_session() as session:
-                invoice = Facture(
-                    id_immeuble=invoice_data.get('id_immeuble'),
-                    categorie=invoice_data.get('categorie', ''),
-                    montant=invoice_data.get('montant', 0),
-                    date=datetime.strptime(invoice_data.get('date', ''), '%Y-%m-%d').date() if invoice_data.get('date') else datetime.now().date(),
-                    no_facture=invoice_data.get('no_facture', ''),
-                    source=invoice_data.get('source', ''),
-                    pdf_facture=invoice_data.get('pdf_facture', ''),
-                    type_paiement=invoice_data.get('type_paiement', ''),
-                    notes=invoice_data.get('notes', '')
+                transaction = Transaction(
+                    id_immeuble=transaction_data.get('id_immeuble'),
+                    type_transaction=transaction_data.get('type_transaction', ''),
+                    montant=transaction_data.get('montant', 0),
+                    description=transaction_data.get('description', ''),
+                    date_transaction=datetime.strptime(transaction_data.get('date_transaction', ''), '%Y-%m-%d').date() if transaction_data.get('date_transaction') else datetime.now().date(),
+                    methode_paiement=transaction_data.get('methode_paiement', ''),
+                    statut=transaction_data.get('statut', 'en_attente'),
+                    reference=transaction_data.get('reference', ''),
+                    pdf_document=transaction_data.get('pdf_document', ''),
+                    notes=transaction_data.get('notes', '')
                 )
                 
-                session.add(invoice)
+                session.add(transaction)
                 session.commit()
-                session.refresh(invoice)
+                session.refresh(transaction)
                 
-                print(f"✅ Facture créée: {invoice.no_facture} (ID: {invoice.id_facture})")
-                return invoice.to_dict()
+                print(f"✅ Transaction créée: {transaction.type_transaction} (ID: {transaction.id_transaction})")
+                return transaction.to_dict()
         except Exception as e:
-            print(f"❌ Erreur lors de la création de la facture: {e}")
+            print(f"❌ Erreur lors de la création de la transaction: {e}")
             raise e
     
-    def update_invoice(self, invoice_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Mettre à jour une facture"""
+    def update_transaction(self, transaction_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Mettre à jour une transaction"""
         try:
             with self.get_session() as session:
-                invoice = session.query(Facture).filter(Facture.id_facture == invoice_id).first()
-                if not invoice:
+                transaction = session.query(Transaction).filter(Transaction.id_transaction == transaction_id).first()
+                if not transaction:
                     return None
                 
                 # Mettre à jour les champs avec le format français
-                if 'categorie' in update_data:
-                    invoice.categorie = update_data['categorie']
+                if 'type_transaction' in update_data:
+                    transaction.type_transaction = update_data['type_transaction']
                 if 'montant' in update_data:
-                    invoice.montant = update_data['montant']
-                if 'date' in update_data:
-                    invoice.date = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
-                if 'no_facture' in update_data:
-                    invoice.no_facture = update_data['no_facture']
-                if 'source' in update_data:
-                    invoice.source = update_data['source']
-                if 'pdf_facture' in update_data:
-                    invoice.pdf_facture = update_data['pdf_facture']
-                if 'type_paiement' in update_data:
-                    invoice.type_paiement = update_data['type_paiement']
+                    transaction.montant = update_data['montant']
+                if 'description' in update_data:
+                    transaction.description = update_data['description']
+                if 'date_transaction' in update_data:
+                    transaction.date_transaction = datetime.strptime(update_data['date_transaction'], '%Y-%m-%d').date()
+                if 'methode_paiement' in update_data:
+                    transaction.methode_paiement = update_data['methode_paiement']
+                if 'statut' in update_data:
+                    transaction.statut = update_data['statut']
+                if 'reference' in update_data:
+                    transaction.reference = update_data['reference']
+                if 'pdf_document' in update_data:
+                    transaction.pdf_document = update_data['pdf_document']
                 if 'notes' in update_data:
-                    invoice.notes = update_data['notes']
+                    transaction.notes = update_data['notes']
                 if 'id_immeuble' in update_data:
-                    invoice.id_immeuble = update_data['id_immeuble']
+                    transaction.id_immeuble = update_data['id_immeuble']
                 
-                invoice.date_modification = datetime.utcnow()
+                transaction.date_modification = datetime.utcnow()
                 session.commit()
                 
-                print(f"✅ Facture mise à jour: {invoice.no_facture} (ID: {invoice.id_facture})")
-                return invoice.to_dict()
+                print(f"✅ Transaction mise à jour: {transaction.type_transaction} (ID: {transaction.id_transaction})")
+                return transaction.to_dict()
         except Exception as e:
-            print(f"❌ Erreur lors de la mise à jour de la facture {invoice_id}: {e}")
+            print(f"❌ Erreur lors de la mise à jour de la transaction {transaction_id}: {e}")
             raise e
     
-    def delete_invoice(self, invoice_id: int) -> bool:
-        """Supprimer une facture"""
+    def delete_transaction(self, transaction_id: int) -> bool:
+        """Supprimer une transaction"""
         try:
             with self.get_session() as session:
-                invoice = session.query(Facture).filter(Facture.id_facture == invoice_id).first()
-                if not invoice:
+                transaction = session.query(Transaction).filter(Transaction.id_transaction == transaction_id).first()
+                if not transaction:
                     return False
                 
-                session.delete(invoice)
+                session.delete(transaction)
                 session.commit()
                 
-                print(f"✅ Facture supprimée: {invoice.no_facture} (ID: {invoice.id_facture})")
+                print(f"✅ Transaction supprimée: {transaction.type_transaction} (ID: {transaction.id_transaction})")
                 return True
         except Exception as e:
-            print(f"❌ Erreur lors de la suppression de la facture {invoice_id}: {e}")
+            print(f"❌ Erreur lors de la suppression de la transaction {transaction_id}: {e}")
             raise e
     
     # === MÉTHODES POUR LES BAUX ===
