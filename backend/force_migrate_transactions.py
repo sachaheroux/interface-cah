@@ -3,96 +3,86 @@
 Script pour forcer la migration de la table transactions sur Render
 """
 
-import os
-import sys
 import requests
-from datetime import datetime
+import time
 
-# Configuration Render
 RENDER_API_URL = "https://interface-cah-backend.onrender.com"
 
-def force_recreate_transactions():
-    """Forcer la recréation de la table transactions via l'API"""
+def force_migration():
+    """Forcer la migration en créant une transaction de test"""
+    print("🔄 Forçage de la migration de la table transactions...")
+    
     try:
-        print("🔄 Forçage de la recréation de la table transactions...")
+        # Récupérer un immeuble
+        buildings_response = requests.get(f"{RENDER_API_URL}/api/buildings")
+        if buildings_response.status_code != 200:
+            print("❌ Impossible de récupérer les immeubles")
+            return False
         
-        # 1. Créer une transaction de test pour déclencher la création de la table
-        print("📝 Création d'une transaction de test...")
+        buildings = buildings_response.json().get('data', [])
+        if not buildings:
+            print("❌ Aucun immeuble trouvé")
+            return False
         
+        building_id = buildings[0]['id_immeuble']
+        print(f"   Utilisation de l'immeuble ID: {building_id}")
+        
+        # Créer une transaction de test pour forcer la création de la table
         test_transaction = {
-            "id_immeuble": 1,  # Supposons qu'il y ait au moins un immeuble
+            "id_immeuble": building_id,
             "categorie": "revenu",
             "montant": 0.01,
-            "date_de_transaction": "2025-01-01",
+            "date_de_transaction": "2025-01-17",
             "methode_de_paiement": "test",
-            "reference": "test_migration",
-            "source": "Migration automatique",
+            "reference": "MIGRATION-FORCE",
+            "source": "Migration forcée",
             "pdf_transaction": "",
-            "notes": "Transaction de test pour migration"
+            "notes": "Transaction de test pour forcer la migration"
         }
         
-        try:
-            response = requests.post(f"{RENDER_API_URL}/api/transactions", json=test_transaction)
-            if response.status_code == 201:
-                print("✅ Transaction de test créée avec succès")
-                transaction_id = response.json().get('data', {}).get('id_transaction')
-                
-                # Supprimer la transaction de test
-                if transaction_id:
-                    delete_response = requests.delete(f"{RENDER_API_URL}/api/transactions/{transaction_id}")
-                    if delete_response.status_code == 200:
-                        print("✅ Transaction de test supprimée")
-                    else:
-                        print("⚠️ Transaction de test créée mais non supprimée")
-                
-                return True
-            else:
-                print(f"❌ Erreur création transaction: {response.status_code}")
-                print(f"   Détail: {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"❌ Erreur lors de la création de test: {e}")
+        print("   Création d'une transaction de test...")
+        response = requests.post(f"{RENDER_API_URL}/api/transactions", json=test_transaction)
+        
+        print(f"   Status: {response.status_code}")
+        if response.status_code == 201:
+            print("✅ Transaction créée avec succès - Migration forcée!")
+            transaction_id = response.json().get('data', {}).get('id_transaction')
+            
+            # Supprimer la transaction de test
+            if transaction_id:
+                print("   Suppression de la transaction de test...")
+                delete_response = requests.delete(f"{RENDER_API_URL}/api/transactions/{transaction_id}")
+                if delete_response.status_code == 200:
+                    print("✅ Transaction de test supprimée")
+                else:
+                    print("⚠️ Transaction créée mais non supprimée")
+            
+            return True
+        else:
+            print(f"❌ Erreur lors de la création: {response.status_code}")
+            print(f"   Détail: {response.text}")
             return False
             
     except Exception as e:
-        print(f"❌ Erreur lors de la migration: {e}")
+        print(f"❌ Erreur lors de la migration forcée: {e}")
         return False
 
-def test_transactions_endpoint():
-    """Tester l'endpoint des transactions"""
+def test_after_migration():
+    """Tester après la migration"""
+    print("\n🧪 Test après migration...")
+    
     try:
-        print("🧪 Test de l'endpoint des transactions...")
-        
+        # Test de la liste des transactions
         response = requests.get(f"{RENDER_API_URL}/api/transactions")
-        if response.status_code == 200:
-            transactions = response.json().get('data', [])
-            print(f"✅ Endpoint des transactions fonctionne ({len(transactions)} transactions)")
-            return True
-        else:
-            print(f"❌ Erreur transactions: {response.status_code}")
-            print(f"   Détail: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Erreur lors du test: {e}")
-        return False
-
-def test_constants_endpoint():
-    """Tester l'endpoint des constantes"""
-    try:
-        print("🧪 Test de l'endpoint des constantes...")
+        print(f"   Status liste: {response.status_code}")
         
-        response = requests.get(f"{RENDER_API_URL}/api/transactions/constants")
         if response.status_code == 200:
-            constants = response.json()
-            print("✅ Endpoint des constantes fonctionne")
-            print(f"   Catégories: {constants.get('categories', [])}")
-            print(f"   Méthodes de paiement: {constants.get('payment_methods', [])}")
+            data = response.json()
+            transactions = data.get('data', [])
+            print(f"✅ Liste des transactions: {len(transactions)} transactions")
             return True
         else:
-            print(f"❌ Erreur constantes: {response.status_code}")
-            print(f"   Détail: {response.text}")
+            print(f"❌ Erreur liste: {response.text}")
             return False
             
     except Exception as e:
@@ -104,28 +94,26 @@ def main():
     print("🚀 Migration forcée de la table transactions sur Render")
     print("=" * 60)
     
-    # Test initial
-    print("🔍 Test initial...")
-    if test_transactions_endpoint():
-        print("✅ La table transactions fonctionne déjà!")
-        return True
-    
-    # Migration forcée
-    print("\n🔄 Début de la migration forcée...")
-    if not force_recreate_transactions():
-        print("❌ Échec de la migration forcée")
-        return False
-    
-    # Test final
-    print("\n🧪 Test final...")
-    if test_transactions_endpoint() and test_constants_endpoint():
-        print("\n🎉 Migration terminée avec succès!")
-        print("✅ La page Transactions devrait maintenant fonctionner")
-        return True
+    # Forcer la migration
+    if force_migration():
+        print("\n⏳ Attente de la stabilisation...")
+        time.sleep(5)
+        
+        # Tester après migration
+        if test_after_migration():
+            print("\n🎉 Migration terminée avec succès!")
+            print("✅ La page Transactions devrait maintenant fonctionner")
+            return True
+        else:
+            print("\n❌ Problème persistant après migration")
+            return False
     else:
-        print("\n❌ Problème persistant après migration")
+        print("\n❌ Échec de la migration forcée")
         return False
 
 if __name__ == "__main__":
     success = main()
-    sys.exit(0 if success else 1)
+    if success:
+        print("\n✅ Vous pouvez maintenant tester la page Transactions!")
+    else:
+        print("\n❌ La migration a échoué")
