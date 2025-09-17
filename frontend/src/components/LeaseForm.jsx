@@ -142,6 +142,11 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
         const result = await response.json()
         handleChange('pdf_bail', result.filename)
         console.log('✅ PDF uploadé:', result.filename)
+        
+        // Si on est en mode édition, mettre à jour le bail immédiatement
+        if (isEditing && lease.id_bail) {
+          await updateLeasePdf(lease.id_bail, result.filename)
+        }
       } else {
         const error = await response.json()
         console.error('❌ Erreur upload PDF:', error)
@@ -150,6 +155,28 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     } catch (error) {
       console.error('❌ Erreur upload PDF:', error)
       alert('Erreur de connexion lors de l\'upload')
+    }
+  }
+
+  const updateLeasePdf = async (leaseId, pdfFilename) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases/${leaseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pdf_bail: pdfFilename
+        })
+      })
+
+      if (response.ok) {
+        console.log('✅ PDF du bail mis à jour')
+      } else {
+        console.error('❌ Erreur lors de la mise à jour du PDF')
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour du PDF:', error)
     }
   }
 

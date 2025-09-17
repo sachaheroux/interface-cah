@@ -1567,6 +1567,26 @@ async def get_monitoring_status():
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du statut: {str(e)}")
 
 
+@app.put("/api/leases/{lease_id}")
+async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
+    """Mettre à jour un bail existant"""
+    try:
+        # Convertir les données en dictionnaire
+        update_data = lease_data.dict(exclude_unset=True)
+        
+        # Mettre à jour le bail
+        updated_lease = db_service.update_lease(lease_id, update_data)
+        
+        if updated_lease:
+            return {
+                "message": "Bail mis à jour avec succès",
+                "lease": updated_lease
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Bail non trouvé")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
