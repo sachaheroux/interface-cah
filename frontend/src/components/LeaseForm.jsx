@@ -14,6 +14,10 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
   const [loading, setLoading] = useState(false)
   const [availableTenants, setAvailableTenants] = useState([])
   const [availableUnits, setAvailableUnits] = useState([])
+  const [tenantSearchTerm, setTenantSearchTerm] = useState('')
+  const [filteredTenants, setFilteredTenants] = useState([])
+  const [showTenantDropdown, setShowTenantDropdown] = useState(false)
+  const [selectedTenant, setSelectedTenant] = useState(null)
 
   // Charger les données
   useEffect(() => {
@@ -22,6 +26,34 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
       loadUnits()
     }
   }, [isOpen])
+
+  // Filtrer les locataires selon le terme de recherche
+  useEffect(() => {
+    if (tenantSearchTerm.trim() === '') {
+      setFilteredTenants([])
+    } else {
+      const filtered = availableTenants.filter(tenant =>
+        `${tenant.nom} ${tenant.prenom}`.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
+        tenant.email?.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
+        tenant.telephone?.includes(tenantSearchTerm)
+      )
+      setFilteredTenants(filtered)
+    }
+  }, [tenantSearchTerm, availableTenants])
+
+  // Fermer le dropdown quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showTenantDropdown && !event.target.closest('.tenant-search-container')) {
+        setShowTenantDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showTenantDropdown])
 
   // Initialiser le formulaire
   useEffect(() => {
@@ -34,6 +66,15 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
         methode_paiement: lease.methode_paiement || 'Virement bancaire',
         pdf_bail: lease.pdf_bail || ''
       })
+      
+      // Trouver le locataire correspondant pour l'affichage
+      if (lease.id_locataire && availableTenants.length > 0) {
+        const tenant = availableTenants.find(t => t.id_locataire === lease.id_locataire)
+        if (tenant) {
+          setSelectedTenant(tenant)
+          setTenantSearchTerm(`${tenant.nom} ${tenant.prenom}`)
+        }
+      }
     } else {
       setFormData({
         id_locataire: '',
@@ -43,8 +84,10 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
         methode_paiement: 'Virement bancaire',
         pdf_bail: ''
       })
+      setSelectedTenant(null)
+      setTenantSearchTerm('')
     }
-  }, [lease, isOpen])
+  }, [lease, isOpen, availableTenants])
 
   const loadTenants = async () => {
     try {
@@ -74,6 +117,30 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const handleTenantSearch = (value) => {
+    setTenantSearchTerm(value)
+    setShowTenantDropdown(value.length > 0)
+  }
+
+  const handleTenantSelect = (tenant) => {
+    setSelectedTenant(tenant)
+    setTenantSearchTerm(`${tenant.nom} ${tenant.prenom}`)
+    setFormData(prev => ({
+      ...prev,
+      id_locataire: tenant.id_locataire
+    }))
+    setShowTenantDropdown(false)
+  }
+
+  const handleTenantClear = () => {
+    setSelectedTenant(null)
+    setTenantSearchTerm('')
+    setFormData(prev => ({
+      ...prev,
+      id_locataire: ''
     }))
   }
 
@@ -189,24 +256,71 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Sélection du locataire */}
-          <div>
+          <div className="relative tenant-search-container">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <User className="h-4 w-4 inline mr-2" />
               Locataire *
             </label>
-            <select
-              value={formData.id_locataire}
-              onChange={(e) => handleChange('id_locataire', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              required
-            >
-              <option value="">Sélectionner un locataire</option>
-              {availableTenants.map((tenant) => (
-                <option key={tenant.id_locataire} value={tenant.id_locataire}>
-                  {tenant.nom} {tenant.prenom}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                value={tenantSearchTerm}
+                onChange={(e) => handleTenantSearch(e.target.value)}
+                onFocus={() => setShowTenantDropdown(tenantSearchTerm.length > 0)}
+                placeholder="Rechercher un locataire par nom, email ou téléphone..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
+              />
+              {selectedTenant && (
+                <button
+                  type="button"
+                  onClick={handleTenantClear}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Dropdown des résultats */}
+            {showTenantDropdown && filteredTenants.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredTenants.slice(0, 10).map((tenant) => (
+                  <div
+                    key={tenant.id_locataire}
+                    onClick={() => handleTenantSelect(tenant)}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {tenant.nom} {tenant.prenom}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {tenant.email} • {tenant.telephone}
+                        </p>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {tenant.statut}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredTenants.length > 10 && (
+                  <div className="p-2 text-xs text-gray-500 text-center">
+                    ... et {filteredTenants.length - 10} autres résultats
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {showTenantDropdown && filteredTenants.length === 0 && tenantSearchTerm.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
+                <p className="text-sm text-gray-500 text-center">
+                  Aucun locataire trouvé pour "{tenantSearchTerm}"
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Dates du bail */}
