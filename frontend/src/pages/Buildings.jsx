@@ -71,6 +71,28 @@ export default function Buildings() {
     }
   }, [])
 
+  // Charger les statistiques des unités
+  useEffect(() => {
+    const loadUnitsStats = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
+        if (response.ok) {
+          const data = await response.json()
+          const units = data.data || []
+          setTotalUnits(units.length)
+          
+          // Compter les unités occupées (qui ont au moins un locataire)
+          const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
+          setOccupiedUnits(occupied)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des statistiques des unités:', error)
+      }
+    }
+    
+    loadUnitsStats()
+  }, [])
+
   const loadAssignments = async () => {
     try {
       const response = await assignmentsService.getAssignments()
@@ -326,28 +348,6 @@ export default function Buildings() {
       </div>
     )
   }
-
-  // Charger les statistiques des unités
-  useEffect(() => {
-    const loadUnitsStats = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
-        if (response.ok) {
-          const data = await response.json()
-          const units = data.data || []
-          setTotalUnits(units.length)
-          
-          // Compter les unités occupées (qui ont au moins un locataire)
-          const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
-          setOccupiedUnits(occupied)
-        }
-      } catch (error) {
-        console.error('Erreur lors du chargement des statistiques des unités:', error)
-      }
-    }
-    
-    loadUnitsStats()
-  }, [])
 
   // Statistiques pour le tableau de bord des immeubles (basées sur les immeubles filtrés)
   const totalBuildings = filteredBuildings.length
