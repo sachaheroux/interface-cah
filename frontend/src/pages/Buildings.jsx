@@ -12,7 +12,8 @@ import {
   TrendingUp,
   BarChart3
 } from 'lucide-react'
-import { buildingsService, assignmentsService } from '../services/api'
+import { buildingsService } from '../services/api'
+import api from '../services/api'
 import BuildingForm from '../components/BuildingForm'
 import BuildingDetails from '../components/BuildingDetails'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
@@ -33,13 +34,13 @@ export default function Buildings() {
   const [buildingToDelete, setBuildingToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [viewMode, setViewMode] = useState('list') // 'list', 'map', 'units'
-  const [assignments, setAssignments] = useState([])
+  const [tenants, setTenants] = useState([])
   const [totalUnits, setTotalUnits] = useState(0)
   const [occupiedUnits, setOccupiedUnits] = useState(0)
 
   useEffect(() => {
     fetchBuildings()
-    loadAssignments()
+    loadTenants()
     
     // Écouter les événements de changement de vue
     const handleViewChange = (event) => {
@@ -50,14 +51,14 @@ export default function Buildings() {
     const handleTenantDeleted = (event) => {
       console.log(`📢 Buildings: Événement tenantDeleted reçu:`, event.detail)
       console.log(`🔄 Buildings: Rechargement des assignations suite à la suppression...`)
-      loadAssignments()
+      loadTenants()
     }
     
     // Écouter l'événement de suppression d'assignation spécifique
     const handleAssignmentRemoved = (event) => {
       console.log(`📢 Buildings: Événement assignmentRemoved reçu:`, event.detail)
       console.log(`🔄 Buildings: Rechargement des assignations suite à la suppression d'assignation...`)
-      loadAssignments()
+      loadTenants()
     }
     
     window.addEventListener('buildingsViewChange', handleViewChange)
@@ -93,15 +94,12 @@ export default function Buildings() {
     loadUnitsStats()
   }, [])
 
-  const loadAssignments = async () => {
+  const loadTenants = async () => {
     try {
-      const response = await assignmentsService.getAssignments()
-      setAssignments(response.data || [])
+      const response = await api.get('/api/tenants')
+      setTenants(response.data.data || [])
     } catch (error) {
-      console.error('Error loading assignments:', error)
-      // Fallback vers localStorage
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      setAssignments(localAssignments)
+      console.error('Error loading tenants:', error)
     }
   }
 
