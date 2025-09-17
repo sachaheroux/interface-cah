@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import uvicorn
-from datetime import datetime
+from date_transactiontime import date_transactiontime
 import json
 import os
 import platform
@@ -47,53 +47,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Constantes pour les factures
-INVOICE_CATEGORIES = {
-    "municipal_taxes": "Taxes municipales",
-    "school_taxes": "Taxes scolaire", 
-    "insurance": "Assurance",
-    "snow_removal": "Déneigement",
-    "lawn_care": "Gazon",
-    "management": "Gestion",
-    "renovations": "Rénovations",
-    "repairs": "Réparations",
-    "wifi": "WiFi",
-    "electricity": "Électricité",
-    "other": "Autres"
-}
+# Constantes pour les transactions
+TRANSACTION_TYPES = [
+    "loyer",
+    "transaction", 
+    "maintenance",
+    "revenus",
+    "depenses",
+    "investissement",
+    "frais",
+    "autre"
+]
 
-PAYMENT_TYPES = {
-    "bank_transfer": "Virement bancaire",
-    "check": "Chèque",
-    "cash": "Espèces"
-}
+TRANSACTION_PAYMENT_METHODS = [
+    "virement",
+    "cheque", 
+    "especes",
+    "carte",
+    "autre"
+]
 
-INVOICE_TYPES = {
-    "rental_building": "Immeuble en location",
-    "construction_project": "Projet de construction"
-}
+TRANSACTION_STATUSES = [
+    "en_attente",
+    "paye",
+    "annule"
+]
+
 
 # ========================================
 # ENDPOINT POUR LES CONSTANTES (défini tôt pour éviter les erreurs)
 # ========================================
 
-@app.get("/api/invoices/constants")
-async def get_invoice_constants():
-    """Récupérer les constantes pour les factures (catégories, types de paiement, etc.)"""
+@app.get("/api/transactions/constants")
+async def get_transaction_constants():
+    """Récupérer les constantes pour les transactions (types, méthodes de paiement, statuts, etc.)"""
     try:
-        print("🔧 Récupération des constantes de factures...")
-        
-        # Utiliser le service SQLite
-        constants = db_service.get_invoice_constants()
-        
-        print(f"📊 Catégories: {len(constants['categories'])}")
-        print(f"💳 Types de paiement: {len(constants['paymentTypes'])}")
-        print(f"📋 Types de facture: {len(constants['invoiceTypes'])}")
-        
-        return constants
-        
+        print("🔧 Récupération des constantes de transactions...")
+        return {
+            "types": TRANSACTION_TYPES,
+            "payment_methods": TRANSACTION_PAYMENT_METHODS,
+            "statuses": TRANSACTION_STATUSES
+        }
     except Exception as e:
-        print(f"❌ Erreur lors de la récupération des constantes: {e}")
+        print(f"❌ Erreur lors de la récupération des constantes de transactions: {e}")
         raise HTTPException(status_code=500, detail="Erreur interne du serveur")
 
 # Modèles Pydantic pour la validation des données
@@ -119,7 +115,7 @@ class BuildingCreateFrancais(BaseModel):
     contracteur: str = ""
     notes: str = ""
 
-class BuildingUpdateFrancais(BaseModel):
+class BuildingUpdate_transactionFrancais(BaseModel):
     nom_immeuble: Optional[str] = None
     adresse: Optional[str] = None
     ville: Optional[str] = None
@@ -145,7 +141,7 @@ class UnitCreateFrancais(BaseModel):
     nbr_salle_de_bain: float
     notes: str = ""
 
-class UnitUpdateFrancais(BaseModel):
+class UnitUpdate_transactionFrancais(BaseModel):
     id_immeuble: Optional[int] = None
     adresse_unite: Optional[str] = None
     type: Optional[str] = None
@@ -162,7 +158,7 @@ class TenantCreateFrancais(BaseModel):
     statut: str = "actif"
     notes: str = ""
 
-class TenantUpdateFrancais(BaseModel):
+class TenantUpdate_transactionFrancais(BaseModel):
     id_unite: Optional[int] = None
     nom: Optional[str] = None
     prenom: Optional[str] = None
@@ -173,38 +169,38 @@ class TenantUpdateFrancais(BaseModel):
 
 class InvoiceCreateFrancais(BaseModel):
     id_immeuble: int
-    categorie: str
+    type_transaction: str
     montant: float
-    date: str
-    no_facture: str = ""
+    date_transaction: str
+    no_transaction: str = ""
     source: str = ""
-    pdf_facture: str = ""
-    type_paiement: str = ""
+    pdf_transaction: str = ""
+    methode_paiement: str = ""
     notes: str = ""
 
-class InvoiceUpdateFrancais(BaseModel):
+class InvoiceUpdate_transactionFrancais(BaseModel):
     id_immeuble: Optional[int] = None
-    categorie: Optional[str] = None
+    type_transaction: Optional[str] = None
     montant: Optional[float] = None
-    date: Optional[str] = None
-    no_facture: Optional[str] = None
+    date_transaction: Optional[str] = None
+    no_transaction: Optional[str] = None
     source: Optional[str] = None
-    pdf_facture: Optional[str] = None
-    type_paiement: Optional[str] = None
+    pdf_transaction: Optional[str] = None
+    methode_paiement: Optional[str] = None
     notes: Optional[str] = None
 
 class LeaseCreateFrancais(BaseModel):
     id_locataire: int
-    date_debut: str
-    date_fin: str
+    date_transaction_debut: str
+    date_transaction_fin: str
     prix_loyer: float
     methode_paiement: str = "Virement bancaire"
     pdf_bail: str = ""
 
-class LeaseUpdateFrancais(BaseModel):
+class LeaseUpdate_transactionFrancais(BaseModel):
     id_locataire: Optional[int] = None
-    date_debut: Optional[str] = None
-    date_fin: Optional[str] = None
+    date_transaction_debut: Optional[str] = None
+    date_transaction_fin: Optional[str] = None
     prix_loyer: Optional[float] = None
     methode_paiement: Optional[str] = None
     pdf_bail: Optional[str] = None
@@ -273,14 +269,14 @@ async def create_lease(lease_data: LeaseCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.put("/api/leases/{lease_id}")
-async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
+async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transactionFrancais):
     """Mettre à jour un bail"""
     try:
         lease_dict = lease_data.dict(exclude_unset=True)
-        updated_lease = db_service.update_lease(lease_id, lease_dict)
-        if not updated_lease:
+        update_transactiond_lease = db_service.update_transaction_lease(lease_id, lease_dict)
+        if not update_transactiond_lease:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
-        return {"data": updated_lease, "message": "Bail mis à jour avec succès"}
+        return {"data": update_transactiond_lease, "message": "Bail mis à jour avec succès"}
     except Exception as e:
         print(f"Erreur lors de la mise à jour du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
@@ -423,19 +419,19 @@ async def create_building(building_data: BuildingCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'immeuble: {str(e)}")
 
 @app.put("/api/buildings/{building_id}")
-async def update_building(building_id: int, building_data: BuildingUpdateFrancais):
+async def update_transaction_building(building_id: int, building_data: BuildingUpdate_transactionFrancais):
     """Mettre à jour un immeuble existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_dict = building_data.dict(exclude_unset=True)
+        update_transaction_dict = building_data.dict(exclude_unset=True)
         
         # Mettre à jour l'immeuble via le service SQLite
-        updated_building = db_service.update_building(building_id, update_dict)
+        update_transactiond_building = db_service.update_transaction_building(building_id, update_transaction_dict)
         
-        if not updated_building:
+        if not update_transactiond_building:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
         
-        return updated_building
+        return update_transactiond_building
     except HTTPException:
         raise
     except Exception as e:
@@ -497,20 +493,20 @@ async def create_tenant(tenant_data: TenantCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création du locataire: {str(e)}")
 
 @app.put("/api/tenants/{tenant_id}")
-async def update_tenant(tenant_id: int, tenant_data: TenantUpdateFrancais):
+async def update_transaction_tenant(tenant_id: int, tenant_data: TenantUpdate_transactionFrancais):
     """Mettre à jour un locataire existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_dict = tenant_data.dict(exclude_unset=True)
+        update_transaction_dict = tenant_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        updated_tenant = db_service.update_tenant(tenant_id, update_dict)
+        update_transactiond_tenant = db_service.update_transaction_tenant(tenant_id, update_transaction_dict)
         
-        if not updated_tenant:
+        if not update_transactiond_tenant:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
         
         print(f"Locataire mis à jour: {tenant_id}")
-        return {"data": updated_tenant}
+        return {"data": update_transactiond_tenant}
     except HTTPException:
         raise
     except Exception as e:
@@ -653,26 +649,26 @@ async def create_tenant_with_lease(data: dict):
         print(f"🔍 DEBUG - leaseStartDate: {lease_data.get('leaseStartDate')}")
         print(f"🔍 DEBUG - leaseEndDate: {lease_data.get('leaseEndDate')}")
         
-        # Supprimer les valeurs None/vides SAUF pour les dates obligatoires
+        # Supprimer les valeurs None/vides SAUF pour les date_transactions obligatoires
         lease_data_cleaned = {k: v for k, v in lease_data.items() if v is not None and v != ""}
         
         # Debug des données après nettoyage
         print(f"🔍 DEBUG - lease_data après nettoyage: {lease_data_cleaned}")
         
-        # Vérifier que les dates obligatoires sont présentes
+        # Vérifier que les date_transactions obligatoires sont présentes
         if not lease_data_cleaned.get('leaseStartDate'):
             print(f"❌ ERREUR: leaseStartDate manquant dans lease_data")
-            raise HTTPException(status_code=400, detail="La date de début du bail est obligatoire")
+            raise HTTPException(status_code=400, detail="La date_transaction de début du bail est obligatoire")
         
         if not lease_data_cleaned.get('leaseEndDate'):
             print(f"❌ ERREUR: leaseEndDate manquant dans lease_data")
-            raise HTTPException(status_code=400, detail="La date de fin du bail est obligatoire")
+            raise HTTPException(status_code=400, detail="La date_transaction de fin du bail est obligatoire")
         
         # Créer le bail via le service
         lease_data_francais = {
             "id_locataire": tenant_id,
-            "date_debut": lease_data_cleaned.get("leaseStartDate"),
-            "date_fin": lease_data_cleaned.get("leaseEndDate"),
+            "date_transaction_debut": lease_data_cleaned.get("leaseStartDate"),
+            "date_transaction_fin": lease_data_cleaned.get("leaseEndDate"),
             "prix_loyer": lease_data_cleaned.get("rentAmount", 0),
             "methode_paiement": lease_data_cleaned.get("paymentMethod", "Virement bancaire"),
             "pdf_bail": lease_data_cleaned.get("pdfLease", "")
@@ -877,13 +873,13 @@ async def create_building_report(report_data: dict):
         
         if existing_report:
             # Mettre à jour le rapport existant via SQLite
-            updated_report = db_service.update_building_report(existing_report["id"], report_data)
+            update_transactiond_report = db_service.update_transaction_building_report(existing_report["id"], report_data)
         else:
             # Créer un nouveau rapport via SQLite
-            updated_report = db_service.create_building_report(report_data)
+            update_transactiond_report = db_service.create_building_report(report_data)
         
         print(f"Rapport immeuble sauvegardé: {building_id} - {year}")
-        return {"data": updated_report}
+        return {"data": update_transactiond_report}
     except Exception as e:
         print(f"Erreur lors de la sauvegarde du rapport d'immeuble: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la sauvegarde du rapport d'immeuble: {str(e)}")
@@ -1046,7 +1042,7 @@ async def list_documents():
                     files.append({
                         "filename": filename,
                         "size": os.path.getsize(file_path),
-                        "uploaded_at": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat()
+                        "uploaded_at": date_transactiontime.fromtimestamp(os.path.getctime(file_path)).isoformat()
                     })
         
         return {"documents": files}
@@ -1159,11 +1155,11 @@ async def create_unit(unit_data: UnitCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'unité: {str(e)}")
 
 @app.put("/api/units/{unit_id}")
-async def update_unit(unit_id: int, unit_data: UnitUpdateFrancais):
+async def update_transaction_unit(unit_id: int, unit_data: UnitUpdate_transactionFrancais):
     """Mettre à jour une unité avec le format français"""
     try:
         unit_dict = unit_data.dict(exclude_unset=True)
-        unit = db_service.update_unit(unit_id, unit_dict)
+        unit = db_service.update_transaction_unit(unit_id, unit_dict)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"unit": unit, "message": "Unité mise à jour avec succès"}
@@ -1191,104 +1187,104 @@ async def delete_unit(unit_id: int):
 # ROUTES POUR LES FACTURES
 # ========================================
 
-@app.get("/api/invoices")
-async def get_invoices():
-    """Récupérer toutes les factures"""
+@app.get("/api/transactions")
+async def get_transactions():
+    """Récupérer toutes les transactions"""
     try:
-        invoices = db_service.get_invoices()
+        transactions = db_service.get_transactions()
         return {"data": invoices}
     except Exception as e:
-        print(f"Erreur lors du chargement des factures: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures: {str(e)}")
+        print(f"Erreur lors du chargement des transactions: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions: {str(e)}")
 
-@app.get("/api/invoices/{invoice_id}")
-async def get_invoice(invoice_id: int):
-    """Récupérer une facture spécifique par ID"""
+@app.get("/api/transactions/{transaction_id}")
+async def get_transaction(transaction_id: int):
+    """Récupérer une transaction spécifique par ID"""
     try:
-        invoice = db_service.get_invoice(invoice_id)
+        transaction = db_service.get_transaction(transaction_id)
         if not invoice:
-            raise HTTPException(status_code=404, detail="Facture non trouvée")
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
         return {"data": invoice}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la récupération de la facture: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la facture: {str(e)}")
+        print(f"Erreur lors de la récupération de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la transaction: {str(e)}")
 
-@app.post("/api/invoices")
-async def create_invoice(invoice_data: InvoiceCreateFrancais):
-    """Créer une nouvelle facture avec le format français"""
+@app.post("/api/transactions")
+async def create_transaction(transaction_data: InvoiceCreateFrancais):
+    """Créer une nouvelle transaction avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        invoice_dict = invoice_data.dict()
+        invoice_dict = transaction_data.dict()
         
-        # Créer la facture via le service SQLite
-        new_invoice = db_service.create_invoice(invoice_dict)
+        # Créer la transaction via le service SQLite
+        new_transaction = db_service.create_transaction(invoice_dict)
         
         return {"data": new_invoice}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la création de la facture: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la facture: {str(e)}")
+        print(f"Erreur lors de la création de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
 
-@app.put("/api/invoices/{invoice_id}")
-async def update_invoice(invoice_id: int, invoice_data: InvoiceUpdateFrancais):
-    """Mettre à jour une facture existante avec le format français"""
+@app.put("/api/transactions/{transaction_id}")
+async def update_transaction_transaction(transaction_id: int, transaction_data: InvoiceUpdate_transactionFrancais):
+    """Mettre à jour une transaction existante avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_dict = invoice_data.dict(exclude_unset=True)
+        update_transaction_dict = transaction_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        updated_invoice = db_service.update_invoice(invoice_id, update_dict)
+        update_transactiond_transaction = db_service.update_transaction_transaction(transaction_id, update_transaction_dict)
         
-        if not updated_invoice:
-            raise HTTPException(status_code=404, detail="Facture non trouvée")
+        if not update_transactiond_invoice:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
         
-        print(f"✅ Facture mise à jour: {updated_invoice.get('invoiceNumber')}")
-        return {"data": updated_invoice}
+        print(f"✅ Transaction mise à jour: {update_transactiond_invoice.get('invoiceNumber')}")
+        return {"data": update_transactiond_invoice}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la mise à jour de la facture: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la facture: {str(e)}")
+        print(f"Erreur lors de la mise à jour de la transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la transaction: {str(e)}")
 
-@app.delete("/api/invoices/{invoice_id}")
-async def delete_invoice(invoice_id: int):
-    """Supprimer une facture"""
+@app.delete("/api/transactions/{transaction_id}")
+async def delete_transaction(transaction_id: int):
+    """Supprimer une transaction"""
     try:
-        # Supprimer la facture via le service SQLite
-        success = db_service.delete_invoice(invoice_id)
+        # Supprimer la transaction via le service SQLite
+        success = db_service.delete_transaction(transaction_id)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Facture non trouvée")
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
         
-        return {"message": "Facture supprimée avec succès"}
+        return {"message": "Transaction supprimée avec succès"}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erreur lors de la suppression de la facture: {e}")
+        print(f"Erreur lors de la suppression de la transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
-@app.get("/api/invoices/building/{building_id}")
+@app.get("/api/transactions/building/{building_id}")
 async def get_building_invoices(building_id: int):
-    """Récupérer toutes les factures d'un immeuble spécifique"""
+    """Récupérer toutes les transactions d'un immeuble spécifique"""
     try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table factures
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table transactions
         return {"data": []}
     except Exception as e:
-        print(f"Erreur lors du chargement des factures d'immeuble: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures d'immeuble: {str(e)}")
+        print(f"Erreur lors du chargement des transactions d'immeuble: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions d'immeuble: {str(e)}")
 
-@app.get("/api/invoices/building/{building_id}/category/{category}")
+@app.get("/api/transactions/building/{building_id}/category/{category}")
 async def get_building_category_invoices(building_id: int, category: str):
-    """Récupérer toutes les factures d'une catégorie spécifique pour un immeuble"""
+    """Récupérer toutes les transactions d'une catégorie spécifique pour un immeuble"""
     try:
-        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table factures
+        # Pour l'instant, retourner une liste vide car nous n'avons pas encore de table transactions
         return {"data": []}
     except Exception as e:
-        print(f"Erreur lors du chargement des factures de catégorie: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des factures de catégorie: {str(e)}")
+        print(f"Erreur lors du chargement des transactions de catégorie: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des transactions de catégorie: {str(e)}")
 
 # ========================================
 # ENDPOINTS DE SAUVEGARDE
@@ -1375,7 +1371,7 @@ async def stop_automatic_backups():
 async def run_validation():
     """Exécuter une validation complète des données"""
     try:
-        results = data_validator.validate_all()
+        results = data_validator.validate_transaction_all()
         
         # Compter les résultats par niveau
         counts = {
@@ -1432,7 +1428,7 @@ async def get_validation_health():
     """Obtenir un résumé de la santé des données"""
     try:
         # Validation rapide
-        results = data_validator.validate_all()
+        results = data_validator.validate_transaction_all()
         
         # Compter les problèmes critiques
         critical_issues = [r for r in results if r.level == ValidationLevel.CRITICAL]
@@ -1568,19 +1564,19 @@ async def get_monitoring_status():
 
 
 @app.put("/api/leases/{lease_id}")
-async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
+async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transactionFrancais):
     """Mettre à jour un bail existant"""
     try:
         # Convertir les données en dictionnaire
-        update_data = lease_data.dict(exclude_unset=True)
+        update_transaction_data = lease_data.dict(exclude_unset=True)
         
         # Mettre à jour le bail
-        updated_lease = db_service.update_lease(lease_id, update_data)
+        update_transactiond_lease = db_service.update_transaction_lease(lease_id, update_transaction_data)
         
-        if updated_lease:
+        if update_transactiond_lease:
             return {
                 "message": "Bail mis à jour avec succès",
-                "lease": updated_lease
+                "lease": update_transactiond_lease
             }
         else:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
@@ -1590,7 +1586,7 @@ async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
-    return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
+    return {"message": "Test endpoint fonctionne", "timestamp": date_transactiontime.now().isoformat()}
 
 
 if __name__ == "__main__":
