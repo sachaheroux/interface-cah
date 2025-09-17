@@ -71,11 +71,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         .slice(1) // Prendre toutes les assignations sauf la première
         .map((assignment, index) => ({
           id: `renewal_${assignment.id}`,
-          startDate: assignment.leaseStartDate || assignment.startDate || '',
-          endDate: assignment.leaseEndDate || assignment.endDate || '',
-          monthlyRent: assignment.rentAmount || 0,
-          paymentMethod: 'Virement bancaire', // Valeur par défaut
-          renewalPdf: ''
+          date_debut: assignment.leaseStartDate || assignment.startDate || '',
+          date_fin: assignment.leaseEndDate || assignment.endDate || '',
+          prix_loyer: assignment.rentAmount || 0,
+          methode_paiement: 'Virement bancaire', // Valeur par défaut
+          pdf_bail: ''
         }))
       
       console.log('🔄 Renouvellements préparés:', renewalsData)
@@ -94,11 +94,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           console.log('✅ Unité trouvée:', unit)
           
           const leaseData = {
-            startDate: baseAssignment.leaseStartDate || baseAssignment.startDate || '',
-            endDate: baseAssignment.leaseEndDate || baseAssignment.endDate || '',
-            monthlyRent: baseAssignment.rentAmount || 0,
-            paymentMethod: 'Virement bancaire', // Valeur par défaut
-            leasePdf: ''
+            date_debut: baseAssignment.leaseStartDate || baseAssignment.startDate || '',
+            date_fin: baseAssignment.leaseEndDate || baseAssignment.endDate || '',
+            prix_loyer: baseAssignment.rentAmount || 0,
+            methode_paiement: 'Virement bancaire', // Valeur par défaut
+            pdf_bail: ''
           }
           
           console.log('📋 Données de bail de base extraites:', leaseData)
@@ -139,11 +139,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
       if (activeAssignment) {
         console.log('✅ Assignation active trouvée:', activeAssignment)
         return {
-          startDate: activeAssignment.leaseStartDate || '',
-          endDate: activeAssignment.leaseEndDate || '',
-          monthlyRent: activeAssignment.rentAmount || 0,
-          paymentMethod: 'Virement bancaire', // Valeur par défaut
-          leasePdf: '',
+          date_debut: activeAssignment.leaseStartDate || '',
+          date_fin: activeAssignment.leaseEndDate || '',
+          prix_loyer: activeAssignment.rentAmount || 0,
+          methode_paiement: 'Virement bancaire', // Valeur par défaut
+          pdf_bail: '',
         }
       } else {
         console.log('❌ Aucune assignation active trouvée pour le locataire:', tenantId)
@@ -518,12 +518,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     // Préparer les données de bail
     const leaseData = {
       unitId: parseInt(formData.id_unite),
-      moveInDate: formData.lease?.startDate || null,
-      moveOutDate: formData.lease?.endDate || null,
-      rentAmount: parseFloat(formData.lease?.monthlyRent) || 0,
+      moveInDate: formData.lease?.date_debut || null,
+      moveOutDate: formData.lease?.date_fin || null,
+      rentAmount: parseFloat(formData.lease?.prix_loyer) || 0,
       depositAmount: 0, // Pas de champ dans le formulaire actuel
-      leaseStartDate: formData.lease?.startDate || null,
-      leaseEndDate: formData.lease?.endDate || null,
+      leaseStartDate: formData.lease?.date_debut || null,
+      leaseEndDate: formData.lease?.date_fin || null,
       rentDueDay: 1, // Valeur par défaut
       notes: formData.notes.trim()
     }
@@ -571,7 +571,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         console.log('🏠 Création des renouvellements...')
         
         for (const renewal of formData.leaseRenewals) {
-          if (renewal.startDate && renewal.endDate) {
+          if (renewal.date_debut && renewal.date_fin) {
             console.log('🔄 Création du renouvellement:', renewal)
             
             const renewalResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
@@ -582,12 +582,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               body: JSON.stringify({
                 tenantId: tenant.id_locataire,
                 unitId: parseInt(formData.unitId),
-                moveInDate: renewal.startDate,
-                moveOutDate: renewal.endDate,
-                rentAmount: renewal.monthlyRent || 0,
+                moveInDate: renewal.date_debut,
+                moveOutDate: renewal.date_fin,
+                rentAmount: renewal.prix_loyer || 0,
                 depositAmount: 0,
-                leaseStartDate: renewal.startDate,
-                leaseEndDate: renewal.endDate,
+                leaseStartDate: renewal.date_debut,
+                leaseEndDate: renewal.date_fin,
                 rentDueDay: 1,
                 notes: `Renouvellement de bail - ${renewal.renewalPdf || ''}`
               })
@@ -657,7 +657,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
           console.log('🔄 Création des renouvellements:', formData.leaseRenewals)
           
           for (const renewal of formData.leaseRenewals) {
-            if (renewal.startDate && renewal.endDate) {
+            if (renewal.date_debut && renewal.date_fin) {
               try {
                 const renewalResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/assignments`, {
                   method: 'POST',
@@ -667,12 +667,12 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                   body: JSON.stringify({
                     tenantId: result.data.tenant.id_locataire,
                     unitId: formData.unitId,
-                    moveInDate: renewal.startDate,
-                    moveOutDate: renewal.endDate,
-                    rentAmount: renewal.monthlyRent || 0,
+                    moveInDate: renewal.date_debut,
+                    moveOutDate: renewal.date_fin,
+                    rentAmount: renewal.prix_loyer || 0,
                     depositAmount: 0,
-                    leaseStartDate: renewal.startDate,
-                    leaseEndDate: renewal.endDate,
+                    leaseStartDate: renewal.date_debut,
+                    leaseEndDate: renewal.date_fin,
                     rentDueDay: 1,
                     notes: `Renouvellement de bail - ${renewal.renewalPdf || ''}`
                   })
