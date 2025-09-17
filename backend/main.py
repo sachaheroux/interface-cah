@@ -47,49 +47,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Constantes pour les transactions
-TRANSACTION_TYPES = [
-    "loyer",
-    "transaction", 
-    "maintenance",
-    "revenus",
-    "depenses",
-    "investissement",
-    "frais",
-    "autre"
-]
-
-TRANSACTION_PAYMENT_METHODS = [
-    "virement",
-    "cheque", 
-    "especes",
-    "carte",
-    "autre"
-]
-
-TRANSACTION_STATUSES = [
-    "en_attente",
-    "paye",
-    "annule"
-]
 
 # ========================================
 # ENDPOINT POUR LES CONSTANTES (défini tôt pour éviter les erreurs)
 # ========================================
 
-@app.get("/api/transactions/constants")
-async def get_transaction_constants():
-    """Récupérer les constantes pour les transactions (types, méthodes de paiement, statuts, etc.)"""
-    try:
-        print("🔧 Récupération des constantes de transactions...")
-        return {
-            "types": TRANSACTION_TYPES,
-            "payment_methods": TRANSACTION_PAYMENT_METHODS,
-            "statuses": TRANSACTION_STATUSES
-        }
-    except Exception as e:
-        print(f"❌ Erreur lors de la récupération des constantes de transactions: {e}")
-        raise HTTPException(status_code=500, detail="Erreur interne du serveur")
 
 # Modèles Pydantic pour la validation des données
 
