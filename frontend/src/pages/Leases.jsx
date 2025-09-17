@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FileText, Plus, Search, Calendar, DollarSign, User, Home, Edit, Trash2 } from 'lucide-react'
+import { FileText, Plus, Search, Calendar, DollarSign, User, Home, Edit, Trash2, Eye } from 'lucide-react'
 import LeaseForm from '../components/LeaseForm'
 
 export default function Leases() {
