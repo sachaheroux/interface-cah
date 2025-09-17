@@ -39,7 +39,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
       // Une assignation est active si la date d'aujourd'hui est entre la date de début et de fin
       const today = new Date()
       const activeAssignment = allAssignments.find(a => {
-        if (parseInt(a.tenantId) !== parseInt(tenant.id)) return false
+        if (parseInt(a.tenantId) !== parseInt(tenant.id_locataire)) return false
         
         const startDate = a.leaseStartDate ? new Date(a.leaseStartDate) : null
         const endDate = a.leaseEndDate ? new Date(a.leaseEndDate) : null
@@ -62,7 +62,7 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
       })
       
       console.log('🔍 DEBUG - TenantDetails loadTenantUnit:', {
-        tenantId: tenant.id,
+        tenantId: tenant.id_locataire,
         allAssignments: allAssignments.map(a => ({ id: a.id, tenantId: a.tenantId, unitId: a.unitId })),
         activeAssignment: activeAssignment
       })
@@ -133,9 +133,9 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
               <User className="h-8 w-8 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{tenant.name}</h2>
-              <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getTenantStatusColor(tenant.status)}`}>
-                {getTenantStatusLabel(tenant.status)}
+              <h2 className="text-2xl font-bold text-gray-900">{tenant.nom} {tenant.prenom}</h2>
+              <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getTenantStatusColor(tenant.statut)}`}>
+                {getTenantStatusLabel(tenant.statut)}
               </span>
             </div>
           </div>
@@ -208,12 +208,12 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
                   </div>
                 )}
                 
-                {tenant.phone && (
+                {tenant.telephone && (
                   <div className="flex items-center">
                     <Phone className="h-5 w-5 text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Téléphone</p>
-                      <p className="text-gray-900">{tenant.phone}</p>
+                      <p className="text-gray-900">{tenant.telephone}</p>
                     </div>
                   </div>
                 )}

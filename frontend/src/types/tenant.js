@@ -1,10 +1,10 @@
 // Types et modèles pour les locataires
 
 export const TenantStatus = {
-  ACTIVE: 'active',
-  PENDING: 'pending',
-  INACTIVE: 'inactive',
-  FORMER: 'former'
+  ACTIVE: 'actif',
+  PENDING: 'en_attente',
+  INACTIVE: 'inactif',
+  FORMER: 'ancien'
 }
 
 export const defaultTenant = {

@@ -67,9 +67,9 @@ export default function Tenants() {
         filtered = filtered.filter(tenant => {
           if (!tenant || typeof tenant !== 'object') return false
           
-          const name = tenant.name || ''
+          const name = `${tenant.nom || ''} ${tenant.prenom || ''}`.trim()
           const email = tenant.email || ''
-          const phone = tenant.phone || ''
+          const phone = tenant.telephone || ''
           const building = tenant.building || ''
           
           const searchLower = searchTerm.toLowerCase()
@@ -87,7 +87,7 @@ export default function Tenants() {
       if (statusFilter && statusFilter.trim()) {
         filtered = filtered.filter(tenant => {
           if (!tenant || typeof tenant !== 'object') return false
-          return tenant.status === statusFilter
+          return tenant.statut === statusFilter
         })
       }
 
@@ -147,15 +147,15 @@ export default function Tenants() {
   }
 
   const handleDeleteTenant = async (tenant) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le locataire "${tenant.name}" ?`)) {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le locataire "${tenant.nom} ${tenant.prenom}" ?`)) {
       try {
-        console.log(`🗑️ Suppression du locataire: ${tenant.name} (ID: ${tenant.id})`)
+        console.log(`🗑️ Suppression du locataire: ${tenant.nom} ${tenant.prenom} (ID: ${tenant.id_locataire})`)
         
         // Étape 1: Supprimer d'abord toutes les assignations du locataire
         try {
-          console.log(`🔗 Suppression des assignations pour le locataire ${tenant.id}...`)
-          await assignmentsService.removeTenantAssignment(tenant.id)
-          console.log(`✅ Assignations supprimées pour le locataire ${tenant.id}`)
+          console.log(`🔗 Suppression des assignations pour le locataire ${tenant.id_locataire}...`)
+          await assignmentsService.removeTenantAssignment(tenant.id_locataire)
+          console.log(`✅ Assignations supprimées pour le locataire ${tenant.id_locataire}`)
         } catch (assignmentError) {
           console.warn(`⚠️ Erreur lors de la suppression des assignations:`, assignmentError)
           // Continuer même si la suppression des assignations échoue
@@ -163,25 +163,25 @@ export default function Tenants() {
         
         // Étape 2: Supprimer le locataire lui-même
         console.log(`👤 Suppression du locataire de la base de données...`)
-        await tenantsService.deleteTenant(tenant.id)
+        await tenantsService.deleteTenant(tenant.id_locataire)
         
         // Étape 3: Mettre à jour l'interface
-        setTenants(prev => prev.filter(t => t.id !== tenant.id))
+        setTenants(prev => prev.filter(t => t.id_locataire !== tenant.id_locataire))
         setShowDetails(false)
         
-        console.log(`✅ Locataire ${tenant.name} supprimé avec succès`)
+        console.log(`✅ Locataire ${tenant.nom} ${tenant.prenom} supprimé avec succès`)
         
         // Étape 4: Déclencher un événement pour actualiser les autres vues
         window.dispatchEvent(new CustomEvent('tenantDeleted', { 
-          detail: { tenantId: tenant.id, tenantName: tenant.name } 
+          detail: { tenantId: tenant.id_locataire, tenantName: `${tenant.nom} ${tenant.prenom}` } 
         }))
         
       } catch (error) {
         console.error('❌ Erreur lors de la suppression:', error)
-        alert(`Erreur lors de la suppression du locataire "${tenant.name}". Vérifiez la console pour plus de détails.`)
+        alert(`Erreur lors de la suppression du locataire "${tenant.nom} ${tenant.prenom}". Vérifiez la console pour plus de détails.`)
         
         // En cas d'erreur API majeure, on supprime localement quand même
-        setTenants(prev => prev.filter(t => t.id !== tenant.id))
+        setTenants(prev => prev.filter(t => t.id_locataire !== tenant.id_locataire))
         setShowDetails(false)
       }
     }
@@ -271,7 +271,7 @@ export default function Tenants() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.isArray(filteredTenants) && filteredTenants.map((tenant) => (
-            <div key={tenant.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={tenant.id_locataire} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               {/* En-tête du locataire */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
@@ -279,9 +279,9 @@ export default function Tenants() {
                     <Users className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="text-lg font-semibold text-gray-900">{tenant.name}</h4>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTenantStatusColor(tenant.status)}`}>
-                      {getTenantStatusLabel(tenant.status)}
+                    <h4 className="text-lg font-semibold text-gray-900">{tenant.nom} {tenant.prenom}</h4>
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTenantStatusColor(tenant.statut)}`}>
+                      {getTenantStatusLabel(tenant.statut)}
                     </span>
                   </div>
                 </div>
@@ -296,10 +296,10 @@ export default function Tenants() {
                   </div>
                 )}
                 
-                {tenant.phone && (
+                {tenant.telephone && (
                   <div className="flex items-center text-gray-600">
                     <Phone className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{tenant.phone}</span>
+                    <span className="text-sm">{tenant.telephone}</span>
                   </div>
                 )}
 

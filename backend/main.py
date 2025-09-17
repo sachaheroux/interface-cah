@@ -518,25 +518,25 @@ async def get_assignments():
         print(f"Erreur lors du chargement des assignations: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
-@app.post("/api/tenants/create-with-assignment")
-async def create_tenant_with_assignment(data: dict):
-    """Créer un locataire avec son assignation - LOGIQUE SIMPLE ET FIABLE"""
+@app.post("/api/tenants/create-with-lease")
+async def create_tenant_with_lease(data: dict):
+    """Créer un locataire avec son bail - LOGIQUE SIMPLE ET FIABLE"""
     try:
-        print(f"🔍 DEBUG - create_tenant_with_assignment reçu: {data}")
+        print(f"🔍 DEBUG - create_tenant_with_lease reçu: {data}")
         
-        # NOUVEAU FORMAT : data contient {tenant: {...}, assignment: {...}}
+        # NOUVEAU FORMAT : data contient {tenant: {...}, lease: {...}}
         tenant_data = data.get("tenant", {})
-        assignment_data = data.get("assignment", {})
+        lease_data = data.get("lease", {})
         
         # Fallback pour l'ancien format
-        if not tenant_data and not assignment_data:
+        if not tenant_data and not lease_data:
             tenant_data = {
                 "name": data.get("name", "").strip(),
                 "email": data.get("email", "").strip(),
                 "phone": data.get("phone", "").strip(),
                 "notes": data.get("notes", "")
             }
-            assignment_data = {
+            lease_data = {
                 "unitId": data.get("unitId"),
                 "moveInDate": data.get("moveInDate"),
                 "moveOutDate": data.get("moveOutDate"),
@@ -563,13 +563,13 @@ async def create_tenant_with_assignment(data: dict):
             print(f"❌ Validation échouée: nom='{nom}', prenom='{prenom}', name='{name}'")
             raise HTTPException(status_code=400, detail="Le nom et prénom du locataire sont obligatoires")
         
-        if not assignment_data.get("unitId"):
+        if not lease_data.get("unitId"):
             raise HTTPException(status_code=400, detail="L'unité est obligatoire")
         
         # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
         # Mapper les champs anglais vers français pour le service
         tenant_data_francais = {
-            "id_unite": assignment_data.get("unitId"),
+            "id_unite": lease_data.get("unitId"),
             "nom": tenant_data.get("nom", ""),
             "prenom": tenant_data.get("prenom", ""),
             "email": tenant_data.get("email", ""),
@@ -582,28 +582,38 @@ async def create_tenant_with_assignment(data: dict):
         tenant_id = created_tenant["id"]
         print(f"✅ Locataire créé avec ID: {tenant_id}")
         
-        # 2. CRÉER L'ASSIGNATION avec les données de bail
-        print(f"🏠 Création de l'assignation pour l'unité: {assignment_data['unitId']}")
-        assignment_data["tenantId"] = tenant_id
+        # 2. CRÉER LE BAIL avec les données de bail
+        print(f"🏠 Création du bail pour l'unité: {lease_data['unitId']}")
+        lease_data["tenantId"] = tenant_id
         
         # Debug des données avant nettoyage
-        print(f"🔍 DEBUG - assignment_data avant nettoyage: {assignment_data}")
+        print(f"🔍 DEBUG - lease_data avant nettoyage: {lease_data}")
         
         # Supprimer les valeurs None/vides
-        assignment_data = {k: v for k, v in assignment_data.items() if v is not None and v != ""}
+        lease_data = {k: v for k, v in lease_data.items() if v is not None and v != ""}
         
         # Debug des données après nettoyage
-        print(f"🔍 DEBUG - assignment_data après nettoyage: {assignment_data}")
+        print(f"🔍 DEBUG - lease_data après nettoyage: {lease_data}")
         
-        created_assignment = db_service.create_assignment_with_validation(assignment_data)
-        print(f"✅ Assignation créée avec ID: {created_assignment['id']}")
-        print(f"🔍 DEBUG - Assignation créée complète: {created_assignment}")
+        # Créer le bail via le service
+        lease_data_francais = {
+            "id_locataire": tenant_id,
+            "date_debut": lease_data.get("leaseStartDate"),
+            "date_fin": lease_data.get("leaseEndDate"),
+            "prix_loyer": lease_data.get("rentAmount", 0),
+            "methode_paiement": lease_data.get("paymentMethod", "Virement bancaire"),
+            "pdf_bail": lease_data.get("pdfLease", "")
+        }
+        
+        created_lease = db_service.create_lease(lease_data_francais)
+        print(f"✅ Bail créé avec ID: {created_lease['id']}")
+        print(f"🔍 DEBUG - Bail créé complet: {created_lease}")
         
         return {
             "data": {
                 "tenant": created_tenant,
-                "assignment": created_assignment,
-                "message": "Locataire et assignation créés avec succès"
+                "lease": created_lease,
+                "message": "Locataire et bail créés avec succès"
             }
         }
         

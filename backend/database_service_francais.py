@@ -451,6 +451,32 @@ class DatabaseServiceFrancais:
             print(f"❌ Erreur lors de la suppression de la facture {invoice_id}: {e}")
             raise e
     
+    # === MÉTHODES POUR LES BAUX ===
+    
+    def create_lease(self, lease_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Créer un nouveau bail"""
+        try:
+            with self.get_session() as session:
+                # Utiliser directement les données françaises du frontend
+                lease = Bail(
+                    id_locataire=lease_data.get('id_locataire'),
+                    date_debut=datetime.strptime(lease_data.get('date_debut'), '%Y-%m-%d').date() if lease_data.get('date_debut') else None,
+                    date_fin=datetime.strptime(lease_data.get('date_fin'), '%Y-%m-%d').date() if lease_data.get('date_fin') else None,
+                    prix_loyer=lease_data.get('prix_loyer', 0),
+                    methode_paiement=lease_data.get('methode_paiement', 'Virement bancaire'),
+                    pdf_bail=lease_data.get('pdf_bail', '')
+                )
+                
+                session.add(lease)
+                session.commit()
+                session.refresh(lease)
+                
+                print(f"✅ Bail créé: {lease.prix_loyer}$/mois (ID: {lease.id_bail})")
+                return lease.to_dict()
+        except Exception as e:
+            print(f"❌ Erreur lors de la création du bail: {e}")
+            raise e
+    
     # ========================================
     # OPÉRATIONS POUR LES ASSIGNATIONS (COMPATIBILITÉ)
     # ========================================

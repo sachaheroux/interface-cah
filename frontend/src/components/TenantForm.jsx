@@ -157,15 +157,16 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
   useEffect(() => {
     if (tenant) {
       console.log('📋 Chargement des données locataire existant:', {
-        id: tenant.id,
-        name: tenant.name,
+        id_locataire: tenant.id_locataire,
+        nom: tenant.nom,
+        prenom: tenant.prenom,
         lease: tenant.lease,
         leaseRenewal: tenant.leaseRenewal,
         isLeaseDataManuallySet: isLeaseDataManuallySet
       })
       
       // Charger l'unité assignée et les données de bail depuis les assignations
-      loadTenantAssignmentAndLeaseData(tenant.id).then(({ unitData, leaseData, renewalsData }) => {
+      loadTenantAssignmentAndLeaseData(tenant.id_locataire).then(({ unitData, leaseData, renewalsData }) => {
         console.log('📋 Résultat du chargement:', { unitData, leaseData, renewalsData })
         
         // Si pas de données d'assignation ET pas de données de bail dans le tenant, utiliser des valeurs vides
@@ -186,11 +187,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         })
         
         setFormData({
-          nom: tenant.nom || tenant.name?.split(' ')[0] || '',
-          prenom: tenant.prenom || tenant.name?.split(' ').slice(1).join(' ') || '',
+          nom: tenant.nom || '',
+          prenom: tenant.prenom || '',
           email: tenant.email || '',
-          telephone: tenant.telephone || tenant.phone || '',
-          statut: tenant.statut || tenant.status || TenantStatus.ACTIVE,
+          telephone: tenant.telephone || '',
+          statut: tenant.statut || TenantStatus.ACTIVE,
           
           id_unite: unitData?.id || tenant.unitId || tenant.id_unite || '',
           unitInfo: unitData || tenant.unitInfo || null,
@@ -203,7 +204,8 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         })
         
         console.log('✅ FormData mis à jour avec:', {
-          name: tenant.name || '',
+          nom: tenant.nom || '',
+          prenom: tenant.prenom || '',
           unitId: unitData?.id || tenant.unitId || '',
           lease: finalLeaseData,
           renewals: renewalsData
@@ -544,7 +546,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         console.log('📝 Mise à jour du locataire existant...')
         
         // 1. Mettre à jour les infos personnelles du locataire
-        const tenantResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/${tenant.id}`, {
+        const tenantResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants/${tenant.id_locataire}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -578,7 +580,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                tenantId: tenant.id,
+                tenantId: tenant.id_locataire,
                 unitId: parseInt(formData.unitId),
                 moveInDate: renewal.startDate,
                 moveOutDate: renewal.endDate,
@@ -663,7 +665,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
-                    tenantId: result.data.tenant.id,
+                    tenantId: result.data.tenant.id_locataire,
                     unitId: formData.unitId,
                     moveInDate: renewal.startDate,
                     moveOutDate: renewal.endDate,
@@ -873,7 +875,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       {unit.currentTenants.map((tenant, index) => (
                                         <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                          {tenant.name}
+                                          {tenant.nom} {tenant.prenom}
                                         </span>
                                       ))}
                                     </div>
