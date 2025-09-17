@@ -151,11 +151,42 @@ class DatabaseServiceFrancais:
     # ========================================
     
     def get_units(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-        """Récupérer toutes les unités"""
+        """Récupérer toutes les unités avec les informations des locataires"""
         try:
             with self.get_session() as session:
                 units = session.query(Unite).offset(skip).limit(limit).all()
-                return [unit.to_dict() for unit in units]
+                
+                result = []
+                for unit in units:
+                    unit_dict = unit.to_dict()
+                    
+                    # Ajouter les informations de l'immeuble
+                    if unit.immeuble:
+                        unit_dict['immeuble'] = {
+                            'id_immeuble': unit.immeuble.id_immeuble,
+                            'nom_immeuble': unit.immeuble.nom_immeuble,
+                            'adresse': unit.immeuble.adresse
+                        }
+                    
+                    # Ajouter les informations des locataires
+                    if unit.locataires:
+                        unit_dict['locataires'] = []
+                        for locataire in unit.locataires:
+                            locataire_info = {
+                                'id_locataire': locataire.id_locataire,
+                                'nom': locataire.nom,
+                                'prenom': locataire.prenom,
+                                'email': locataire.email,
+                                'telephone': locataire.telephone,
+                                'statut': locataire.statut
+                            }
+                            unit_dict['locataires'].append(locataire_info)
+                    else:
+                        unit_dict['locataires'] = []
+                    
+                    result.append(unit_dict)
+                
+                return result
         except Exception as e:
             print(f"❌ Erreur lors de la récupération des unités: {e}")
             raise e

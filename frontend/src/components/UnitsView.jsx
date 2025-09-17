@@ -492,8 +492,8 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                     <p className="text-sm text-gray-600">{unit.type}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.currentTenants?.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {unit.currentTenants?.length > 0 ? 'Occupée' : 'Libre'}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.locataires?.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {unit.locataires?.length > 0 ? 'Occupée' : 'Libre'}
                 </span>
               </div>
 
@@ -513,24 +513,34 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                 </div>
               )}
 
-              {/* Locataire */}
-              {unit.currentTenants?.length > 0 && (
+              {/* Locataires */}
+              {unit.locataires?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                       <Users className="h-4 w-4 mr-2 text-gray-600" />
                       <span className="text-sm font-medium text-gray-900">Locataires</span>
                     </div>
-                    <span className="text-xs text-gray-500">{unit.currentTenants.length} locataire{unit.currentTenants.length > 1 ? 's' : ''}</span>
+                    <span className="text-xs text-gray-500">{unit.locataires.length} locataire{unit.locataires.length > 1 ? 's' : ''}</span>
                   </div>
                   
-                  {/* Liste des locataires avec bouton de suppression pour chaque */}
+                  {/* Liste des locataires */}
                   <div className="space-y-2">
-                    {unit.currentTenants.map((tenant, tenantIndex) => (
-                      <div key={tenantIndex} className="bg-white rounded-md p-2 border border-gray-200">
+                    {unit.locataires.map((tenant, tenantIndex) => (
+                      <div key={tenant.id_locataire} className="bg-white rounded-md p-2 border border-gray-200">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="font-medium text-sm text-gray-900">{tenant.nom} {tenant.prenom}</div>
+                            <div className="flex items-center mt-1">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                tenant.statut === 'actif' ? 'bg-green-100 text-green-800' :
+                                tenant.statut === 'en_attente' ? 'bg-yellow-100 text-yellow-800' :
+                                tenant.statut === 'inactif' ? 'bg-gray-100 text-gray-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {tenant.statut}
+                              </span>
+                            </div>
                             {tenant.email && (
                               <div className="flex items-center mt-1">
                                 <Mail className="h-3 w-3 mr-2 text-gray-400" />
@@ -544,21 +554,6 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                               </div>
                             )}
                           </div>
-                          
-                          {/* Bouton pour retirer ce locataire de cette unité */}
-                          <button
-                            onClick={(event) => handleRemoveFromUnit(
-                              tenant.id_locataire, 
-                              unit.id_unite, 
-                              `${tenant.nom} ${tenant.prenom}`, 
-                              `${unit.adresse_unite}`,
-                              event
-                            )}
-                            className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                            title={`Retirer ${tenant.nom} ${tenant.prenom} de cette unité`}
-                          >
-                            <UserMinus className="h-4 w-4" />
-                          </button>
                         </div>
                       </div>
                     ))}

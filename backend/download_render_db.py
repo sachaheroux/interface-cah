@@ -74,6 +74,7 @@ def export_database_via_api():
         units = get_data_from_api("/api/units")
         tenants = get_data_from_api("/api/tenants")
         invoices = get_data_from_api("/api/invoices")
+        leases = get_data_from_api("/api/leases")
         
         # Insérer les données dans la base locale
         if buildings:
@@ -91,6 +92,10 @@ def export_database_via_api():
         if invoices:
             insert_invoices(cursor, invoices)
             print(f"✅ {len(invoices)} factures exportées")
+            
+        if leases:
+            insert_leases(cursor, leases)
+            print(f"✅ {len(leases)} baux exportés")
         
         conn.commit()
         conn.close()
@@ -240,6 +245,31 @@ def insert_invoices(cursor, invoices):
             invoice.get('notes'),
             invoice.get('date_creation'),
             invoice.get('date_modification')
+        ))
+
+def insert_leases(cursor, leases):
+    """Insérer les baux dans la base locale"""
+    for lease in leases:
+        # Vérifier que lease est un dictionnaire
+        if not isinstance(lease, dict):
+            print(f"⚠️  Bail ignoré (pas un dictionnaire): {lease}")
+            continue
+            
+        cursor.execute("""
+            INSERT OR REPLACE INTO baux (
+                id_bail, id_locataire, date_debut, date_fin, prix_loyer,
+                methode_paiement, pdf_bail, date_creation, date_modification
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            lease.get('id_bail'),
+            lease.get('id_locataire'),
+            lease.get('date_debut'),
+            lease.get('date_fin'),
+            lease.get('prix_loyer'),
+            lease.get('methode_paiement'),
+            lease.get('pdf_bail'),
+            lease.get('date_creation'),
+            lease.get('date_modification')
         ))
 
 def show_database_info():
