@@ -27,30 +27,18 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   const [showAddUnitForm, setShowAddUnitForm] = useState(false)
   const [selectedBuildingForUnit, setSelectedBuildingForUnit] = useState(null)
 
-  // Charger les assignations depuis le backend
-  const loadAssignments = async () => {
+  // Charger les locataires depuis le backend
+  const loadTenants = async () => {
     try {
-      console.log('🔄 DEBUG - Début chargement assignations...')
       setLoadingAssignments(true)
-      const response = await assignmentsService.getAssignments()
-      const assignmentsData = response.data || []
-      console.log('✅ DEBUG - Assignments loaded from backend:', {
-        count: assignmentsData.length,
-        assignments: assignmentsData
-      })
-      setAssignments(assignmentsData)
+      const response = await tenantsService.getTenants()
+      const tenantsData = response.data || []
+      setAssignments(tenantsData) // Utiliser les locataires comme "assignments"
     } catch (error) {
-      console.error('❌ DEBUG - Error loading assignments:', error)
-      // Fallback vers localStorage
-      const localAssignments = JSON.parse(localStorage.getItem('unitTenantAssignments') || '[]')
-      console.log('⚠️ DEBUG - Fallback to localStorage:', {
-        count: localAssignments.length,
-        assignments: localAssignments
-      })
-      setAssignments(localAssignments)
+      console.error('Error loading tenants:', error)
+      setAssignments([])
     } finally {
       setLoadingAssignments(false)
-      console.log('✅ DEBUG - Fin chargement assignations')
     }
   }
 
@@ -76,83 +64,31 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         unitsFromRender = []
       }
       
-      // 3. Calculer le statut et ajouter les currentTenants à chaque unité
+      // 3. Calculer le statut et ajouter les locataires à chaque unité
       const unitsWithStatus = unitsFromRender.map(unit => {
-        const unitAssignments = assignments.filter(a => parseInt(a.unitId) === unit.id)
+        // Trouver les locataires pour cette unité
+        const unitTenants = assignments.filter(tenant => tenant.id_unite === unit.id_unite)
         
-        console.log(`🐛 DEBUG - Unité ${unit.id} (${unit.unitNumber}):`, {
-          unitAssignments: unitAssignments,
-          assignmentsCount: unitAssignments.length,
-          fullUnitAssignments: JSON.stringify(unitAssignments, null, 2)
-        })
-        
-        // Filtrer seulement les assignations actives (date d'aujourd'hui entre début et fin)
-        const today = new Date()
-        const activeAssignments = unitAssignments.filter(a => {
-          const startDate = a.leaseStartDate ? new Date(a.leaseStartDate) : null
-          const endDate = a.leaseEndDate ? new Date(a.leaseEndDate) : null
-          
-          // Si pas de dates, considérer comme inactive
-          if (!startDate || !endDate) return false
-          
-          // Vérifier si aujourd'hui est entre startDate et endDate
-          return today >= startDate && today <= endDate
-        })
-        
-        console.log(`🔍 DEBUG - Unité ${unit.id} assignations actives:`, {
-          total: unitAssignments.length,
-          active: activeAssignments.length,
-          today: today
-        })
-        
-        const currentTenants = activeAssignments.map(a => {
-          // Le backend retourne les données dans tenantData
-          const tenantData = a.tenantData || a.tenant
-          const tenant = {
-            ...tenantData,
-            id: tenantData?.id || a.tenantId
-          }
-          return tenant
-        })
+        const currentTenants = unitTenants.map(tenant => ({
+          id: tenant.id_locataire,
+          nom: tenant.nom,
+          prenom: tenant.prenom,
+          email: tenant.email,
+          telephone: tenant.telephone,
+          statut: tenant.statut
+        }))
         
         // Trouver l'immeuble parent pour obtenir le nom et l'adresse complète
         const parentBuilding = buildings.find(b => b.id_immeuble === unit.id_immeuble)
         const buildingName = parentBuilding?.nom_immeuble || ''
         
-        // Nettoyer l'adresse pour éviter la duplication (titre simple)
-        let simpleAddress = unit.unitAddress || `${unit.unitNumber}`
-        
-        // Si l'adresse contient des numéros dupliqués (ex: "56 56-58-60-62 rue Vachon")
-        // Extraire seulement le numéro de l'unité et le nom de rue
-        if (simpleAddress && simpleAddress.includes(' ')) {
-          const parts = simpleAddress.split(' ')
-          if (parts.length >= 3) {
-            // Vérifier si le deuxième élément contient des tirets (ex: "56-58-60-62")
-            if (parts[1] && parts[1].includes('-')) {
-              // Prendre seulement le premier numéro et tout après le deuxième élément
-              const unitNum = parts[0]
-              const streetPart = parts.slice(2).join(' ')
-              simpleAddress = `${unitNum} ${streetPart}`
-            } else {
-              // Format normal, prendre le premier numéro et tout après le premier espace
-              const unitNum = parts[0]
-              const streetPart = parts.slice(1).join(' ')
-              simpleAddress = `${unitNum} ${streetPart}`
-            }
-          }
-        }
+        // Utiliser l'adresse de l'unité
+        let simpleAddress = unit.adresse_unite || `${unit.type}`
         
         // Adresse complète avec ville et code postal (pour l'affichage détaillé)
         let fullAddress = simpleAddress
-        if (parentBuilding?.address) {
-          const buildingAddress = parentBuilding.address
-          const city = buildingAddress.city || ''
-          const postalCode = buildingAddress.postalCode || ''
-          
-          if (city || postalCode) {
-            const cityPostal = [city, postalCode].filter(Boolean).join(' ')
-            fullAddress = `${simpleAddress}, ${cityPostal}`
-          }
+        if (parentBuilding?.ville && parentBuilding?.code_postal) {
+          fullAddress = `${simpleAddress}, ${parentBuilding.ville} ${parentBuilding.code_postal}`
         }
         
         return {
@@ -160,7 +96,6 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           // Mapping des propriétés pour l'affichage
           address: fullAddress, // Adresse complète pour l'affichage détaillé
           buildingName: buildingName,
-          unitNumber: unit.unitNumber,
           // Titre simple pour l'en-tête de la carte (sans ville/code postal)
           simpleTitle: simpleAddress,
           status: unit.currentTenants?.length > 0 ? 'occupied' : 'vacant',
@@ -178,13 +113,13 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
   // Charger les unités et les assignations
   useEffect(() => {
-    loadAssignments()
+    loadTenants()
     
     // Écouter l'événement de suppression de locataire
     const handleTenantDeleted = (event) => {
       console.log(`📢 Événement tenantDeleted reçu:`, event.detail)
       console.log(`🔄 Rechargement des assignations suite à la suppression...`)
-      loadAssignments()
+      loadTenants()
     }
     
     window.addEventListener('tenantDeleted', handleTenantDeleted)
@@ -385,7 +320,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
         // Recharger les assignations pour mettre à jour l'affichage
         console.log('🔄 Rechargement des assignations...')
-        await loadAssignments()
+        await loadTenants()
         console.log('✅ Assignations rechargées')
 
         // Déclencher un événement pour mettre à jour les autres vues
