@@ -175,10 +175,11 @@ export default function Buildings() {
       
       if (selectedBuilding) {
         // Update existing building via API
-        const response = await buildingsService.updateBuilding(selectedBuilding.id, cleanedData)
+        const buildingId = selectedBuilding.id_immeuble || selectedBuilding.id
+        const response = await buildingsService.updateBuilding(buildingId, cleanedData)
         
         // Mettre à jour l'état local
-        const updatedBuildings = buildings.map(b => b.id === selectedBuilding.id ? response.data : b)
+        const updatedBuildings = buildings.map(b => (b.id_immeuble || b.id) === buildingId ? response.data : b)
         setBuildings(updatedBuildings)
         setFilteredBuildings(updatedBuildings)
       } else {

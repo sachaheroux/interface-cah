@@ -542,6 +542,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           isOpen={showForm}
           onSave={handleSaveUnit}
           onClose={handleCloseForm}
+          buildings={buildings}
         />
       )}
       {showDetails && (
