@@ -127,26 +127,28 @@ class TenantUpdate_transactionFrancais(BaseModel):
     statut: Optional[str] = None
     notes: Optional[str] = None
 
-class InvoiceCreateFrancais(BaseModel):
+class TransactionCreateFrancais(BaseModel):
     id_immeuble: int
-    type_transaction: str
+    type: str
+    categorie: str
     montant: float
-    date_transaction: str
-    no_transaction: str = ""
+    date_de_transaction: str
+    reference: str = ""
     source: str = ""
     pdf_transaction: str = ""
-    methode_paiement: str = ""
+    methode_de_paiement: str = ""
     notes: str = ""
 
-class InvoiceUpdate_transactionFrancais(BaseModel):
+class TransactionUpdateFrancais(BaseModel):
     id_immeuble: Optional[int] = None
-    type_transaction: Optional[str] = None
+    type: Optional[str] = None
+    categorie: Optional[str] = None
     montant: Optional[float] = None
-    date_transaction: Optional[str] = None
-    no_transaction: Optional[str] = None
+    date_de_transaction: Optional[str] = None
+    reference: Optional[str] = None
     source: Optional[str] = None
     pdf_transaction: Optional[str] = None
-    methode_paiement: Optional[str] = None
+    methode_de_paiement: Optional[str] = None
     notes: Optional[str] = None
 
 class LeaseCreateFrancais(BaseModel):
@@ -948,7 +950,7 @@ async def get_transaction(transaction_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la transaction: {str(e)}")
 
 @app.post("/api/transactions")
-async def create_transaction(transaction_data: InvoiceCreateFrancais):
+async def create_transaction(transaction_data: TransactionCreateFrancais):
     """Créer une nouvelle transaction avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
