@@ -15,6 +15,12 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
   const [loading, setLoading] = useState(false)
   const [assignedTenants, setAssignedTenants] = useState([])
   const [loadingTenants, setLoadingTenants] = useState(false)
+  
+  // États pour la recherche d'immeuble
+  const [buildingSearch, setBuildingSearch] = useState('')
+  const [filteredBuildings, setFilteredBuildings] = useState([])
+  const [showBuildingDropdown, setShowBuildingDropdown] = useState(false)
+  const [selectedBuildingName, setSelectedBuildingName] = useState('')
 
   // Charger les locataires assignés à cette unité
   useEffect(() => {
@@ -65,13 +71,22 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         unitId: unit.id
       })
       
+      const buildingId = unit.id_immeuble || unit.buildingId || null
       setFormData({
-        id_immeuble: unit.id_immeuble || unit.buildingId || null,
+        id_immeuble: buildingId,
         adresse_unite: unit.adresse_unite || unit.unitAddress || '',
         type: unit.type || '4 1/2',
         nbr_chambre: unit.nbr_chambre || unit.bedrooms || 1,
         nbr_salle_de_bain: unit.nbr_salle_de_bain || unit.bathrooms || 1,
       })
+      
+      // Trouver et définir le nom de l'immeuble sélectionné
+      if (buildingId && buildings.length > 0) {
+        const building = buildings.find(b => b.id_immeuble === buildingId)
+        if (building) {
+          setSelectedBuildingName(`${building.nom_immeuble || building.name} - ${building.adresse || building.address?.street || ''}`)
+        }
+      }
       
       console.log('✅ UnitForm: FormData chargé')
     } else if (selectedBuilding) {
@@ -84,6 +99,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         nbr_chambre: 1,
         nbr_salle_de_bain: 1,
       })
+      setSelectedBuildingName(`${selectedBuilding.nom_immeuble || selectedBuilding.name} - ${selectedBuilding.adresse || selectedBuilding.address?.street || ''}`)
     } else {
       // Création d'une nouvelle unité (sans immeuble pré-sélectionné)
       console.log('🔄 UnitForm: Création d\'une unité sans immeuble pré-sélectionné')
@@ -94,14 +110,77 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
         nbr_chambre: 1,
         nbr_salle_de_bain: 1,
       })
+      setSelectedBuildingName('')
     }
   }, [unit, selectedBuilding, buildings])
+
+  // Fermer le dropdown quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBuildingDropdown && !event.target.closest('.building-search-container')) {
+        setShowBuildingDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showBuildingDropdown])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
+  }
+
+  // Fonction pour filtrer les immeubles basée sur la recherche
+  const filterBuildings = (searchTerm) => {
+    if (!searchTerm.trim()) {
+      setFilteredBuildings([])
+      return
+    }
+    
+    const filtered = buildings.filter(building => {
+      const buildingName = building.nom_immeuble || building.name || ''
+      const buildingAddress = building.adresse || building.address?.street || ''
+      const searchLower = searchTerm.toLowerCase()
+      
+      return buildingName.toLowerCase().includes(searchLower) || 
+             buildingAddress.toLowerCase().includes(searchLower)
+    })
+    
+    setFilteredBuildings(filtered)
+  }
+
+  // Gestion de la recherche d'immeuble
+  const handleBuildingSearch = (value) => {
+    setBuildingSearch(value)
+    filterBuildings(value)
+    setShowBuildingDropdown(true)
+  }
+
+  // Sélection d'un immeuble
+  const handleBuildingSelect = (building) => {
+    setFormData(prev => ({
+      ...prev,
+      id_immeuble: building.id_immeuble
+    }))
+    setSelectedBuildingName(`${building.nom_immeuble || building.name} - ${building.adresse || building.address?.street || ''}`)
+    setBuildingSearch('')
+    setShowBuildingDropdown(false)
+  }
+
+  // Effacer la sélection d'immeuble
+  const clearBuildingSelection = () => {
+    setFormData(prev => ({
+      ...prev,
+      id_immeuble: null
+    }))
+    setSelectedBuildingName('')
+    setBuildingSearch('')
+    setShowBuildingDropdown(false)
   }
 
 
@@ -220,23 +299,77 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
             
             {/* Sélection d'immeuble (seulement pour la création) */}
             {!unit && (
-              <div>
+              <div className="relative building-search-container">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Immeuble *
                 </label>
-                <select
-                  value={formData.id_immeuble || ''}
-                  onChange={(e) => handleInputChange('id_immeuble', parseInt(e.target.value) || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  required
-                >
-                  <option value="">Sélectionner un immeuble</option>
-                  {buildings.map(building => (
-                    <option key={building.id_immeuble} value={building.id_immeuble}>
-                      {building.nom_immeuble || building.name} - {building.adresse || building.address?.street || ''}
-                    </option>
-                  ))}
-                </select>
+                
+                {/* Affichage de l'immeuble sélectionné */}
+                {selectedBuildingName && (
+                  <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Home className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-sm font-medium text-blue-900">{selectedBuildingName}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearBuildingSelection}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Changer d'immeuble"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Barre de recherche */}
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={buildingSearch}
+                      onChange={(e) => handleBuildingSearch(e.target.value)}
+                      onFocus={() => setShowBuildingDropdown(true)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="Rechercher un immeuble..."
+                      required={!selectedBuildingName}
+                    />
+                  </div>
+                  
+                  {/* Dropdown des résultats de recherche */}
+                  {showBuildingDropdown && (buildingSearch || filteredBuildings.length > 0) && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredBuildings.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500 text-center">
+                          {buildingSearch ? 'Aucun immeuble trouvé' : 'Commencez à taper pour rechercher...'}
+                        </div>
+                      ) : (
+                        filteredBuildings.map((building) => (
+                          <div
+                            key={building.id_immeuble}
+                            onClick={() => handleBuildingSelect(building)}
+                            className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="flex items-start">
+                              <Home className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {building.nom_immeuble || building.name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {building.adresse || building.address?.street || ''}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
