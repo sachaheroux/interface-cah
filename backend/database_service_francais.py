@@ -385,11 +385,16 @@ class DatabaseServiceFrancais:
     def get_transactions(self) -> List[Dict[str, Any]]:
         """Récupérer toutes les transactions"""
         try:
+            print("🔍 [DB] Début de get_transactions()")
             with self.get_session() as session:
+                print("🔍 [DB] Session créée, requête en cours...")
                 transactions = session.query(Transaction).all()
-                return [transaction.to_dict() for transaction in transactions]
+                print(f"🔍 [DB] {len(transactions)} transactions trouvées")
+                result = [transaction.to_dict() for transaction in transactions]
+                print(f"✅ [DB] Transactions converties: {len(result)}")
+                return result
         except Exception as e:
-            print(f"❌ Erreur lors de la récupération des transactions: {e}")
+            print(f"❌ [DB] Erreur dans get_transactions(): {e}")
             raise e
     
     def get_transaction(self, transaction_id: int) -> Optional[Dict[str, Any]]:
