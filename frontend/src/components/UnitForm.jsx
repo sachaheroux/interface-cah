@@ -236,32 +236,27 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
     
     try {
       setLoading(true)
+      // Utiliser le format français pour les données
       const unitData = {
-        ...formData,
-        id: unit?.id || Date.now(),
-        buildingId: unit?.buildingId || formData.id_immeuble,
-        buildingName: unit?.buildingName,
-        address: unit?.address,
-        createdAt: unit?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        id_unite: unit?.id_unite || unit?.id,
+        id_immeuble: formData.id_immeuble,
+        adresse_unite: formData.adresse_unite,
+        type: formData.type,
+        nbr_chambre: formData.nbr_chambre,
+        nbr_salle_de_bain: formData.nbr_salle_de_bain
       }
 
       console.log('💾 UnitForm: Sauvegarde unitData:', {
-        unitId: unitData.id,
+        unitId: unitData.id_unite,
         unitData: unitData
       })
 
       // Utiliser le service API pour mettre à jour l'unité
-      if (unit?.id) {
+      if (unit?.id_unite || unit?.id) {
         // Mise à jour d'une unité existante
-        // Convertir l'ID en entier si c'est un string comme "1-1"
-        let unitId = unit.id
-        if (typeof unitId === 'string' && unitId.includes('-')) {
-          // Extraire le premier nombre de l'ID (ex: "1-1" -> 1)
-          unitId = parseInt(unitId.split('-')[0])
-        }
+        const unitId = unit.id_unite || unit.id
         
-        console.log('🔄 UnitForm: ID original:', unit.id, 'ID converti:', unitId)
+        console.log('🔄 UnitForm: Mise à jour unité ID:', unitId)
         
         const response = await unitsService.updateUnit(unitId, unitData)
         console.log('✅ UnitForm: Unité mise à jour via API:', response.data)

@@ -180,18 +180,30 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
     try {
       console.log('✅ UnitsView: Unité sauvegardée par UnitForm, rechargement des données')
 
-      // Notifier le parent pour recharger les données
-      if (onBuildingUpdated && typeof onBuildingUpdated === 'function') {
-        onBuildingUpdated(updatedUnit.buildingId)
-      } else {
-        console.warn('⚠️ UnitsView: onBuildingUpdated not available, skipping refresh')
+      // Mettre à jour l'état local avec l'unité modifiée
+      if (updatedUnit) {
+        setUnits(prevUnits => 
+          prevUnits.map(unit => 
+            (unit.id_unite || unit.id) === (updatedUnit.id_unite || updatedUnit.id) 
+              ? updatedUnit 
+              : unit
+          )
+        )
+        setFilteredUnits(prevUnits => 
+          prevUnits.map(unit => 
+            (unit.id_unite || unit.id) === (updatedUnit.id_unite || updatedUnit.id) 
+              ? updatedUnit 
+              : unit
+          )
+        )
       }
 
       // Fermer le formulaire
       setShowForm(false)
       setSelectedUnit(null)
       
-      console.log('✅ UnitsView: Interface mise à jour avec succès')
+      // Recharger les unités pour s'assurer de la cohérence
+      await reloadUnits()
       
     } catch (error) {
       console.error('❌ UnitsView: Erreur lors de la mise à jour:', error)
