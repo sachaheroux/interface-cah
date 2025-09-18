@@ -4,7 +4,7 @@ import {
   Building2, Bed, Bath, Car, Wifi, Wind, CheckCircle, Clock, AlertCircle, UserMinus, Plus
 } from 'lucide-react'
 import { getUnitTypeLabel } from '../types/unit'
-import { assignmentsService, unitsService } from '../services/api'
+import { assignmentsService, unitsService, tenantsService } from '../services/api'
 import UnitForm from './UnitForm'
 import UnitDetails from './UnitDetails'
 import { buildingsService } from '../services/api'
