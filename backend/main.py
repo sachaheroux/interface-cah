@@ -1303,6 +1303,86 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
 # ENDPOINTS POUR LES TRANSACTIONS
 # ========================================
 
+@app.post("/api/migrate/transactions")
+async def migrate_transactions_table():
+    """Migrer la table transactions vers la nouvelle structure"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Vérifier si la table existe et a les bonnes colonnes
+            result = session.execute(text("PRAGMA table_info(transactions)"))
+            columns = [row[1] for row in result.fetchall()]
+            
+            if 'type' not in columns or 'categorie' not in columns:
+                print("🔄 Migration de la table transactions...")
+                
+                # Sauvegarder les données existantes
+                existing_data = []
+                if 'id_transaction' in columns:
+                    result = session.execute(text("SELECT * FROM transactions"))
+                    existing_data = [dict(row._mapping) for row in result.fetchall()]
+                    print(f"📦 Sauvegarde de {len(existing_data)} transactions existantes")
+                
+                # Supprimer l'ancienne table
+                session.execute(text("DROP TABLE IF EXISTS transactions"))
+                print("🗑️ Ancienne table supprimée")
+                
+                # Créer la nouvelle table avec la bonne structure
+                session.execute(text("""
+                    CREATE TABLE transactions (
+                        id_transaction INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id_immeuble INTEGER NOT NULL,
+                        type VARCHAR(50) NOT NULL,
+                        categorie VARCHAR(100) NOT NULL,
+                        montant DECIMAL(12, 2) NOT NULL,
+                        date_de_transaction DATE NOT NULL,
+                        methode_de_paiement VARCHAR(50),
+                        reference VARCHAR(100),
+                        source VARCHAR(255),
+                        pdf_transaction VARCHAR(255),
+                        notes TEXT DEFAULT '',
+                        date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (id_immeuble) REFERENCES immeubles (id_immeuble) ON DELETE CASCADE
+                    )
+                """))
+                print("✅ Nouvelle table créée")
+                
+                # Réinsérer les données existantes avec des valeurs par défaut
+                for data in existing_data:
+                    session.execute(text("""
+                        INSERT INTO transactions (
+                            id_immeuble, type, categorie, montant, date_de_transaction,
+                            methode_de_paiement, reference, source, pdf_transaction, notes,
+                            date_creation, date_modification
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """), (
+                        data.get('id_immeuble', 1),
+                        'depense',  # Valeur par défaut
+                        'autre',    # Valeur par défaut
+                        data.get('montant', 0),
+                        data.get('date_de_transaction', data.get('date_transaction', '2025-01-01')),
+                        data.get('methode_de_paiement', ''),
+                        data.get('reference', ''),
+                        data.get('source', ''),
+                        data.get('pdf_transaction', data.get('pdf_document', '')),
+                        data.get('notes', ''),
+                        data.get('date_creation', '2025-01-01 00:00:00'),
+                        data.get('date_modification', '2025-01-01 00:00:00')
+                    ))
+                
+                session.commit()
+                print(f"✅ {len(existing_data)} transactions migrées")
+                
+                return {"message": f"Table transactions migrée avec succès. {len(existing_data)} transactions migrées."}
+            else:
+                return {"message": "Table transactions déjà à jour."}
+                
+    except Exception as e:
+        print(f"❌ Erreur lors de la migration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
+
 @app.get("/api/transactions-constants")
 async def get_transaction_constants():
     """Récupérer les constantes pour les transactions"""
