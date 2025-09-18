@@ -448,20 +448,20 @@ async def create_tenant(tenant_data: TenantCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création du locataire: {str(e)}")
 
 @app.put("/api/tenants/{tenant_id}")
-async def update_transaction_tenant(tenant_id: int, tenant_data: TenantUpdate_transactionFrancais):
+async def update_tenant(tenant_id: int, tenant_data: TenantUpdate_transactionFrancais):
     """Mettre à jour un locataire existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_transaction_dict = tenant_data.dict(exclude_unset=True)
+        tenant_dict = tenant_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        update_transactiond_tenant = db_service_francais.update_transaction_tenant(tenant_id, update_transaction_dict)
+        updated_tenant = db_service_francais.update_tenant(tenant_id, tenant_dict)
         
-        if not update_transactiond_tenant:
+        if not updated_tenant:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
         
         print(f"Locataire mis à jour: {tenant_id}")
-        return {"data": update_transactiond_tenant}
+        return {"data": updated_tenant}
     except HTTPException:
         raise
     except Exception as e:
