@@ -192,7 +192,7 @@ async def health_check():
 async def get_leases():
     """Récupérer tous les baux"""
     try:
-        leases = db_service.get_leases()
+        leases = db_service_francais.get_leases()
         return {"data": leases}
     except Exception as e:
         print(f"Erreur lors de la récupération des baux: {e}")
@@ -202,7 +202,7 @@ async def get_leases():
 async def get_lease(lease_id: int):
     """Récupérer un bail par ID"""
     try:
-        lease = db_service.get_lease(lease_id)
+        lease = db_service_francais.get_lease(lease_id)
         if not lease:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
         return {"data": lease}
@@ -215,7 +215,7 @@ async def create_lease(lease_data: LeaseCreateFrancais):
     """Créer un nouveau bail"""
     try:
         lease_dict = lease_data.dict()
-        created_lease = db_service.create_lease(lease_dict)
+        created_lease = db_service_francais.create_lease(lease_dict)
         return {"data": created_lease, "message": "Bail créé avec succès"}
     except Exception as e:
         print(f"Erreur lors de la création du bail: {e}")
@@ -226,7 +226,7 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
     """Mettre à jour un bail"""
     try:
         lease_dict = lease_data.dict(exclude_unset=True)
-        update_transactiond_lease = db_service.update_transaction_lease(lease_id, lease_dict)
+        update_transactiond_lease = db_service_francais.update_transaction_lease(lease_id, lease_dict)
         if not update_transactiond_lease:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
         return {"data": update_transactiond_lease, "message": "Bail mis à jour avec succès"}
@@ -238,7 +238,7 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
 async def delete_lease(lease_id: int):
     """Supprimer un bail"""
     try:
-        success = db_service.delete_lease(lease_id)
+        success = db_service_francais.delete_lease(lease_id)
         if not success:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
         return {"message": "Bail supprimé avec succès"}
@@ -252,7 +252,7 @@ async def get_dashboard_data():
     """Retourner les données du tableau de bord calculées à partir des vrais immeubles"""
     try:
         # Récupérer tous les immeubles via le service SQLite
-        buildings = db_service.get_buildings()
+        buildings = db_service_francais.get_buildings()
         
         # Calculer les statistiques réelles
         total_buildings = len(buildings)
@@ -329,7 +329,7 @@ async def get_dashboard_data():
 async def get_buildings():
     """Récupérer tous les immeubles"""
     try:
-        buildings = db_service.get_buildings()
+        buildings = db_service_francais.get_buildings()
         return buildings
     except Exception as e:
         print(f"❌ Erreur lors du chargement des immeubles: {e}")
@@ -339,7 +339,7 @@ async def get_buildings():
 async def get_building(building_id: int):
     """Récupérer un immeuble spécifique par ID"""
     try:
-        building = db_service.get_building(building_id)
+        building = db_service_francais.get_building(building_id)
         if not building:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
         return building
@@ -361,7 +361,7 @@ async def create_building(building_data: BuildingCreateFrancais):
         print(f"🔍 DEBUG - Dictionnaire: {building_dict}")
         
         # Créer l'immeuble via le service SQLite
-        new_building = db_service.create_building(building_dict)
+        new_building = db_service_francais.create_building(building_dict)
         
         return new_building
     except Exception as e:
@@ -379,7 +379,7 @@ async def update_transaction_building(building_id: int, building_data: BuildingU
         update_transaction_dict = building_data.dict(exclude_unset=True)
         
         # Mettre à jour l'immeuble via le service SQLite
-        update_transactiond_building = db_service.update_transaction_building(building_id, update_transaction_dict)
+        update_transactiond_building = db_service_francais.update_transaction_building(building_id, update_transaction_dict)
         
         if not update_transactiond_building:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
@@ -395,7 +395,7 @@ async def delete_building(building_id: int):
     """Supprimer un immeuble"""
     try:
         # Supprimer l'immeuble via le service SQLite
-        success = db_service.delete_building(building_id)
+        success = db_service_francais.delete_building(building_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
@@ -411,7 +411,7 @@ async def delete_building(building_id: int):
 async def get_tenants():
     """Récupérer tous les locataires"""
     try:
-        tenants = db_service.get_tenants()
+        tenants = db_service_francais.get_tenants()
         return {"data": tenants}
     except Exception as e:
         print(f"Erreur lors du chargement des locataires: {e}")
@@ -421,7 +421,7 @@ async def get_tenants():
 async def get_tenant(tenant_id: int):
     """Récupérer un locataire spécifique par ID"""
     try:
-        tenant = db_service.get_tenant(tenant_id)
+        tenant = db_service_francais.get_tenant(tenant_id)
         if not tenant:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
         return {"data": tenant}
@@ -438,7 +438,7 @@ async def create_tenant(tenant_data: TenantCreateFrancais):
         tenant_dict = tenant_data.dict()
         
         # Créer le locataire via le service SQLite
-        new_tenant = db_service.create_tenant(tenant_dict)
+        new_tenant = db_service_francais.create_tenant(tenant_dict)
         
         return {"data": new_tenant}
     except Exception as e:
@@ -453,7 +453,7 @@ async def update_transaction_tenant(tenant_id: int, tenant_data: TenantUpdate_tr
         update_transaction_dict = tenant_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        update_transactiond_tenant = db_service.update_transaction_tenant(tenant_id, update_transaction_dict)
+        update_transactiond_tenant = db_service_francais.update_transaction_tenant(tenant_id, update_transaction_dict)
         
         if not update_transactiond_tenant:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
@@ -471,7 +471,7 @@ async def delete_tenant(tenant_id: int):
     """Supprimer un locataire"""
     try:
         # Supprimer le locataire via le service SQLite
-        success = db_service.delete_tenant(tenant_id)
+        success = db_service_francais.delete_tenant(tenant_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Locataire non trouvé")
@@ -562,7 +562,7 @@ async def create_tenant_with_lease(data: dict):
             "notes": tenant_data.get("notes", "")
         }
         print(f"📝 Création du locataire: {tenant_data_francais['nom']} {tenant_data_francais['prenom']}")
-        created_tenant = db_service.create_tenant(tenant_data_francais)
+        created_tenant = db_service_francais.create_tenant(tenant_data_francais)
         tenant_id = created_tenant["id_locataire"]
         print(f"✅ Locataire créé avec ID: {tenant_id}")
         
@@ -601,7 +601,7 @@ async def create_tenant_with_lease(data: dict):
         }
         
         print(f"🔍 DEBUG - Données envoyées au service create_lease: {lease_data_francais}")
-        created_lease = db_service.create_lease(lease_data_francais)
+        created_lease = db_service_francais.create_lease(lease_data_francais)
         print(f"🔍 DEBUG - Type de created_lease: {type(created_lease)}")
         print(f"🔍 DEBUG - Contenu de created_lease: {created_lease}")
         print(f"✅ Bail créé avec ID: {created_lease['id_bail']}")
@@ -644,15 +644,15 @@ async def create_building_report(report_data: dict):
         year = report_data.get("year")
         
         # Vérifier si un rapport existe déjà pour cet immeuble et cette année
-        reports = db_service.get_building_reports()
+        reports = db_service_francais.get_building_reports()
         existing_report = next((r for r in reports if r.get("buildingId") == building_id and r.get("year") == year), None)
         
         if existing_report:
             # Mettre à jour le rapport existant via SQLite
-            update_transactiond_report = db_service.update_transaction_building_report(existing_report["id"], report_data)
+            update_transactiond_report = db_service_francais.update_transaction_building_report(existing_report["id"], report_data)
         else:
             # Créer un nouveau rapport via SQLite
-            update_transactiond_report = db_service.create_building_report(report_data)
+            update_transactiond_report = db_service_francais.create_building_report(report_data)
         
         print(f"Rapport immeuble sauvegardé: {building_id} - {year}")
         return {"data": update_transactiond_report}
@@ -665,7 +665,7 @@ async def delete_building_report(report_id: int):
     """Supprimer un rapport d'immeuble"""
     try:
         # Supprimer via le service SQLite
-        success = db_service.delete_building_report(report_id)
+        success = db_service_francais.delete_building_report(report_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Rapport non trouvé")
@@ -687,7 +687,7 @@ async def create_unit_report(report_data: dict):
     """Créer un nouveau rapport d'unité mensuel"""
     try:
         # Créer le rapport via le service SQLite
-        new_report = db_service.create_unit_report(report_data)
+        new_report = db_service_francais.create_unit_report(report_data)
         
         print(f"Rapport unité créé: {report_data.get('unitId')} - {report_data.get('year')}/{report_data.get('month')}")
         return {"data": new_report}
@@ -700,7 +700,7 @@ async def delete_unit_report(report_id: int):
     """Supprimer un rapport d'unité"""
     try:
         # Supprimer via le service SQLite
-        success = db_service.delete_unit_report(report_id)
+        success = db_service_francais.delete_unit_report(report_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Rapport non trouvé")
@@ -723,7 +723,7 @@ async def delete_unit_report(report_id: int):
 async def get_unit(unit_id: int):
     """Récupérer une unité par ID"""
     try:
-        unit = db_service.get_unit(unit_id)
+        unit = db_service_francais.get_unit(unit_id)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"data": unit}
@@ -738,7 +738,7 @@ async def delete_unit(unit_id: int):
     """Supprimer une unité"""
     try:
         # Supprimer via le service SQLite
-        success = db_service.delete_unit(unit_id)
+        success = db_service_francais.delete_unit(unit_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
@@ -851,7 +851,7 @@ async def get_document(filename: str):
 async def get_units(skip: int = 0, limit: int = 100):
     """Récupérer toutes les unités"""
     try:
-        units = db_service.get_units(skip=skip, limit=limit)
+        units = db_service_francais.get_units(skip=skip, limit=limit)
         return {"data": units}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
@@ -860,7 +860,7 @@ async def get_units(skip: int = 0, limit: int = 100):
 async def get_unit(unit_id: int):
     """Récupérer une unité par ID"""
     try:
-        unit = db_service.get_unit(unit_id)
+        unit = db_service_francais.get_unit(unit_id)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"unit": unit}
@@ -873,7 +873,7 @@ async def get_unit(unit_id: int):
 async def get_units_by_building(building_id: int):
     """Récupérer toutes les unités d'un immeuble"""
     try:
-        units = db_service.get_units_by_building(building_id)
+        units = db_service_francais.get_units_by_building(building_id)
         return {"units": units, "total": len(units)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des unités: {str(e)}")
@@ -883,7 +883,7 @@ async def create_unit(unit_data: UnitCreateFrancais):
     """Créer une nouvelle unité avec le format français"""
     try:
         unit_dict = unit_data.dict()
-        unit = db_service.create_unit(unit_dict)
+        unit = db_service_francais.create_unit(unit_dict)
         return {"unit": unit, "message": "Unité créée avec succès"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -895,7 +895,7 @@ async def update_transaction_unit(unit_id: int, unit_data: UnitUpdate_transactio
     """Mettre à jour une unité avec le format français"""
     try:
         unit_dict = unit_data.dict(exclude_unset=True)
-        unit = db_service.update_transaction_unit(unit_id, unit_dict)
+        unit = db_service_francais.update_transaction_unit(unit_id, unit_dict)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"unit": unit, "message": "Unité mise à jour avec succès"}
@@ -910,7 +910,7 @@ async def update_transaction_unit(unit_id: int, unit_data: UnitUpdate_transactio
 async def delete_unit(unit_id: int):
     """Supprimer une unité"""
     try:
-        success = db_service.delete_unit(unit_id)
+        success = db_service_francais.delete_unit(unit_id)
         if not success:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"message": "Unité supprimée avec succès"}
@@ -927,7 +927,7 @@ async def delete_unit(unit_id: int):
 async def get_transactions():
     """Récupérer toutes les transactions"""
     try:
-        transactions = db_service.get_transactions()
+        transactions = db_service_francais.get_transactions()
         return {"data": transactions}
     except Exception as e:
         print(f"Erreur lors du chargement des transactions: {e}")
@@ -937,7 +937,7 @@ async def get_transactions():
 async def get_transaction(transaction_id: int):
     """Récupérer une transaction spécifique par ID"""
     try:
-        transaction = db_service.get_transaction(transaction_id)
+        transaction = db_service_francais.get_transaction(transaction_id)
         if not invoice:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         return {"data": invoice}
@@ -955,7 +955,7 @@ async def create_transaction(transaction_data: InvoiceCreateFrancais):
         invoice_dict = transaction_data.dict()
         
         # Créer la transaction via le service SQLite
-        new_transaction = db_service.create_transaction(invoice_dict)
+        new_transaction = db_service_francais.create_transaction(invoice_dict)
         
         return {"data": new_transaction}
     except HTTPException:
@@ -972,7 +972,7 @@ async def update_transaction_transaction(transaction_id: int, transaction_data: 
         update_transaction_dict = transaction_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        update_transactiond_transaction = db_service.update_transaction_transaction(transaction_id, update_transaction_dict)
+        update_transactiond_transaction = db_service_francais.update_transaction_transaction(transaction_id, update_transaction_dict)
         
         if not update_transactiond_invoice:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
@@ -990,7 +990,7 @@ async def delete_transaction(transaction_id: int):
     """Supprimer une transaction"""
     try:
         # Supprimer la transaction via le service SQLite
-        success = db_service.delete_transaction(transaction_id)
+        success = db_service_francais.delete_transaction(transaction_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
@@ -1287,7 +1287,7 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
         update_transaction_data = lease_data.dict(exclude_unset=True)
         
         # Mettre à jour le bail
-        update_transactiond_lease = db_service.update_transaction_lease(lease_id, update_transaction_data)
+        update_transactiond_lease = db_service_francais.update_transaction_lease(lease_id, update_transaction_data)
         
         if update_transactiond_lease:
             return {
@@ -1419,7 +1419,7 @@ async def get_transaction_constants():
 async def get_transactions():
     """Récupérer toutes les transactions"""
     try:
-        transactions = db_service.get_transactions()
+        transactions = db_service_francais.get_transactions()
         return {"data": transactions}
     except Exception as e:
         print(f"Erreur lors du chargement des transactions: {e}")
@@ -1429,7 +1429,7 @@ async def get_transactions():
 async def get_transaction(transaction_id: int):
     """Récupérer une transaction par ID"""
     try:
-        transaction = db_service.get_transaction(transaction_id)
+        transaction = db_service_francais.get_transaction(transaction_id)
         if not transaction:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         return {"data": transaction}
@@ -1443,7 +1443,7 @@ async def get_transaction(transaction_id: int):
 async def create_transaction(transaction_data: dict):
     """Créer une nouvelle transaction"""
     try:
-        created_transaction = db_service.create_transaction(transaction_data)
+        created_transaction = db_service_francais.create_transaction(transaction_data)
         return {"data": created_transaction, "message": "Transaction créée avec succès"}
     except Exception as e:
         print(f"Erreur lors de la création de la transaction: {e}")
@@ -1453,7 +1453,7 @@ async def create_transaction(transaction_data: dict):
 async def update_transaction(transaction_id: int, transaction_data: dict):
     """Mettre à jour une transaction"""
     try:
-        updated_transaction = db_service.update_transaction(transaction_id, transaction_data)
+        updated_transaction = db_service_francais.update_transaction(transaction_id, transaction_data)
         if not updated_transaction:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         return {"data": updated_transaction, "message": "Transaction mise à jour avec succès"}
@@ -1467,7 +1467,7 @@ async def update_transaction(transaction_id: int, transaction_data: dict):
 async def delete_transaction(transaction_id: int):
     """Supprimer une transaction"""
     try:
-        success = db_service.delete_transaction(transaction_id)
+        success = db_service_francais.delete_transaction(transaction_id)
         if not success:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         return {"message": "Transaction supprimée avec succès"}
