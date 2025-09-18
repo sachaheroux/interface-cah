@@ -374,19 +374,19 @@ async def create_building(building_data: BuildingCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'immeuble: {str(e)}")
 
 @app.put("/api/buildings/{building_id}")
-async def update_transaction_building(building_id: int, building_data: BuildingUpdate_transactionFrancais):
+async def update_building(building_id: int, building_data: BuildingUpdate_transactionFrancais):
     """Mettre à jour un immeuble existant avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_transaction_dict = building_data.dict(exclude_unset=True)
+        building_dict = building_data.dict(exclude_unset=True)
         
         # Mettre à jour l'immeuble via le service SQLite
-        update_transactiond_building = db_service_francais.update_transaction_building(building_id, update_transaction_dict)
+        updated_building = db_service_francais.update_building(building_id, building_dict)
         
-        if not update_transactiond_building:
+        if not updated_building:
             raise HTTPException(status_code=404, detail="Immeuble non trouvé")
         
-        return update_transactiond_building
+        return updated_building
     except HTTPException:
         raise
     except Exception as e:
@@ -893,11 +893,11 @@ async def create_unit(unit_data: UnitCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'unité: {str(e)}")
 
 @app.put("/api/units/{unit_id}")
-async def update_transaction_unit(unit_id: int, unit_data: UnitUpdate_transactionFrancais):
+async def update_unit(unit_id: int, unit_data: UnitUpdate_transactionFrancais):
     """Mettre à jour une unité avec le format français"""
     try:
         unit_dict = unit_data.dict(exclude_unset=True)
-        unit = db_service_francais.update_transaction_unit(unit_id, unit_dict)
+        unit = db_service_francais.update_unit(unit_id, unit_dict)
         if not unit:
             raise HTTPException(status_code=404, detail="Unité non trouvée")
         return {"unit": unit, "message": "Unité mise à jour avec succès"}

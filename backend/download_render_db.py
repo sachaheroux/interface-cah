@@ -24,16 +24,25 @@ def create_local_db():
     conn = sqlite3.connect(LOCAL_DB_PATH)
     cursor = conn.cursor()
     
-    # Créer les tables avec la structure française
+    # Créer les tables avec la vraie structure de Render
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS immeubles (
             id_immeuble INTEGER PRIMARY KEY AUTOINCREMENT,
             nom_immeuble TEXT NOT NULL,
             adresse TEXT NOT NULL,
             ville TEXT NOT NULL,
+            province TEXT DEFAULT '',
             code_postal TEXT NOT NULL,
-            valeur_actuelle DECIMAL(12, 2) DEFAULT 0,
-            date_construction DATE,
+            pays TEXT DEFAULT '',
+            nbr_unite INTEGER DEFAULT 0,
+            annee_construction INTEGER,
+            prix_achete DECIMAL(12, 2) DEFAULT 0,
+            mise_de_fond DECIMAL(12, 2) DEFAULT 0,
+            taux_interet DECIMAL(5, 2) DEFAULT 0,
+            valeur_actuel DECIMAL(12, 2) DEFAULT 0,
+            proprietaire TEXT DEFAULT '',
+            banque TEXT DEFAULT '',
+            contracteur TEXT DEFAULT '',
             notes TEXT DEFAULT '',
             date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
             date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -48,9 +57,6 @@ def create_local_db():
             type TEXT NOT NULL,
             nbr_chambre INTEGER DEFAULT 0,
             nbr_salle_de_bain INTEGER DEFAULT 0,
-            superficie DECIMAL(8, 2) DEFAULT 0,
-            loyer_mensuel DECIMAL(10, 2) DEFAULT 0,
-            notes TEXT DEFAULT '',
             date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
             date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (id_immeuble) REFERENCES immeubles (id_immeuble) ON DELETE CASCADE
@@ -127,17 +133,27 @@ def fetch_and_insert_data():
             cursor.execute("DELETE FROM immeubles")
             for building in buildings:
                 cursor.execute("""
-                    INSERT INTO immeubles (id_immeuble, nom_immeuble, adresse, ville, code_postal, 
-                                         valeur_actuelle, date_construction, notes, date_creation, date_modification)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO immeubles (id_immeuble, nom_immeuble, adresse, ville, province, code_postal, pays,
+                                         nbr_unite, annee_construction, prix_achete, mise_de_fond, taux_interet,
+                                         valeur_actuel, proprietaire, banque, contracteur, notes, date_creation, date_modification)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     building.get('id_immeuble'),
                     building.get('nom_immeuble', ''),
                     building.get('adresse', ''),
                     building.get('ville', ''),
+                    building.get('province', ''),
                     building.get('code_postal', ''),
-                    building.get('valeur_actuelle', 0),
-                    building.get('date_construction'),
+                    building.get('pays', ''),
+                    building.get('nbr_unite', 0),
+                    building.get('annee_construction'),
+                    building.get('prix_achete', 0),
+                    building.get('mise_de_fond', 0),
+                    building.get('taux_interet', 0),
+                    building.get('valeur_actuel', 0),
+                    building.get('proprietaire', ''),
+                    building.get('banque', ''),
+                    building.get('contracteur', ''),
                     building.get('notes', ''),
                     building.get('date_creation'),
                     building.get('date_modification')
@@ -160,8 +176,8 @@ def fetch_and_insert_data():
             for unit in units:
                 cursor.execute("""
                     INSERT INTO unites (id_unite, id_immeuble, adresse_unite, type, nbr_chambre, 
-                                      nbr_salle_de_bain, superficie, loyer_mensuel, notes, date_creation, date_modification)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      nbr_salle_de_bain, date_creation, date_modification)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     unit.get('id_unite'),
                     unit.get('id_immeuble'),
@@ -169,9 +185,6 @@ def fetch_and_insert_data():
                     unit.get('type', ''),
                     unit.get('nbr_chambre', 0),
                     unit.get('nbr_salle_de_bain', 0),
-                    unit.get('superficie', 0),
-                    unit.get('loyer_mensuel', 0),
-                    unit.get('notes', ''),
                     unit.get('date_creation'),
                     unit.get('date_modification')
                 ))

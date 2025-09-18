@@ -85,38 +85,44 @@ class DatabaseServiceFrancais:
             raise e
     
     def update_building(self, building_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Mettre à jour un immeuble"""
+        """Mettre à jour un immeuble avec les champs français"""
         try:
             with self.get_session() as session:
                 building = session.query(Immeuble).filter(Immeuble.id_immeuble == building_id).first()
                 if not building:
                     return None
                 
-                # Mettre à jour les champs
-                if 'name' in update_data:
-                    building.nom_immeuble = update_data['name']
-                if 'address' in update_data and isinstance(update_data['address'], dict):
-                    addr = update_data['address']
-                    building.adresse = addr.get('street', building.adresse)
-                    building.ville = addr.get('city', building.ville)
-                    building.province = addr.get('province', building.province)
-                    building.code_postal = addr.get('postalCode', building.code_postal)
-                    building.pays = addr.get('country', building.pays)
-                if 'units' in update_data:
-                    building.nbr_unite = update_data['units']
-                if 'yearBuilt' in update_data:
-                    building.annee_construction = update_data['yearBuilt']
-                if 'financials' in update_data and isinstance(update_data['financials'], dict):
-                    fin = update_data['financials']
-                    building.prix_achete = fin.get('purchasePrice', building.prix_achete)
-                    building.mise_de_fond = fin.get('downPayment', building.mise_de_fond)
-                    building.taux_interet = fin.get('interestRate', building.taux_interet)
-                    building.valeur_actuel = fin.get('currentValue', building.valeur_actuel)
-                if 'contacts' in update_data and isinstance(update_data['contacts'], dict):
-                    cont = update_data['contacts']
-                    building.proprietaire = cont.get('owner', building.proprietaire)
-                    building.banque = cont.get('bank', building.banque)
-                    building.contracteur = cont.get('contractor', building.contracteur)
+                # Mettre à jour les champs français directement
+                if 'nom_immeuble' in update_data:
+                    building.nom_immeuble = update_data['nom_immeuble']
+                if 'adresse' in update_data:
+                    building.adresse = update_data['adresse']
+                if 'ville' in update_data:
+                    building.ville = update_data['ville']
+                if 'province' in update_data:
+                    building.province = update_data['province']
+                if 'code_postal' in update_data:
+                    building.code_postal = update_data['code_postal']
+                if 'pays' in update_data:
+                    building.pays = update_data['pays']
+                if 'nbr_unite' in update_data:
+                    building.nbr_unite = update_data['nbr_unite']
+                if 'annee_construction' in update_data:
+                    building.annee_construction = update_data['annee_construction']
+                if 'prix_achete' in update_data:
+                    building.prix_achete = update_data['prix_achete']
+                if 'mise_de_fond' in update_data:
+                    building.mise_de_fond = update_data['mise_de_fond']
+                if 'taux_interet' in update_data:
+                    building.taux_interet = update_data['taux_interet']
+                if 'valeur_actuel' in update_data:
+                    building.valeur_actuel = update_data['valeur_actuel']
+                if 'proprietaire' in update_data:
+                    building.proprietaire = update_data['proprietaire']
+                if 'banque' in update_data:
+                    building.banque = update_data['banque']
+                if 'contracteur' in update_data:
+                    building.contracteur = update_data['contracteur']
                 if 'notes' in update_data:
                     building.notes = update_data['notes']
                 

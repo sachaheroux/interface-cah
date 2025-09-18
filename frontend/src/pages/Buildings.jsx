@@ -152,26 +152,27 @@ export default function Buildings() {
     try {
       setError(null) // Réinitialiser l'erreur lors de la sauvegarde
       
-      // Nettoyer les données pour éviter les erreurs de validation
+      // Utiliser directement les données françaises du formulaire
       const cleanedData = {
-        ...buildingData,
-        units: Number(buildingData.units) || 1,
-        floors: Number(buildingData.floors) || 1,
-        yearBuilt: Number(buildingData.yearBuilt) || new Date().getFullYear(),
-        totalArea: Number(buildingData.totalArea) || null,
-        characteristics: {
-          ...buildingData.characteristics,
-          parking: Number(buildingData.characteristics?.parking) || 0,
-          balconies: Number(buildingData.characteristics?.balconies) || 0
-        },
-        financials: {
-          ...buildingData.financials,
-          purchasePrice: Number(buildingData.financials?.purchasePrice) || 0,
-          downPayment: Number(buildingData.financials?.downPayment) || 0,
-          interestRate: Number(buildingData.financials?.interestRate) || 0,
-          currentValue: Number(buildingData.financials?.currentValue) || 0
-        }
+        nom_immeuble: buildingData.nom_immeuble || buildingData.name || '',
+        adresse: buildingData.adresse || buildingData.address?.street || '',
+        ville: buildingData.ville || buildingData.address?.city || '',
+        province: buildingData.province || buildingData.address?.province || '',
+        code_postal: buildingData.code_postal || buildingData.address?.postalCode || '',
+        pays: buildingData.pays || buildingData.address?.country || '',
+        nbr_unite: Number(buildingData.nbr_unite || buildingData.units) || 1,
+        annee_construction: Number(buildingData.annee_construction || buildingData.yearBuilt) || new Date().getFullYear(),
+        prix_achete: Number(buildingData.prix_achete || buildingData.financials?.purchasePrice) || 0,
+        mise_de_fond: Number(buildingData.mise_de_fond || buildingData.financials?.downPayment) || 0,
+        taux_interet: Number(buildingData.taux_interet || buildingData.financials?.interestRate) || 0,
+        valeur_actuel: Number(buildingData.valeur_actuel || buildingData.financials?.currentValue) || 0,
+        proprietaire: buildingData.proprietaire || buildingData.contacts?.owner || '',
+        banque: buildingData.banque || buildingData.contacts?.bank || '',
+        contracteur: buildingData.contracteur || buildingData.contacts?.contractor || '',
+        notes: buildingData.notes || ''
       }
+      
+      console.log('🔍 DEBUG - Données nettoyées pour API:', cleanedData)
       
       if (selectedBuilding) {
         // Update existing building via API
