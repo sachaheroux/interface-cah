@@ -68,7 +68,7 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
     
     if (unit) {
       console.log('🔄 UnitForm: Chargement des données unité:', {
-        unitId: unit.id
+        unitId: unit.id_unite
       })
       
       const buildingId = unit.id_immeuble || unit.buildingId || null
@@ -112,7 +112,20 @@ export default function UnitForm({ unit, isOpen, onClose, onSave, buildings = []
       })
       setSelectedBuildingName('')
     }
-  }, [unit, selectedBuilding, buildings])
+  }, [unit, selectedBuilding]) // Retirer buildings pour éviter la boucle infinie
+
+  // Mettre à jour le nom de l'immeuble quand les buildings sont chargés
+  useEffect(() => {
+    if (unit && buildings && buildings.length > 0) {
+      const buildingId = unit.id_immeuble || unit.buildingId || null
+      if (buildingId) {
+        const building = buildings.find(b => b.id_immeuble === buildingId)
+        if (building) {
+          setSelectedBuildingName(`${building.nom_immeuble || building.name} - ${building.adresse || building.address?.street || ''}`)
+        }
+      }
+    }
+  }, [buildings, unit]) // Se déclenche seulement quand buildings ou unit change
 
   // Fermer le dropdown quand on clique en dehors
   useEffect(() => {
