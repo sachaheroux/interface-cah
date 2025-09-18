@@ -104,8 +104,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     
     if (!formData.nom.trim()) errors.nom = 'Le nom est obligatoire'
     if (!formData.prenom.trim()) errors.prenom = 'Le prénom est obligatoire'
-    // Email n'est plus obligatoire
-    if (!formData.telephone.trim()) errors.telephone = 'Le téléphone est obligatoire'
+    // Email et téléphone ne sont plus obligatoires
     if (!formData.id_unite) errors.id_unite = 'L\'unité est obligatoire'
     
     return errors
@@ -263,7 +262,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Phone className="h-4 w-4 inline mr-2" />
-                  Téléphone *
+                  Téléphone
                 </label>
                 <input
                   type="tel"
