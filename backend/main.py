@@ -967,7 +967,7 @@ async def create_transaction(transaction_data: TransactionCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
 
 @app.put("/api/transactions/{transaction_id}")
-async def update_transaction_transaction(transaction_id: int, transaction_data: InvoiceUpdate_transactionFrancais):
+async def update_transaction_transaction(transaction_id: int, transaction_data: TransactionUpdateFrancais):
     """Mettre à jour une transaction existante avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
