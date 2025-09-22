@@ -919,15 +919,12 @@ export default function ProfitabilityAnalysis() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Cashflow mensuel</h3>
             <div className="space-y-6">
               {analysisData.monthlyTotals.map((month, index) => {
-                const maxRevenue = Math.max(...analysisData.monthlyTotals.map(m => m.revenue))
-                const maxExpenses = Math.max(...analysisData.monthlyTotals.map(m => m.expenses))
-                const maxTotal = Math.max(maxRevenue, maxExpenses)
-                
-                const revenueWidth = (month.revenue / maxTotal) * 100
-                const expensesWidth = (month.expenses / maxTotal) * 100
+                const total = month.revenue + month.expenses
+                const revenuePercentage = (month.revenue / total) * 100
+                const expensesPercentage = (month.expenses / total) * 100
                 
                 return (
-                  <div key={month.month} className="space-y-2">
+                  <div key={month.month} className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="w-24 text-sm font-medium text-gray-700">
                         {month.month}
@@ -941,31 +938,26 @@ export default function ProfitabilityAnalysis() {
                       </div>
                     </div>
                     
-                    {/* Barre de revenus */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Revenus</span>
-                        <span>{revenueWidth.toFixed(1)}%</span>
+                    {/* Barre unique avec revenus à gauche et dépenses à droite */}
+                    <div className="w-full bg-gray-200 rounded-full h-6 flex overflow-hidden">
+                      {/* Revenus à gauche (vert) */}
+                      <div 
+                        className="bg-green-500 h-full transition-all duration-700 flex items-center justify-end pr-2"
+                        style={{ width: `${revenuePercentage}%` }}
+                      >
+                        <span className="text-white text-xs font-medium">
+                          {revenuePercentage.toFixed(1)}%
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div 
-                          className="bg-green-500 h-3 rounded-full transition-all duration-500"
-                          style={{ width: `${revenueWidth}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    {/* Barre de dépenses */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Dépenses</span>
-                        <span>{expensesWidth.toFixed(1)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div 
-                          className="bg-red-500 h-3 rounded-full transition-all duration-500"
-                          style={{ width: `${expensesWidth}%` }}
-                        ></div>
+                      
+                      {/* Dépenses à droite (rouge) */}
+                      <div 
+                        className="bg-red-500 h-full transition-all duration-700 flex items-center justify-start pl-2"
+                        style={{ width: `${expensesPercentage}%` }}
+                      >
+                        <span className="text-white text-xs font-medium">
+                          {expensesPercentage.toFixed(1)}%
+                        </span>
                       </div>
                     </div>
                   </div>
