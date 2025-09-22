@@ -429,18 +429,18 @@ export default function ProfitabilityAnalysis() {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Cashflow net par immeuble</h3>
               <div className="flex">
                 {/* Axe Y avec montants */}
-                <div className="flex flex-col justify-between h-80 pr-4">
+                <div className="flex flex-col justify-between h-80 pr-4 w-20">
                   {(() => {
-                    const maxAbsValue = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
+                    const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
                     const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
-                    const range = maxAbsValue - minValue
+                    const range = Math.max(Math.abs(maxValue), Math.abs(minValue))
+                    const stepSize = Math.ceil(range / 5 / 1000) * 1000 // Arrondir à la centaine supérieure
                     const steps = 5
-                    const stepValue = range / steps
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = minValue + (stepValue * i)
+                      const value = stepSize * i
                       return (
-                        <div key={i} className="text-xs text-gray-500 text-right">
+                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -449,33 +449,41 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <div key={i} className="border-t border-gray-200"></div>
-                    ))}
+                    {(() => {
+                      const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
+                      const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
+                      const range = Math.max(Math.abs(maxValue), Math.abs(minValue))
+                      const stepSize = Math.ceil(range / 5 / 1000) * 1000
+                      const steps = 5
+                      
+                      return Array.from({ length: steps + 1 }, (_, i) => (
+                        <div key={i} className="border-t border-gray-300"></div>
+                      ))
+                    })()}
                   </div>
                   
                   {/* Barres */}
-                  <div className="h-80 flex items-end justify-center space-x-4 relative z-10">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
-                      const maxAbsValue = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
+                      const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
                       const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
-                      const range = maxAbsValue - minValue
-                      const isPositive = building.summary.netCashflow >= 0
-                      const barHeight = (Math.abs(building.summary.netCashflow) / range) * 280
+                      const range = Math.max(Math.abs(maxValue), Math.abs(minValue))
+                      const stepSize = Math.ceil(range / 5 / 1000) * 1000
+                      const maxHeight = stepSize * 5
+                      
+                      const barHeight = (building.summary.netCashflow / maxHeight) * 320
                       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          <div className="flex flex-col items-center">
+                          <div className="flex flex-col items-end justify-end w-full h-80">
                             <div 
-                              className={`w-full rounded-t-lg transition-all duration-700 ${
-                                isPositive ? 'bg-gradient-to-t from-green-500 to-green-400' : 'bg-gradient-to-b from-red-500 to-red-400'
-                              }`}
+                              className="w-full rounded-t-lg transition-all duration-700"
                               style={{ 
-                                height: `${barHeight}px`,
+                                height: `${Math.abs(barHeight)}px`,
                                 backgroundColor: colors[index % colors.length]
                               }}
                             ></div>
@@ -509,16 +517,16 @@ export default function ProfitabilityAnalysis() {
               
               <div className="flex">
                 {/* Axe Y avec montants */}
-                <div className="flex flex-col justify-between h-80 pr-4">
+                <div className="flex flex-col justify-between h-80 pr-4 w-20">
                   {(() => {
                     const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
+                    const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
                     const steps = 5
-                    const stepValue = maxRevenue / steps
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = stepValue * i
+                      const value = stepSize * i
                       return (
-                        <div key={i} className="text-xs text-gray-500 text-right">
+                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -527,19 +535,27 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <div key={i} className="border-t border-gray-200"></div>
-                    ))}
+                    {(() => {
+                      const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
+                      const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
+                      const steps = 5
+                      
+                      return Array.from({ length: steps + 1 }, (_, i) => (
+                        <div key={i} className="border-t border-gray-300"></div>
+                      ))
+                    })()}
                   </div>
                   
                   {/* Barres */}
-                  <div className="h-80 flex items-end justify-center space-x-2 relative z-10">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
-                      const totalHeight = (building.summary.totalRevenue / maxRevenue) * 280
+                      const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
+                      const maxHeight = stepSize * 5
+                      const totalHeight = (building.summary.totalRevenue / maxHeight) * 320
                       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#ef4444']
                       
                       // Simuler des catégories de revenus (loyers, autres revenus, etc.)
@@ -550,7 +566,7 @@ export default function ProfitabilityAnalysis() {
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          <div className="flex flex-col items-center w-full">
+                          <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {revenueCategories.map((category, catIndex) => {
                                 const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
@@ -609,16 +625,16 @@ export default function ProfitabilityAnalysis() {
               
               <div className="flex">
                 {/* Axe Y avec montants */}
-                <div className="flex flex-col justify-between h-80 pr-4">
+                <div className="flex flex-col justify-between h-80 pr-4 w-20">
                   {(() => {
                     const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
+                    const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
                     const steps = 5
-                    const stepValue = maxExpenses / steps
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = stepValue * i
+                      const value = stepSize * i
                       return (
-                        <div key={i} className="text-xs text-gray-500 text-right">
+                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -627,19 +643,27 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <div key={i} className="border-t border-gray-200"></div>
-                    ))}
+                    {(() => {
+                      const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
+                      const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
+                      const steps = 5
+                      
+                      return Array.from({ length: steps + 1 }, (_, i) => (
+                        <div key={i} className="border-t border-gray-300"></div>
+                      ))
+                    })()}
                   </div>
                   
                   {/* Barres */}
-                  <div className="h-80 flex items-end justify-center space-x-2 relative z-10">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
-                      const totalHeight = (building.summary.totalExpenses / maxExpenses) * 280
+                      const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
+                      const maxHeight = stepSize * 5
+                      const totalHeight = (building.summary.totalExpenses / maxHeight) * 320
                       const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                       
                       // Simuler des catégories de dépenses basées sur les données réelles
@@ -653,7 +677,7 @@ export default function ProfitabilityAnalysis() {
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          <div className="flex flex-col items-center w-full">
+                          <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {expenseCategories.map((category, catIndex) => {
                                 const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
@@ -679,6 +703,104 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pie chart - Répartition des dépenses globales */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Répartition des dépenses globales</h3>
+            
+            {/* Pie Chart SVG */}
+            <div className="flex justify-center mb-6">
+              <svg width="200" height="200" className="transform -rotate-90">
+                {(() => {
+                  const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                  let currentAngle = 0
+                  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+                  
+                  return Object.entries(analysisData.categories).map(([category, amount], index) => {
+                    const percentage = (amount / total) * 100
+                    const angle = (percentage / 100) * 360
+                    const startAngle = currentAngle
+                    const endAngle = currentAngle + angle
+                    
+                    const startAngleRad = (startAngle * Math.PI) / 180
+                    const endAngleRad = (endAngle * Math.PI) / 180
+                    
+                    const x1 = 100 + 80 * Math.cos(startAngleRad)
+                    const y1 = 100 + 80 * Math.sin(startAngleRad)
+                    const x2 = 100 + 80 * Math.cos(endAngleRad)
+                    const y2 = 100 + 80 * Math.sin(endAngleRad)
+                    
+                    const largeArcFlag = angle > 180 ? 1 : 0
+                    
+                    const pathData = [
+                      `M 100 100`,
+                      `L ${x1} ${y1}`,
+                      `A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                      'Z'
+                    ].join(' ')
+                    
+                    currentAngle += angle
+                    
+                    return (
+                      <path
+                        key={category}
+                        d={pathData}
+                        fill={colors[index % colors.length]}
+                        className="hover:opacity-80 transition-opacity duration-200"
+                        style={{ cursor: 'pointer' }}
+                      />
+                    )
+                  })
+                })()}
+              </svg>
+            </div>
+            
+            {/* Légende détaillée */}
+            <div className="space-y-3">
+              {Object.entries(analysisData.categories).map(([category, amount], index) => {
+                const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                const percentage = ((amount / total) * 100).toFixed(1)
+                const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+                
+                return (
+                  <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: colors[index % colors.length] }}
+                      ></div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900 capitalize">
+                          {category.replace('_', ' ')}
+                        </span>
+                        <div className="text-xs text-gray-500">
+                          {percentage}% du total
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-gray-900">
+                        ${amount.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {percentage}%
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* Résumé total */}
+            <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary-900">Total des dépenses</span>
+                <span className="text-lg font-bold text-primary-900">
+                  ${Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
