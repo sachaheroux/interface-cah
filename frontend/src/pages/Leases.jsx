@@ -91,15 +91,6 @@ export default function Leases() {
     }
   }
 
-  const handleViewPdf = (lease) => {
-    if (lease.pdf_bail) {
-      // Si c'est un nom de fichier, essayer de l'ouvrir depuis le serveur
-      const pdfUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${lease.pdf_bail}`
-      window.open(pdfUrl, '_blank')
-    } else {
-      alert('Aucun PDF disponible pour ce bail')
-    }
-  }
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié'
@@ -225,14 +216,7 @@ export default function Leases() {
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4" />
                         {lease.pdf_bail ? (
-                          <button
-                            onClick={() => handleViewPdf(lease)}
-                            className="text-blue-600 hover:text-blue-800 hover:underline flex items-center space-x-1"
-                            title="Ouvrir le PDF du bail"
-                          >
-                            <span>PDF disponible</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </button>
+                          <span className="text-green-600 font-medium">PDF disponible</span>
                         ) : (
                           <span className="text-gray-500">Aucun PDF</span>
                         )}
