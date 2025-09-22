@@ -539,24 +539,9 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
-                  {/* Lignes de grille */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {(() => {
-                      const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
-                      const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
-                      const range = Math.max(Math.abs(maxValue), Math.abs(minValue))
-                      const stepSize = Math.ceil(range / 5 / 1000) * 1000
-                      const steps = 5
-                      
-                      return Array.from({ length: steps + 1 }, (_, i) => (
-                        <div key={i} className="border-t border-gray-300"></div>
-                      ))
-                    })()}
-                  </div>
-                  
-                  {/* Zone des barres - séparée */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                <div className="flex-1 relative">
+                  {/* Zone des barres avec ligne de base */}
+                  <div className="h-80 flex items-end justify-center space-x-1 relative px-2" style={{ borderBottom: '2px solid #1f2937' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
                       const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
@@ -569,7 +554,7 @@ export default function ProfitabilityAnalysis() {
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
-                          {/* Barre qui part de la ligne de base */}
+                          {/* Barre qui part exactement de la ligne de base */}
                           <div 
                             className="w-full transition-all duration-700"
                             style={{ 
@@ -582,8 +567,8 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Zone des noms - séparée et en dessous */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                  {/* Zone des noms - EN DESSOUS de la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
