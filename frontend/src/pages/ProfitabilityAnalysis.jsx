@@ -497,9 +497,9 @@ export default function ProfitabilityAnalysis() {
               </div>
               
               {/* Noms des immeubles - SÉPARÉS du graphique */}
-              <div className="flex justify-center space-x-1 px-2 mt-4">
+              <div className="flex justify-center px-2 mt-4">
                 {analysisData.buildings.map((building, index) => (
-                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%`, paddingLeft: '2px', paddingRight: '2px' }} title={building.name}>
                     {building.name}
                   </div>
                 ))}
@@ -600,9 +600,9 @@ export default function ProfitabilityAnalysis() {
               </div>
               
               {/* Noms des immeubles - SÉPARÉS du graphique */}
-              <div className="flex justify-center space-x-1 px-2 mt-4">
+              <div className="flex justify-center px-2 mt-4">
                 {analysisData.buildings.map((building, index) => (
-                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%`, paddingLeft: '2px', paddingRight: '2px' }} title={building.name}>
                     {building.name}
                   </div>
                 ))}
@@ -718,9 +718,9 @@ export default function ProfitabilityAnalysis() {
               </div>
               
               {/* Noms des immeubles - SÉPARÉS du graphique */}
-              <div className="flex justify-center space-x-1 px-2 mt-4">
+              <div className="flex justify-center px-2 mt-4">
                 {analysisData.buildings.map((building, index) => (
-                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%`, paddingLeft: '2px', paddingRight: '2px' }} title={building.name}>
                     {building.name}
                   </div>
                 ))}
