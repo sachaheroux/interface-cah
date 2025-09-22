@@ -986,15 +986,40 @@ async def update_transaction_transaction(transaction_id: int, transaction_data: 
 
 @app.delete("/api/transactions/{transaction_id}")
 async def delete_transaction(transaction_id: int):
-    """Supprimer une transaction"""
+    """Supprimer une transaction et son PDF associé"""
     try:
-        # Supprimer la transaction via le service SQLite
+        # Récupérer la transaction pour obtenir le nom du PDF
+        transaction = db_service_francais.get_transaction(transaction_id)
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction non trouvée")
+        
+        # Supprimer le PDF de Backblaze B2 s'il existe
+        if transaction.get('pdf_transaction'):
+            try:
+                from storage_service import get_storage_service
+                storage_service = get_storage_service()
+                
+                # Construire la clé S3 (peut être un nom simple ou une clé complète)
+                pdf_key = transaction['pdf_transaction']
+                if not '/' in pdf_key:
+                    pdf_key = f"documents/{pdf_key}"
+                
+                # Supprimer le PDF
+                if storage_service.delete_pdf(pdf_key):
+                    print(f"✅ PDF supprimé de Backblaze B2: {pdf_key}")
+                else:
+                    print(f"⚠️ PDF non trouvé sur Backblaze B2: {pdf_key}")
+            except Exception as pdf_error:
+                print(f"⚠️ Erreur lors de la suppression du PDF: {pdf_error}")
+                # Continuer même si la suppression du PDF échoue
+        
+        # Supprimer la transaction de la base de données
         success = db_service_francais.delete_transaction(transaction_id)
         
         if not success:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         
-        return {"message": "Transaction supprimée avec succès"}
+        return {"message": "Transaction et PDF supprimés avec succès"}
     except HTTPException:
         raise
     except Exception as e:
@@ -1462,19 +1487,6 @@ async def update_transaction(transaction_id: int, transaction_data: dict):
         print(f"Erreur lors de la mise à jour de la transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la transaction: {str(e)}")
 
-@app.delete("/api/transactions/{transaction_id}")
-async def delete_transaction(transaction_id: int):
-    """Supprimer une transaction"""
-    try:
-        success = db_service_francais.delete_transaction(transaction_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Transaction non trouvée")
-        return {"message": "Transaction supprimée avec succès"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Erreur lors de la suppression de la transaction: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la transaction: {str(e)}")
 
 @app.get("/api/test-endpoint")
 async def test_endpoint():

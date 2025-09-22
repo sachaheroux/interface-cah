@@ -331,6 +331,23 @@ export default function Transactions() {
                       <span className="ml-1">{transaction.notes}</span>
                     </div>
                   )}
+                  
+                  {transaction.pdf_transaction && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Document PDF:</span>
+                        <a
+                          href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${transaction.pdf_transaction}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm underline"
+                        >
+                          {transaction.pdf_transaction}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex items-center space-x-2 ml-4">
