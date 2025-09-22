@@ -266,15 +266,6 @@ export default function Leases() {
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    {lease.pdf_bail && (
-                      <button
-                        onClick={() => handleViewPdf(lease)}
-                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
-                        title="Ouvrir le PDF"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                    )}
                     <button
                       onClick={() => handleEditLease(lease)}
                       className="p-2 text-gray-400 hover:text-blue-600 transition-colors"

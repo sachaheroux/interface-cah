@@ -786,22 +786,43 @@ async def delete_unit(unit_id: int):
 async def upload_document(file: UploadFile = File(...)):
     """Uploader un document (PDF, image, etc.) vers Backblaze B2"""
     try:
+        print(f"📤 Upload PDF reçu: {file.filename} ({file.size} bytes)")
+        
         # Vérifier le type de fichier
         if not file.filename.lower().endswith('.pdf'):
+            print(f"❌ Type de fichier non supporté: {file.filename}")
             raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
         
         # Lire le contenu du fichier
         file_content = await file.read()
+        print(f"📄 Contenu lu: {len(file_content)} bytes")
+        
+        # Vérifier les variables d'environnement Backblaze B2
+        import os
+        b2_key_id = os.getenv('B2_APPLICATION_KEY_ID')
+        b2_key = os.getenv('B2_APPLICATION_KEY')
+        b2_bucket = os.getenv('B2_BUCKET_NAME')
+        
+        print(f"🔑 B2 Key ID: {b2_key_id[:8] if b2_key_id else 'MANQUANT'}...")
+        print(f"🔑 B2 Key: {b2_key[:8] if b2_key else 'MANQUANT'}...")
+        print(f"📦 B2 Bucket: {b2_bucket}")
+        
+        if not b2_key_id or not b2_key:
+            print("❌ Variables d'environnement Backblaze B2 manquantes")
+            raise HTTPException(status_code=500, detail="Configuration Backblaze B2 manquante")
         
         # Upload vers Backblaze B2
         from storage_service import get_storage_service
         storage_service = get_storage_service()
         
+        print("🚀 Tentative d'upload vers Backblaze B2...")
         result = storage_service.upload_pdf(
             file_content=file_content,
             original_filename=file.filename,
             folder="documents"
         )
+        
+        print(f"📊 Résultat upload: {result}")
         
         if result["success"]:
             print(f"✅ Document uploadé vers Backblaze B2: {result['filename']}")
@@ -814,11 +835,15 @@ async def upload_document(file: UploadFile = File(...)):
                 "size": result["size"]
             }
         else:
+            print(f"❌ Erreur upload Backblaze B2: {result['error']}")
             raise HTTPException(status_code=500, detail=f"Erreur lors de l'upload vers Backblaze B2: {result['error']}")
             
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Erreur inattendue lors de l'upload: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'upload: {str(e)}")
 
 @app.get("/api/documents")

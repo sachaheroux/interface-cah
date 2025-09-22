@@ -124,6 +124,8 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     const file = event.target.files[0]
     if (!file) return
 
+    console.log('📤 Tentative d\'upload PDF:', file.name, file.size, 'bytes')
+
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       alert('Seuls les fichiers PDF sont acceptés')
       return
@@ -133,28 +135,41 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`
+      console.log('🌐 URL d\'upload:', apiUrl)
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData
       })
 
+      console.log('📊 Réponse reçue:', response.status, response.statusText)
+
       if (response.ok) {
         const result = await response.json()
+        console.log('✅ Résultat upload:', result)
         handleChange('pdf_bail', result.filename)
         console.log('✅ PDF uploadé:', result.filename)
         
         // Si on est en mode édition, mettre à jour le bail immédiatement
-        if (isEditing && lease.id_bail) {
+        if (lease?.id_bail) {
           await updateLeasePdf(lease.id_bail, result.filename)
         }
       } else {
-        const error = await response.json()
-        console.error('❌ Erreur upload PDF:', error)
-        alert(`Erreur lors de l'upload: ${error.detail || 'Erreur inconnue'}`)
+        const errorText = await response.text()
+        console.error('❌ Erreur upload PDF - Status:', response.status)
+        console.error('❌ Erreur upload PDF - Response:', errorText)
+        
+        try {
+          const error = JSON.parse(errorText)
+          alert(`Erreur lors de l'upload: ${error.detail || 'Erreur inconnue'}`)
+        } catch {
+          alert(`Erreur lors de l'upload: ${response.status} - ${errorText}`)
+        }
       }
     } catch (error) {
       console.error('❌ Erreur upload PDF:', error)
-      alert('Erreur de connexion lors de l\'upload')
+      alert(`Erreur de connexion lors de l'upload: ${error.message}`)
     }
   }
 
