@@ -53,27 +53,115 @@ export default function ProfitabilityAnalysis() {
 
     setLoading(true)
     try {
-      // TODO: Appeler l'API d'analyse
       console.log('Analyse pour:', selectedBuildings, startDate, endDate)
       
-      // Simulation de données pour le moment
+      // Données bidon pour tester l'interface
       setTimeout(() => {
-        setAnalysisData({
-          period: { start: startDate, end: endDate },
-          buildings: selectedBuildings,
-          summary: {
-            totalRevenue: 45000,
-            totalExpenses: 12000,
-            netCashflow: 33000,
-            roi: 12.5
-          }
-        })
+        const mockData = generateMockAnalysisData(selectedBuildings, startDate, endDate)
+        setAnalysisData(mockData)
         setLoading(false)
       }, 2000)
       
     } catch (error) {
       console.error('Erreur lors de l\'analyse:', error)
       setLoading(false)
+    }
+  }
+
+  const generateMockAnalysisData = (buildingIds, startDate, endDate) => {
+    const selectedBuildingsData = buildings.filter(b => buildingIds.includes(b.id_immeuble))
+    
+    // Générer des données mensuelles pour la période
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const months = []
+    
+    for (let d = new Date(start); d <= end; d.setMonth(d.getMonth() + 1)) {
+      months.push(new Date(d).toISOString().slice(0, 7)) // Format YYYY-MM
+    }
+    
+    // Données par immeuble et par mois
+    const buildingData = selectedBuildingsData.map(building => {
+      const monthlyData = months.map(month => {
+        const baseRevenue = Math.floor(Math.random() * 5000) + 2000 // 2000-7000
+        const baseExpenses = Math.floor(Math.random() * 2000) + 500  // 500-2500
+        
+        return {
+          month,
+          revenue: baseRevenue,
+          expenses: baseExpenses,
+          netCashflow: baseRevenue - baseExpenses,
+          categories: {
+            loyers: baseRevenue,
+            taxes: Math.floor(baseExpenses * 0.3),
+            entretien: Math.floor(baseExpenses * 0.25),
+            reparation: Math.floor(baseExpenses * 0.2),
+            assurance: Math.floor(baseExpenses * 0.15),
+            autre: Math.floor(baseExpenses * 0.1)
+          }
+        }
+      })
+      
+      const totalRevenue = monthlyData.reduce((sum, month) => sum + month.revenue, 0)
+      const totalExpenses = monthlyData.reduce((sum, month) => sum + month.expenses, 0)
+      
+      return {
+        id: building.id_immeuble,
+        name: building.nom_immeuble,
+        address: building.adresse,
+        monthlyData,
+        summary: {
+          totalRevenue,
+          totalExpenses,
+          netCashflow: totalRevenue - totalExpenses,
+          roi: ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1)
+        }
+      }
+    })
+    
+    // Calculer les totaux globaux
+    const totalRevenue = buildingData.reduce((sum, building) => sum + building.summary.totalRevenue, 0)
+    const totalExpenses = buildingData.reduce((sum, building) => sum + building.summary.totalExpenses, 0)
+    const netCashflow = totalRevenue - totalExpenses
+    
+    // Données pour les pie charts (toutes catégories confondues)
+    const allCategories = buildingData.reduce((acc, building) => {
+      building.monthlyData.forEach(month => {
+        Object.keys(month.categories).forEach(category => {
+          if (category !== 'loyers') { // Exclure les loyers des dépenses
+            acc[category] = (acc[category] || 0) + month.categories[category]
+          }
+        })
+      })
+      return acc
+    }, {})
+    
+    return {
+      period: { start: startDate, end: endDate },
+      buildings: buildingData,
+      summary: {
+        totalRevenue,
+        totalExpenses,
+        netCashflow,
+        roi: (netCashflow / totalRevenue * 100).toFixed(1)
+      },
+      categories: allCategories,
+      monthlyTotals: months.map(month => {
+        const monthData = buildingData.reduce((acc, building) => {
+          const monthInfo = building.monthlyData.find(m => m.month === month)
+          if (monthInfo) {
+            acc.revenue += monthInfo.revenue
+            acc.expenses += monthInfo.expenses
+            acc.netCashflow += monthInfo.netCashflow
+          }
+          return acc
+        }, { revenue: 0, expenses: 0, netCashflow: 0 })
+        
+        return {
+          month,
+          ...monthData
+        }
+      })
     }
   }
 
@@ -247,11 +335,136 @@ export default function ProfitabilityAnalysis() {
             </div>
           </div>
 
-          {/* Placeholder pour les graphiques */}
+          {/* Graphiques d'analyse */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar chart - Comparaison des immeubles */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Comparaison des immeubles</h3>
+              <div className="space-y-3">
+                {analysisData.buildings.map((building, index) => (
+                  <div key={building.id} className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{building.name}</span>
+                        <span className="text-sm text-gray-500">${building.summary.netCashflow.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${(building.summary.netCashflow / Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))) * 100}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pie chart - Répartition des dépenses */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition des dépenses</h3>
+              <div className="space-y-2">
+                {Object.entries(analysisData.categories).map(([category, amount], index) => {
+                  const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                  const percentage = ((amount / total) * 100).toFixed(1)
+                  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500', 'bg-purple-500']
+                  
+                  return (
+                    <div key={category} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}></div>
+                        <span className="text-sm text-gray-700 capitalize">{category}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500">{percentage}%</span>
+                        <span className="text-sm font-medium text-gray-900">${amount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Graphique de cashflow mensuel */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Graphiques d'analyse</h3>
-            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Graphiques en cours de développement...</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cashflow mensuel</h3>
+            <div className="space-y-4">
+              {analysisData.monthlyTotals.map((month, index) => (
+                <div key={month.month} className="flex items-center space-x-4">
+                  <div className="w-20 text-sm text-gray-600">
+                    {new Date(month.month + '-01').toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' })}
+                  </div>
+                  <div className="flex-1 flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative">
+                      <div 
+                        className="bg-green-500 h-4 rounded-l-full"
+                        style={{ width: `${(month.revenue / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%` }}
+                      ></div>
+                      <div 
+                        className="bg-red-500 h-4 rounded-r-full absolute top-0"
+                        style={{ 
+                          width: `${(month.expenses / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%`,
+                          left: `${(month.revenue / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%`
+                        }}
+                      ></div>
+                    </div>
+                    <div className="w-32 text-right text-sm">
+                      <div className="text-green-600">+${month.revenue.toLocaleString()}</div>
+                      <div className="text-red-600">-${month.expenses.toLocaleString()}</div>
+                      <div className={`font-medium ${month.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        ${month.netCashflow.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tableau détaillé */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Détail par immeuble</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Immeuble</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dépenses</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashflow net</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {analysisData.buildings.map((building) => (
+                    <tr key={building.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{building.name}</div>
+                          <div className="text-sm text-gray-500">{building.address}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                        ${building.summary.totalRevenue.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                        ${building.summary.totalExpenses.toLocaleString()}
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                        building.summary.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        ${building.summary.netCashflow.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {building.summary.roi}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
