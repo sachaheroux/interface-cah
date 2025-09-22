@@ -53,6 +53,10 @@ class BackblazeStorageService:
             clean_base_name = re.sub(r'[^a-zA-Z0-9_-]', '_', base_name)
             clean_base_name = clean_base_name[:50]  # Limiter la longueur
             
+            # Nettoyer les doubles underscores
+            clean_base_name = re.sub(r'_+', '_', clean_base_name)
+            clean_base_name = clean_base_name.strip('_')
+            
             # Ajouter un préfixe contextuel
             context_prefix = {
                 "bail": "bail",

@@ -875,19 +875,26 @@ async def list_documents():
 async def get_document(filename: str):
     """Servir un document (PDF, image, etc.) depuis Backblaze B2"""
     try:
-        # Le filename peut être soit un nom simple soit une clé S3 complète
-        # Si c'est une clé S3 (contient '/'), l'utiliser directement
-        # Sinon, chercher dans le dossier documents
-        if '/' in filename:
-            s3_key = filename
-        else:
-            s3_key = f"documents/{filename}"
-        
-        # Télécharger depuis Backblaze B2
         from storage_service import get_storage_service
         storage_service = get_storage_service()
         
-        file_content = storage_service.download_pdf(s3_key)
+        # Si c'est une clé S3 complète (contient '/'), l'utiliser directement
+        if '/' in filename:
+            s3_key = filename
+            file_content = storage_service.download_pdf(s3_key)
+        else:
+            # Chercher dans tous les dossiers possibles
+            folders = ['documents', 'bails', 'transactions']
+            file_content = None
+            s3_key = None
+            
+            for folder in folders:
+                test_key = f"{folder}/{filename}"
+                file_content = storage_service.download_pdf(test_key)
+                if file_content is not None:
+                    s3_key = test_key
+                    print(f"✅ PDF trouvé dans: {s3_key}")
+                    break
         
         if file_content is None:
             raise HTTPException(
