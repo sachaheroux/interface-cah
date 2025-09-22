@@ -153,16 +153,16 @@ class TransactionUpdateFrancais(BaseModel):
 
 class LeaseCreateFrancais(BaseModel):
     id_locataire: int
-    date_transaction_debut: str
-    date_transaction_fin: str
+    date_debut: str
+    date_fin: str
     prix_loyer: float
     methode_paiement: str = "Virement bancaire"
     pdf_bail: str = ""
 
-class LeaseUpdate_transactionFrancais(BaseModel):
+class LeaseUpdateFrancais(BaseModel):
     id_locataire: Optional[int] = None
-    date_transaction_debut: Optional[str] = None
-    date_transaction_fin: Optional[str] = None
+    date_debut: Optional[str] = None
+    date_fin: Optional[str] = None
     prix_loyer: Optional[float] = None
     methode_paiement: Optional[str] = None
     pdf_bail: Optional[str] = None
@@ -224,14 +224,14 @@ async def create_lease(lease_data: LeaseCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.put("/api/leases/{lease_id}")
-async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transactionFrancais):
+async def update_lease(lease_id: int, lease_data: LeaseUpdateFrancais):
     """Mettre à jour un bail"""
     try:
         lease_dict = lease_data.dict(exclude_unset=True)
-        update_transactiond_lease = db_service_francais.update_transaction_lease(lease_id, lease_dict)
-        if not update_transactiond_lease:
+        updated_lease = db_service_francais.update_lease(lease_id, lease_dict)
+        if not updated_lease:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
-        return {"data": update_transactiond_lease, "message": "Bail mis à jour avec succès"}
+        return {"data": updated_lease, "message": "Bail mis à jour avec succès"}
     except Exception as e:
         print(f"Erreur lors de la mise à jour du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
@@ -1357,25 +1357,6 @@ async def get_monitoring_status():
         print(f"Erreur lors de la récupération du statut: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du statut: {str(e)}")
 
-@app.put("/api/leases/{lease_id}")
-async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transactionFrancais):
-    """Mettre à jour un bail existant"""
-    try:
-        # Convertir les données en dictionnaire
-        update_transaction_data = lease_data.dict(exclude_unset=True)
-        
-        # Mettre à jour le bail
-        update_transactiond_lease = db_service_francais.update_transaction_lease(lease_id, update_transaction_data)
-        
-        if update_transactiond_lease:
-            return {
-                "message": "Bail mis à jour avec succès",
-                "lease": update_transactiond_lease
-            }
-        else:
-            raise HTTPException(status_code=404, detail="Bail non trouvé")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
 
 # ========================================
 # ENDPOINTS POUR LES TRANSACTIONS
