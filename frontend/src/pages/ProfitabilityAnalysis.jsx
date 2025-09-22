@@ -481,7 +481,7 @@ export default function ProfitabilityAnalysis() {
                         <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div 
-                              className="w-full rounded-t-lg transition-all duration-700"
+                              className="w-full transition-all duration-700"
                               style={{ 
                                 height: `${Math.abs(barHeight)}px`,
                                 backgroundColor: colors[index % colors.length]
@@ -494,7 +494,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                  <div className="flex justify-center space-x-1 px-2 -mt-1">
                     {analysisData.buildings.map((building, index) => (
                       <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
                         {building.name}
@@ -573,7 +573,7 @@ export default function ProfitabilityAnalysis() {
                       return (
                         <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
-                            <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                            <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {revenueCategories.map((category, catIndex) => {
                                 const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
                                 return (
@@ -596,7 +596,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                  <div className="flex justify-center space-x-1 px-2 -mt-1">
                     {analysisData.buildings.map((building, index) => (
                       <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
                         {building.name}
@@ -690,7 +690,7 @@ export default function ProfitabilityAnalysis() {
                       return (
                         <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
-                            <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                            <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {expenseCategories.map((category, catIndex) => {
                                 const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
                                 return (
@@ -713,7 +713,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                  <div className="flex justify-center space-x-1 px-2 -mt-1">
                     {analysisData.buildings.map((building, index) => (
                       <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
                         {building.name}
