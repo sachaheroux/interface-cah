@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react'
+import api from '../services/api'
 
 export default function ProfitabilityAnalysis() {
   const [buildings, setBuildings] = useState([])
