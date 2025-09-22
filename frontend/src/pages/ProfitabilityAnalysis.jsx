@@ -438,7 +438,7 @@ export default function ProfitabilityAnalysis() {
                     const steps = 5
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = stepSize * i
+                      const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
                         <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
@@ -488,7 +488,7 @@ export default function ProfitabilityAnalysis() {
                               }}
                             ></div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
@@ -524,7 +524,7 @@ export default function ProfitabilityAnalysis() {
                     const steps = 5
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = stepSize * i
+                      const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
                         <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
@@ -584,7 +584,7 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
@@ -632,7 +632,7 @@ export default function ProfitabilityAnalysis() {
                     const steps = 5
                     
                     return Array.from({ length: steps + 1 }, (_, i) => {
-                      const value = stepSize * i
+                      const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
                         <div key={i} className="text-xs text-gray-600 text-right font-medium">
                           ${value.toLocaleString()}
@@ -695,7 +695,7 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
