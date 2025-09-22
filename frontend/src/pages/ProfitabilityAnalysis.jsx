@@ -556,7 +556,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
                       const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
@@ -583,15 +583,20 @@ export default function ProfitabilityAnalysis() {
                           <div 
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '120%', // Plus d'espace pour les noms longs
+                              width: '100%', // Largeur normale
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
-                              whiteSpace: 'nowrap',
-                              overflow: 'visible'
+                              left: '0',
+                              height: '60px', // Hauteur pour 2-3 lignes
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'center',
+                              lineHeight: '1.2'
                             }}
                             title={building.name}
                           >
-                            {building.name}
+                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                              {building.name}
+                            </div>
                           </div>
                         </div>
                       )
@@ -653,7 +658,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
                       const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
@@ -692,15 +697,20 @@ export default function ProfitabilityAnalysis() {
                           <div 
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '120%', // Plus d'espace pour les noms longs
+                              width: '100%', // Largeur normale
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
-                              whiteSpace: 'nowrap',
-                              overflow: 'visible'
+                              left: '0',
+                              height: '60px', // Hauteur pour 2-3 lignes
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'center',
+                              lineHeight: '1.2'
                             }}
                             title={building.name}
                           >
-                            {building.name}
+                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                              {building.name}
+                            </div>
                           </div>
                         </div>
                       )
@@ -774,7 +784,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
                       const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
@@ -816,15 +826,20 @@ export default function ProfitabilityAnalysis() {
                           <div 
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '120%', // Plus d'espace pour les noms longs
+                              width: '100%', // Largeur normale
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
-                              whiteSpace: 'nowrap',
-                              overflow: 'visible'
+                              left: '0',
+                              height: '60px', // Hauteur pour 2-3 lignes
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'center',
+                              lineHeight: '1.2'
                             }}
                             title={building.name}
                           >
-                            {building.name}
+                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                              {building.name}
+                            </div>
                           </div>
                         </div>
                       )
