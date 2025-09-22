@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
-# Test deploiement backend - ligne propre
+# Test deploiement backend - ligne propre - API analysis ajoutée
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
