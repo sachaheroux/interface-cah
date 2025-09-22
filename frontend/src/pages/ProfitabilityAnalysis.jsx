@@ -478,7 +478,7 @@ export default function ProfitabilityAnalysis() {
                       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div 
                               className="w-full rounded-t-lg transition-all duration-700"
@@ -488,7 +488,7 @@ export default function ProfitabilityAnalysis() {
                               }}
                             ></div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
@@ -565,7 +565,7 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {revenueCategories.map((category, catIndex) => {
@@ -584,7 +584,7 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
@@ -676,7 +676,7 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {expenseCategories.map((category, catIndex) => {
@@ -695,7 +695,7 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-2 max-w-full truncate" title={building.name}>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
                             {building.name}
                           </div>
                         </div>
