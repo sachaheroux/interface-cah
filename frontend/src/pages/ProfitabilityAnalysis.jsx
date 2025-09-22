@@ -584,7 +584,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              top: '340px', // Sous la ligne de base + marge
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
@@ -698,7 +698,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              top: '340px', // Sous la ligne de base + marge
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
@@ -827,7 +827,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              top: '340px', // Sous la ligne de base + marge
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
