@@ -11,8 +11,14 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+// Fonction pour formater les dates en français
+const formatDate = (date) => {
+  const months = [
+    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
+  ]
+  return `${months[date.getMonth()]} ${date.getFullYear()}`
+}
 
 export default function ProfitabilityAnalysis() {
   const [buildings, setBuildings] = useState([])
@@ -122,7 +128,7 @@ export default function ProfitabilityAnalysis() {
     // Ajouter tous les mois de la période, y compris le mois de fin
     while (currentYear < endYearInt || (currentYear === endYearInt && currentMonth <= endMonthInt)) {
       const date = new Date(currentYear, currentMonth - 1, 1)
-      months.push(format(date, 'MMM yyyy', { locale: fr }))
+      months.push(formatDate(date))
       
       currentMonth++
       if (currentMonth > 12) {
