@@ -427,35 +427,67 @@ export default function ProfitabilityAnalysis() {
             {/* 1. Bar chart - Cashflow net par immeuble */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Cashflow net par immeuble</h3>
-              <div className="h-80 flex items-end justify-center space-x-4">
-                {analysisData.buildings.map((building, index) => {
-                  const maxAbsValue = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
-                  const isPositive = building.summary.netCashflow >= 0
-                  const barHeight = (Math.abs(building.summary.netCashflow) / maxAbsValue) * 280 // Hauteur max 280px
-                  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
-                  
-                  return (
-                    <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                      <div className="text-xs text-gray-600 text-center font-medium">
-                        {building.name}
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div 
-                          className={`w-full rounded-t-lg transition-all duration-700 ${
-                            isPositive ? 'bg-gradient-to-t from-green-500 to-green-400' : 'bg-gradient-to-b from-red-500 to-red-400'
-                          }`}
-                          style={{ 
-                            height: `${barHeight}px`,
-                            backgroundColor: colors[index % colors.length]
-                          }}
-                        ></div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {isPositive ? '+' : ''}${building.summary.netCashflow.toLocaleString()}
+              <div className="flex">
+                {/* Axe Y avec montants */}
+                <div className="flex flex-col justify-between h-80 pr-4">
+                  {(() => {
+                    const maxAbsValue = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
+                    const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
+                    const range = maxAbsValue - minValue
+                    const steps = 5
+                    const stepValue = range / steps
+                    
+                    return Array.from({ length: steps + 1 }, (_, i) => {
+                      const value = minValue + (stepValue * i)
+                      return (
+                        <div key={i} className="text-xs text-gray-500 text-right">
+                          ${value.toLocaleString()}
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })
+                  })()}
+                </div>
+                
+                {/* Graphique principal */}
+                <div className="flex-1 relative">
+                  {/* Lignes de grille */}
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className="border-t border-gray-200"></div>
+                    ))}
+                  </div>
+                  
+                  {/* Barres */}
+                  <div className="h-80 flex items-end justify-center space-x-4 relative z-10">
+                    {analysisData.buildings.map((building, index) => {
+                      const maxAbsValue = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
+                      const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
+                      const range = maxAbsValue - minValue
+                      const isPositive = building.summary.netCashflow >= 0
+                      const barHeight = (Math.abs(building.summary.netCashflow) / range) * 280
+                      const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+                      
+                      return (
+                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          <div className="flex flex-col items-center">
+                            <div 
+                              className={`w-full rounded-t-lg transition-all duration-700 ${
+                                isPositive ? 'bg-gradient-to-t from-green-500 to-green-400' : 'bg-gradient-to-b from-red-500 to-red-400'
+                              }`}
+                              style={{ 
+                                height: `${barHeight}px`,
+                                backgroundColor: colors[index % colors.length]
+                              }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                            {building.name}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -475,47 +507,75 @@ export default function ProfitabilityAnalysis() {
                 </div>
               </div>
               
-              <div className="h-80 flex items-end justify-center space-x-2">
-                {analysisData.buildings.map((building, index) => {
-                  const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
-                  const totalHeight = (building.summary.totalRevenue / maxRevenue) * 280
-                  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#ef4444']
-                  
-                  // Simuler des catégories de revenus (loyers, autres revenus, etc.)
-                  const revenueCategories = [
-                    { name: 'Loyers', amount: building.summary.totalRevenue * 0.8 },
-                    { name: 'Autres', amount: building.summary.totalRevenue * 0.2 }
-                  ]
-                  
-                  return (
-                    <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                      <div className="text-xs text-gray-600 text-center font-medium">
-                        {building.name}
-                      </div>
-                      <div className="flex flex-col items-center w-full">
-                        <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                          {revenueCategories.map((category, catIndex) => {
-                            const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
-                            return (
-                              <div
-                                key={catIndex}
-                                className="w-full transition-all duration-700 hover:opacity-80"
-                                style={{ 
-                                  height: `${categoryHeight}px`,
-                                  backgroundColor: colors[catIndex % colors.length]
-                                }}
-                                title={`${category.name}: $${category.amount.toLocaleString()}`}
-                              ></div>
-                            )
-                          })}
+              <div className="flex">
+                {/* Axe Y avec montants */}
+                <div className="flex flex-col justify-between h-80 pr-4">
+                  {(() => {
+                    const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
+                    const steps = 5
+                    const stepValue = maxRevenue / steps
+                    
+                    return Array.from({ length: steps + 1 }, (_, i) => {
+                      const value = stepValue * i
+                      return (
+                        <div key={i} className="text-xs text-gray-500 text-right">
+                          ${value.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          ${building.summary.totalRevenue.toLocaleString()}
+                      )
+                    })
+                  })()}
+                </div>
+                
+                {/* Graphique principal */}
+                <div className="flex-1 relative">
+                  {/* Lignes de grille */}
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className="border-t border-gray-200"></div>
+                    ))}
+                  </div>
+                  
+                  {/* Barres */}
+                  <div className="h-80 flex items-end justify-center space-x-2 relative z-10">
+                    {analysisData.buildings.map((building, index) => {
+                      const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
+                      const totalHeight = (building.summary.totalRevenue / maxRevenue) * 280
+                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#ef4444']
+                      
+                      // Simuler des catégories de revenus (loyers, autres revenus, etc.)
+                      const revenueCategories = [
+                        { name: 'Loyers', amount: building.summary.totalRevenue * 0.8 },
+                        { name: 'Autres', amount: building.summary.totalRevenue * 0.2 }
+                      ]
+                      
+                      return (
+                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          <div className="flex flex-col items-center w-full">
+                            <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                              {revenueCategories.map((category, catIndex) => {
+                                const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
+                                return (
+                                  <div
+                                    key={catIndex}
+                                    className="w-full transition-all duration-700 hover:opacity-80"
+                                    style={{ 
+                                      height: `${categoryHeight}px`,
+                                      backgroundColor: colors[catIndex % colors.length]
+                                    }}
+                                    title={`${category.name}: $${category.amount.toLocaleString()}`}
+                                  ></div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                            {building.name}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -547,50 +607,78 @@ export default function ProfitabilityAnalysis() {
                 </div>
               </div>
               
-              <div className="h-80 flex items-end justify-center space-x-2">
-                {analysisData.buildings.map((building, index) => {
-                  const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
-                  const totalHeight = (building.summary.totalExpenses / maxExpenses) * 280
-                  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
-                  
-                  // Simuler des catégories de dépenses basées sur les données réelles
-                  const expenseCategories = [
-                    { name: 'Taxes', amount: building.summary.totalExpenses * 0.3 },
-                    { name: 'Entretien', amount: building.summary.totalExpenses * 0.25 },
-                    { name: 'Réparation', amount: building.summary.totalExpenses * 0.2 },
-                    { name: 'Assurance', amount: building.summary.totalExpenses * 0.15 },
-                    { name: 'Autres', amount: building.summary.totalExpenses * 0.1 }
-                  ]
-                  
-                  return (
-                    <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                      <div className="text-xs text-gray-600 text-center font-medium">
-                        {building.name}
-                      </div>
-                      <div className="flex flex-col items-center w-full">
-                        <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                          {expenseCategories.map((category, catIndex) => {
-                            const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
-                            return (
-                              <div
-                                key={catIndex}
-                                className="w-full transition-all duration-700 hover:opacity-80"
-                                style={{ 
-                                  height: `${categoryHeight}px`,
-                                  backgroundColor: colors[catIndex % colors.length]
-                                }}
-                                title={`${category.name}: $${category.amount.toLocaleString()}`}
-                              ></div>
-                            )
-                          })}
+              <div className="flex">
+                {/* Axe Y avec montants */}
+                <div className="flex flex-col justify-between h-80 pr-4">
+                  {(() => {
+                    const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
+                    const steps = 5
+                    const stepValue = maxExpenses / steps
+                    
+                    return Array.from({ length: steps + 1 }, (_, i) => {
+                      const value = stepValue * i
+                      return (
+                        <div key={i} className="text-xs text-gray-500 text-right">
+                          ${value.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          ${building.summary.totalExpenses.toLocaleString()}
+                      )
+                    })
+                  })()}
+                </div>
+                
+                {/* Graphique principal */}
+                <div className="flex-1 relative">
+                  {/* Lignes de grille */}
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className="border-t border-gray-200"></div>
+                    ))}
+                  </div>
+                  
+                  {/* Barres */}
+                  <div className="h-80 flex items-end justify-center space-x-2 relative z-10">
+                    {analysisData.buildings.map((building, index) => {
+                      const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
+                      const totalHeight = (building.summary.totalExpenses / maxExpenses) * 280
+                      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+                      
+                      // Simuler des catégories de dépenses basées sur les données réelles
+                      const expenseCategories = [
+                        { name: 'Taxes', amount: building.summary.totalExpenses * 0.3 },
+                        { name: 'Entretien', amount: building.summary.totalExpenses * 0.25 },
+                        { name: 'Réparation', amount: building.summary.totalExpenses * 0.2 },
+                        { name: 'Assurance', amount: building.summary.totalExpenses * 0.15 },
+                        { name: 'Autres', amount: building.summary.totalExpenses * 0.1 }
+                      ]
+                      
+                      return (
+                        <div key={building.id} className="flex flex-col items-center space-y-2" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          <div className="flex flex-col items-center w-full">
+                            <div className="w-full rounded-t-lg overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                              {expenseCategories.map((category, catIndex) => {
+                                const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
+                                return (
+                                  <div
+                                    key={catIndex}
+                                    className="w-full transition-all duration-700 hover:opacity-80"
+                                    style={{ 
+                                      height: `${categoryHeight}px`,
+                                      backgroundColor: colors[catIndex % colors.length]
+                                    }}
+                                    title={`${category.name}: $${category.amount.toLocaleString()}`}
+                                  ></div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 text-center font-medium mt-2">
+                            {building.name}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
