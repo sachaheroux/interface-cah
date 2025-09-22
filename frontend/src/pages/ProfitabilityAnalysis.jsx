@@ -8,7 +8,8 @@ import {
   PieChart, 
   Download,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Search
 } from 'lucide-react'
 
 export default function ProfitabilityAnalysis() {
@@ -19,11 +20,26 @@ export default function ProfitabilityAnalysis() {
   const [loading, setLoading] = useState(false)
   const [analysisData, setAnalysisData] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [buildingSearchTerm, setBuildingSearchTerm] = useState('')
+  const [filteredBuildings, setFilteredBuildings] = useState([])
 
   // Charger les immeubles au montage
   useEffect(() => {
     loadBuildings()
   }, [])
+
+  // Filtrer les immeubles selon la recherche
+  useEffect(() => {
+    if (buildingSearchTerm.trim() === '') {
+      setFilteredBuildings(buildings)
+    } else {
+      const filtered = buildings.filter(building =>
+        building.nom_immeuble.toLowerCase().includes(buildingSearchTerm.toLowerCase()) ||
+        building.adresse.toLowerCase().includes(buildingSearchTerm.toLowerCase())
+      )
+      setFilteredBuildings(filtered)
+    }
+  }, [buildings, buildingSearchTerm])
 
   const loadBuildings = async () => {
     try {
@@ -53,6 +69,17 @@ export default function ProfitabilityAnalysis() {
         ? prev.filter(id => id !== buildingId)
         : [...prev, buildingId]
     )
+  }
+
+  const handleSelectAllBuildings = () => {
+    if (selectedBuildings.length === filteredBuildings.length) {
+      // Désélectionner tous les immeubles filtrés
+      setSelectedBuildings(prev => prev.filter(id => !filteredBuildings.some(b => b.id_immeuble === id)))
+    } else {
+      // Sélectionner tous les immeubles filtrés
+      const newSelected = [...new Set([...selectedBuildings, ...filteredBuildings.map(b => b.id_immeuble)])]
+      setSelectedBuildings(newSelected)
+    }
   }
 
   const runAnalysis = async () => {
@@ -222,7 +249,7 @@ export default function ProfitabilityAnalysis() {
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-medium text-gray-700">
                 <Building className="h-4 w-4 inline mr-2" />
-                Immeubles à analyser
+                Immeubles à analyser ({selectedBuildings.length} sélectionnés)
               </label>
               <button
                 onClick={loadBuildings}
@@ -232,25 +259,58 @@ export default function ProfitabilityAnalysis() {
                 <span>Recharger</span>
               </button>
             </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {buildings.length === 0 ? (
+            
+            {/* Barre de recherche */}
+            <div className="mb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un immeuble..."
+                  value={buildingSearchTerm}
+                  onChange={(e) => setBuildingSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Bouton tout sélectionner */}
+            <div className="mb-3">
+              <button
+                onClick={handleSelectAllBuildings}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                {selectedBuildings.length === filteredBuildings.length && filteredBuildings.length > 0
+                  ? 'Tout désélectionner'
+                  : 'Tout sélectionner'
+                } ({filteredBuildings.length} immeubles)
+              </button>
+            </div>
+
+            <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+              {filteredBuildings.length === 0 ? (
                 <div className="text-center py-4">
                   <div className="text-sm text-gray-500">
                     {buildings.length === 0 ? 'Chargement des immeubles...' : 'Aucun immeuble trouvé'}
                   </div>
                 </div>
               ) : (
-                buildings.map((building) => (
-                  <label key={building.id_immeuble} className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded">
+                filteredBuildings.map((building) => (
+                  <label key={building.id_immeuble} className="flex items-center space-x-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedBuildings.includes(building.id_immeuble)}
                       onChange={() => handleBuildingToggle(building.id_immeuble)}
                       className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <span className="text-sm text-gray-700">
-                      {building.nom_immeuble} - {building.adresse}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {building.nom_immeuble}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {building.adresse}
+                      </div>
+                    </div>
                   </label>
                 ))
               )}
@@ -366,51 +426,166 @@ export default function ProfitabilityAnalysis() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Bar chart - Comparaison des immeubles */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Comparaison des immeubles</h3>
-              <div className="space-y-3">
-                {analysisData.buildings.map((building, index) => (
-                  <div key={building.id} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">{building.name}</span>
-                        <span className="text-sm text-gray-500">${building.summary.netCashflow.toLocaleString()}</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Comparaison des immeubles</h3>
+              <div className="space-y-4">
+                {analysisData.buildings.map((building, index) => {
+                  const maxCashflow = Math.max(...analysisData.buildings.map(b => Math.abs(b.summary.netCashflow)))
+                  const barHeight = (Math.abs(building.summary.netCashflow) / maxCashflow) * 200 // Hauteur max 200px
+                  const isPositive = building.summary.netCashflow >= 0
+                  
+                  return (
+                    <div key={building.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {building.name}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {building.address}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-sm font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                            ${building.summary.netCashflow.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ROI: {building.summary.roi}%
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                          style={{ 
-                            width: `${(building.summary.netCashflow / Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))) * 100}%` 
-                          }}
-                        ></div>
+                      
+                      <div className="flex items-end space-x-1 h-32">
+                        {/* Barre principale */}
+                        <div className="flex-1 flex flex-col items-center">
+                          <div 
+                            className={`w-full rounded-t-lg transition-all duration-700 ${
+                              isPositive ? 'bg-gradient-to-t from-green-500 to-green-400' : 'bg-gradient-to-t from-red-500 to-red-400'
+                            }`}
+                            style={{ height: `${barHeight}px` }}
+                          ></div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {isPositive ? 'Profit' : 'Perte'}
+                          </div>
+                        </div>
+                        
+                        {/* Barres de revenus et dépenses */}
+                        <div className="flex-1 flex flex-col items-center">
+                          <div className="text-xs text-gray-500 mb-1">Revenus</div>
+                          <div 
+                            className="w-full bg-green-200 rounded-t-lg transition-all duration-700"
+                            style={{ height: `${(building.summary.totalRevenue / maxCashflow) * 200}px` }}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex-1 flex flex-col items-center">
+                          <div className="text-xs text-gray-500 mb-1">Dépenses</div>
+                          <div 
+                            className="w-full bg-red-200 rounded-t-lg transition-all duration-700"
+                            style={{ height: `${(building.summary.totalExpenses / maxCashflow) * 200}px` }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
             {/* Pie chart - Répartition des dépenses */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition des dépenses</h3>
-              <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Répartition des dépenses</h3>
+              
+              {/* Pie Chart SVG */}
+              <div className="flex justify-center mb-6">
+                <svg width="200" height="200" className="transform -rotate-90">
+                  {(() => {
+                    const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                    let currentAngle = 0
+                    const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+                    
+                    return Object.entries(analysisData.categories).map(([category, amount], index) => {
+                      const percentage = (amount / total) * 100
+                      const angle = (percentage / 100) * 360
+                      const startAngle = currentAngle
+                      const endAngle = currentAngle + angle
+                      
+                      const startAngleRad = (startAngle * Math.PI) / 180
+                      const endAngleRad = (endAngle * Math.PI) / 180
+                      
+                      const x1 = 100 + 80 * Math.cos(startAngleRad)
+                      const y1 = 100 + 80 * Math.sin(startAngleRad)
+                      const x2 = 100 + 80 * Math.cos(endAngleRad)
+                      const y2 = 100 + 80 * Math.sin(endAngleRad)
+                      
+                      const largeArcFlag = angle > 180 ? 1 : 0
+                      
+                      const pathData = [
+                        `M 100 100`,
+                        `L ${x1} ${y1}`,
+                        `A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                        'Z'
+                      ].join(' ')
+                      
+                      currentAngle += angle
+                      
+                      return (
+                        <path
+                          key={category}
+                          d={pathData}
+                          fill={colors[index % colors.length]}
+                          className="hover:opacity-80 transition-opacity duration-200"
+                          style={{ cursor: 'pointer' }}
+                        />
+                      )
+                    })
+                  })()}
+                </svg>
+              </div>
+              
+              {/* Légende détaillée */}
+              <div className="space-y-3">
                 {Object.entries(analysisData.categories).map(([category, amount], index) => {
                   const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
                   const percentage = ((amount / total) * 100).toFixed(1)
-                  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500', 'bg-purple-500']
+                  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                   
                   return (
-                    <div key={category} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}></div>
-                        <span className="text-sm text-gray-700 capitalize">{category}</span>
+                    <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: colors[index % colors.length] }}
+                        ></div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {category.replace('_', ' ')}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {percentage}% du total
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">{percentage}%</span>
-                        <span className="text-sm font-medium text-gray-900">${amount.toLocaleString()}</span>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-gray-900">
+                          ${amount.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {percentage}%
+                        </div>
                       </div>
                     </div>
                   )
                 })}
+              </div>
+              
+              {/* Résumé total */}
+              <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-primary-900">Total des dépenses</span>
+                  <span className="text-lg font-bold text-primary-900">
+                    ${Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0).toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -418,36 +593,60 @@ export default function ProfitabilityAnalysis() {
           {/* Graphique de cashflow mensuel */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Cashflow mensuel</h3>
-            <div className="space-y-4">
-              {analysisData.monthlyTotals.map((month, index) => (
-                <div key={month.month} className="flex items-center space-x-4">
-                  <div className="w-20 text-sm text-gray-600">
-                    {new Date(month.month + '-01').toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' })}
-                  </div>
-                  <div className="flex-1 flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-4 relative">
-                      <div 
-                        className="bg-green-500 h-4 rounded-l-full"
-                        style={{ width: `${(month.revenue / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%` }}
-                      ></div>
-                      <div 
-                        className="bg-red-500 h-4 rounded-r-full absolute top-0"
-                        style={{ 
-                          width: `${(month.expenses / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%`,
-                          left: `${(month.revenue / Math.max(...analysisData.monthlyTotals.map(m => m.revenue))) * 100}%`
-                        }}
-                      ></div>
+            <div className="space-y-6">
+              {analysisData.monthlyTotals.map((month, index) => {
+                const maxRevenue = Math.max(...analysisData.monthlyTotals.map(m => m.revenue))
+                const maxExpenses = Math.max(...analysisData.monthlyTotals.map(m => m.expenses))
+                const maxTotal = Math.max(maxRevenue, maxExpenses)
+                
+                const revenueWidth = (month.revenue / maxTotal) * 100
+                const expensesWidth = (month.expenses / maxTotal) * 100
+                
+                return (
+                  <div key={month.month} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="w-24 text-sm font-medium text-gray-700">
+                        {new Date(month.month + '-01').toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' })}
+                      </div>
+                      <div className="flex items-center space-x-6 text-sm">
+                        <div className="text-green-600 font-medium">+${month.revenue.toLocaleString()}</div>
+                        <div className="text-red-600 font-medium">-${month.expenses.toLocaleString()}</div>
+                        <div className={`font-bold ${month.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${month.netCashflow.toLocaleString()}
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-32 text-right text-sm">
-                      <div className="text-green-600">+${month.revenue.toLocaleString()}</div>
-                      <div className="text-red-600">-${month.expenses.toLocaleString()}</div>
-                      <div className={`font-medium ${month.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ${month.netCashflow.toLocaleString()}
+                    
+                    {/* Barre de revenus */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Revenus</span>
+                        <span>{revenueWidth.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-green-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${revenueWidth}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    {/* Barre de dépenses */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Dépenses</span>
+                        <span>{expensesWidth.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div 
+                          className="bg-red-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${expensesWidth}%` }}
+                        ></div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
