@@ -963,6 +963,58 @@ export default function ProfitabilityAnalysis() {
                   </div>
                 )
               })}
+              
+              {/* Ligne de total pour toute la période */}
+              <div className="pt-4 mt-6 border-t-2 border-gray-300">
+                {(() => {
+                  const totalRevenue = analysisData.monthlyTotals.reduce((sum, month) => sum + month.revenue, 0)
+                  const totalExpenses = analysisData.monthlyTotals.reduce((sum, month) => sum + month.expenses, 0)
+                  const totalNetCashflow = totalRevenue - totalExpenses
+                  const total = totalRevenue + totalExpenses
+                  const totalRevenuePercentage = (totalRevenue / total) * 100
+                  const totalExpensesPercentage = (totalExpenses / total) * 100
+                  
+                  return (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-lg font-bold text-gray-800">
+                          TOTAL PÉRIODE
+                        </div>
+                        <div className="flex items-center space-x-6 text-lg">
+                          <div className="text-green-600 font-bold">+${totalRevenue.toLocaleString()}</div>
+                          <div className="text-red-600 font-bold">-${totalExpenses.toLocaleString()}</div>
+                          <div className={`text-xl font-bold ${totalNetCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ${totalNetCashflow.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Barre de total - plus épaisse */}
+                      <div className="w-full bg-gray-300 rounded-full h-8 flex overflow-hidden">
+                        {/* Revenus totaux à gauche (vert) */}
+                        <div 
+                          className="bg-green-600 h-full transition-all duration-700 flex items-center justify-end pr-3"
+                          style={{ width: `${totalRevenuePercentage}%` }}
+                        >
+                          <span className="text-white text-sm font-bold">
+                            {totalRevenuePercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        
+                        {/* Dépenses totales à droite (rouge) */}
+                        <div 
+                          className="bg-red-600 h-full transition-all duration-700 flex items-center justify-start pl-3"
+                          style={{ width: `${totalExpensesPercentage}%` }}
+                        >
+                          <span className="text-white text-sm font-bold">
+                            {totalExpensesPercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           </div>
 
