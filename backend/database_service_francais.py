@@ -841,5 +841,45 @@ class DatabaseServiceFrancais:
             }
         }
 
+    def get_leases_by_buildings_and_period(self, building_ids, start_date, end_date):
+        """Récupérer les baux pour des immeubles et une période donnée"""
+        try:
+            with self.get_session() as session:
+                return session.query(Bail).filter(
+                    Bail.id_immeuble.in_(building_ids),
+                    Bail.date_debut <= end_date,
+                    or_(
+                        Bail.date_fin >= start_date,
+                        Bail.date_fin.is_(None)
+                    )
+                ).all()
+        except Exception as e:
+            print(f"Erreur lors de la récupération des baux: {e}")
+            return []
+
+    def get_transactions_by_buildings_and_period(self, building_ids, start_date, end_date):
+        """Récupérer les transactions pour des immeubles et une période donnée"""
+        try:
+            with self.get_session() as session:
+                return session.query(TransactionFrancais).filter(
+                    TransactionFrancais.id_immeuble.in_(building_ids),
+                    TransactionFrancais.date_de_transaction >= start_date,
+                    TransactionFrancais.date_de_transaction <= end_date
+                ).all()
+        except Exception as e:
+            print(f"Erreur lors de la récupération des transactions: {e}")
+            return []
+
+    def get_buildings_by_ids(self, building_ids):
+        """Récupérer les immeubles par IDs"""
+        try:
+            with self.get_session() as session:
+                return session.query(ImmeubleFrancais).filter(
+                    ImmeubleFrancais.id_immeuble.in_(building_ids)
+                ).all()
+        except Exception as e:
+            print(f"Erreur lors de la récupération des immeubles: {e}")
+            return []
+
 # Instance globale du service
 db_service_francais = DatabaseServiceFrancais()

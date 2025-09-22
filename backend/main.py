@@ -1492,6 +1492,166 @@ async def get_transaction_constants():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des constantes: {str(e)}")
 
+@app.get("/api/analysis/profitability")
+async def get_profitability_analysis(
+    building_ids: str = Query(..., description="IDs des immeubles séparés par des virgules"),
+    start_year: int = Query(..., description="Année de début"),
+    start_month: int = Query(..., description="Mois de début (1-12)"),
+    end_year: int = Query(..., description="Année de fin"),
+    end_month: int = Query(..., description="Mois de fin (1-12)")
+):
+    """Récupérer l'analyse de rentabilité avec les vraies données"""
+    try:
+        # Convertir les IDs des immeubles
+        building_id_list = [int(id.strip()) for id in building_ids.split(',') if id.strip()]
+        
+        # Créer les dates de début et fin
+        start_date = datetime(start_year, start_month, 1)
+        end_date = datetime(end_year, end_month, 1)
+        
+        # Récupérer les données des baux pour les revenus
+        leases = db_service_francais.get_leases_by_buildings_and_period(building_id_list, start_date, end_date)
+        
+        # Récupérer les données des transactions
+        transactions = db_service_francais.get_transactions_by_buildings_and_period(building_id_list, start_date, end_date)
+        
+        # Récupérer les immeubles
+        buildings = db_service_francais.get_buildings_by_ids(building_id_list)
+        
+        # Calculer les données d'analyse
+        analysis_data = calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date)
+        
+        return analysis_data
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'analyse de rentabilité: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse de rentabilité: {str(e)}")
+
+def calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date):
+    """Calculer l'analyse de rentabilité avec les vraies données"""
+    from collections import defaultdict
+    import calendar
+    
+    # Initialiser les données
+    analysis_data = {
+        "buildings": [],
+        "monthlyTotals": [],
+        "period": {
+            "start": start_date.strftime("%Y-%m"),
+            "end": end_date.strftime("%Y-%m")
+        }
+    }
+    
+    # Créer un dictionnaire pour les données mensuelles
+    monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+    
+    # Traiter les baux pour les revenus
+    for lease in leases:
+        building_id = lease.id_immeuble
+        loyer = lease.loyer_mensuel or 0
+        
+        # Calculer les mois actifs du bail
+        current_date = max(start_date, lease.date_debut)
+        end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+        
+        while current_date <= end_lease_date:
+            month_key = current_date.strftime("%Y-%m")
+            monthly_data[month_key]["revenue"] += loyer
+            monthly_data[month_key]["netCashflow"] += loyer
+            
+            # Passer au mois suivant
+            if current_date.month == 12:
+                current_date = current_date.replace(year=current_date.year + 1, month=1)
+            else:
+                current_date = current_date.replace(month=current_date.month + 1)
+    
+    # Traiter les transactions
+    for transaction in transactions:
+        building_id = transaction.id_immeuble
+        montant = transaction.montant or 0
+        type_transaction = transaction.type
+        
+        # Déterminer le mois de la transaction
+        transaction_date = transaction.date_de_transaction
+        if transaction_date:
+            month_key = transaction_date.strftime("%Y-%m")
+            
+            if type_transaction == "revenu":
+                monthly_data[month_key]["revenue"] += montant
+                monthly_data[month_key]["netCashflow"] += montant
+            elif type_transaction == "depense":
+                monthly_data[month_key]["expenses"] += abs(montant)  # S'assurer que c'est positif
+                monthly_data[month_key]["netCashflow"] -= abs(montant)
+    
+    # Calculer les données par immeuble
+    building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+    
+    # Revenus des baux par immeuble
+    for lease in leases:
+        building_id = lease.id_immeuble
+        loyer = lease.loyer_mensuel or 0
+        
+        current_date = max(start_date, lease.date_debut)
+        end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+        
+        while current_date <= end_lease_date:
+            building_data[building_id]["revenue"] += loyer
+            building_data[building_id]["netCashflow"] += loyer
+            
+            if current_date.month == 12:
+                current_date = current_date.replace(year=current_date.year + 1, month=1)
+            else:
+                current_date = current_date.replace(month=current_date.month + 1)
+    
+    # Transactions par immeuble
+    for transaction in transactions:
+        building_id = transaction.id_immeuble
+        montant = transaction.montant or 0
+        type_transaction = transaction.type
+        
+        if type_transaction == "revenu":
+            building_data[building_id]["revenue"] += montant
+            building_data[building_id]["netCashflow"] += montant
+        elif type_transaction == "depense":
+            building_data[building_id]["expenses"] += abs(montant)
+            building_data[building_id]["netCashflow"] -= abs(montant)
+    
+    # Construire les données des immeubles
+    for building in buildings:
+        building_id = building.id_immeuble
+        data = building_data[building_id]
+        
+        analysis_data["buildings"].append({
+            "id": building_id,
+            "name": building.nom_immeuble,
+            "summary": {
+                "totalRevenue": data["revenue"],
+                "totalExpenses": data["expenses"],
+                "netCashflow": data["netCashflow"]
+            }
+        })
+    
+    # Construire les données mensuelles
+    current_date = start_date
+    while current_date <= end_date:
+        month_key = current_date.strftime("%Y-%m")
+        month_name = calendar.month_name[current_date.month][:3].lower() + f". {current_date.year}"
+        
+        data = monthly_data[month_key]
+        analysis_data["monthlyTotals"].append({
+            "month": month_name,
+            "revenue": data["revenue"],
+            "expenses": data["expenses"],
+            "netCashflow": data["netCashflow"]
+        })
+        
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=current_date.month + 1)
+    
+    return analysis_data
+
 @app.get("/api/transactions")
 async def get_transactions():
     """Récupérer toutes les transactions"""

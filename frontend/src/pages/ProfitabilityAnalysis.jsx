@@ -11,14 +11,6 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react'
-// Fonction pour formater les dates en français
-const formatDate = (date) => {
-  const months = [
-    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
-  ]
-  return `${months[date.getMonth()]} ${date.getFullYear()}`
-}
 
 export default function ProfitabilityAnalysis() {
   const [buildings, setBuildings] = useState([])
@@ -102,143 +94,29 @@ export default function ProfitabilityAnalysis() {
     try {
       console.log('Analyse pour:', selectedBuildings, `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
       
-      // Données bidon pour tester l'interface
-      setTimeout(() => {
-        const mockData = generateMockAnalysisData(selectedBuildings, startYear, startMonth, endYear, endMonth)
-        setAnalysisData(mockData)
-        setLoading(false)
-      }, 2000)
+      // Récupérer les vraies données depuis l'API
+      const buildingIds = selectedBuildings.join(',')
+      const response = await api.get(`/analysis/profitability`, {
+        params: {
+          building_ids: buildingIds,
+          start_year: startYear,
+          start_month: startMonth,
+          end_year: endYear,
+          end_month: endMonth
+        }
+      })
       
+      console.log('📊 Données d\'analyse récupérées:', response.data)
+      setAnalysisData(response.data)
+      setLoading(false)
+      setShowAnalysis(true)
     } catch (error) {
-      console.error('Erreur lors de l\'analyse:', error)
+      console.error('❌ Erreur lors de l\'analyse:', error)
+      alert('Erreur lors de l\'analyse de rentabilité. Veuillez réessayer.')
       setLoading(false)
     }
   }
 
-  const generateMockAnalysisData = (buildingIds, startYear, startMonth, endYear, endMonth) => {
-    const selectedBuildingsData = buildings.filter(b => buildingIds.includes(b.id_immeuble))
-    
-    // Générer les mois de la période sélectionnée
-    const months = []
-    let currentYear = parseInt(startYear)
-    let currentMonth = parseInt(startMonth)
-    const endYearInt = parseInt(endYear)
-    const endMonthInt = parseInt(endMonth)
-
-    // Ajouter tous les mois de la période, y compris le mois de fin
-    while (currentYear < endYearInt || (currentYear === endYearInt && currentMonth <= endMonthInt)) {
-      const date = new Date(currentYear, currentMonth - 1, 1)
-      months.push(formatDate(date))
-      
-      // Passer au mois suivant
-      currentMonth++
-      if (currentMonth > 12) {
-        currentMonth = 1
-        currentYear++
-      }
-    }
-    
-    // Debug: vérifier la logique
-    console.log('🔍 Debug génération mois:')
-    console.log('  - Début:', startYear, startMonth)
-    console.log('  - Fin:', endYear, endMonth)
-    console.log('  - Mois générés:', months.length)
-    console.log('  - Liste:', months)
-    
-    // Debug: afficher les mois générés
-    console.log('📅 Période sélectionnée:', `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
-    console.log('📅 Nombre de mois:', months.length)
-    console.log('📅 Mois générés:', months)
-    
-    // Exemples de périodes personnalisées :
-    // Janvier 2025 à Mars 2025 = 3 mois
-    // Juillet 2025 à Juin 2026 = 12 mois  
-    // Octobre 2024 à Février 2025 = 5 mois
-    
-    // Données par immeuble et par mois
-    const buildingData = selectedBuildingsData.map(building => {
-      const monthlyData = months.map(month => {
-        const baseRevenue = Math.floor(Math.random() * 5000) + 2000 // 2000-7000
-        const baseExpenses = Math.floor(Math.random() * 2000) + 500  // 500-2500
-        
-        return {
-          month,
-          revenue: baseRevenue,
-          expenses: baseExpenses,
-          netCashflow: baseRevenue - baseExpenses,
-          categories: {
-            loyers: baseRevenue,
-            taxes: Math.floor(baseExpenses * 0.3),
-            entretien: Math.floor(baseExpenses * 0.25),
-            reparation: Math.floor(baseExpenses * 0.2),
-            assurance: Math.floor(baseExpenses * 0.15),
-            autre: Math.floor(baseExpenses * 0.1)
-          }
-        }
-      })
-      
-      const totalRevenue = monthlyData.reduce((sum, month) => sum + month.revenue, 0)
-      const totalExpenses = monthlyData.reduce((sum, month) => sum + month.expenses, 0)
-      
-      return {
-        id: building.id_immeuble,
-        name: building.nom_immeuble,
-        address: building.adresse,
-        monthlyData,
-        summary: {
-          totalRevenue,
-          totalExpenses,
-          netCashflow: totalRevenue - totalExpenses,
-          roi: ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1)
-        }
-      }
-    })
-    
-    // Calculer les totaux globaux
-    const totalRevenue = buildingData.reduce((sum, building) => sum + building.summary.totalRevenue, 0)
-    const totalExpenses = buildingData.reduce((sum, building) => sum + building.summary.totalExpenses, 0)
-    const netCashflow = totalRevenue - totalExpenses
-    
-    // Données pour les pie charts (toutes catégories confondues)
-    const allCategories = buildingData.reduce((acc, building) => {
-      building.monthlyData.forEach(month => {
-        Object.keys(month.categories).forEach(category => {
-          if (category !== 'loyers') { // Exclure les loyers des dépenses
-            acc[category] = (acc[category] || 0) + month.categories[category]
-          }
-        })
-      })
-      return acc
-    }, {})
-    
-    return {
-      period: { start: `${startMonth}/${startYear}`, end: `${endMonth}/${endYear}` },
-      buildings: buildingData,
-      summary: {
-        totalRevenue,
-        totalExpenses,
-        netCashflow,
-        roi: (netCashflow / totalRevenue * 100).toFixed(1)
-      },
-      categories: allCategories,
-      monthlyTotals: months.map(month => {
-        const monthData = buildingData.reduce((acc, building) => {
-          const monthInfo = building.monthlyData.find(m => m.month === month)
-          if (monthInfo) {
-            acc.revenue += monthInfo.revenue
-            acc.expenses += monthInfo.expenses
-            acc.netCashflow += monthInfo.netCashflow
-          }
-          return acc
-        }, { revenue: 0, expenses: 0, netCashflow: 0 })
-        
-        return {
-          month,
-          ...monthData
-        }
-      })
-    }
-  }
 
   const exportReport = () => {
     // TODO: Générer et télécharger le rapport PDF
