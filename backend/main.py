@@ -755,29 +755,38 @@ async def delete_unit(unit_id: int):
 
 @app.post("/api/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
-    """Uploader un document (PDF, image, etc.)"""
+    """Uploader un document (PDF, image, etc.) vers Backblaze B2"""
     try:
-        # Créer le répertoire documents s'il n'existe pas
-        documents_dir = os.path.join(DATA_DIR, "documents")
-        os.makedirs(documents_dir, exist_ok=True)
-        
         # Vérifier le type de fichier
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
         
-        # Chemin complet du fichier
-        file_path = os.path.join(documents_dir, file.filename)
+        # Lire le contenu du fichier
+        file_content = await file.read()
         
-        # Sauvegarder le fichier
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Upload vers Backblaze B2
+        from storage_service import get_storage_service
+        storage_service = get_storage_service()
         
-        print(f"✅ Document uploadé: {file.filename}")
-        return {
-            "message": "Document uploadé avec succès",
-            "filename": file.filename,
-            "size": os.path.getsize(file_path)
-        }
+        result = storage_service.upload_pdf(
+            file_content=file_content,
+            original_filename=file.filename,
+            folder="documents"
+        )
+        
+        if result["success"]:
+            print(f"✅ Document uploadé vers Backblaze B2: {result['filename']}")
+            return {
+                "message": "Document uploadé avec succès",
+                "filename": result["filename"],
+                "original_filename": result["original_filename"],
+                "s3_key": result["s3_key"],
+                "file_url": result["file_url"],
+                "size": result["size"]
+            }
+        else:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de l'upload vers Backblaze B2: {result['error']}")
+            
     except HTTPException:
         raise
     except Exception as e:
@@ -785,23 +794,13 @@ async def upload_document(file: UploadFile = File(...)):
 
 @app.get("/api/documents")
 async def list_documents():
-    """Lister tous les documents disponibles"""
+    """Lister tous les documents disponibles depuis Backblaze B2"""
     try:
-        # Créer le répertoire documents s'il n'existe pas
-        documents_dir = os.path.join(DATA_DIR, "documents")
-        os.makedirs(documents_dir, exist_ok=True)
+        from storage_service import get_storage_service
+        storage_service = get_storage_service()
         
-        # Lister les fichiers
-        files = []
-        if os.path.exists(documents_dir):
-            for filename in os.listdir(documents_dir):
-                if filename.lower().endswith('.pdf'):
-                    file_path = os.path.join(documents_dir, filename)
-                    files.append({
-                        "filename": filename,
-                        "size": os.path.getsize(file_path),
-                        "uploaded_at": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat()
-                    })
+        # Lister les fichiers depuis Backblaze B2
+        files = storage_service.list_pdfs(folder="documents")
         
         return {"documents": files}
     except Exception as e:
@@ -809,41 +808,39 @@ async def list_documents():
 
 @app.get("/api/documents/{filename}")
 async def get_document(filename: str):
-    """Servir un document (PDF, image, etc.)"""
+    """Servir un document (PDF, image, etc.) depuis Backblaze B2"""
     try:
-        # Créer le répertoire documents s'il n'existe pas
-        documents_dir = os.path.join(DATA_DIR, "documents")
-        os.makedirs(documents_dir, exist_ok=True)
+        # Le filename peut être soit un nom simple soit une clé S3 complète
+        # Si c'est une clé S3 (contient '/'), l'utiliser directement
+        # Sinon, chercher dans le dossier documents
+        if '/' in filename:
+            s3_key = filename
+        else:
+            s3_key = f"documents/{filename}"
         
-        # Chemin complet du fichier
-        file_path = os.path.join(documents_dir, filename)
+        # Télécharger depuis Backblaze B2
+        from storage_service import get_storage_service
+        storage_service = get_storage_service()
         
-        # Vérifier si le fichier existe
-        if not os.path.exists(file_path):
-            # Lister les fichiers disponibles pour aider au diagnostic
-            available_files = []
-            if os.path.exists(documents_dir):
-                available_files = [f for f in os.listdir(documents_dir) if f.lower().endswith('.pdf')]
-            
-            error_detail = {
-                "error": "Document non trouvé",
-                "requested_file": filename,
-                "documents_dir": documents_dir,
-                "available_files": available_files,
-                "message": f"Le fichier '{filename}' n'existe pas. Fichiers disponibles: {available_files}"
-            }
-            
+        file_content = storage_service.download_pdf(s3_key)
+        
+        if file_content is None:
             raise HTTPException(
                 status_code=404, 
-                detail=error_detail
+                detail=f"Document non trouvé: {filename}"
             )
         
-        # Retourner le fichier
-        return FileResponse(
-            path=file_path,
-            filename=filename,
-            media_type='application/octet-stream'
+        # Retourner le fichier en mémoire
+        from fastapi.responses import Response
+        return Response(
+            content=file_content,
+            media_type='application/pdf',
+            headers={
+                "Content-Disposition": f"inline; filename={filename}",
+                "Content-Length": str(len(file_content))
+            }
         )
+        
     except HTTPException:
         raise
     except Exception as e:
