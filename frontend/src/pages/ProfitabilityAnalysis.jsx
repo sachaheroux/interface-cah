@@ -539,7 +539,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -556,7 +556,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
                       const minValue = Math.min(...analysisData.buildings.map(b => b.summary.netCashflow))
@@ -584,7 +584,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '340px', // Sous la ligne de base + marge
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
@@ -643,7 +643,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -658,7 +658,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
                       const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
@@ -698,7 +698,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '340px', // Sous la ligne de base + marge
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
@@ -769,7 +769,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -784,7 +784,7 @@ export default function ProfitabilityAnalysis() {
                   </div>
                   
                   {/* Barres avec noms intégrés */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2" style={{ marginBottom: '60px' }}>
+                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
                       const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
@@ -827,7 +827,7 @@ export default function ProfitabilityAnalysis() {
                             className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
                               width: '100%', // Largeur normale
-                              top: '340px', // Sous la ligne de base + marge
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
                               left: '0',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
