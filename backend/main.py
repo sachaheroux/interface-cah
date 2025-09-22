@@ -1548,7 +1548,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     # Traiter les baux pour les revenus
     for lease in leases:
         building_id = lease.id_immeuble
-        loyer = lease.loyer_mensuel or 0
+        loyer = lease.prix_loyer or 0
         
         # Calculer les mois actifs du bail
         current_date = max(start_date, lease.date_debut)
@@ -1569,18 +1569,20 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     for transaction in transactions:
         building_id = transaction.id_immeuble
         montant = transaction.montant or 0
-        type_transaction = transaction.type
+        type_transaction = transaction.categorie
         
         # Déterminer le mois de la transaction
         transaction_date = transaction.date_de_transaction
         if transaction_date:
             month_key = transaction_date.strftime("%Y-%m")
             
-            if type_transaction == "revenu":
-                monthly_data[month_key]["revenue"] += montant
-                monthly_data[month_key]["netCashflow"] += montant
-            elif type_transaction == "depense":
-                monthly_data[month_key]["expenses"] += abs(montant)  # S'assurer que c'est positif
+            # Déterminer si c'est un revenu ou une dépense basé sur la catégorie
+            # Les revenus sont généralement les loyers, les dépenses sont les autres catégories
+            if type_transaction and "loyer" in type_transaction.lower():
+                monthly_data[month_key]["revenue"] += abs(montant)
+                monthly_data[month_key]["netCashflow"] += abs(montant)
+            else:
+                monthly_data[month_key]["expenses"] += abs(montant)
                 monthly_data[month_key]["netCashflow"] -= abs(montant)
     
     # Calculer les données par immeuble
@@ -1589,7 +1591,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     # Revenus des baux par immeuble
     for lease in leases:
         building_id = lease.id_immeuble
-        loyer = lease.loyer_mensuel or 0
+        loyer = lease.prix_loyer or 0
         
         current_date = max(start_date, lease.date_debut)
         end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
@@ -1607,12 +1609,12 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     for transaction in transactions:
         building_id = transaction.id_immeuble
         montant = transaction.montant or 0
-        type_transaction = transaction.type
+        type_transaction = transaction.categorie
         
-        if type_transaction == "revenu":
-            building_data[building_id]["revenue"] += montant
-            building_data[building_id]["netCashflow"] += montant
-        elif type_transaction == "depense":
+        if type_transaction and "loyer" in type_transaction.lower():
+            building_data[building_id]["revenue"] += abs(montant)
+            building_data[building_id]["netCashflow"] += abs(montant)
+        else:
             building_data[building_id]["expenses"] += abs(montant)
             building_data[building_id]["netCashflow"] -= abs(montant)
     
