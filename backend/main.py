@@ -783,7 +783,7 @@ async def delete_unit(unit_id: int):
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
 @app.post("/api/documents/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(file: UploadFile = File(...), context: str = "document"):
     """Uploader un document (PDF, image, etc.) vers Backblaze B2"""
     try:
         print(f"📤 Upload PDF reçu: {file.filename} ({file.size} bytes)")
@@ -816,10 +816,21 @@ async def upload_document(file: UploadFile = File(...)):
         storage_service = get_storage_service()
         
         print("🚀 Tentative d'upload vers Backblaze B2...")
+        print(f"📝 Contexte: {context}")
+        
+        # Déterminer le dossier selon le contexte
+        folder_map = {
+            "bail": "bails",
+            "transaction": "transactions", 
+            "document": "documents"
+        }
+        folder = folder_map.get(context, "documents")
+        
         result = storage_service.upload_pdf(
             file_content=file_content,
             original_filename=file.filename,
-            folder="documents"
+            folder=folder,
+            context=context
         )
         
         print(f"📊 Résultat upload: {result}")

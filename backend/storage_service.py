@@ -30,7 +30,7 @@ class BackblazeStorageService:
             aws_secret_access_key=self.b2_application_key
         )
     
-    def upload_pdf(self, file_content: bytes, original_filename: str, folder: str = "documents") -> Dict[str, Any]:
+    def upload_pdf(self, file_content: bytes, original_filename: str, folder: str = "documents", context: str = "document") -> Dict[str, Any]:
         """
         Uploader un PDF vers Backblaze B2
         
@@ -43,11 +43,24 @@ class BackblazeStorageService:
             Dict avec les informations du fichier uploadé
         """
         try:
-            # Générer un nom de fichier unique
+            # Générer un nom de fichier unique : nom_original_timestamp.pdf
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            unique_id = str(uuid.uuid4())[:8]
             file_extension = os.path.splitext(original_filename)[1]
-            new_filename = f"{timestamp}_{unique_id}{file_extension}"
+            base_name = os.path.splitext(original_filename)[0]
+            
+            # Nettoyer le nom de base (enlever caractères spéciaux)
+            import re
+            clean_base_name = re.sub(r'[^a-zA-Z0-9_-]', '_', base_name)
+            clean_base_name = clean_base_name[:50]  # Limiter la longueur
+            
+            # Ajouter un préfixe contextuel
+            context_prefix = {
+                "bail": "bail",
+                "transaction": "transaction", 
+                "document": "document"
+            }.get(context, "document")
+            
+            new_filename = f"{context_prefix}_{clean_base_name}_{timestamp}{file_extension}"
             
             # Chemin complet dans le bucket
             s3_key = f"{folder}/{new_filename}"

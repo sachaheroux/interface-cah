@@ -138,7 +138,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
       const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`
       console.log('🌐 URL d\'upload:', apiUrl)
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrl}?context=bail`, {
         method: 'POST',
         body: formData
       })

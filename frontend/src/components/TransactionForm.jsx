@@ -101,7 +101,7 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       formData.append('file', file)
 
       // Utiliser fetch directement pour éviter les problèmes de Content-Type
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload?context=transaction`, {
         method: 'POST',
         body: formData
       })
