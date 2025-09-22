@@ -488,12 +488,18 @@ export default function ProfitabilityAnalysis() {
                               }}
                             ></div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
-                            {building.name}
-                          </div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Noms des immeubles sous la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -584,12 +590,18 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
-                            {building.name}
-                          </div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Noms des immeubles sous la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -695,12 +707,18 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 text-center font-medium mt-1 max-w-full truncate" title={building.name}>
-                            {building.name}
-                          </div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Noms des immeubles sous la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
