@@ -27,13 +27,20 @@ export default function ProfitabilityAnalysis() {
 
   const loadBuildings = async () => {
     try {
+      console.log('🔄 Chargement des immeubles...')
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/buildings`)
+      console.log('📊 Réponse immeubles:', response.status)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('📋 Données immeubles:', data)
         setBuildings(data.data || [])
+        console.log('✅ Immeubles chargés:', data.data?.length || 0)
+      } else {
+        console.error('❌ Erreur API immeubles:', response.status)
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des immeubles:', error)
+      console.error('❌ Erreur lors du chargement des immeubles:', error)
     }
   }
 
@@ -209,24 +216,41 @@ export default function ProfitabilityAnalysis() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Sélection des immeubles */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              <Building className="h-4 w-4 inline mr-2" />
-              Immeubles à analyser
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                <Building className="h-4 w-4 inline mr-2" />
+                Immeubles à analyser
+              </label>
+              <button
+                onClick={loadBuildings}
+                className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Recharger</span>
+              </button>
+            </div>
             <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {buildings.map((building) => (
-                <label key={building.id_immeuble} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedBuildings.includes(building.id_immeuble)}
-                    onChange={() => handleBuildingToggle(building.id_immeuble)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">
-                    {building.nom_immeuble} - {building.adresse}
-                  </span>
-                </label>
-              ))}
+              {buildings.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="text-sm text-gray-500">
+                    {buildings.length === 0 ? 'Chargement des immeubles...' : 'Aucun immeuble trouvé'}
+                  </div>
+                </div>
+              ) : (
+                buildings.map((building) => (
+                  <label key={building.id_immeuble} className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedBuildings.includes(building.id_immeuble)}
+                      onChange={() => handleBuildingToggle(building.id_immeuble)}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      {building.nom_immeuble} - {building.adresse}
+                    </span>
+                  </label>
+                ))
+              )}
             </div>
           </div>
 
