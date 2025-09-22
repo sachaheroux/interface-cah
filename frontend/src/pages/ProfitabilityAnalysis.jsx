@@ -97,7 +97,7 @@ export default function ProfitabilityAnalysis() {
       
       // Récupérer les vraies données depuis l'API
       const buildingIds = selectedBuildings.join(',')
-      const response = await api.get(`/analysis/profitability`, {
+      const response = await api.get(`/api/analysis/profitability`, {
         params: {
           building_ids: buildingIds,
           start_year: startYear,
