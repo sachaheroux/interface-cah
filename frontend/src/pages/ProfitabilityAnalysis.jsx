@@ -119,6 +119,7 @@ export default function ProfitabilityAnalysis() {
     const endYearInt = parseInt(endYear)
     const endMonthInt = parseInt(endMonth)
 
+    // Ajouter tous les mois de la période, y compris le mois de fin
     while (currentYear < endYearInt || (currentYear === endYearInt && currentMonth <= endMonthInt)) {
       const date = new Date(currentYear, currentMonth - 1, 1)
       months.push(format(date, 'MMM yyyy', { locale: fr }))
@@ -132,7 +133,13 @@ export default function ProfitabilityAnalysis() {
     
     // Debug: afficher les mois générés
     console.log('📅 Période sélectionnée:', `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
+    console.log('📅 Nombre de mois:', months.length)
     console.log('📅 Mois générés:', months)
+    
+    // Exemples de périodes personnalisées :
+    // Janvier 2025 à Mars 2025 = 3 mois
+    // Juillet 2025 à Juin 2026 = 12 mois  
+    // Octobre 2024 à Février 2025 = 5 mois
     
     // Données par immeuble et par mois
     const buildingData = selectedBuildingsData.map(building => {
