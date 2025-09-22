@@ -73,7 +73,7 @@ export default function Leases() {
   }
 
   const handleDeleteLease = async (lease) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ce bail ?`)) {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ce bail ? Le PDF associé sera également supprimé.`)) {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases/${lease.id_bail}`, {
           method: 'DELETE'
@@ -81,7 +81,7 @@ export default function Leases() {
         
         if (response.ok) {
           setLeases(prev => prev.filter(l => l.id_bail !== lease.id_bail))
-          console.log('✅ Bail supprimé avec succès')
+          console.log('✅ Bail et PDF supprimés avec succès')
         } else {
           console.error('❌ Erreur lors de la suppression du bail')
         }
@@ -238,6 +238,24 @@ export default function Leases() {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Section PDF du bail - comme pour les transactions */}
+                    {lease.pdf_bail && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-gray-700">Document PDF du bail:</span>
+                          <a
+                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${lease.pdf_bail}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          >
+                            {lease.pdf_bail}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center space-x-2">

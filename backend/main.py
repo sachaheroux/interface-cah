@@ -238,12 +238,41 @@ async def update_transaction_lease(lease_id: int, lease_data: LeaseUpdate_transa
 
 @app.delete("/api/leases/{lease_id}")
 async def delete_lease(lease_id: int):
-    """Supprimer un bail"""
+    """Supprimer un bail et son PDF associé"""
     try:
+        # Récupérer le bail pour obtenir le nom du PDF
+        lease = db_service_francais.get_lease(lease_id)
+        if not lease:
+            raise HTTPException(status_code=404, detail="Bail non trouvé")
+        
+        # Supprimer le PDF de Backblaze B2 s'il existe
+        if lease.get('pdf_bail'):
+            try:
+                from storage_service import get_storage_service
+                storage_service = get_storage_service()
+                
+                # Construire la clé S3 (peut être un nom simple ou une clé complète)
+                pdf_key = lease['pdf_bail']
+                if not '/' in pdf_key:
+                    pdf_key = f"documents/{pdf_key}"
+                
+                # Supprimer le PDF
+                if storage_service.delete_pdf(pdf_key):
+                    print(f"✅ PDF du bail supprimé de Backblaze B2: {pdf_key}")
+                else:
+                    print(f"⚠️ PDF du bail non trouvé sur Backblaze B2: {pdf_key}")
+            except Exception as pdf_error:
+                print(f"⚠️ Erreur lors de la suppression du PDF du bail: {pdf_error}")
+                # Continuer même si la suppression du PDF échoue
+        
+        # Supprimer le bail de la base de données
         success = db_service_francais.delete_lease(lease_id)
         if not success:
             raise HTTPException(status_code=404, detail="Bail non trouvé")
-        return {"message": "Bail supprimé avec succès"}
+        
+        return {"message": "Bail et PDF supprimés avec succès"}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Erreur lors de la suppression du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
