@@ -1518,6 +1518,16 @@ async def get_profitability_analysis(
         # Récupérer les immeubles
         buildings = db_service_francais.get_buildings_by_ids(building_id_list)
         
+        # Debug: Afficher les données récupérées
+        print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
+        print(f"🔍 DEBUG - Transactions trouvées: {len(transactions)}")
+        print(f"🔍 DEBUG - Immeubles trouvés: {len(buildings)}")
+        
+        if transactions:
+            print(f"🔍 DEBUG - Première transaction: {transactions[0].__dict__ if hasattr(transactions[0], '__dict__') else transactions[0]}")
+        if leases:
+            print(f"🔍 DEBUG - Premier bail: {leases[0].__dict__ if hasattr(leases[0], '__dict__') else leases[0]}")
+        
         # Calculer les données d'analyse
         analysis_data = calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date)
         
