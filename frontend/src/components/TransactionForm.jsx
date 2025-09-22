@@ -100,14 +100,20 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await api.post('/api/documents/upload', formData)
+      // Utiliser fetch directement pour éviter les problèmes de Content-Type
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload`, {
+        method: 'POST',
+        body: formData
+      })
 
-      if (response.data) {
-        handleChange('pdf_transaction', response.data.filename)
-        console.log('✅ PDF uploadé:', response.data.filename)
+      if (response.ok) {
+        const result = await response.json()
+        handleChange('pdf_transaction', result.filename)
+        console.log('✅ PDF uploadé:', result.filename)
       } else {
-        console.error('❌ Erreur upload PDF:', response)
-        alert('Erreur lors de l\'upload du PDF')
+        const errorData = await response.json()
+        console.error('❌ Erreur upload PDF:', errorData)
+        alert(`Erreur lors de l'upload: ${errorData.detail || 'Erreur inconnue'}`)
       }
     } catch (error) {
       console.error('❌ Erreur upload PDF:', error)
