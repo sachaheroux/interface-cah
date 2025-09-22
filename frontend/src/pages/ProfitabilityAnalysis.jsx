@@ -23,6 +23,7 @@ export default function ProfitabilityAnalysis() {
   const [loading, setLoading] = useState(false)
   const [analysisData, setAnalysisData] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [showAnalysis, setShowAnalysis] = useState(false)
   const [buildingSearchTerm, setBuildingSearchTerm] = useState('')
   const [filteredBuildings, setFilteredBuildings] = useState([])
 
@@ -338,7 +339,7 @@ export default function ProfitabilityAnalysis() {
       </div>
 
       {/* Résultats de l'analyse */}
-      {analysisData && (
+      {showAnalysis && analysisData && analysisData.buildings && analysisData.buildings.length > 0 && (
         <div className="space-y-6">
           {/* Métriques clés */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -347,7 +348,7 @@ export default function ProfitabilityAnalysis() {
                 <div>
                   <p className="text-sm text-gray-600">Revenus totaux</p>
                   <p className="text-2xl font-bold text-green-600">
-                    ${analysisData.summary.totalRevenue.toLocaleString()}
+                    ${analysisData?.summary?.totalRevenue?.toLocaleString() || '0'}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-600" />
