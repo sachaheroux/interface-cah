@@ -93,14 +93,14 @@ export default function ProfitabilityAnalysis() {
   }
 
   const runAnalysis = async () => {
-    if (selectedBuildings.length === 0 || !startDate || !endDate) {
+    if (selectedBuildings.length === 0 || !startYear || !startMonth || !endYear || !endMonth) {
       alert('Veuillez sélectionner au moins un immeuble et une période')
       return
     }
 
     setLoading(true)
     try {
-      console.log('Analyse pour:', selectedBuildings, startDate, endDate)
+      console.log('Analyse pour:', selectedBuildings, `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
       
       // Données bidon pour tester l'interface
       setTimeout(() => {
@@ -204,7 +204,7 @@ export default function ProfitabilityAnalysis() {
     }, {})
     
     return {
-      period: { start: startDate, end: endDate },
+      period: { start: `${startMonth}/${startYear}`, end: `${endMonth}/${endYear}` },
       buildings: buildingData,
       summary: {
         totalRevenue,
@@ -432,7 +432,7 @@ export default function ProfitabilityAnalysis() {
         <div className="mt-6 flex justify-end">
           <button
             onClick={runAnalysis}
-            disabled={loading || selectedBuildings.length === 0 || !startDate || !endDate}
+            disabled={loading || selectedBuildings.length === 0 || !startYear || !startMonth || !endYear || !endMonth}
             className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
