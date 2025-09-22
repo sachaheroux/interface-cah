@@ -130,12 +130,20 @@ export default function ProfitabilityAnalysis() {
       const date = new Date(currentYear, currentMonth - 1, 1)
       months.push(formatDate(date))
       
+      // Passer au mois suivant
       currentMonth++
       if (currentMonth > 12) {
         currentMonth = 1
         currentYear++
       }
     }
+    
+    // Debug: vérifier la logique
+    console.log('🔍 Debug génération mois:')
+    console.log('  - Début:', startYear, startMonth)
+    console.log('  - Fin:', endYear, endMonth)
+    console.log('  - Mois générés:', months.length)
+    console.log('  - Liste:', months)
     
     // Debug: afficher les mois générés
     console.log('📅 Période sélectionnée:', `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
@@ -547,16 +555,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Noms des immeubles - AU-DESSUS des barres */}
-                  <div className="flex justify-center space-x-1 px-2 mb-2">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Barres */}
+                  {/* Barres avec noms intégrés */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
@@ -569,7 +568,8 @@ export default function ProfitabilityAnalysis() {
                       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          {/* Barre */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div 
                               className="w-full transition-all duration-700"
@@ -578,6 +578,18 @@ export default function ProfitabilityAnalysis() {
                                 backgroundColor: colors[index % colors.length]
                               }}
                             ></div>
+                          </div>
+                          {/* Nom positionné exactement sous la ligne de base */}
+                          <div 
+                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            style={{ 
+                              width: '100%',
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              left: '0'
+                            }}
+                            title={building.name}
+                          >
+                            {building.name}
                           </div>
                         </div>
                       )
@@ -638,16 +650,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Noms des immeubles - AU-DESSUS des barres */}
-                  <div className="flex justify-center space-x-1 px-2 mb-2">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Barres */}
+                  {/* Barres avec noms intégrés */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
@@ -663,7 +666,8 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          {/* Barre empilée */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {revenueCategories.map((category, catIndex) => {
@@ -681,6 +685,18 @@ export default function ProfitabilityAnalysis() {
                                 )
                               })}
                             </div>
+                          </div>
+                          {/* Nom positionné exactement sous la ligne de base */}
+                          <div 
+                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            style={{ 
+                              width: '100%',
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              left: '0'
+                            }}
+                            title={building.name}
+                          >
+                            {building.name}
                           </div>
                         </div>
                       )
@@ -753,16 +769,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Noms des immeubles - AU-DESSUS des barres */}
-                  <div className="flex justify-center space-x-1 px-2 mb-2">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Barres */}
+                  {/* Barres avec noms intégrés */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
@@ -781,7 +788,8 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                          {/* Barre empilée */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                               {expenseCategories.map((category, catIndex) => {
@@ -799,6 +807,18 @@ export default function ProfitabilityAnalysis() {
                                 )
                               })}
                             </div>
+                          </div>
+                          {/* Nom positionné exactement sous la ligne de base */}
+                          <div 
+                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            style={{ 
+                              width: '100%',
+                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
+                              left: '0'
+                            }}
+                            title={building.name}
+                          >
+                            {building.name}
                           </div>
                         </div>
                       )
