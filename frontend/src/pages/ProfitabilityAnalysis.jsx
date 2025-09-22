@@ -539,7 +539,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -568,7 +568,7 @@ export default function ProfitabilityAnalysis() {
                       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
                       
                       return (
-                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           {/* Barre */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div 
@@ -579,13 +579,11 @@ export default function ProfitabilityAnalysis() {
                               }}
                             ></div>
                           </div>
-                          {/* Nom positionné exactement sous la ligne de base */}
+                          {/* Nom sous la barre */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium"
+                            className="text-xs text-gray-600 text-center font-medium mt-2"
                             style={{ 
-                              width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0',
+                              width: '100%',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
                               alignItems: 'flex-start',
@@ -643,7 +641,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -673,7 +671,7 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           {/* Barre empilée */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
@@ -693,13 +691,11 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          {/* Nom positionné exactement sous la ligne de base */}
+                          {/* Nom sous la barre */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium"
+                            className="text-xs text-gray-600 text-center font-medium mt-2"
                             style={{ 
-                              width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0',
+                              width: '100%',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
                               alignItems: 'flex-start',
@@ -769,7 +765,7 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800" style={{ paddingBottom: '60px' }}>
+                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
                   {/* Lignes de grille */}
                   <div className="absolute inset-0 flex flex-col justify-between">
                     {(() => {
@@ -802,7 +798,7 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="relative" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
                           {/* Barre empilée */}
                           <div className="flex flex-col items-end justify-end w-full h-80">
                             <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
@@ -822,13 +818,11 @@ export default function ProfitabilityAnalysis() {
                               })}
                             </div>
                           </div>
-                          {/* Nom positionné exactement sous la ligne de base */}
+                          {/* Nom sous la barre */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium"
+                            className="text-xs text-gray-600 text-center font-medium mt-2"
                             style={{ 
-                              width: '100%', // Largeur normale
-                              top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0',
+                              width: '100%',
                               height: '60px', // Hauteur pour 2-3 lignes
                               display: 'flex',
                               alignItems: 'flex-start',
