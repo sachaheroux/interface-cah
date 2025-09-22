@@ -5,7 +5,7 @@ Utilise les nouveaux modèles français
 """
 
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, or_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 import json

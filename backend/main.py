@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 # Test deploiement backend - ligne propre
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
