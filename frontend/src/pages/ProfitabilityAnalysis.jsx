@@ -11,12 +11,16 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 export default function ProfitabilityAnalysis() {
   const [buildings, setBuildings] = useState([])
   const [selectedBuildings, setSelectedBuildings] = useState([])
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startYear, setStartYear] = useState('2025')
+  const [startMonth, setStartMonth] = useState('07')
+  const [endYear, setEndYear] = useState('2026')
+  const [endMonth, setEndMonth] = useState('06')
   const [loading, setLoading] = useState(false)
   const [analysisData, setAnalysisData] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
@@ -94,7 +98,7 @@ export default function ProfitabilityAnalysis() {
       
       // Données bidon pour tester l'interface
       setTimeout(() => {
-        const mockData = generateMockAnalysisData(selectedBuildings, startDate, endDate)
+        const mockData = generateMockAnalysisData(selectedBuildings, startYear, startMonth, endYear, endMonth)
         setAnalysisData(mockData)
         setLoading(false)
       }, 2000)
@@ -105,29 +109,29 @@ export default function ProfitabilityAnalysis() {
     }
   }
 
-  const generateMockAnalysisData = (buildingIds, startDate, endDate) => {
+  const generateMockAnalysisData = (buildingIds, startYear, startMonth, endYear, endMonth) => {
     const selectedBuildingsData = buildings.filter(b => buildingIds.includes(b.id_immeuble))
     
-    // Générer des données mensuelles pour la période
-    const start = new Date(startDate)
-    const end = new Date(endDate)
+    // Générer les mois de la période sélectionnée
     const months = []
-    
-    // Corriger la génération des mois pour correspondre exactement à la période sélectionnée
-    let currentDate = new Date(start.getFullYear(), start.getMonth(), 1)
-    const endDateObj = new Date(end.getFullYear(), end.getMonth(), 1)
-    
-    // Ajouter le mois de début
-    months.push(currentDate.toISOString().slice(0, 7))
-    
-    // Ajouter les mois suivants jusqu'au mois de fin inclus
-    while (currentDate < endDateObj) {
-      currentDate.setMonth(currentDate.getMonth() + 1)
-      months.push(currentDate.toISOString().slice(0, 7))
+    let currentYear = parseInt(startYear)
+    let currentMonth = parseInt(startMonth)
+    const endYearInt = parseInt(endYear)
+    const endMonthInt = parseInt(endMonth)
+
+    while (currentYear < endYearInt || (currentYear === endYearInt && currentMonth <= endMonthInt)) {
+      const date = new Date(currentYear, currentMonth - 1, 1)
+      months.push(format(date, 'MMM yyyy', { locale: fr }))
+      
+      currentMonth++
+      if (currentMonth > 12) {
+        currentMonth = 1
+        currentYear++
+      }
     }
     
     // Debug: afficher les mois générés
-    console.log('📅 Période sélectionnée:', startDate, 'à', endDate)
+    console.log('📅 Période sélectionnée:', `${startMonth}/${startYear} à ${endMonth}/${endYear}`)
     console.log('📅 Mois générés:', months)
     
     // Données par immeuble et par mois
@@ -336,24 +340,76 @@ export default function ProfitabilityAnalysis() {
               <Calendar className="h-4 w-4 inline mr-2" />
               Période d'analyse
             </label>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Date de début</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                <label className="block text-xs text-gray-500 mb-1">Mois de début</label>
+                <select
+                  value={startMonth}
+                  onChange={(e) => setStartMonth(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                >
+                  <option value="01">Janvier</option>
+                  <option value="02">Février</option>
+                  <option value="03">Mars</option>
+                  <option value="04">Avril</option>
+                  <option value="05">Mai</option>
+                  <option value="06">Juin</option>
+                  <option value="07">Juillet</option>
+                  <option value="08">Août</option>
+                  <option value="09">Septembre</option>
+                  <option value="10">Octobre</option>
+                  <option value="11">Novembre</option>
+                  <option value="12">Décembre</option>
+                </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Date de fin</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                <label className="block text-xs text-gray-500 mb-1">Année de début</label>
+                <select
+                  value={startYear}
+                  onChange={(e) => setStartYear(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                >
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Mois de fin</label>
+                <select
+                  value={endMonth}
+                  onChange={(e) => setEndMonth(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="01">Janvier</option>
+                  <option value="02">Février</option>
+                  <option value="03">Mars</option>
+                  <option value="04">Avril</option>
+                  <option value="05">Mai</option>
+                  <option value="06">Juin</option>
+                  <option value="07">Juillet</option>
+                  <option value="08">Août</option>
+                  <option value="09">Septembre</option>
+                  <option value="10">Octobre</option>
+                  <option value="11">Novembre</option>
+                  <option value="12">Décembre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Année de fin</label>
+                <select
+                  value={endYear}
+                  onChange={(e) => setEndYear(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="2023">2023</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                </select>
               </div>
             </div>
           </div>
@@ -478,6 +534,15 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
+                  {/* Noms des immeubles - AU-DESSUS des barres */}
+                  <div className="flex justify-center space-x-1 px-2 mb-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
+                  </div>
+                  
                   {/* Barres */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
@@ -504,15 +569,6 @@ export default function ProfitabilityAnalysis() {
                         </div>
                       )
                     })}
-                  </div>
-                  
-                  {/* Noms des immeubles - EN BAS avec alignement parfait */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
                   </div>
                   
                 </div>
@@ -569,6 +625,15 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
+                  {/* Noms des immeubles - AU-DESSUS des barres */}
+                  <div className="flex justify-center space-x-1 px-2 mb-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
+                  </div>
+                  
                   {/* Barres */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
@@ -607,15 +672,6 @@ export default function ProfitabilityAnalysis() {
                         </div>
                       )
                     })}
-                  </div>
-                  
-                  {/* Noms des immeubles - EN BAS avec alignement parfait */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
                   </div>
                   
                 </div>
@@ -684,6 +740,15 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
+                  {/* Noms des immeubles - AU-DESSUS des barres */}
+                  <div className="flex justify-center space-x-1 px-2 mb-2">
+                    {analysisData.buildings.map((building, index) => (
+                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                        {building.name}
+                      </div>
+                    ))}
+                  </div>
+                  
                   {/* Barres */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
@@ -725,15 +790,6 @@ export default function ProfitabilityAnalysis() {
                         </div>
                       )
                     })}
-                  </div>
-                  
-                  {/* Noms des immeubles - EN BAS avec alignement parfait */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
                   </div>
                   
                 </div>
