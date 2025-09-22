@@ -9,6 +9,7 @@ import Buildings from './pages/Buildings'
 import Tenants from './pages/Tenants'
 import Leases from './pages/Leases'
 import Transactions from './pages/Transactions'
+import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis'
 import Maintenance from './pages/Maintenance'
 import Employees from './pages/Employees'
 import Contractors from './pages/Contractors'
@@ -40,6 +41,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/buildings" element={<Buildings />} />
+            <Route path="/buildings/analysis" element={<ProfitabilityAnalysis />} />
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/leases" element={<Leases />} />
             <Route path="/transactions" element={<Transactions />} />

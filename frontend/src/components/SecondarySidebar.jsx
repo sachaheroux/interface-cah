@@ -30,8 +30,18 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Tous les immeubles', icon: List, active: viewMode === 'list' },
         { name: 'Toutes les unités', icon: Users, active: viewMode === 'units' },
         { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
+        { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis' },
         { name: 'Rapports', icon: FileText },
         { name: 'Maintenance', icon: Wrench },
+      ]
+    
+    case '/buildings/analysis':
+      return [
+        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
+        { name: 'Configuration', icon: SettingsIcon, active: true },
+        { name: 'Graphiques', icon: BarChart3 },
+        { name: 'Rapports', icon: FileText },
+        { name: 'Export', icon: Download },
       ]
     
     case '/tenants':
