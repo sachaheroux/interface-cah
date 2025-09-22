@@ -581,11 +581,13 @@ export default function ProfitabilityAnalysis() {
                           </div>
                           {/* Nom positionné exactement sous la ligne de base */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '100%',
+                              width: '120%', // Plus d'espace pour les noms longs
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0'
+                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
+                              whiteSpace: 'nowrap',
+                              overflow: 'visible'
                             }}
                             title={building.name}
                           >
@@ -688,11 +690,13 @@ export default function ProfitabilityAnalysis() {
                           </div>
                           {/* Nom positionné exactement sous la ligne de base */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '100%',
+                              width: '120%', // Plus d'espace pour les noms longs
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0'
+                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
+                              whiteSpace: 'nowrap',
+                              overflow: 'visible'
                             }}
                             title={building.name}
                           >
@@ -810,11 +814,13 @@ export default function ProfitabilityAnalysis() {
                           </div>
                           {/* Nom positionné exactement sous la ligne de base */}
                           <div 
-                            className="absolute text-xs text-gray-600 text-center font-medium max-w-full truncate"
+                            className="absolute text-xs text-gray-600 text-center font-medium"
                             style={{ 
-                              width: '100%',
+                              width: '120%', // Plus d'espace pour les noms longs
                               top: '320px', // Exactement sous la ligne de base (h-80 = 320px)
-                              left: '0'
+                              left: '-10%', // Centrer le nom avec l'espace supplémentaire
+                              whiteSpace: 'nowrap',
+                              overflow: 'visible'
                             }}
                             title={building.name}
                           >
@@ -944,7 +950,7 @@ export default function ProfitabilityAnalysis() {
                   <div key={month.month} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="w-24 text-sm font-medium text-gray-700">
-                        {new Date(month.month + '-01').toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' })}
+                        {month.month}
                       </div>
                       <div className="flex items-center space-x-6 text-sm">
                         <div className="text-green-600 font-medium">+${month.revenue.toLocaleString()}</div>
