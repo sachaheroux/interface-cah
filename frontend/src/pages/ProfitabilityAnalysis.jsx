@@ -555,7 +555,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Barres avec noms intégrés */}
+                  {/* Zone des barres - séparée */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.summary.netCashflow))
@@ -568,37 +568,41 @@ export default function ProfitabilityAnalysis() {
                       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          {/* Barre */}
-                          <div className="flex flex-col items-end justify-end w-full h-80">
-                            <div 
-                              className="w-full transition-all duration-700"
-                              style={{ 
-                                height: `${Math.abs(barHeight)}px`,
-                                backgroundColor: colors[index % colors.length]
-                              }}
-                            ></div>
-                          </div>
-                          {/* Nom sous la barre */}
+                        <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
+                          {/* Barre qui part de la ligne de base */}
                           <div 
-                            className="text-xs text-gray-600 text-center font-medium mt-2"
+                            className="w-full transition-all duration-700"
                             style={{ 
-                              width: '100%',
-                              height: '60px', // Hauteur pour 2-3 lignes
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              justifyContent: 'center',
-                              lineHeight: '1.2'
+                              height: `${Math.abs(barHeight)}px`,
+                              backgroundColor: colors[index % colors.length]
                             }}
-                            title={building.name}
-                          >
-                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
-                              {building.name}
-                            </div>
-                          </div>
+                          ></div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Zone des noms - séparée et en dessous */}
+                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                    {analysisData.buildings.map((building, index) => (
+                      <div 
+                        key={`name-${building.id}`} 
+                        className="text-xs text-gray-600 text-center font-medium"
+                        style={{ 
+                          width: `${100 / analysisData.buildings.length}%`,
+                          height: '60px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          lineHeight: '1.2'
+                        }}
+                        title={building.name}
+                      >
+                        <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                          {building.name}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   
                 </div>
@@ -655,7 +659,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Barres avec noms intégrés */}
+                  {/* Zone des barres - séparée */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
@@ -671,46 +675,50 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          {/* Barre empilée */}
-                          <div className="flex flex-col items-end justify-end w-full h-80">
-                            <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                              {revenueCategories.map((category, catIndex) => {
-                                const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
-                                return (
-                                  <div
-                                    key={catIndex}
-                                    className="w-full transition-all duration-700 hover:opacity-80"
-                                    style={{ 
-                                      height: `${categoryHeight}px`,
-                                      backgroundColor: colors[catIndex % colors.length]
-                                    }}
-                                    title={`${category.name}: $${category.amount.toLocaleString()}`}
-                                  ></div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                          {/* Nom sous la barre */}
-                          <div 
-                            className="text-xs text-gray-600 text-center font-medium mt-2"
-                            style={{ 
-                              width: '100%',
-                              height: '60px', // Hauteur pour 2-3 lignes
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              justifyContent: 'center',
-                              lineHeight: '1.2'
-                            }}
-                            title={building.name}
-                          >
-                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
-                              {building.name}
-                            </div>
+                        <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
+                          {/* Barre empilée qui part de la ligne de base */}
+                          <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                            {revenueCategories.map((category, catIndex) => {
+                              const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
+                              return (
+                                <div
+                                  key={catIndex}
+                                  className="w-full transition-all duration-700 hover:opacity-80"
+                                  style={{ 
+                                    height: `${categoryHeight}px`,
+                                    backgroundColor: colors[catIndex % colors.length]
+                                  }}
+                                  title={`${category.name}: $${category.amount.toLocaleString()}`}
+                                ></div>
+                              )
+                            })}
                           </div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Zone des noms - séparée et en dessous */}
+                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                    {analysisData.buildings.map((building, index) => (
+                      <div 
+                        key={`name-${building.id}`} 
+                        className="text-xs text-gray-600 text-center font-medium"
+                        style={{ 
+                          width: `${100 / analysisData.buildings.length}%`,
+                          height: '60px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          lineHeight: '1.2'
+                        }}
+                        title={building.name}
+                      >
+                        <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                          {building.name}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   
                 </div>
@@ -779,7 +787,7 @@ export default function ProfitabilityAnalysis() {
                     })()}
                   </div>
                   
-                  {/* Barres avec noms intégrés */}
+                  {/* Zone des barres - séparée */}
                   <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
@@ -798,46 +806,50 @@ export default function ProfitabilityAnalysis() {
                       ]
                       
                       return (
-                        <div key={building.id} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                          {/* Barre empilée */}
-                          <div className="flex flex-col items-end justify-end w-full h-80">
-                            <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                              {expenseCategories.map((category, catIndex) => {
-                                const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
-                                return (
-                                  <div
-                                    key={catIndex}
-                                    className="w-full transition-all duration-700 hover:opacity-80"
-                                    style={{ 
-                                      height: `${categoryHeight}px`,
-                                      backgroundColor: colors[catIndex % colors.length]
-                                    }}
-                                    title={`${category.name}: $${category.amount.toLocaleString()}`}
-                                  ></div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                          {/* Nom sous la barre */}
-                          <div 
-                            className="text-xs text-gray-600 text-center font-medium mt-2"
-                            style={{ 
-                              width: '100%',
-                              height: '60px', // Hauteur pour 2-3 lignes
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              justifyContent: 'center',
-                              lineHeight: '1.2'
-                            }}
-                            title={building.name}
-                          >
-                            <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
-                              {building.name}
-                            </div>
+                        <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
+                          {/* Barre empilée qui part de la ligne de base */}
+                          <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
+                            {expenseCategories.map((category, catIndex) => {
+                              const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
+                              return (
+                                <div
+                                  key={catIndex}
+                                  className="w-full transition-all duration-700 hover:opacity-80"
+                                  style={{ 
+                                    height: `${categoryHeight}px`,
+                                    backgroundColor: colors[catIndex % colors.length]
+                                  }}
+                                  title={`${category.name}: $${category.amount.toLocaleString()}`}
+                                ></div>
+                              )
+                            })}
                           </div>
                         </div>
                       )
                     })}
+                  </div>
+                  
+                  {/* Zone des noms - séparée et en dessous */}
+                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                    {analysisData.buildings.map((building, index) => (
+                      <div 
+                        key={`name-${building.id}`} 
+                        className="text-xs text-gray-600 text-center font-medium"
+                        style={{ 
+                          width: `${100 / analysisData.buildings.length}%`,
+                          height: '60px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          lineHeight: '1.2'
+                        }}
+                        title={building.name}
+                      >
+                        <div style={{ wordWrap: 'break-word', maxWidth: '100%' }}>
+                          {building.name}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   
                 </div>
