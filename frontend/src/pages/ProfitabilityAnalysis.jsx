@@ -630,22 +630,9 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
-                  {/* Lignes de grille */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {(() => {
-                      const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
-                      const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
-                      const steps = 5
-                      
-                      return Array.from({ length: steps + 1 }, (_, i) => (
-                        <div key={i} className="border-t border-gray-300"></div>
-                      ))
-                    })()}
-                  </div>
-                  
-                  {/* Zone des barres - séparée */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                <div className="flex-1 relative">
+                  {/* Zone des barres avec ligne de base */}
+                  <div className="h-80 flex items-end justify-center space-x-1 relative px-2" style={{ borderBottom: '2px solid #1f2937' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
                       const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
@@ -661,7 +648,7 @@ export default function ProfitabilityAnalysis() {
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
-                          {/* Barre empilée qui part de la ligne de base */}
+                          {/* Barre empilée qui part exactement de la ligne de base */}
                           <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                             {revenueCategories.map((category, catIndex) => {
                               const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
@@ -683,8 +670,8 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Zone des noms - séparée et en dessous */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                  {/* Zone des noms - EN DESSOUS de la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
@@ -758,22 +745,9 @@ export default function ProfitabilityAnalysis() {
                 </div>
                 
                 {/* Graphique principal */}
-                <div className="flex-1 relative border-l-2 border-b-2 border-gray-800">
-                  {/* Lignes de grille */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {(() => {
-                      const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
-                      const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
-                      const steps = 5
-                      
-                      return Array.from({ length: steps + 1 }, (_, i) => (
-                        <div key={i} className="border-t border-gray-300"></div>
-                      ))
-                    })()}
-                  </div>
-                  
-                  {/* Zone des barres - séparée */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative z-10 px-2">
+                <div className="flex-1 relative">
+                  {/* Zone des barres avec ligne de base */}
+                  <div className="h-80 flex items-end justify-center space-x-1 relative px-2" style={{ borderBottom: '2px solid #1f2937' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
                       const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
@@ -792,7 +766,7 @@ export default function ProfitabilityAnalysis() {
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
-                          {/* Barre empilée qui part de la ligne de base */}
+                          {/* Barre empilée qui part exactement de la ligne de base */}
                           <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
                             {expenseCategories.map((category, catIndex) => {
                               const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
@@ -814,8 +788,8 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Zone des noms - séparée et en dessous */}
-                  <div className="flex justify-center space-x-1 px-2 mt-4">
+                  {/* Zone des noms - EN DESSOUS de la ligne de base */}
+                  <div className="flex justify-center space-x-1 px-2 mt-2">
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
