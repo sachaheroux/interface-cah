@@ -493,15 +493,16 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 -mt-1">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
                 </div>
+              </div>
+              
+              {/* Noms des immeubles - SÉPARÉS du graphique */}
+              <div className="flex justify-center space-x-1 px-2 mt-4">
+                {analysisData.buildings.map((building, index) => (
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                    {building.name}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -595,15 +596,16 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 -mt-1">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
                 </div>
+              </div>
+              
+              {/* Noms des immeubles - SÉPARÉS du graphique */}
+              <div className="flex justify-center space-x-1 px-2 mt-4">
+                {analysisData.buildings.map((building, index) => (
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                    {building.name}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -712,15 +714,16 @@ export default function ProfitabilityAnalysis() {
                     })}
                   </div>
                   
-                  {/* Noms des immeubles sous la ligne de base */}
-                  <div className="flex justify-center space-x-1 px-2 -mt-1">
-                    {analysisData.buildings.map((building, index) => (
-                      <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
-                        {building.name}
-                      </div>
-                    ))}
-                  </div>
                 </div>
+              </div>
+              
+              {/* Noms des immeubles - SÉPARÉS du graphique */}
+              <div className="flex justify-center space-x-1 px-2 mt-4">
+                {analysisData.buildings.map((building, index) => (
+                  <div key={building.id} className="text-xs text-gray-600 text-center font-medium max-w-full truncate" style={{ width: `${100 / analysisData.buildings.length}%` }} title={building.name}>
+                    {building.name}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
