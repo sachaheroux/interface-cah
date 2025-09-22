@@ -34,8 +34,11 @@ export default function ProfitabilityAnalysis() {
       if (response.ok) {
         const data = await response.json()
         console.log('📋 Données immeubles:', data)
-        setBuildings(data.data || [])
-        console.log('✅ Immeubles chargés:', data.data?.length || 0)
+        
+        // L'API retourne directement un tableau, pas un objet avec data
+        const buildingsList = Array.isArray(data) ? data : (data.data || [])
+        setBuildings(buildingsList)
+        console.log('✅ Immeubles chargés:', buildingsList.length)
       } else {
         console.error('❌ Erreur API immeubles:', response.status)
       }
