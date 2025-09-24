@@ -848,9 +848,9 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
-                # Approche simplifiée : récupérer tous les baux et filtrer en Python
-                all_leases = session.query(Bail).all()
-                print(f"🔍 DEBUG - Tous les baux: {len(all_leases)}")
+                # Approche simplifiée : récupérer tous les baux avec les relations chargées
+                all_leases = session.query(Bail).join(Locataire).join(Unite).all()
+                print(f"🔍 DEBUG - Tous les baux avec relations: {len(all_leases)}")
                 
                 filtered_leases = []
                 for lease in all_leases:
