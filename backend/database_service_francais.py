@@ -848,7 +848,7 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
-                leases = session.query(Bail).join(Locataire, Bail.id_locataire == Locataire.id_locataire).join(Unite, Locataire.id_unite == Unite.id_unite).filter(
+                leases = session.query(Bail).join(Bail.locataire).join(Locataire.unite).filter(
                     Unite.id_immeuble.in_(building_ids),
                     Bail.date_debut <= end_date,
                     or_(
