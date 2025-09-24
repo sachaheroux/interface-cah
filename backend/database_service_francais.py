@@ -848,14 +848,36 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
-                leases = session.query(Bail).join(Bail.locataire).join(Locataire.unite).filter(
-                    Unite.id_immeuble.in_(building_ids),
-                    Bail.date_debut <= end_date,
-                    or_(
-                        Bail.date_fin >= start_date,
-                        Bail.date_fin.is_(None)
-                    )
-                ).all()
+                # Utiliser une requête SQL brute pour éviter les problèmes de relations
+                building_ids_str = ','.join(map(str, building_ids))
+                query = text(f"""
+                    SELECT b.* FROM baux b
+                    JOIN locataires l ON b.id_locataire = l.id_locataire
+                    JOIN unites u ON l.id_unite = u.id_unite
+                    WHERE u.id_immeuble IN ({building_ids_str})
+                    AND b.date_debut <= :end_date
+                    AND (b.date_fin >= :start_date OR b.date_fin IS NULL)
+                """)
+                
+                result = session.execute(query, {
+                    'start_date': start_date,
+                    'end_date': end_date
+                })
+                
+                leases = []
+                for row in result:
+                    # Créer un objet Bail à partir du résultat
+                    lease = Bail()
+                    lease.id_bail = row.id_bail
+                    lease.id_locataire = row.id_locataire
+                    lease.date_debut = row.date_debut
+                    lease.date_fin = row.date_fin
+                    lease.prix_loyer = row.prix_loyer
+                    lease.methode_paiement = row.methode_paiement
+                    lease.pdf_bail = row.pdf_bail
+                    lease.date_creation = row.date_creation
+                    lease.date_modification = row.date_modification
+                    leases.append(lease)
                 
                 print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
                 for lease in leases:
