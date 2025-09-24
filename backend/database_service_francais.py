@@ -842,11 +842,11 @@ class DatabaseServiceFrancais:
         }
 
     def get_leases_by_buildings_and_period(self, building_ids, start_date, end_date):
-        """Récupérer les baux pour des immeubles et une période donnée"""
+        """Récupérer les baux pour des immeubles et une période donnée via les unités"""
         try:
             with self.get_session() as session:
-                return session.query(Bail).filter(
-                    Bail.id_immeuble.in_(building_ids),
+                return session.query(Bail).join(Unite).filter(
+                    Unite.id_immeuble.in_(building_ids),
                     Bail.date_debut <= end_date,
                     or_(
                         Bail.date_fin >= start_date,
