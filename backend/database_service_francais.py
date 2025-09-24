@@ -848,43 +848,25 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
-                # Requête SQL brute : Immeubles → Unités → Locataires → Baux
-                building_ids_str = ','.join(map(str, building_ids))
-                query = text(f"""
-                    SELECT b.* FROM baux b
-                    JOIN locataires l ON b.id_locataire = l.id_locataire
-                    JOIN unites u ON l.id_unite = u.id_unite
-                    WHERE u.id_immeuble IN ({building_ids_str})
-                    AND b.date_debut <= :end_date
-                    AND (b.date_fin >= :start_date OR b.date_fin IS NULL)
-                """)
+                # Approche simplifiée : récupérer tous les baux et filtrer en Python
+                all_leases = session.query(Bail).all()
+                print(f"🔍 DEBUG - Tous les baux: {len(all_leases)}")
                 
-                print(f"🔍 DEBUG - Requête SQL: {query}")
+                filtered_leases = []
+                for lease in all_leases:
+                    # Vérifier si le bail est dans la période
+                    if lease.date_debut <= end_date and (lease.date_fin >= start_date or lease.date_fin is None):
+                        # Pour chaque bail, vérifier si le locataire est dans un immeuble sélectionné
+                        # En utilisant une requête séparée pour éviter les problèmes de relations
+                        locataire_query = session.query(Locataire).filter(Locataire.id_locataire == lease.id_locataire).first()
+                        if locataire_query:
+                            unite_query = session.query(Unite).filter(Unite.id_unite == locataire_query.id_unite).first()
+                            if unite_query and unite_query.id_immeuble in building_ids:
+                                filtered_leases.append(lease)
+                                print(f"🔍 DEBUG - Bail trouvé: ID {lease.id_bail}, Prix: {lease.prix_loyer}, Immeuble: {unite_query.id_immeuble}")
                 
-                result = session.execute(query, {
-                    'start_date': start_date,
-                    'end_date': end_date
-                })
-                
-                leases = []
-                for row in result:
-                    # Créer un objet Bail à partir du résultat
-                    lease = Bail()
-                    lease.id_bail = row.id_bail
-                    lease.id_locataire = row.id_locataire
-                    lease.date_debut = row.date_debut
-                    lease.date_fin = row.date_fin
-                    lease.prix_loyer = row.prix_loyer
-                    lease.methode_paiement = row.methode_paiement
-                    lease.pdf_bail = row.pdf_bail
-                    lease.date_creation = row.date_creation
-                    lease.date_modification = row.date_modification
-                    leases.append(lease)
-                    
-                    print(f"🔍 DEBUG - Bail trouvé: ID {lease.id_bail}, Prix: {lease.prix_loyer}, Début: {lease.date_debut}, Fin: {lease.date_fin}")
-                
-                print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
-                return leases
+                print(f"🔍 DEBUG - Baux filtrés: {len(filtered_leases)}")
+                return filtered_leases
                 
         except Exception as e:
             print(f"Erreur lors de la récupération des baux: {e}")
