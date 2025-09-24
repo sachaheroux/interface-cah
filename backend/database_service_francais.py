@@ -848,42 +848,22 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
-                # Utiliser une requête SQL brute pour éviter les problèmes de relations
-                building_ids_str = ','.join(map(str, building_ids))
-                query = text(f"""
-                    SELECT b.* FROM baux b
-                    JOIN locataires l ON b.id_locataire = l.id_locataire
-                    JOIN unites u ON l.id_unite = u.id_unite
-                    WHERE u.id_immeuble IN ({building_ids_str})
-                    AND b.date_debut <= :end_date
-                    AND (b.date_fin >= :start_date OR b.date_fin IS NULL)
-                """)
+                # Approche simplifiée : récupérer tous les baux et filtrer en Python
+                all_leases = session.query(Bail).all()
+                print(f"🔍 DEBUG - Tous les baux: {len(all_leases)}")
                 
-                result = session.execute(query, {
-                    'start_date': start_date,
-                    'end_date': end_date
-                })
+                filtered_leases = []
+                for lease in all_leases:
+                    # Vérifier si le bail est dans la période
+                    if lease.date_debut <= end_date and (lease.date_fin >= start_date or lease.date_fin is None):
+                        # Vérifier si le locataire est dans un immeuble sélectionné
+                        if lease.locataire and lease.locataire.unite and lease.locataire.unite.id_immeuble in building_ids:
+                            filtered_leases.append(lease)
+                            print(f"🔍 DEBUG - Bail trouvé: ID {lease.id_bail}, Prix: {lease.prix_loyer}, Immeuble: {lease.locataire.unite.id_immeuble}")
                 
-                leases = []
-                for row in result:
-                    # Créer un objet Bail à partir du résultat
-                    lease = Bail()
-                    lease.id_bail = row.id_bail
-                    lease.id_locataire = row.id_locataire
-                    lease.date_debut = row.date_debut
-                    lease.date_fin = row.date_fin
-                    lease.prix_loyer = row.prix_loyer
-                    lease.methode_paiement = row.methode_paiement
-                    lease.pdf_bail = row.pdf_bail
-                    lease.date_creation = row.date_creation
-                    lease.date_modification = row.date_modification
-                    leases.append(lease)
+                print(f"🔍 DEBUG - Baux filtrés: {len(filtered_leases)}")
+                return filtered_leases
                 
-                print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
-                for lease in leases:
-                    print(f"🔍 DEBUG - Bail ID: {lease.id_bail}, Prix: {lease.prix_loyer}, Début: {lease.date_debut}, Fin: {lease.date_fin}")
-                
-                return leases
         except Exception as e:
             print(f"Erreur lors de la récupération des baux: {e}")
             import traceback
