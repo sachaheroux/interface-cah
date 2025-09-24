@@ -861,10 +861,10 @@ class DatabaseServiceFrancais:
         """Récupérer les transactions pour des immeubles et une période donnée"""
         try:
             with self.get_session() as session:
-                return session.query(TransactionFrancais).filter(
-                    TransactionFrancais.id_immeuble.in_(building_ids),
-                    TransactionFrancais.date_de_transaction >= start_date,
-                    TransactionFrancais.date_de_transaction <= end_date
+                return session.query(Transaction).filter(
+                    Transaction.id_immeuble.in_(building_ids),
+                    Transaction.date_de_transaction >= start_date,
+                    Transaction.date_de_transaction <= end_date
                 ).all()
         except Exception as e:
             print(f"Erreur lors de la récupération des transactions: {e}")
@@ -874,8 +874,8 @@ class DatabaseServiceFrancais:
         """Récupérer les immeubles par IDs"""
         try:
             with self.get_session() as session:
-                return session.query(ImmeubleFrancais).filter(
-                    ImmeubleFrancais.id_immeuble.in_(building_ids)
+                return session.query(Immeuble).filter(
+                    Immeuble.id_immeuble.in_(building_ids)
                 ).all()
         except Exception as e:
             print(f"Erreur lors de la récupération des immeubles: {e}")
