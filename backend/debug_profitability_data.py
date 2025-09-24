@@ -79,10 +79,34 @@ def debug_profitability_data():
             print(f"   Nombre total de baux: {len(leases)}")
             
             if isinstance(leases, list) and leases:
-                building_1_leases = [l for l in leases if isinstance(l, dict) and l.get('id_immeuble') == 1]
+                # Afficher la structure du premier bail
+                print(f"   Structure du premier bail: {list(leases[0].keys()) if isinstance(leases[0], dict) else 'Non-dict'}")
+                
+                # Afficher le contenu de la clé 'unite' du premier bail
+                first_lease = leases[0]
+                if isinstance(first_lease, dict) and 'unite' in first_lease:
+                    unite_info = first_lease['unite']
+                    print(f"   Contenu de 'unite': {unite_info}")
+                    print(f"   ID immeuble dans 'unite': {unite_info.get('id_immeuble') if isinstance(unite_info, dict) else 'N/A'}")
+                
+                # Chercher les baux pour l'immeuble 1
+                building_1_leases = []
+                for lease in leases:
+                    if isinstance(lease, dict):
+                        # Vérifier si le bail est lié à l'immeuble 1 via l'unité → immeuble
+                        unite_info = lease.get('unite', {})
+                        if isinstance(unite_info, dict):
+                            immeuble_info = unite_info.get('immeuble', {})
+                            if isinstance(immeuble_info, dict) and immeuble_info.get('id_immeuble') == 1:
+                                building_1_leases.append(lease)
+                        elif lease.get('id_immeuble') == 1:
+                            building_1_leases.append(lease)
+                
                 print(f"   Nombre de baux trouvés pour l'immeuble 1: {len(building_1_leases)}")
                 for lease in building_1_leases[:5]:
-                    print(f"   ID: {lease.get('id_bail')}, Immeuble: {lease.get('id_immeuble')}, Prix: {lease.get('prix_loyer')}, Début: {lease.get('date_debut')}, Fin: {lease.get('date_fin')}")
+                    unite_info = lease.get('unite', {})
+                    immeuble_info = unite_info.get('immeuble', {})
+                    print(f"   ID: {lease.get('id_bail')}, Immeuble: {immeuble_info.get('id_immeuble', 'N/A')}, Prix: {lease.get('prix_loyer')}, Début: {lease.get('date_debut')}, Fin: {lease.get('date_fin')}")
             else:
                 print(f"   Format de données inattendu: {leases}")
         else:
@@ -122,8 +146,12 @@ def debug_profitability_data():
             # Afficher les données détaillées
             if analysis_data.get('buildings'):
                 print(f"   Immeubles trouvés: {[b.get('name', 'N/A') for b in analysis_data['buildings']]}")
+                for building in analysis_data['buildings']:
+                    print(f"     - {building.get('name')}: Revenus: ${building.get('revenue', 0)}, Dépenses: ${building.get('expenses', 0)}, Cashflow: ${building.get('netCashflow', 0)}")
+            
             if analysis_data.get('monthlyTotals'):
                 print(f"   Premier mois: {analysis_data['monthlyTotals'][0]}")
+                print(f"   Mois de septembre 2025: {analysis_data['monthlyTotals'][2] if len(analysis_data['monthlyTotals']) > 2 else 'N/A'}")
         else:
             print(f"   ❌ Erreur API d'analyse: {response.status_code}")
             print(f"   Réponse: {response.text}")

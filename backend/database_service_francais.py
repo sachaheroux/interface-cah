@@ -845,7 +845,10 @@ class DatabaseServiceFrancais:
         """Récupérer les baux pour des immeubles et une période donnée via les unités"""
         try:
             with self.get_session() as session:
-                return session.query(Bail).join(Unite).filter(
+                print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
+                print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
+                
+                leases = session.query(Bail).join(Unite).filter(
                     Unite.id_immeuble.in_(building_ids),
                     Bail.date_debut <= end_date,
                     or_(
@@ -853,8 +856,16 @@ class DatabaseServiceFrancais:
                         Bail.date_fin.is_(None)
                     )
                 ).all()
+                
+                print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
+                for lease in leases:
+                    print(f"🔍 DEBUG - Bail ID: {lease.id_bail}, Prix: {lease.prix_loyer}, Début: {lease.date_debut}, Fin: {lease.date_fin}")
+                
+                return leases
         except Exception as e:
             print(f"Erreur lors de la récupération des baux: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def get_transactions_by_buildings_and_period(self, building_ids, start_date, end_date):
