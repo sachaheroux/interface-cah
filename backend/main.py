@@ -1557,8 +1557,11 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     
     # Traiter les baux pour les revenus
     for lease in leases:
-        building_id = lease.id_immeuble
+        # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
+        building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
         loyer = lease.prix_loyer or 0
+        
+        print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
         
         # Calculer les mois actifs du bail
         current_date = max(start_date, lease.date_debut)
@@ -1600,8 +1603,11 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
     
     # Revenus des baux par immeuble
     for lease in leases:
-        building_id = lease.id_immeuble
+        # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
+        building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
         loyer = lease.prix_loyer or 0
+        
+        print(f"🔍 DEBUG - Calcul immeuble bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
         
         current_date = max(start_date, lease.date_debut)
         end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
