@@ -21,6 +21,32 @@ export default function TransactionForm({ transaction, buildings, constants, onS
   const [showBuildingDropdown, setShowBuildingDropdown] = useState(false)
   const [filteredBuildings, setFilteredBuildings] = useState([])
 
+  // Catégories selon le type
+  const getCategoriesByType = (type) => {
+    if (type === 'revenu') {
+      return ['Capital']
+    } else if (type === 'depense') {
+      return [
+        'Assurances',
+        'Frais d\'utilisation',
+        'Frais fixes d\'utilisation',
+        'Frais dépôt commercial',
+        'Hydro Québec',
+        'Frais crédit',
+        'Intérêts',
+        'Frais de gestion',
+        'Taxes scolaires',
+        'Taxes municipales',
+        'Entretien',
+        'Réparation mineure',
+        'Réparation majeure',
+        'Internet',
+        'Fournitures'
+      ]
+    }
+    return []
+  }
+
   useEffect(() => {
     if (transaction) {
       setFormData({
@@ -44,6 +70,16 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       }))
     }
   }, [transaction])
+
+  // Réinitialiser la catégorie quand le type change
+  useEffect(() => {
+    if (formData.type) {
+      const availableCategories = getCategoriesByType(formData.type)
+      if (!availableCategories.includes(formData.categorie)) {
+        setFormData(prev => ({ ...prev, categorie: '' }))
+      }
+    }
+  }, [formData.type])
 
   useEffect(() => {
     // Filtrer les immeubles selon la recherche
@@ -328,10 +364,13 @@ export default function TransactionForm({ transaction, buildings, constants, onS
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.categorie ? 'border-red-500' : 'border-gray-300'
                 }`}
+                disabled={!formData.type}
               >
-                <option value="">Sélectionner une catégorie</option>
-                {constants?.categories?.map(category => (
-                  <option key={category} value={category}>{getCategoryLabel(category)}</option>
+                <option value="">
+                  {formData.type ? 'Sélectionner une catégorie' : 'Sélectionnez d\'abord un type'}
+                </option>
+                {getCategoriesByType(formData.type).map(category => (
+                  <option key={category} value={category}>{category}</option>
                 ))}
               </select>
               {errors.categorie && (
