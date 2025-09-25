@@ -1585,8 +1585,12 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
             
             # Calculer les mois actifs du bail
-            current_date = max(start_date, lease.date_debut)
-            end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+            # Convertir les dates en datetime pour la comparaison
+            lease_start = lease.date_debut if isinstance(lease.date_debut, datetime) else datetime.combine(lease.date_debut, datetime.min.time())
+            lease_end = lease.date_fin if isinstance(lease.date_fin, datetime) else datetime.combine(lease.date_fin, datetime.min.time()) if lease.date_fin else None
+            
+            current_date = max(start_date, lease_start)
+            end_lease_date = min(end_date, lease_end) if lease_end else end_date
             
             while current_date <= end_lease_date:
                 month_key = current_date.strftime("%Y-%m")
@@ -1631,8 +1635,12 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             
             print(f"🔍 DEBUG - Calcul immeuble bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
             
-            current_date = max(start_date, lease.date_debut)
-            end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+            # Convertir les dates en datetime pour la comparaison
+            lease_start = lease.date_debut if isinstance(lease.date_debut, datetime) else datetime.combine(lease.date_debut, datetime.min.time())
+            lease_end = lease.date_fin if isinstance(lease.date_fin, datetime) else datetime.combine(lease.date_fin, datetime.min.time()) if lease.date_fin else None
+            
+            current_date = max(start_date, lease_start)
+            end_lease_date = min(end_date, lease_end) if lease_end else end_date
             
             while current_date <= end_lease_date:
                 building_data[building_id]["revenue"] += loyer
