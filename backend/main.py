@@ -1617,10 +1617,13 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 
                 # Déterminer si c'est un revenu ou une dépense basé sur la catégorie
                 # Les revenus sont généralement les loyers, les dépenses sont les autres catégories
+                print(f"🔍 DEBUG - Traitement transaction: Type={type_transaction}, Montant={montant}, Type_montant={type(montant)}")
                 if type_transaction and "loyer" in type_transaction.lower():
+                    print(f"🔍 DEBUG - Ajout revenu: {abs(montant)}")
                     monthly_data[month_key]["revenue"] += abs(montant)
                     monthly_data[month_key]["netCashflow"] += abs(montant)
                 else:
+                    print(f"🔍 DEBUG - Ajout dépense: {abs(montant)}")
                     monthly_data[month_key]["expenses"] += abs(montant)
                     monthly_data[month_key]["netCashflow"] -= abs(montant)
         
