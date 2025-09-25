@@ -474,21 +474,9 @@ export default function ProfitabilityAnalysis() {
               </div>
             </div>
 
-            {/* 2. Bar chart - Revenus par catégorie et immeuble (stacked) */}
+            {/* 2. Bar chart - Revenus par immeuble */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenus par catégorie et immeuble</h3>
-              
-              {/* Légende pour les revenus */}
-              <div className="flex justify-center mb-4 space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3b82f6' }}></div>
-                  <span className="text-xs text-gray-600">Loyers</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#10b981' }}></div>
-                  <span className="text-xs text-gray-600">Autres</span>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenus par immeuble</h3>
               
               <div className="flex">
                 {/* Axe Y avec montants */}
@@ -517,34 +505,20 @@ export default function ProfitabilityAnalysis() {
                       const maxRevenue = Math.max(...analysisData.buildings.map(b => b.summary.totalRevenue))
                       const stepSize = Math.ceil(maxRevenue / 5 / 1000) * 1000
                       const maxHeight = stepSize * 5
-                      const totalHeight = (building.summary.totalRevenue / maxHeight) * 320
+                      const barHeight = (building.summary.totalRevenue / maxHeight) * 320
                       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#ef4444']
-                      
-                      // Simuler des catégories de revenus (loyers, autres revenus, etc.)
-                      const revenueCategories = [
-                        { name: 'Loyers', amount: building.summary.totalRevenue * 0.8 },
-                        { name: 'Autres', amount: building.summary.totalRevenue * 0.2 }
-                      ]
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
-                          {/* Barre empilée qui part exactement de la ligne de base */}
-                          <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                            {revenueCategories.map((category, catIndex) => {
-                              const categoryHeight = (category.amount / building.summary.totalRevenue) * totalHeight
-                              return (
-                                <div
-                                  key={catIndex}
-                                  className="w-full transition-all duration-700 hover:opacity-80"
-                                  style={{ 
-                                    height: `${categoryHeight}px`,
-                                    backgroundColor: colors[catIndex % colors.length]
-                                  }}
-                                  title={`${category.name}: $${category.amount.toLocaleString()}`}
-                                ></div>
-                              )
-                            })}
-                          </div>
+                          {/* Barre simple */}
+                          <div 
+                            className="w-full transition-all duration-700 hover:opacity-80"
+                            style={{ 
+                              height: `${barHeight}px`,
+                              backgroundColor: colors[index % colors.length]
+                            }}
+                            title={`Revenus: $${building.summary.totalRevenue.toLocaleString()}`}
+                          ></div>
                         </div>
                       )
                     })}
@@ -577,33 +551,9 @@ export default function ProfitabilityAnalysis() {
               </div>
             </div>
 
-            {/* 3. Bar chart - Dépenses par catégorie et immeuble (stacked) */}
+            {/* 3. Bar chart - Dépenses par immeuble */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Dépenses par catégorie et immeuble</h3>
-              
-              {/* Légende pour les dépenses */}
-              <div className="flex justify-center mb-4 space-x-3 flex-wrap">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ef4444' }}></div>
-                  <span className="text-xs text-gray-600">Taxes</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#f97316' }}></div>
-                  <span className="text-xs text-gray-600">Entretien</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#eab308' }}></div>
-                  <span className="text-xs text-gray-600">Réparation</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#22c55e' }}></div>
-                  <span className="text-xs text-gray-600">Assurance</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3b82f6' }}></div>
-                  <span className="text-xs text-gray-600">Autres</span>
-                </div>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Dépenses par immeuble</h3>
               
               <div className="flex">
                 {/* Axe Y avec montants */}
@@ -632,37 +582,20 @@ export default function ProfitabilityAnalysis() {
                       const maxExpenses = Math.max(...analysisData.buildings.map(b => b.summary.totalExpenses))
                       const stepSize = Math.ceil(maxExpenses / 5 / 1000) * 1000
                       const maxHeight = stepSize * 5
-                      const totalHeight = (building.summary.totalExpenses / maxHeight) * 320
+                      const barHeight = (building.summary.totalExpenses / maxHeight) * 320
                       const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
-                      
-                      // Simuler des catégories de dépenses basées sur les données réelles
-                      const expenseCategories = [
-                        { name: 'Taxes', amount: building.summary.totalExpenses * 0.3 },
-                        { name: 'Entretien', amount: building.summary.totalExpenses * 0.25 },
-                        { name: 'Réparation', amount: building.summary.totalExpenses * 0.2 },
-                        { name: 'Assurance', amount: building.summary.totalExpenses * 0.15 },
-                        { name: 'Autres', amount: building.summary.totalExpenses * 0.1 }
-                      ]
                       
                       return (
                         <div key={building.id} className="flex flex-col items-center justify-end" style={{ width: `${100 / analysisData.buildings.length}%`, height: '320px' }}>
-                          {/* Barre empilée qui part exactement de la ligne de base */}
-                          <div className="w-full overflow-hidden" style={{ height: `${totalHeight}px` }}>
-                            {expenseCategories.map((category, catIndex) => {
-                              const categoryHeight = (category.amount / building.summary.totalExpenses) * totalHeight
-                              return (
-                                <div
-                                  key={catIndex}
-                                  className="w-full transition-all duration-700 hover:opacity-80"
-                                  style={{ 
-                                    height: `${categoryHeight}px`,
-                                    backgroundColor: colors[catIndex % colors.length]
-                                  }}
-                                  title={`${category.name}: $${category.amount.toLocaleString()}`}
-                                ></div>
-                              )
-                            })}
-                          </div>
+                          {/* Barre simple */}
+                          <div 
+                            className="w-full transition-all duration-700 hover:opacity-80"
+                            style={{ 
+                              height: `${barHeight}px`,
+                              backgroundColor: colors[index % colors.length]
+                            }}
+                            title={`Dépenses: $${building.summary.totalExpenses.toLocaleString()}`}
+                          ></div>
                         </div>
                       )
                     })}
