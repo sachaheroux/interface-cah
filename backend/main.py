@@ -1721,8 +1721,17 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             "netCashflow": total_net_cashflow
         }
         
+        # Calculer les catégories de dépenses pour le pie chart
+        expense_categories = defaultdict(float)
+        for transaction in transactions:
+            if transaction.categorie and not ("loyer" in transaction.categorie.lower()):
+                expense_categories[transaction.categorie] += abs(float(transaction.montant or 0))
+        
+        analysis_data["categories"] = dict(expense_categories)
+        
         print(f"🔍 DEBUG - calculate_profitability_analysis: Succès")
         print(f"🔍 DEBUG - Résumé: Revenus: ${total_revenue}, Dépenses: ${total_expenses}, Cashflow: ${total_net_cashflow}")
+        print(f"🔍 DEBUG - Catégories: {analysis_data['categories']}")
         return analysis_data
         
     except Exception as e:

@@ -704,11 +704,11 @@ export default function ProfitabilityAnalysis() {
             <div className="flex justify-center mb-6">
               <svg width="200" height="200" className="transform -rotate-90">
                 {(() => {
-                  const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                  const total = Object.values(analysisData.categories || {}).reduce((sum, val) => sum + val, 0)
                   let currentAngle = 0
                   const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                   
-                  return Object.entries(analysisData.categories).map(([category, amount], index) => {
+                  return Object.entries(analysisData.categories || {}).map(([category, amount], index) => {
                     const percentage = (amount / total) * 100
                     const angle = (percentage / 100) * 360
                     const startAngle = currentAngle
@@ -749,8 +749,8 @@ export default function ProfitabilityAnalysis() {
             
             {/* Légende détaillée */}
             <div className="space-y-3">
-              {Object.entries(analysisData.categories).map(([category, amount], index) => {
-                const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+              {Object.entries(analysisData.categories || {}).map(([category, amount], index) => {
+                const total = Object.values(analysisData.categories || {}).reduce((sum, val) => sum + val, 0)
                 const percentage = ((amount / total) * 100).toFixed(1)
                 const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                 
@@ -788,7 +788,7 @@ export default function ProfitabilityAnalysis() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary-900">Total des dépenses</span>
                 <span className="text-lg font-bold text-primary-900">
-                  ${Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0).toLocaleString()}
+                  ${Object.values(analysisData.categories || {}).reduce((sum, val) => sum + val, 0).toLocaleString()}
                 </span>
               </div>
             </div>
