@@ -12,31 +12,43 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Configuration du chemin de la base de données
-if os.environ.get("ENVIRONMENT") == "development" or os.name == 'nt':
-    # En local (Windows) ou développement
-    DATA_DIR = os.environ.get("DATA_DIR", "./data")
+# Vérifier si on est sur Render avec une base de données PostgreSQL
+RENDER_DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if RENDER_DATABASE_URL:
+    # Sur Render avec base de données PostgreSQL
+    print(f"🗄️ Base de données Render PostgreSQL détectée")
+    engine = create_engine(
+        RENDER_DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True
+    )
 else:
-    # Sur Render ou production Linux
-    DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
+    # Configuration SQLite locale
+    if os.environ.get("ENVIRONMENT") == "development" or os.name == 'nt':
+        # En local (Windows) ou développement
+        DATA_DIR = os.environ.get("DATA_DIR", "./data")
+    else:
+        # Sur Render ou production Linux
+        DATA_DIR = os.environ.get("DATA_DIR", "/opt/render/project/src/data")
 
-# Créer le répertoire s'il n'existe pas
-os.makedirs(DATA_DIR, exist_ok=True)
+    # Créer le répertoire s'il n'existe pas
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-# Chemin de la base de données SQLite
-DATABASE_PATH = os.path.join(DATA_DIR, "cah_database.db")
+    # Chemin de la base de données SQLite
+    DATABASE_PATH = os.path.join(DATA_DIR, "cah_database.db")
+    print(f"🗄️ Base de données SQLite : {DATABASE_PATH}")
 
-print(f"🗄️ Base de données SQLite : {DATABASE_PATH}")
-
-# Créer le moteur SQLAlchemy
-engine = create_engine(
-    f"sqlite:///{DATABASE_PATH}",
-    echo=False,  # Mettre à True pour voir les requêtes SQL
-    pool_pre_ping=True,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 30.0
-    }
-)
+    # Créer le moteur SQLAlchemy
+    engine = create_engine(
+        f"sqlite:///{DATABASE_PATH}",
+        echo=False,  # Mettre à True pour voir les requêtes SQL
+        pool_pre_ping=True,
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30.0
+        }
+    )
 
 # Créer la session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
