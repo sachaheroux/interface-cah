@@ -1573,7 +1573,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         }
         
         # Créer un dictionnaire pour les données mensuelles
-        monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+        monthly_data = defaultdict(lambda: {"revenue": 0.0, "expenses": 0.0, "netCashflow": 0.0})
         
         # Traiter les baux pour les revenus
         print(f"🔍 DEBUG - Traitement des baux...")
@@ -1628,7 +1628,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                     monthly_data[month_key]["netCashflow"] -= abs(montant)
         
         # Calculer les données par immeuble
-        building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+        building_data = defaultdict(lambda: {"revenue": 0.0, "expenses": 0.0, "netCashflow": 0.0})
         
         # Revenus des baux par immeuble
         print(f"🔍 DEBUG - Calcul des revenus par immeuble pour {len(leases)} baux")
