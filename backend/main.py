@@ -11,6 +11,10 @@ import os
 import platform
 import shutil
 import re
+import logging
+
+# Configuration du logger
+logger = logging.getLogger(__name__)
 
 # Imports pour SQLite
 from database import db_manager, init_database
@@ -1574,26 +1578,26 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         # Traiter les baux pour les revenus
         print(f"🔍 DEBUG - Traitement des baux...")
         for lease in leases:
-        # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
-        building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
-        loyer = lease.prix_loyer or 0
-        
-        print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
-        
-        # Calculer les mois actifs du bail
-        current_date = max(start_date, lease.date_debut)
-        end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
-        
-        while current_date <= end_lease_date:
-            month_key = current_date.strftime("%Y-%m")
-            monthly_data[month_key]["revenue"] += loyer
-            monthly_data[month_key]["netCashflow"] += loyer
+            # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
+            building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
+            loyer = lease.prix_loyer or 0
             
-            # Passer au mois suivant
-            if current_date.month == 12:
-                current_date = current_date.replace(year=current_date.year + 1, month=1)
-            else:
-                current_date = current_date.replace(month=current_date.month + 1)
+            print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
+            
+            # Calculer les mois actifs du bail
+            current_date = max(start_date, lease.date_debut)
+            end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+            
+            while current_date <= end_lease_date:
+                month_key = current_date.strftime("%Y-%m")
+                monthly_data[month_key]["revenue"] += loyer
+                monthly_data[month_key]["netCashflow"] += loyer
+                
+                # Passer au mois suivant
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
     
     # Traiter les transactions
     for transaction in transactions:
