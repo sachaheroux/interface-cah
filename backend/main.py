@@ -1502,61 +1502,78 @@ async def get_profitability_analysis(
 ):
     """Récupérer l'analyse de rentabilité avec les vraies données"""
     try:
+        print(f"🔍 DEBUG - Début de l'analyse de rentabilité")
+        print(f"🔍 DEBUG - Paramètres reçus: building_ids={building_ids}, start_year={start_year}, start_month={start_month}, end_year={end_year}, end_month={end_month}")
+        
         # Convertir les IDs des immeubles
         building_id_list = [int(id.strip()) for id in building_ids.split(',') if id.strip()]
+        print(f"🔍 DEBUG - IDs des immeubles convertis: {building_id_list}")
         
         # Créer les dates de début et fin
         start_date = datetime(start_year, start_month, 1)
         end_date = datetime(end_year, end_month, 1)
+        print(f"🔍 DEBUG - Dates créées: {start_date} à {end_date}")
         
         # Récupérer les données des baux pour les revenus
+        print(f"🔍 DEBUG - Récupération des baux...")
         leases = db_service_francais.get_leases_by_buildings_and_period(building_id_list, start_date, end_date)
+        print(f"🔍 DEBUG - Baux récupérés: {len(leases)}")
         
         # Récupérer les données des transactions
+        print(f"🔍 DEBUG - Récupération des transactions...")
         transactions = db_service_francais.get_transactions_by_buildings_and_period(building_id_list, start_date, end_date)
+        print(f"🔍 DEBUG - Transactions récupérées: {len(transactions)}")
         
         # Récupérer les immeubles
+        print(f"🔍 DEBUG - Récupération des immeubles...")
         buildings = db_service_francais.get_buildings_by_ids(building_id_list)
+        print(f"🔍 DEBUG - Immeubles récupérés: {len(buildings)}")
         
         # Debug: Afficher les données récupérées
-        print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
-        print(f"🔍 DEBUG - Transactions trouvées: {len(transactions)}")
-        print(f"🔍 DEBUG - Immeubles trouvés: {len(buildings)}")
-        
         if transactions:
             print(f"🔍 DEBUG - Première transaction: {transactions[0].__dict__ if hasattr(transactions[0], '__dict__') else transactions[0]}")
         if leases:
             print(f"🔍 DEBUG - Premier bail: {leases[0].__dict__ if hasattr(leases[0], '__dict__') else leases[0]}")
         
         # Calculer les données d'analyse
+        print(f"🔍 DEBUG - Début du calcul de l'analyse...")
         analysis_data = calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date)
+        print(f"🔍 DEBUG - Analyse calculée avec succès")
         
         return analysis_data
         
     except Exception as e:
+        print(f"❌ ERREUR dans l'analyse de rentabilité: {str(e)}")
+        import traceback
+        print(f"❌ TRACEBACK: {traceback.format_exc()}")
         logger.error(f"Erreur lors de l'analyse de rentabilité: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse de rentabilité: {str(e)}")
 
 def calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date):
     """Calculer l'analyse de rentabilité avec les vraies données"""
-    from collections import defaultdict
-    import calendar
-    
-    # Initialiser les données
-    analysis_data = {
-        "buildings": [],
-        "monthlyTotals": [],
-        "period": {
-            "start": start_date.strftime("%Y-%m"),
-            "end": end_date.strftime("%Y-%m")
+    try:
+        print(f"🔍 DEBUG - calculate_profitability_analysis: Début")
+        print(f"🔍 DEBUG - Paramètres: {len(buildings)} immeubles, {len(leases)} baux, {len(transactions)} transactions")
+        
+        from collections import defaultdict
+        import calendar
+        
+        # Initialiser les données
+        analysis_data = {
+            "buildings": [],
+            "monthlyTotals": [],
+            "period": {
+                "start": start_date.strftime("%Y-%m"),
+                "end": end_date.strftime("%Y-%m")
+            }
         }
-    }
-    
-    # Créer un dictionnaire pour les données mensuelles
-    monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
-    
-    # Traiter les baux pour les revenus
-    for lease in leases:
+        
+        # Créer un dictionnaire pour les données mensuelles
+        monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+        
+        # Traiter les baux pour les revenus
+        print(f"🔍 DEBUG - Traitement des baux...")
+        for lease in leases:
         # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
         building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
         loyer = lease.prix_loyer or 0
@@ -1668,7 +1685,14 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         else:
             current_date = current_date.replace(month=current_date.month + 1)
     
-    return analysis_data
+        print(f"🔍 DEBUG - calculate_profitability_analysis: Succès")
+        return analysis_data
+        
+    except Exception as e:
+        print(f"❌ ERREUR dans calculate_profitability_analysis: {str(e)}")
+        import traceback
+        print(f"❌ TRACEBACK: {traceback.format_exc()}")
+        raise e
 
 @app.get("/api/transactions")
 async def get_transactions():
