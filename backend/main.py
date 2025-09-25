@@ -1698,7 +1698,19 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             else:
                 current_date = current_date.replace(month=current_date.month + 1)
         
+        # Calculer le résumé global
+        total_revenue = sum(data["revenue"] for data in monthly_data.values())
+        total_expenses = sum(data["expenses"] for data in monthly_data.values())
+        total_net_cashflow = sum(data["netCashflow"] for data in monthly_data.values())
+        
+        analysis_data["summary"] = {
+            "totalRevenue": total_revenue,
+            "totalExpenses": total_expenses,
+            "netCashflow": total_net_cashflow
+        }
+        
         print(f"🔍 DEBUG - calculate_profitability_analysis: Succès")
+        print(f"🔍 DEBUG - Résumé: Revenus: ${total_revenue}, Dépenses: ${total_expenses}, Cashflow: ${total_net_cashflow}")
         return analysis_data
         
     except Exception as e:
