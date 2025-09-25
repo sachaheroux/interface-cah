@@ -4,7 +4,7 @@ Service de base de données en français pour Interface CAH
 Utilise les nouveaux modèles français
 """
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy import create_engine, text, or_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
@@ -844,13 +844,25 @@ class DatabaseServiceFrancais:
     def get_leases_by_buildings_and_period(self, building_ids, start_date, end_date):
         """Récupérer les baux pour des immeubles et une période donnée via les unités"""
         try:
-            print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
-            print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
-            
-            # Pour l'instant, retourner une liste vide pour éviter l'erreur 500
-            # TODO: Implémenter la logique correcte
-            print(f"🔍 DEBUG - Retour temporaire: liste vide")
-            return []
+            with self.get_session() as session:
+                print(f"🔍 DEBUG - Recherche baux pour immeubles: {building_ids}")
+                print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
+                
+                # Approche SQLAlchemy ORM simple avec eager loading
+                leases = session.query(Bail).join(Locataire).join(Unite).filter(
+                    Unite.id_immeuble.in_(building_ids),
+                    Bail.date_debut <= end_date,
+                    or_(Bail.date_fin >= start_date, Bail.date_fin.is_(None))
+                ).options(
+                    joinedload(Bail.locataire).joinedload(Locataire.unite)
+                ).all()
+                
+                print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
+                for lease in leases:
+                    building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
+                    print(f"🔍 DEBUG - Bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {lease.prix_loyer}")
+                
+                return leases
                 
         except Exception as e:
             print(f"Erreur lors de la récupération des baux: {e}")
