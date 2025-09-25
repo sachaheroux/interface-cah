@@ -1715,10 +1715,19 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         total_expenses = sum(data["expenses"] for data in monthly_data.values())
         total_net_cashflow = sum(data["netCashflow"] for data in monthly_data.values())
         
+        # Calculer la valeur totale des immeubles pour le ROI
+        total_property_value = sum(building.valeur_actuel or 0 for building in buildings)
+        
+        # Calculer le ROI (Return on Investment)
+        # ROI = (Cashflow net / Valeur totale des immeubles) * 100
+        roi_percentage = (total_net_cashflow / total_property_value * 100) if total_property_value > 0 else 0
+        
         analysis_data["summary"] = {
             "totalRevenue": total_revenue,
             "totalExpenses": total_expenses,
-            "netCashflow": total_net_cashflow
+            "netCashflow": total_net_cashflow,
+            "roi": round(roi_percentage, 2),
+            "totalPropertyValue": total_property_value
         }
         
         # Calculer les catégories de dépenses pour le pie chart

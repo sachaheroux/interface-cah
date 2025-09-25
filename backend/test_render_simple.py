@@ -18,12 +18,15 @@ print(f'Status: {response.status_code}')
 
 if response.status_code == 200:
     data = response.json()
-    print(f'Summary: {data.get("summary", "NON TROUVÉ")}')
+    summary = data.get("summary", {})
+    print(f'Summary: {summary}')
+    print(f'ROI: {summary.get("roi", "N/A")}%')
+    print(f'Valeur totale immeubles: ${summary.get("totalPropertyValue", 0):,}')
     print(f'Buildings: {len(data.get("buildings", []))}')
     
     for building in data.get('buildings', []):
-        summary = building.get('summary', {})
-        print(f'  - {building.get("name", "N/A")}: Revenus: ${summary.get("totalRevenue", 0)}, Dépenses: ${summary.get("totalExpenses", 0)}')
+        building_summary = building.get('summary', {})
+        print(f'  - {building.get("name", "N/A")}: Revenus: ${building_summary.get("totalRevenue", 0)}, Dépenses: ${building_summary.get("totalExpenses", 0)}')
         
     print(f'Monthly data: {len(data.get("monthlyTotals", []))} mois')
     for month in data.get('monthlyTotals', [])[:3]:
