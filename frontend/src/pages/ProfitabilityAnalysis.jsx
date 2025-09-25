@@ -342,7 +342,7 @@ export default function ProfitabilityAnalysis() {
       {showAnalysis && analysisData && analysisData.buildings && analysisData.buildings.length > 0 && (
         <div className="space-y-6">
           {/* Métriques clés */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -379,38 +379,8 @@ export default function ProfitabilityAnalysis() {
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">ROI</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {analysisData?.summary?.roi?.toFixed(2) || '0.00'}%
-                  </p>
-                </div>
-                <PieChart className="h-8 w-8 text-purple-600" />
-              </div>
-            </div>
           </div>
 
-          {/* Informations sur la valeur des immeubles */}
-          {analysisData?.summary?.totalPropertyValue && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-700 font-medium">Valeur totale des immeubles analysés</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    ${analysisData.summary.totalPropertyValue.toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-blue-600">ROI basé sur cette valeur</p>
-                  <p className="text-sm font-semibold text-blue-800">
-                    {analysisData.summary.roi.toFixed(2)}% par période
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Graphiques d'analyse - 3 bar charts verticaux */}
           <div className="space-y-8">
