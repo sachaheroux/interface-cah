@@ -1718,20 +1718,11 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         total_expenses = sum(data["expenses"] for data in monthly_data.values())
         total_net_cashflow = sum(data["netCashflow"] for data in monthly_data.values())
         
-        # Calculer les catégories de dépenses
-        expense_categories = defaultdict(float)
-        for transaction in transactions:
-            category = transaction.categorie or "Autres"
-            montant = float(abs(transaction.montant or 0))
-            expense_categories[category] += montant
-        
         analysis_data["summary"] = {
             "totalRevenue": total_revenue,
             "totalExpenses": total_expenses,
             "netCashflow": total_net_cashflow
         }
-        
-        analysis_data["categories"] = dict(expense_categories)
         
         print(f"🔍 DEBUG - calculate_profitability_analysis: Succès")
         print(f"🔍 DEBUG - Résumé: Revenus: ${total_revenue}, Dépenses: ${total_expenses}, Cashflow: ${total_net_cashflow}")

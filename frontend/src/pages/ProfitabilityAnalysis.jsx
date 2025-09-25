@@ -704,11 +704,18 @@ export default function ProfitabilityAnalysis() {
             <div className="flex justify-center mb-6">
               <svg width="200" height="200" className="transform -rotate-90">
                 {(() => {
-                  const total = Object.values(analysisData.categories).reduce((sum, val) => sum + val, 0)
+                  // Gérer le cas où categories n'existe pas
+                  const categories = analysisData.categories || {}
+                  const total = Object.values(categories).reduce((sum, val) => sum + val, 0)
+                  
+                  if (total === 0) {
+                    return <text x="100" y="100" textAnchor="middle" className="text-gray-500">Aucune dépense</text>
+                  }
+                  
                   let currentAngle = 0
                   const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                   
-                  return Object.entries(analysisData.categories).map(([category, amount], index) => {
+                  return Object.entries(categories).map(([category, amount], index) => {
                     const percentage = (amount / total) * 100
                     const angle = (percentage / 100) * 360
                     const startAngle = currentAngle
