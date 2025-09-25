@@ -832,7 +832,7 @@ export default function ProfitabilityAnalysis() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dépenses</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashflow net</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proportion</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -856,7 +856,13 @@ export default function ProfitabilityAnalysis() {
                         ${building.summary.netCashflow.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {building.summary.roi}%
+                        {(() => {
+                          const revenue = building.summary.totalRevenue || 0;
+                          const expenses = building.summary.totalExpenses || 0;
+                          if (expenses === 0) return revenue > 0 ? '∞' : '0';
+                          const ratio = revenue / expenses;
+                          return ratio.toFixed(2) + ':1';
+                        })()}
                       </td>
                     </tr>
                   ))}
