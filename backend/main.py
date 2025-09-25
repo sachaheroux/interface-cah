@@ -1598,97 +1598,98 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                     current_date = current_date.replace(year=current_date.year + 1, month=1)
                 else:
                     current_date = current_date.replace(month=current_date.month + 1)
-    
-    # Traiter les transactions
-    for transaction in transactions:
-        building_id = transaction.id_immeuble
-        montant = transaction.montant or 0
-        type_transaction = transaction.categorie
         
-        # Déterminer le mois de la transaction
-        transaction_date = transaction.date_de_transaction
-        if transaction_date:
-            month_key = transaction_date.strftime("%Y-%m")
+        # Traiter les transactions
+        print(f"🔍 DEBUG - Traitement des transactions...")
+        for transaction in transactions:
+            building_id = transaction.id_immeuble
+            montant = transaction.montant or 0
+            type_transaction = transaction.categorie
             
-            # Déterminer si c'est un revenu ou une dépense basé sur la catégorie
-            # Les revenus sont généralement les loyers, les dépenses sont les autres catégories
+            # Déterminer le mois de la transaction
+            transaction_date = transaction.date_de_transaction
+            if transaction_date:
+                month_key = transaction_date.strftime("%Y-%m")
+                
+                # Déterminer si c'est un revenu ou une dépense basé sur la catégorie
+                # Les revenus sont généralement les loyers, les dépenses sont les autres catégories
+                if type_transaction and "loyer" in type_transaction.lower():
+                    monthly_data[month_key]["revenue"] += abs(montant)
+                    monthly_data[month_key]["netCashflow"] += abs(montant)
+                else:
+                    monthly_data[month_key]["expenses"] += abs(montant)
+                    monthly_data[month_key]["netCashflow"] -= abs(montant)
+        
+        # Calculer les données par immeuble
+        building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
+        
+        # Revenus des baux par immeuble
+        for lease in leases:
+            # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
+            building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
+            loyer = lease.prix_loyer or 0
+            
+            print(f"🔍 DEBUG - Calcul immeuble bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
+            
+            current_date = max(start_date, lease.date_debut)
+            end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
+            
+            while current_date <= end_lease_date:
+                building_data[building_id]["revenue"] += loyer
+                building_data[building_id]["netCashflow"] += loyer
+                
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
+        
+        # Transactions par immeuble
+        for transaction in transactions:
+            building_id = transaction.id_immeuble
+            montant = transaction.montant or 0
+            type_transaction = transaction.categorie
+            
             if type_transaction and "loyer" in type_transaction.lower():
-                monthly_data[month_key]["revenue"] += abs(montant)
-                monthly_data[month_key]["netCashflow"] += abs(montant)
+                building_data[building_id]["revenue"] += abs(montant)
+                building_data[building_id]["netCashflow"] += abs(montant)
             else:
-                monthly_data[month_key]["expenses"] += abs(montant)
-                monthly_data[month_key]["netCashflow"] -= abs(montant)
-    
-    # Calculer les données par immeuble
-    building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
-    
-    # Revenus des baux par immeuble
-    for lease in leases:
-        # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
-        building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
-        loyer = lease.prix_loyer or 0
+                building_data[building_id]["expenses"] += abs(montant)
+                building_data[building_id]["netCashflow"] -= abs(montant)
         
-        print(f"🔍 DEBUG - Calcul immeuble bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
+        # Construire les données des immeubles
+        for building in buildings:
+            building_id = building.id_immeuble
+            data = building_data[building_id]
+            
+            analysis_data["buildings"].append({
+                "id": building_id,
+                "name": building.nom_immeuble,
+                "summary": {
+                    "totalRevenue": data["revenue"],
+                    "totalExpenses": data["expenses"],
+                    "netCashflow": data["netCashflow"]
+                }
+            })
         
-        current_date = max(start_date, lease.date_debut)
-        end_lease_date = min(end_date, lease.date_fin) if lease.date_fin else end_date
-        
-        while current_date <= end_lease_date:
-            building_data[building_id]["revenue"] += loyer
-            building_data[building_id]["netCashflow"] += loyer
+        # Construire les données mensuelles
+        current_date = start_date
+        while current_date <= end_date:
+            month_key = current_date.strftime("%Y-%m")
+            month_name = calendar.month_name[current_date.month][:3].lower() + f". {current_date.year}"
+            
+            data = monthly_data[month_key]
+            analysis_data["monthlyTotals"].append({
+                "month": month_name,
+                "revenue": data["revenue"],
+                "expenses": data["expenses"],
+                "netCashflow": data["netCashflow"]
+            })
             
             if current_date.month == 12:
                 current_date = current_date.replace(year=current_date.year + 1, month=1)
             else:
                 current_date = current_date.replace(month=current_date.month + 1)
-    
-    # Transactions par immeuble
-    for transaction in transactions:
-        building_id = transaction.id_immeuble
-        montant = transaction.montant or 0
-        type_transaction = transaction.categorie
         
-        if type_transaction and "loyer" in type_transaction.lower():
-            building_data[building_id]["revenue"] += abs(montant)
-            building_data[building_id]["netCashflow"] += abs(montant)
-        else:
-            building_data[building_id]["expenses"] += abs(montant)
-            building_data[building_id]["netCashflow"] -= abs(montant)
-    
-    # Construire les données des immeubles
-    for building in buildings:
-        building_id = building.id_immeuble
-        data = building_data[building_id]
-        
-        analysis_data["buildings"].append({
-            "id": building_id,
-            "name": building.nom_immeuble,
-            "summary": {
-                "totalRevenue": data["revenue"],
-                "totalExpenses": data["expenses"],
-                "netCashflow": data["netCashflow"]
-            }
-        })
-    
-    # Construire les données mensuelles
-    current_date = start_date
-    while current_date <= end_date:
-        month_key = current_date.strftime("%Y-%m")
-        month_name = calendar.month_name[current_date.month][:3].lower() + f". {current_date.year}"
-        
-        data = monthly_data[month_key]
-        analysis_data["monthlyTotals"].append({
-            "month": month_name,
-            "revenue": data["revenue"],
-            "expenses": data["expenses"],
-            "netCashflow": data["netCashflow"]
-        })
-        
-        if current_date.month == 12:
-            current_date = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            current_date = current_date.replace(month=current_date.month + 1)
-    
         print(f"🔍 DEBUG - calculate_profitability_analysis: Succès")
         return analysis_data
         
