@@ -1607,7 +1607,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         print(f"🔍 DEBUG - Traitement des transactions...")
         for transaction in transactions:
             building_id = transaction.id_immeuble
-            montant = transaction.montant or 0
+            montant = float(transaction.montant or 0)
             type_transaction = transaction.categorie
             
             # Déterminer le mois de la transaction
@@ -1661,7 +1661,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         print(f"🔍 DEBUG - Calcul des transactions par immeuble pour {len(transactions)} transactions")
         for transaction in transactions:
             building_id = transaction.id_immeuble
-            montant = transaction.montant or 0
+            montant = float(transaction.montant or 0)
             type_transaction = transaction.categorie
             
             print(f"🔍 DEBUG - Transaction: Immeuble {building_id}, Montant: {montant}, Type: {type_transaction}")
@@ -1719,7 +1719,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         expense_categories = defaultdict(float)
         for transaction in transactions:
             category = transaction.categorie or "Autres"
-            montant = abs(transaction.montant or 0)
+            montant = float(abs(transaction.montant or 0))
             expense_categories[category] += montant
         
         analysis_data["summary"] = {

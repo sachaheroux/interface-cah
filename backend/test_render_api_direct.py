@@ -41,6 +41,11 @@ def test_render_api():
             print('\nDonnées mensuelles (premiers 3 mois):')
             for i, month_data in enumerate(data.get('monthlyTotals', [])[:3]):
                 print(f'  - {month_data.get("month", "N/A")}: Revenus: ${month_data.get("revenue", 0)}, Dépenses: ${month_data.get("expenses", 0)}, Cashflow: ${month_data.get("netCashflow", 0)}')
+            
+            print(f'\nCatégories de dépenses: {data.get("categories", "NON TROUVÉ")}')
+            if 'categories' in data and data['categories']:
+                for category, amount in data['categories'].items():
+                    print(f'  - {category}: ${amount}')
         else:
             print(f'Erreur: {response.text}')
             
