@@ -12,6 +12,7 @@ import {
   Search
 } from 'lucide-react'
 import api from '../services/api'
+import reportExport from '../services/reportExport'
 
 export default function ProfitabilityAnalysis() {
   const [buildings, setBuildings] = useState([])
@@ -120,9 +121,29 @@ export default function ProfitabilityAnalysis() {
   }
 
 
-  const exportReport = () => {
-    // TODO: Générer et télécharger le rapport PDF
-    console.log('Export du rapport PDF')
+  const exportReport = async () => {
+    if (!analysisData || !selectedBuildings.length) {
+      alert('Veuillez d\'abord lancer une analyse')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await reportExport.exportReport(
+        analysisData,
+        selectedBuildings,
+        parseInt(startYear),
+        parseInt(startMonth),
+        parseInt(endYear),
+        parseInt(endMonth)
+      )
+      alert('Rapport exporté avec succès !')
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error)
+      alert('Erreur lors de l\'export du rapport. Veuillez réessayer.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -148,11 +169,20 @@ export default function ProfitabilityAnalysis() {
           </button>
           <button
             onClick={exportReport}
-            className="btn-primary flex items-center space-x-2"
-            disabled={!analysisData}
+            className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!analysisData || loading}
           >
-            <Download className="h-4 w-4" />
-            <span>Exporter PDF</span>
+            {loading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Export en cours...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                <span>Exporter Rapport</span>
+              </>
+            )}
           </button>
         </div>
       </div>
