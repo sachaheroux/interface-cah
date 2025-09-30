@@ -230,10 +230,10 @@ export default function Buildings() {
       setError(null)
       
       // Supprimer via API
-      await buildingsService.deleteBuilding(buildingToDelete.id)
+      await buildingsService.deleteBuilding(buildingToDelete.id_immeuble || buildingToDelete.id)
       
       // Supprimer de l'état local
-      const updatedBuildings = buildings.filter(b => b.id !== buildingToDelete.id)
+      const updatedBuildings = buildings.filter(b => (b.id_immeuble || b.id) !== (buildingToDelete.id_immeuble || buildingToDelete.id))
       setBuildings(updatedBuildings)
       setFilteredBuildings(updatedBuildings)
       

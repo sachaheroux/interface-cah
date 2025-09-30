@@ -14,7 +14,7 @@ export const defaultBuilding = {
   mise_de_fond: 0,
   taux_interet: 0,
   valeur_actuel: 0,
-  dette_restante: 0,
+  dette_restante: null,
   proprietaire: '',
   banque: '',
   contracteur: '',
