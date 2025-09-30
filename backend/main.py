@@ -1903,6 +1903,23 @@ async def migrate_dette_restante():
         print(f"Erreur lors de la migration: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
 
+@app.post("/api/debug/update-building")
+async def debug_update_building(building_id: int, update_data: dict):
+    """Endpoint de debug pour tester la mise à jour d'immeuble"""
+    try:
+        print(f"🔍 DEBUG - Endpoint debug appelé avec building_id: {building_id}")
+        print(f"🔍 DEBUG - update_data reçu: {update_data}")
+        
+        result = db_service_francais.update_building(building_id, update_data)
+        
+        print(f"🔍 DEBUG - Résultat de update_building: {result}")
+        
+        return {"message": "Debug terminé", "result": result}
+        
+    except Exception as e:
+        print(f"❌ Erreur lors du debug: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du debug: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
