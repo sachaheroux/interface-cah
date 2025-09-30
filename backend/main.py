@@ -1733,7 +1733,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         
         # Calculer le ROI (Return on Investment)
         # ROI = (Cashflow net / Valeur totale des immeubles) * 100
-        roi_percentage = (total_net_cashflow / total_property_value * 100) if total_property_value > 0 else 0
+        roi_percentage = (total_net_cashflow / float(total_property_value) * 100) if total_property_value > 0 else 0
         
         analysis_data["summary"] = {
             "totalRevenue": total_revenue,
