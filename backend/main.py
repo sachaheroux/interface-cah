@@ -1717,7 +1717,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         total_net_cashflow = sum(data["netCashflow"] for data in monthly_data.values())
         
         # Calculer la valeur totale des immeubles pour le ROI
-        total_property_value = sum(building.valeur_actuel or 0 for building in buildings)
+        total_property_value = sum(building.get('valeur_actuel', 0) or 0 for building in buildings)
         
         # Calculer le ROI (Return on Investment)
         # ROI = (Cashflow net / Valeur totale des immeubles) * 100
