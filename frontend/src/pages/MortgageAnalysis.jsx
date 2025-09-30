@@ -275,22 +275,23 @@ const MortgageAnalysis = () => {
               </div>
             </div>
 
-            {/* Graphique en barres empilées */}
+            {/* Graphique en barres horizontales empilées */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition de la Dette par Immeuble</h3>
               
               <div className="space-y-4">
                 {analysisData.buildings.map((building, index) => {
                   const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
-                  const barHeight = (building.valeur_actuel / maxValue) * 100
+                  const barWidth = (building.valeur_actuel / maxValue) * 100
                   
                   // Calculer les proportions pour chaque segment
-                  const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * barHeight
-                  const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * barHeight
-                  const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * barHeight
+                  const detteRestanteWidth = (building.dette_restante / building.valeur_actuel) * barWidth
+                  const montantRembourseWidth = (building.montant_rembourse / building.valeur_actuel) * barWidth
+                  const gainValeurWidth = (building.gain_valeur / building.valeur_actuel) * barWidth
+                  const miseDeFondWidth = (building.mise_de_fond / building.valeur_actuel) * barWidth
 
                   return (
-                    <div key={building.id_immeuble} className="flex items-end space-x-4">
+                    <div key={building.id_immeuble} className="flex items-center space-x-4">
                       {/* Nom de l'immeuble */}
                       <div className="w-48 text-right">
                         <p className="text-sm font-medium text-gray-900 truncate" title={building.nom_immeuble}>
@@ -301,15 +302,27 @@ const MortgageAnalysis = () => {
                         </p>
                       </div>
 
-                      {/* Barre empilée */}
+                      {/* Barre verticale empilée */}
                       <div className="flex-1">
                         <div className="relative h-80 border-b-2 border-gray-800">
                           {/* Segment gain de valeur (bleu) - en haut */}
                           {building.gain_valeur > 0 && (
                             <div
-                              className="absolute bottom-0 left-0 bg-blue-500 w-full"
-                              style={{ height: `${gainValeurHeight}%` }}
+                              className="absolute top-0 left-0 bg-blue-500 w-full"
+                              style={{ height: `${gainValeurWidth}%` }}
                               title={`Gain de valeur: ${formatCurrency(building.gain_valeur)}`}
+                            />
+                          )}
+                          
+                          {/* Segment mise de fond (gris) - au milieu-haut */}
+                          {building.mise_de_fond > 0 && (
+                            <div
+                              className="absolute bg-gray-500 w-full"
+                              style={{ 
+                                height: `${miseDeFondWidth}%`,
+                                top: `${gainValeurWidth}%`
+                              }}
+                              title={`Mise de fond: ${formatCurrency(building.mise_de_fond)}`}
                             />
                           )}
                           
@@ -318,8 +331,8 @@ const MortgageAnalysis = () => {
                             <div
                               className="absolute bg-green-500 w-full"
                               style={{ 
-                                height: `${montantRembourseHeight}%`,
-                                bottom: `${gainValeurHeight}%`
+                                height: `${montantRembourseWidth}%`,
+                                top: `${gainValeurWidth + miseDeFondWidth}%`
                               }}
                               title={`Montant remboursé: ${formatCurrency(building.montant_rembourse)}`}
                             />
@@ -330,8 +343,8 @@ const MortgageAnalysis = () => {
                             <div
                               className="absolute bg-red-500 w-full"
                               style={{ 
-                                height: `${detteRestanteHeight}%`,
-                                bottom: `${gainValeurHeight + montantRembourseHeight}%`
+                                height: `${detteRestanteWidth}%`,
+                                top: `${gainValeurWidth + miseDeFondWidth + montantRembourseWidth}%`
                               }}
                               title={`Dette restante: ${formatCurrency(building.dette_restante)}`}
                             />
@@ -357,6 +370,10 @@ const MortgageAnalysis = () => {
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 bg-blue-500 rounded"></div>
                     <span className="text-sm text-gray-600">Gain de valeur</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-500 rounded"></div>
+                    <span className="text-sm text-gray-600">Mise de fond</span>
                   </div>
                 </div>
               </div>
