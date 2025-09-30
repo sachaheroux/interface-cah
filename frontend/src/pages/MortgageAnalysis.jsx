@@ -118,7 +118,7 @@ const MortgageAnalysis = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* En-tête */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -305,18 +305,18 @@ const MortgageAnalysis = () => {
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
                       const stepSize = Math.ceil(maxValue / 5 / 1000) * 1000
-                      const barHeight = (building.valeur_actuel / stepSize) * 100
+                      const barHeight = (building.valeur_actuel / maxValue) * 100
                       
-                      // Calculer les proportions pour chaque segment
-                      const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * barHeight
-                      const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * barHeight
-                      const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * barHeight
-                      const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * barHeight
+                      // Calculer les proportions pour chaque segment (en pourcentage de la hauteur totale)
+                      const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * 100
+                      const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * 100
+                      const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * 100
+                      const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * 100
 
                       return (
                         <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%`, minWidth: '40px' }}>
                           {/* Barre verticale empilée */}
-                          <div className="relative w-full flex flex-col justify-end" style={{ height: '320px' }}>
+                          <div className="relative w-full flex flex-col justify-end" style={{ height: `${barHeight}%` }}>
                             {/* Segment gain de valeur (bleu) - en haut */}
                             {building.gain_valeur > 0 && (
                               <div
