@@ -279,70 +279,72 @@ const MortgageAnalysis = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition de la Dette par Immeuble</h3>
               
-              <div className="flex items-end space-x-2 h-80 border-b-2 border-gray-800">
-                {analysisData.buildings.map((building, index) => {
-                  const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
-                  const barHeight = (building.valeur_actuel / maxValue) * 100
-                  
-                  // Calculer les proportions pour chaque segment
-                  const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * barHeight
-                  const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * barHeight
-                  const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * barHeight
-                  const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * barHeight
+              <div className="overflow-x-auto">
+                <div className="flex items-end space-x-1 h-80 border-b-2 border-gray-800" style={{ minWidth: `${analysisData.buildings.length * 60}px` }}>
+                  {analysisData.buildings.map((building, index) => {
+                    const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
+                    const barHeight = (building.valeur_actuel / maxValue) * 100
+                    
+                    // Calculer les proportions pour chaque segment
+                    const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * barHeight
+                    const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * barHeight
+                    const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * barHeight
+                    const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * barHeight
 
-                  return (
-                    <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
-                      {/* Barre verticale empilée */}
-                      <div className="relative w-full flex flex-col justify-end" style={{ height: '320px' }}>
-                        {/* Segment gain de valeur (bleu) - en haut */}
-                        {building.gain_valeur > 0 && (
-                          <div
-                            className="bg-blue-500 w-full"
-                            style={{ height: `${gainValeurHeight}%` }}
-                            title={`Gain de valeur: ${formatCurrency(building.gain_valeur)}`}
-                          />
-                        )}
+                    return (
+                      <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: '60px', minWidth: '60px' }}>
+                        {/* Barre verticale empilée */}
+                        <div className="relative w-full flex flex-col justify-end" style={{ height: '320px' }}>
+                          {/* Segment gain de valeur (bleu) - en haut */}
+                          {building.gain_valeur > 0 && (
+                            <div
+                              className="bg-blue-500 w-full"
+                              style={{ height: `${gainValeurHeight}%` }}
+                              title={`Gain de valeur: ${formatCurrency(building.gain_valeur)}`}
+                            />
+                          )}
+                          
+                          {/* Segment mise de fond (gris) - au milieu-haut */}
+                          {building.mise_de_fond > 0 && (
+                            <div
+                              className="bg-gray-500 w-full"
+                              style={{ height: `${miseDeFondHeight}%` }}
+                              title={`Mise de fond: ${formatCurrency(building.mise_de_fond)}`}
+                            />
+                          )}
+                          
+                          {/* Segment montant remboursé (vert) - au milieu */}
+                          {building.montant_rembourse > 0 && (
+                            <div
+                              className="bg-green-500 w-full"
+                              style={{ height: `${montantRembourseHeight}%` }}
+                              title={`Montant remboursé: ${formatCurrency(building.montant_rembourse)}`}
+                            />
+                          )}
+                          
+                          {/* Segment dette restante (rouge) - en bas */}
+                          {building.dette_restante > 0 && (
+                            <div
+                              className="bg-red-500 w-full"
+                              style={{ height: `${detteRestanteHeight}%` }}
+                              title={`Dette restante: ${formatCurrency(building.dette_restante)}`}
+                            />
+                          )}
+                        </div>
                         
-                        {/* Segment mise de fond (gris) - au milieu-haut */}
-                        {building.mise_de_fond > 0 && (
-                          <div
-                            className="bg-gray-500 w-full"
-                            style={{ height: `${miseDeFondHeight}%` }}
-                            title={`Mise de fond: ${formatCurrency(building.mise_de_fond)}`}
-                          />
-                        )}
-                        
-                        {/* Segment montant remboursé (vert) - au milieu */}
-                        {building.montant_rembourse > 0 && (
-                          <div
-                            className="bg-green-500 w-full"
-                            style={{ height: `${montantRembourseHeight}%` }}
-                            title={`Montant remboursé: ${formatCurrency(building.montant_rembourse)}`}
-                          />
-                        )}
-                        
-                        {/* Segment dette restante (rouge) - en bas */}
-                        {building.dette_restante > 0 && (
-                          <div
-                            className="bg-red-500 w-full"
-                            style={{ height: `${detteRestanteHeight}%` }}
-                            title={`Dette restante: ${formatCurrency(building.dette_restante)}`}
-                          />
-                        )}
+                        {/* Nom de l'immeuble */}
+                        <div className="mt-2 text-center" style={{ width: '60px' }}>
+                          <p className="text-xs font-medium text-gray-900 truncate" title={building.nom_immeuble}>
+                            {building.nom_immeuble}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {formatCurrency(building.valeur_actuel)}
+                          </p>
+                        </div>
                       </div>
-                      
-                      {/* Nom de l'immeuble */}
-                      <div className="mt-2 text-center">
-                        <p className="text-xs font-medium text-gray-900 truncate max-w-full" title={building.nom_immeuble}>
-                          {building.nom_immeuble}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatCurrency(building.valeur_actuel)}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Légende */}
