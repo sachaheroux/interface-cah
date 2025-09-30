@@ -166,7 +166,7 @@ export default function Buildings() {
         mise_de_fond: Number(buildingData.mise_de_fond || buildingData.financials?.downPayment) || 0,
         taux_interet: Number(buildingData.taux_interet || buildingData.financials?.interestRate) || 0,
         valeur_actuel: Number(buildingData.valeur_actuel || buildingData.financials?.currentValue) || 0,
-        dette_restante: Number(buildingData.dette_restante) || 0,
+        dette_restante: buildingData.dette_restante ? Number(buildingData.dette_restante) : null,
         proprietaire: buildingData.proprietaire || buildingData.contacts?.owner || '',
         banque: buildingData.banque || buildingData.contacts?.bank || '',
         contracteur: buildingData.contracteur || buildingData.contacts?.contractor || '',

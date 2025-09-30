@@ -118,7 +118,7 @@ class DatabaseServiceFrancais:
                 if 'valeur_actuel' in update_data:
                     building.valeur_actuel = update_data['valeur_actuel']
                 if 'dette_restante' in update_data:
-                    building.dette_restante = update_data['dette_restante']
+                    building.dette_restante = update_data['dette_restante'] if update_data['dette_restante'] is not None else 0
                 if 'proprietaire' in update_data:
                     building.proprietaire = update_data['proprietaire']
                 if 'banque' in update_data:
