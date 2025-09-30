@@ -38,6 +38,7 @@ class Immeuble(Base):
     mise_de_fond = Column(DECIMAL(12, 2), default=0)
     taux_interet = Column(DECIMAL(5, 2), default=0)  # pourcentage
     valeur_actuel = Column(DECIMAL(12, 2), default=0)
+    dette_restante = Column(DECIMAL(12, 2), default=0)
     proprietaire = Column(Text)
     banque = Column(Text)
     contracteur = Column(Text)

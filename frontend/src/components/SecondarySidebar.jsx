@@ -20,7 +20,9 @@ import {
   Upload,
   Download,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Calculator,
+  Home
 } from 'lucide-react'
 
 const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buildings') => {
@@ -31,6 +33,7 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Toutes les unités', icon: Users, active: viewMode === 'units' },
         { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis' },
+        { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage' },
         { name: 'Rapports', icon: FileText },
         { name: 'Maintenance', icon: Wrench },
       ]
@@ -42,6 +45,14 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Graphiques', icon: BarChart3 },
         { name: 'Rapports', icon: FileText },
         { name: 'Export', icon: Download },
+      ]
+    
+    case '/buildings/mortgage':
+      return [
+        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
+        { name: 'Configuration', icon: SettingsIcon, active: true },
+        { name: 'Graphiques', icon: BarChart3 },
+        { name: 'Tableau détaillé', icon: FileText },
       ]
     
     case '/tenants':

@@ -348,6 +348,20 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
                       step="0.01"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dette restante ($)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.dette_restante || 0}
+                      onChange={(e) => handleInputChange('dette_restante', parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
                 </div>
               </div>
             )}

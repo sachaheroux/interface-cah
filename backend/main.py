@@ -1796,6 +1796,57 @@ async def check_transaction_reference(reference: str):
         print(f"Erreur lors de la vérification de la référence: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la vérification de la référence: {str(e)}")
 
+@app.get("/api/analysis/mortgage")
+async def get_mortgage_analysis(
+    building_ids: str = Query(..., description="IDs des immeubles séparés par des virgules")
+):
+    """Analyser la dette hypothécaire pour les immeubles sélectionnés"""
+    try:
+        # Parser les IDs des immeubles
+        building_ids_list = [int(id.strip()) for id in building_ids.split(',') if id.strip()]
+        
+        # Récupérer les immeubles
+        buildings = db_service_francais.get_buildings_by_ids(building_ids_list)
+        
+        # Calculer les données de dette pour chaque immeuble
+        mortgage_data = []
+        for building in buildings:
+            prix_achete = float(building.get('prix_achete', 0) or 0)
+            mise_de_fond = float(building.get('mise_de_fond', 0) or 0)
+            valeur_actuel = float(building.get('valeur_actuel', 0) or 0)
+            dette_restante = float(building.get('dette_restante', 0) or 0)
+            
+            # Calculer les montants
+            dette_initiale = prix_achete - mise_de_fond  # Dette de base (bleu)
+            montant_rembourse = dette_initiale - dette_restante  # Montant remboursé (vert)
+            gain_valeur = valeur_actuel - prix_achete  # Gain de valeur (bleu)
+            
+            mortgage_data.append({
+                "id_immeuble": building['id_immeuble'],
+                "nom_immeuble": building['nom_immeuble'],
+                "prix_achete": prix_achete,
+                "mise_de_fond": mise_de_fond,
+                "valeur_actuel": valeur_actuel,
+                "dette_restante": dette_restante,
+                "dette_initiale": dette_initiale,
+                "montant_rembourse": montant_rembourse,
+                "gain_valeur": gain_valeur
+            })
+        
+        return {
+            "buildings": mortgage_data,
+            "summary": {
+                "total_buildings": len(mortgage_data),
+                "total_dette_restante": sum(b['dette_restante'] for b in mortgage_data),
+                "total_montant_rembourse": sum(b['montant_rembourse'] for b in mortgage_data),
+                "total_gain_valeur": sum(b['gain_valeur'] for b in mortgage_data),
+                "total_valeur_actuel": sum(b['valeur_actuel'] for b in mortgage_data)
+            }
+        }
+    except Exception as e:
+        print(f"Erreur lors de l'analyse de dette hypothécaire: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse de dette hypothécaire: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
