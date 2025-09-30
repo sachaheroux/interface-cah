@@ -1040,20 +1040,20 @@ async def create_transaction(transaction_data: TransactionCreateFrancais):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
 
 @app.put("/api/transactions/{transaction_id}")
-async def update_transaction_transaction(transaction_id: int, transaction_data: TransactionUpdateFrancais):
+async def update_transaction(transaction_id: int, transaction_data: TransactionUpdateFrancais):
     """Mettre à jour une transaction existante avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        update_transaction_dict = transaction_data.dict(exclude_unset=True)
+        transaction_dict = transaction_data.dict(exclude_unset=True)
         
         # Mettre à jour via le service SQLite
-        update_transactiond_transaction = db_service_francais.update_transaction_transaction(transaction_id, update_transaction_dict)
+        updated_transaction = db_service_francais.update_transaction(transaction_id, transaction_dict)
         
-        if not update_transactiond_invoice:
+        if not updated_transaction:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
         
-        print(f"✅ Transaction mise à jour: {update_transactiond_invoice.get('invoiceNumber')}")
-        return {"data": update_transactiond_invoice}
+        print(f"✅ Transaction mise à jour: {transaction_id}")
+        return {"data": updated_transaction, "message": "Transaction mise à jour avec succès"}
     except HTTPException:
         raise
     except Exception as e:
@@ -1782,21 +1782,6 @@ async def create_transaction(transaction_data: dict):
     except Exception as e:
         print(f"Erreur lors de la création de la transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
-
-@app.put("/api/transactions/{transaction_id}")
-async def update_transaction(transaction_id: int, transaction_data: dict):
-    """Mettre à jour une transaction"""
-    try:
-        updated_transaction = db_service_francais.update_transaction(transaction_id, transaction_data)
-        if not updated_transaction:
-            raise HTTPException(status_code=404, detail="Transaction non trouvée")
-        return {"data": updated_transaction, "message": "Transaction mise à jour avec succès"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Erreur lors de la mise à jour de la transaction: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la transaction: {str(e)}")
-
 
 @app.get("/api/test-endpoint")
 async def test_endpoint():
