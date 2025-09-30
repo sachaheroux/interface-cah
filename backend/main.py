@@ -1847,6 +1847,62 @@ async def get_mortgage_analysis(
         print(f"Erreur lors de l'analyse de dette hypothécaire: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse de dette hypothécaire: {str(e)}")
 
+@app.post("/api/migrate/dette-restante")
+async def migrate_dette_restante():
+    """Migration pour ajouter la colonne dette_restante à la table immeubles"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Vérifier si la colonne existe déjà
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL sur Render
+                check_query = text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'immeubles' 
+                    AND column_name = 'dette_restante'
+                """)
+            else:
+                # SQLite local
+                check_query = text("PRAGMA table_info(immeubles)")
+            
+            result = session.execute(check_query)
+            
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL
+                column_exists = result.fetchone() is not None
+            else:
+                # SQLite
+                columns = [row[1] for row in result.fetchall()]
+                column_exists = 'dette_restante' in columns
+            
+            if column_exists:
+                return {"message": "La colonne 'dette_restante' existe déjà", "success": True}
+            
+            # Ajouter la colonne
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL
+                alter_query = text("""
+                    ALTER TABLE immeubles 
+                    ADD COLUMN dette_restante DECIMAL(12, 2) DEFAULT 0
+                """)
+            else:
+                # SQLite
+                alter_query = text("""
+                    ALTER TABLE immeubles 
+                    ADD COLUMN dette_restante DECIMAL(12, 2) DEFAULT 0
+                """)
+            
+            session.execute(alter_query)
+            session.commit()
+            
+            return {"message": "Colonne 'dette_restante' ajoutée avec succès", "success": True}
+            
+    except Exception as e:
+        print(f"Erreur lors de la migration: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
