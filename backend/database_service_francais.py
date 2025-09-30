@@ -117,6 +117,8 @@ class DatabaseServiceFrancais:
                     building.taux_interet = update_data['taux_interet']
                 if 'valeur_actuel' in update_data:
                     building.valeur_actuel = update_data['valeur_actuel']
+                if 'dette_restante' in update_data:
+                    building.dette_restante = update_data['dette_restante']
                 if 'proprietaire' in update_data:
                     building.proprietaire = update_data['proprietaire']
                 if 'banque' in update_data:
@@ -141,6 +143,14 @@ class DatabaseServiceFrancais:
             with self.get_session() as session:
                 building = session.query(Immeuble).filter(Immeuble.id_immeuble == building_id).first()
                 if not building:
+                    return False
+                
+                # Vérifier s'il y a des dépendances
+                units_count = session.query(Unite).filter(Unite.id_immeuble == building_id).count()
+                transactions_count = session.query(Transaction).filter(Transaction.id_immeuble == building_id).count()
+                
+                if units_count > 0 or transactions_count > 0:
+                    print(f"⚠️ Impossible de supprimer l'immeuble {building.nom_immeuble}: {units_count} unités et {transactions_count} transactions associées")
                     return False
                 
                 session.delete(building)
