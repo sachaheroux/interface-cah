@@ -109,7 +109,10 @@ export default function Transactions() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié'
-    return new Date(dateString).toLocaleDateString('fr-CA')
+    // Éviter les problèmes de fuseau horaire en créant la date localement
+    const [year, month, day] = dateString.split('-')
+    const localDate = new Date(year, month - 1, day)
+    return localDate.toLocaleDateString('fr-CA')
   }
 
   const formatAmount = (amount) => {
@@ -142,7 +145,10 @@ export default function Transactions() {
 
   const totalAmount = transactions.reduce((sum, t) => sum + (t.montant || 0), 0)
   const thisMonthTransactions = transactions.filter(t => {
-    const transactionDate = new Date(t.date_de_transaction)
+    if (!t.date_de_transaction) return false
+    // Éviter les problèmes de fuseau horaire
+    const [year, month, day] = t.date_de_transaction.split('-')
+    const transactionDate = new Date(year, month - 1, day)
     const now = new Date()
     return transactionDate.getMonth() === now.getMonth() && 
            transactionDate.getFullYear() === now.getFullYear()
