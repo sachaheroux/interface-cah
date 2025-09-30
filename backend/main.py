@@ -1597,7 +1597,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         for lease in leases:
             # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
             building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
-            loyer = lease.prix_loyer or 0
+            loyer = float(lease.prix_loyer or 0)
             
             print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
             
