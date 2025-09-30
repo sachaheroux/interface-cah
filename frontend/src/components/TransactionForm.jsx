@@ -195,6 +195,30 @@ export default function TransactionForm({ transaction, buildings, constants, onS
       return
     }
 
+    // Vérifier si c'est une création et si la référence existe déjà
+    if (!transaction && formData.reference) {
+      try {
+        const checkResponse = await api.get(`/api/transactions/check-reference/${encodeURIComponent(formData.reference)}`)
+        if (checkResponse.data.exists) {
+          const existingTransaction = checkResponse.data.transaction
+          const confirmMessage = `Une transaction avec la référence "${formData.reference}" existe déjà.\n\n` +
+            `Transaction existante:\n` +
+            `- Date: ${existingTransaction.date_de_transaction}\n` +
+            `- Montant: $${existingTransaction.montant}\n` +
+            `- Type: ${existingTransaction.type}\n` +
+            `- Catégorie: ${existingTransaction.categorie}\n\n` +
+            `Voulez-vous vraiment créer cette nouvelle transaction ?`
+          
+          if (!window.confirm(confirmMessage)) {
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de la référence:', error)
+        // Continue même en cas d'erreur de vérification
+      }
+    }
+
     setLoading(true)
     try {
       // Utiliser le nouveau format français

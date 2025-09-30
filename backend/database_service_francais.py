@@ -413,6 +413,16 @@ class DatabaseServiceFrancais:
             print(f"❌ Erreur lors de la récupération de la transaction {transaction_id}: {e}")
             raise e
     
+    def get_transaction_by_reference(self, reference: str) -> Optional[Dict[str, Any]]:
+        """Récupérer une transaction par référence"""
+        try:
+            with self.get_session() as session:
+                transaction = session.query(Transaction).filter(Transaction.reference == reference).first()
+                return transaction.to_dict() if transaction else None
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération de la transaction par référence {reference}: {e}")
+            raise e
+    
     def create_transaction(self, transaction_data: Dict[str, Any]) -> Dict[str, Any]:
         """Créer une nouvelle transaction"""
         try:

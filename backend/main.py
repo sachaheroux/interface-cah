@@ -1783,6 +1783,19 @@ async def create_transaction(transaction_data: dict):
         print(f"Erreur lors de la création de la transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la transaction: {str(e)}")
 
+@app.get("/api/transactions/check-reference/{reference}")
+async def check_transaction_reference(reference: str):
+    """Vérifier si une référence de transaction existe déjà"""
+    try:
+        existing_transaction = db_service_francais.get_transaction_by_reference(reference)
+        return {
+            "exists": existing_transaction is not None,
+            "transaction": existing_transaction
+        }
+    except Exception as e:
+        print(f"Erreur lors de la vérification de la référence: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la vérification de la référence: {str(e)}")
+
 @app.get("/api/test-endpoint")
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
