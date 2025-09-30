@@ -305,23 +305,25 @@ const MortgageAnalysis = () => {
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
                       const stepSize = Math.ceil(maxValue / 5 / 1000) * 1000
-                      const barHeight = (building.valeur_actuel / maxValue) * 100
                       
-                      // Calculer les proportions pour chaque segment (en pourcentage de la hauteur totale)
-                      const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * 100
-                      const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * 100
-                      const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * 100
-                      const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * 100
+                      // Calculer la hauteur de la barre en pixels (proportionnelle à la valeur max)
+                      const barHeightPixels = (building.valeur_actuel / maxValue) * 320
+                      
+                      // Calculer les hauteurs des segments en pixels
+                      const detteRestanteHeight = (building.dette_restante / building.valeur_actuel) * barHeightPixels
+                      const montantRembourseHeight = (building.montant_rembourse / building.valeur_actuel) * barHeightPixels
+                      const gainValeurHeight = (building.gain_valeur / building.valeur_actuel) * barHeightPixels
+                      const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * barHeightPixels
 
                       return (
                         <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%`, minWidth: '40px' }}>
                           {/* Barre verticale empilée */}
-                          <div className="relative w-full flex flex-col justify-end" style={{ height: `${barHeight}%` }}>
+                          <div className="relative w-full flex flex-col justify-end" style={{ height: `${barHeightPixels}px` }}>
                             {/* Segment gain de valeur (bleu) - en haut */}
                             {building.gain_valeur > 0 && (
                               <div
                                 className="bg-blue-500 w-full"
-                                style={{ height: `${gainValeurHeight}%` }}
+                                style={{ height: `${gainValeurHeight}px` }}
                                 title={`Gain de valeur: ${formatCurrency(building.gain_valeur)}`}
                               />
                             )}
@@ -330,7 +332,7 @@ const MortgageAnalysis = () => {
                             {building.mise_de_fond > 0 && (
                               <div
                                 className="bg-gray-500 w-full"
-                                style={{ height: `${miseDeFondHeight}%` }}
+                                style={{ height: `${miseDeFondHeight}px` }}
                                 title={`Mise de fond: ${formatCurrency(building.mise_de_fond)}`}
                               />
                             )}
@@ -339,7 +341,7 @@ const MortgageAnalysis = () => {
                             {building.montant_rembourse > 0 && (
                               <div
                                 className="bg-green-500 w-full"
-                                style={{ height: `${montantRembourseHeight}%` }}
+                                style={{ height: `${montantRembourseHeight}px` }}
                                 title={`Montant remboursé: ${formatCurrency(building.montant_rembourse)}`}
                               />
                             )}
@@ -348,7 +350,7 @@ const MortgageAnalysis = () => {
                             {building.dette_restante > 0 && (
                               <div
                                 className="bg-red-500 w-full"
-                                style={{ height: `${detteRestanteHeight}%` }}
+                                style={{ height: `${detteRestanteHeight}px` }}
                                 title={`Dette restante: ${formatCurrency(building.dette_restante)}`}
                               />
                             )}
