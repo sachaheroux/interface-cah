@@ -301,7 +301,7 @@ const MortgageAnalysis = () => {
                 {/* Graphique principal */}
                 <div className="flex-1 relative">
                   {/* Zone des barres avec ligne de base */}
-                  <div className="h-80 flex items-end justify-center space-x-1 relative px-2" style={{ borderBottom: '2px solid #1f2937' }}>
+                  <div className="h-80 flex items-end justify-between relative px-2" style={{ borderBottom: '2px solid #1f2937' }}>
                     {analysisData.buildings.map((building, index) => {
                       const maxValue = Math.max(...analysisData.buildings.map(b => b.valeur_actuel))
                       const stepSize = Math.ceil(maxValue / 5 / 1000) * 1000
@@ -314,7 +314,7 @@ const MortgageAnalysis = () => {
                       const miseDeFondHeight = (building.mise_de_fond / building.valeur_actuel) * barHeight
 
                       return (
-                        <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                        <div key={building.id_immeuble} className="flex flex-col items-center" style={{ width: `${100 / analysisData.buildings.length}%`, minWidth: '40px' }}>
                           {/* Barre verticale empilée */}
                           <div className="relative w-full flex flex-col justify-end" style={{ height: '320px' }}>
                             {/* Segment gain de valeur (bleu) - en haut */}
@@ -359,9 +359,9 @@ const MortgageAnalysis = () => {
                   </div>
                   
                   {/* Noms des immeubles en dessous */}
-                  <div className="mt-2 flex justify-center space-x-1 px-2">
+                  <div className="mt-2 flex justify-between px-2">
                     {analysisData.buildings.map((building, index) => (
-                      <div key={building.id_immeuble} className="text-center" style={{ width: `${100 / analysisData.buildings.length}%` }}>
+                      <div key={building.id_immeuble} className="text-center" style={{ width: `${100 / analysisData.buildings.length}%`, minWidth: '40px' }}>
                         <div className="text-xs font-medium text-gray-900 leading-tight" title={building.nom_immeuble}>
                           {building.nom_immeuble.split(' ').map((word, i) => (
                             <div key={i}>{word}</div>
