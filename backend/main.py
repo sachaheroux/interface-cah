@@ -92,6 +92,7 @@ class BuildingUpdate_transactionFrancais(BaseModel):
     mise_de_fond: Optional[float] = None
     taux_interet: Optional[float] = None
     valeur_actuel: Optional[float] = None
+    dette_restante: Optional[float] = None
     proprietaire: Optional[str] = None
     banque: Optional[str] = None
     contracteur: Optional[str] = None
