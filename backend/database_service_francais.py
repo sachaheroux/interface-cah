@@ -907,9 +907,10 @@ class DatabaseServiceFrancais:
         """Récupérer les immeubles par IDs"""
         try:
             with self.get_session() as session:
-                return session.query(Immeuble).filter(
+                buildings = session.query(Immeuble).filter(
                     Immeuble.id_immeuble.in_(building_ids)
                 ).all()
+                return [building.to_dict() for building in buildings]
         except Exception as e:
             print(f"Erreur lors de la récupération des immeubles: {e}")
             return []
