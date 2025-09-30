@@ -40,6 +40,7 @@ def create_local_db():
             mise_de_fond DECIMAL(12, 2) DEFAULT 0,
             taux_interet DECIMAL(5, 2) DEFAULT 0,
             valeur_actuel DECIMAL(12, 2) DEFAULT 0,
+            dette_restante DECIMAL(12, 2) DEFAULT 0,
             proprietaire TEXT DEFAULT '',
             banque TEXT DEFAULT '',
             contracteur TEXT DEFAULT '',
@@ -135,8 +136,8 @@ def fetch_and_insert_data():
                 cursor.execute("""
                     INSERT INTO immeubles (id_immeuble, nom_immeuble, adresse, ville, province, code_postal, pays,
                                          nbr_unite, annee_construction, prix_achete, mise_de_fond, taux_interet,
-                                         valeur_actuel, proprietaire, banque, contracteur, notes, date_creation, date_modification)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                         valeur_actuel, dette_restante, proprietaire, banque, contracteur, notes, date_creation, date_modification)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     building.get('id_immeuble'),
                     building.get('nom_immeuble', ''),
@@ -151,6 +152,7 @@ def fetch_and_insert_data():
                     building.get('mise_de_fond', 0),
                     building.get('taux_interet', 0),
                     building.get('valeur_actuel', 0),
+                    building.get('dette_restante', 0),
                     building.get('proprietaire', ''),
                     building.get('banque', ''),
                     building.get('contracteur', ''),

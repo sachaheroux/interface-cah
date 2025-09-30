@@ -66,6 +66,7 @@ class Immeuble(Base):
             "mise_de_fond": float(self.mise_de_fond) if self.mise_de_fond else 0.0,
             "taux_interet": float(self.taux_interet) if self.taux_interet else 0.0,
             "valeur_actuel": float(self.valeur_actuel) if self.valeur_actuel else 0.0,
+            "dette_restante": float(self.dette_restante) if self.dette_restante else 0.0,
             "proprietaire": self.proprietaire,
             "banque": self.banque,
             "contracteur": self.contracteur,
