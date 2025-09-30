@@ -87,6 +87,10 @@ class DatabaseServiceFrancais:
     def update_building(self, building_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Mettre à jour un immeuble avec les champs français"""
         try:
+            print(f"🔍 DEBUG - update_building appelé avec building_id: {building_id}")
+            print(f"🔍 DEBUG - update_data reçu: {update_data}")
+            print(f"🔍 DEBUG - dette_restante dans update_data: {update_data.get('dette_restante')}")
+            
             with self.get_session() as session:
                 building = session.query(Immeuble).filter(Immeuble.id_immeuble == building_id).first()
                 if not building:
@@ -118,7 +122,10 @@ class DatabaseServiceFrancais:
                 if 'valeur_actuel' in update_data:
                     building.valeur_actuel = update_data['valeur_actuel']
                 if 'dette_restante' in update_data:
-                    building.dette_restante = update_data['dette_restante'] if update_data['dette_restante'] is not None else 0
+                    old_value = building.dette_restante
+                    new_value = update_data['dette_restante'] if update_data['dette_restante'] is not None else 0
+                    building.dette_restante = new_value
+                    print(f"🔍 DEBUG - dette_restante mis à jour: {old_value} -> {new_value}")
                 if 'proprietaire' in update_data:
                     building.proprietaire = update_data['proprietaire']
                 if 'banque' in update_data:
