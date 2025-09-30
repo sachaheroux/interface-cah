@@ -77,11 +77,6 @@ export default function BuildingForm({ building = null, isOpen, onClose, onSave 
         updatedAt: new Date().toISOString()
       }
       
-      // Debug: Afficher les données avant envoi
-      console.log('🔍 DEBUG - Données du formulaire:', formData)
-      console.log('🔍 DEBUG - Données à envoyer:', buildingData)
-      console.log('🔍 DEBUG - dette_restante dans formData:', formData.dette_restante)
-      console.log('🔍 DEBUG - dette_restante dans buildingData:', buildingData.dette_restante)
       
       await onSave(buildingData)
       onClose()

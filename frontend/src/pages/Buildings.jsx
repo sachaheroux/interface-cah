@@ -152,9 +152,6 @@ export default function Buildings() {
     try {
       setError(null) // Réinitialiser l'erreur lors de la sauvegarde
       
-      // Debug: Afficher les données reçues du formulaire
-      console.log('🔍 DEBUG - buildingData reçu:', buildingData)
-      console.log('🔍 DEBUG - dette_restante reçu:', buildingData.dette_restante)
       
       // Utiliser directement les données françaises du formulaire
       const cleanedData = {
@@ -177,8 +174,6 @@ export default function Buildings() {
         notes: buildingData.notes || ''
       }
       
-      console.log('🔍 DEBUG - Données nettoyées pour API:', cleanedData)
-      console.log('🔍 DEBUG - dette_restante dans cleanedData:', cleanedData.dette_restante)
       
       if (selectedBuilding) {
         // Update existing building via API
