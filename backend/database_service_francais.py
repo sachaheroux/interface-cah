@@ -914,6 +914,18 @@ class DatabaseServiceFrancais:
         except Exception as e:
             print(f"Erreur lors de la récupération des immeubles: {e}")
             return []
+    
+    def get_buildings_by_ids_objects(self, building_ids):
+        """Récupérer les immeubles par IDs comme objets SQLAlchemy"""
+        try:
+            with self.get_session() as session:
+                buildings = session.query(Immeuble).filter(
+                    Immeuble.id_immeuble.in_(building_ids)
+                ).all()
+                return buildings
+        except Exception as e:
+            print(f"Erreur lors de la récupération des immeubles: {e}")
+            return []
 
 # Instance globale du service
 db_service_francais = DatabaseServiceFrancais()
