@@ -65,6 +65,13 @@ export default function Transactions() {
       filtered = filtered.filter(transaction => transaction.categorie === filterCategory)
     }
 
+    // Trier par date décroissante (plus récent en premier)
+    filtered = filtered.sort((a, b) => {
+      const dateA = new Date(a.date_de_transaction)
+      const dateB = new Date(b.date_de_transaction)
+      return dateB - dateA // Décroissant
+    })
+
     setFilteredTransactions(filtered)
   }
 
