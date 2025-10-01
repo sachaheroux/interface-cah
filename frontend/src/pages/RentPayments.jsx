@@ -39,24 +39,12 @@ const RentPayments = () => {
       const leasesList = Array.isArray(response.data) ? response.data : (response.data.data || [])
       
       // Filtrer les baux pour l'immeuble sélectionné
-      console.log('🔍 DEBUG - Tous les baux:', leasesList.length)
-      console.log('🔍 DEBUG - Immeuble sélectionné:', selectedBuilding.id_immeuble)
+      const buildingLeases = leasesList.filter(lease => 
+        lease.locataire && 
+        lease.locataire.unite && 
+        lease.locataire.unite.id_immeuble === selectedBuilding.id_immeuble
+      )
       
-      const buildingLeases = leasesList.filter(lease => {
-        console.log('🔍 DEBUG - Bail:', lease.id_bail, 'Locataire:', lease.locataire)
-        if (lease.locataire) {
-          console.log('🔍 DEBUG - Unité:', lease.locataire.unite)
-          if (lease.locataire.unite) {
-            console.log('🔍 DEBUG - ID Immeuble:', lease.locataire.unite.id_immeuble, 'vs', selectedBuilding.id_immeuble)
-          }
-        }
-        
-        return lease.locataire && 
-               lease.locataire.unite && 
-               lease.locataire.unite.id_immeuble === selectedBuilding.id_immeuble
-      })
-      
-      console.log('🔍 DEBUG - Baux filtrés pour l\'immeuble:', buildingLeases.length)
       setLeases(buildingLeases)
       
       // Charger les paiements pour chaque bail

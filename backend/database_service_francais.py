@@ -520,16 +520,18 @@ class DatabaseServiceFrancais:
         """Récupérer tous les baux avec les informations des locataires et unités"""
         try:
             with self.get_session() as session:
-                # Faire une jointure pour récupérer les informations complètes
-                leases = session.query(Bail).join(Locataire, Bail.id_locataire == Locataire.id_locataire).join(Unite, Locataire.id_unite == Unite.id_unite).all()
+                # Utiliser joinedload pour charger toutes les relations
+                leases = session.query(Bail).options(
+                    joinedload(Bail.locataire).joinedload(Locataire.unite).joinedload(Unite.immeuble)
+                ).all()
                 
                 result = []
                 for lease in leases:
                     lease_dict = lease.to_dict()
                     
-                    # Ajouter les informations du locataire
+                    # Ajouter les informations du locataire avec son unité et immeuble
                     if lease.locataire:
-                        lease_dict['locataire'] = {
+                        locataire_data = {
                             'id_locataire': lease.locataire.id_locataire,
                             'nom': lease.locataire.nom,
                             'prenom': lease.locataire.prenom,
@@ -537,24 +539,27 @@ class DatabaseServiceFrancais:
                             'telephone': lease.locataire.telephone,
                             'statut': lease.locataire.statut
                         }
-                    
-                    # Ajouter les informations de l'unité
-                    if lease.locataire and lease.locataire.unite:
-                        lease_dict['unite'] = {
-                            'id_unite': lease.locataire.unite.id_unite,
-                            'adresse_unite': lease.locataire.unite.adresse_unite,
-                            'type': lease.locataire.unite.type,
-                            'nbr_chambre': lease.locataire.unite.nbr_chambre,
-                            'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain
-                        }
                         
-                        # Ajouter les informations de l'immeuble
-                        if lease.locataire.unite.immeuble:
-                            lease_dict['unite']['immeuble'] = {
-                                'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
-                                'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
-                                'adresse': lease.locataire.unite.immeuble.adresse
+                        # Ajouter les informations de l'unité directement dans le locataire
+                        if lease.locataire.unite:
+                            locataire_data['unite'] = {
+                                'id_unite': lease.locataire.unite.id_unite,
+                                'adresse_unite': lease.locataire.unite.adresse_unite,
+                                'type': lease.locataire.unite.type,
+                                'nbr_chambre': lease.locataire.unite.nbr_chambre,
+                                'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain,
+                                'id_immeuble': lease.locataire.unite.id_immeuble
                             }
+                            
+                            # Ajouter les informations de l'immeuble
+                            if lease.locataire.unite.immeuble:
+                                locataire_data['unite']['immeuble'] = {
+                                    'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
+                                    'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
+                                    'adresse': lease.locataire.unite.immeuble.adresse
+                                }
+                        
+                        lease_dict['locataire'] = locataire_data
                     
                     result.append(lease_dict)
                 
