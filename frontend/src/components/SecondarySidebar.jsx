@@ -62,7 +62,8 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'En attente', icon: Clock },
         { name: 'Ajouter locataire', icon: Plus },
         { name: 'Gérer les baux', icon: FileText, href: '/leases' },
-        { name: 'Transactions', icon: DollarSign, href: '/transactions' },
+        { name: 'Suivi des paiements', icon: DollarSign, href: '/rent-payments' },
+        { name: 'Transactions', icon: TrendingUp, href: '/transactions' },
       ]
     
     case '/leases':
@@ -72,6 +73,14 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Expirés', icon: Clock },
         { name: 'À venir', icon: Calendar },
         { name: 'Nouveau bail', icon: Plus },
+        { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
+      ]
+    
+    case '/rent-payments':
+      return [
+        { name: 'Suivi des paiements', icon: DollarSign, active: true },
+        { name: 'Configuration', icon: SettingsIcon },
+        { name: 'Rapports', icon: FileText },
         { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
       ]
     

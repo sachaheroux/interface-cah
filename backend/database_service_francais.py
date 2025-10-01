@@ -5,7 +5,7 @@ Utilise les nouveaux modèles français
 """
 
 from sqlalchemy.orm import sessionmaker, joinedload
-from sqlalchemy import create_engine, text, or_
+from sqlalchemy import create_engine, text, or_, and_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 import json
@@ -13,7 +13,7 @@ import os
 import platform
 
 from database import db_manager
-from models_francais import Immeuble, Locataire, Unite, Bail, Transaction
+from models_francais import Immeuble, Locataire, Unite, Bail, Transaction, PaiementLoyer
 
 class DatabaseServiceFrancais:
     """Service principal pour les opérations de base de données en français"""
@@ -926,6 +926,132 @@ class DatabaseServiceFrancais:
         except Exception as e:
             print(f"Erreur lors de la récupération des immeubles: {e}")
             return []
+
+    # ========================================
+    # OPÉRATIONS POUR LES PAIEMENTS DE LOYERS
+    # ========================================
+    
+    def create_paiement_loyer(self, paiement_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Créer un paiement de loyer"""
+        try:
+            with self.get_session() as session:
+                paiement = PaiementLoyer(
+                    id_bail=paiement_data['id_bail'],
+                    mois=paiement_data['mois'],
+                    annee=paiement_data['annee'],
+                    paye=paiement_data.get('paye', False),
+                    date_paiement_reelle=paiement_data.get('date_paiement_reelle'),
+                    montant_paye=paiement_data.get('montant_paye'),
+                    notes=paiement_data.get('notes')
+                )
+                session.add(paiement)
+                session.commit()
+                session.refresh(paiement)
+                
+                print(f"✅ Paiement de loyer créé: Bail {paiement.id_bail}, {paiement.mois}/{paiement.annee}")
+                return paiement.to_dict()
+        except Exception as e:
+            print(f"❌ Erreur lors de la création du paiement de loyer: {e}")
+            raise e
+    
+    def update_paiement_loyer(self, paiement_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Mettre à jour un paiement de loyer"""
+        try:
+            with self.get_session() as session:
+                paiement = session.query(PaiementLoyer).filter(PaiementLoyer.id_paiement == paiement_id).first()
+                if not paiement:
+                    return None
+                
+                # Mettre à jour les champs
+                if 'paye' in update_data:
+                    paiement.paye = update_data['paye']
+                if 'date_paiement_reelle' in update_data:
+                    paiement.date_paiement_reelle = update_data['date_paiement_reelle']
+                if 'montant_paye' in update_data:
+                    paiement.montant_paye = update_data['montant_paye']
+                if 'notes' in update_data:
+                    paiement.notes = update_data['notes']
+                
+                paiement.date_modification = datetime.utcnow()
+                session.commit()
+                
+                print(f"✅ Paiement de loyer mis à jour: ID {paiement_id}")
+                return paiement.to_dict()
+        except Exception as e:
+            print(f"❌ Erreur lors de la mise à jour du paiement de loyer {paiement_id}: {e}")
+            raise e
+    
+    def get_paiements_by_bail(self, bail_id: int) -> List[Dict[str, Any]]:
+        """Récupérer tous les paiements pour un bail"""
+        try:
+            with self.get_session() as session:
+                paiements = session.query(PaiementLoyer).filter(
+                    PaiementLoyer.id_bail == bail_id
+                ).order_by(PaiementLoyer.annee, PaiementLoyer.mois).all()
+                
+                return [paiement.to_dict() for paiement in paiements]
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération des paiements pour le bail {bail_id}: {e}")
+            return []
+    
+    def get_paiements_by_building_and_period(self, building_ids: List[int], start_year: int, start_month: int, end_year: int, end_month: int) -> List[Dict[str, Any]]:
+        """Récupérer les paiements de loyers pour des immeubles et une période donnée"""
+        try:
+            with self.get_session() as session:
+                # Construire la condition de période
+                start_date = date(start_year, start_month, 1)
+                end_date = date(end_year, end_month, 28)  # Utiliser 28 pour éviter les problèmes de mois
+                
+                paiements = session.query(PaiementLoyer).join(Bail).join(Locataire).join(Unite).filter(
+                    Unite.id_immeuble.in_(building_ids),
+                    PaiementLoyer.annee >= start_year,
+                    PaiementLoyer.annee <= end_year,
+                    or_(
+                        PaiementLoyer.annee > start_year,
+                        and_(PaiementLoyer.annee == start_year, PaiementLoyer.mois >= start_month)
+                    ),
+                    or_(
+                        PaiementLoyer.annee < end_year,
+                        and_(PaiementLoyer.annee == end_year, PaiementLoyer.mois <= end_month)
+                    )
+                ).options(
+                    joinedload(PaiementLoyer.bail).joinedload(Bail.locataire).joinedload(Locataire.unite)
+                ).all()
+                
+                return [paiement.to_dict() for paiement in paiements]
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération des paiements par immeuble et période: {e}")
+            return []
+    
+    def get_or_create_paiement(self, bail_id: int, mois: int, annee: int) -> Dict[str, Any]:
+        """Récupérer ou créer un paiement pour un bail, mois et année donnés"""
+        try:
+            with self.get_session() as session:
+                paiement = session.query(PaiementLoyer).filter(
+                    PaiementLoyer.id_bail == bail_id,
+                    PaiementLoyer.mois == mois,
+                    PaiementLoyer.annee == annee
+                ).first()
+                
+                if paiement:
+                    return paiement.to_dict()
+                
+                # Créer un nouveau paiement
+                nouveau_paiement = PaiementLoyer(
+                    id_bail=bail_id,
+                    mois=mois,
+                    annee=annee,
+                    paye=False
+                )
+                session.add(nouveau_paiement)
+                session.commit()
+                session.refresh(nouveau_paiement)
+                
+                print(f"✅ Nouveau paiement créé: Bail {bail_id}, {mois}/{annee}")
+                return nouveau_paiement.to_dict()
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération/création du paiement: {e}")
+            raise e
 
 # Instance globale du service
 db_service_francais = DatabaseServiceFrancais()

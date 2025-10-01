@@ -1503,7 +1503,8 @@ async def get_profitability_analysis(
     start_year: int = Query(..., description="Année de début"),
     start_month: int = Query(..., description="Mois de début (1-12)"),
     end_year: int = Query(..., description="Année de fin"),
-    end_month: int = Query(..., description="Mois de fin (1-12)")
+    end_month: int = Query(..., description="Mois de fin (1-12)"),
+    confirmed_payments_only: bool = Query(False, description="Ne compter que les loyers confirmés payés")
 ):
     """Récupérer l'analyse de rentabilité avec les vraies données"""
     try:
@@ -1542,7 +1543,7 @@ async def get_profitability_analysis(
         
         # Calculer les données d'analyse
         print(f"🔍 DEBUG - Début du calcul de l'analyse...")
-        analysis_data = calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date)
+        analysis_data = calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date, confirmed_payments_only)
         print(f"🔍 DEBUG - Analyse calculée avec succès")
         
         return analysis_data
@@ -1554,7 +1555,7 @@ async def get_profitability_analysis(
         logger.error(f"Erreur lors de l'analyse de rentabilité: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse de rentabilité: {str(e)}")
 
-def calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date):
+def calculate_profitability_analysis(buildings, leases, transactions, start_date, end_date, confirmed_payments_only=False):
     """Calculer l'analyse de rentabilité avec les vraies données"""
     try:
         print(f"🔍 DEBUG - calculate_profitability_analysis: Début")
@@ -1588,6 +1589,25 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             }
         }
         
+        # Récupérer les paiements confirmés si nécessaire
+        confirmed_payments = {}
+        if confirmed_payments_only:
+            print(f"🔍 DEBUG - Récupération des paiements confirmés...")
+            try:
+                payments_response = db_service_francais.get_paiements_by_building_and_period(
+                    [building.id_immeuble for building in buildings], 
+                    start_date.year, start_date.month, 
+                    end_date.year, end_date.month
+                )
+                # Organiser les paiements par bail et mois
+                for payment in payments_response:
+                    key = f"{payment['id_bail']}_{payment['annee']}_{payment['mois']}"
+                    confirmed_payments[key] = payment['paye']
+                print(f"🔍 DEBUG - {len(confirmed_payments)} paiements confirmés récupérés")
+            except Exception as e:
+                print(f"❌ ERREUR lors de la récupération des paiements confirmés: {e}")
+                confirmed_payments = {}
+
         # Créer des dictionnaires pour les données mensuelles et par immeuble
         monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
         building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
@@ -1614,10 +1634,18 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             
             while current_date <= end_lease_date:
                 month_key = current_date.strftime("%Y-%m")
-                monthly_data[month_key]["revenue"] += loyer
-                monthly_data[month_key]["netCashflow"] += loyer
-                building_data[building_id]["revenue"] += loyer
-                building_data[building_id]["netCashflow"] += loyer
+                
+                # Vérifier si le paiement est confirmé (si nécessaire)
+                should_count_payment = True
+                if confirmed_payments_only:
+                    payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
+                    should_count_payment = confirmed_payments.get(payment_key, False)
+                
+                if should_count_payment:
+                    monthly_data[month_key]["revenue"] += loyer
+                    monthly_data[month_key]["netCashflow"] += loyer
+                    building_data[building_id]["revenue"] += loyer
+                    building_data[building_id]["netCashflow"] += loyer
                 
                 # Passer au mois suivant
                 if current_date.month == 12:
@@ -1921,6 +1949,178 @@ async def migrate_dette_restante():
 async def test_endpoint():
     """Endpoint de test pour vérifier le déploiement"""
     return {"message": "Test endpoint fonctionne", "timestamp": datetime.now().isoformat()}
+
+# ========================================
+# ENDPOINTS POUR LES PAIEMENTS DE LOYERS
+# ========================================
+
+class PaiementLoyerCreate(BaseModel):
+    id_bail: int
+    mois: int
+    annee: int
+    paye: bool = False
+    date_paiement_reelle: Optional[str] = None
+    montant_paye: Optional[float] = None
+    notes: Optional[str] = None
+
+class PaiementLoyerUpdate(BaseModel):
+    paye: Optional[bool] = None
+    date_paiement_reelle: Optional[str] = None
+    montant_paye: Optional[float] = None
+    notes: Optional[str] = None
+
+@app.post("/api/paiements-loyers")
+async def create_paiement_loyer(paiement_data: PaiementLoyerCreate):
+    """Créer un paiement de loyer"""
+    try:
+        paiement_dict = paiement_data.dict()
+        if paiement_dict.get('date_paiement_reelle'):
+            paiement_dict['date_paiement_reelle'] = datetime.fromisoformat(paiement_dict['date_paiement_reelle']).date()
+        
+        result = db_service_francais.create_paiement_loyer(paiement_dict)
+        return result
+    except Exception as e:
+        print(f"Erreur lors de la création du paiement de loyer: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création du paiement de loyer: {str(e)}")
+
+@app.put("/api/paiements-loyers/{paiement_id}")
+async def update_paiement_loyer(paiement_id: int, update_data: PaiementLoyerUpdate):
+    """Mettre à jour un paiement de loyer"""
+    try:
+        update_dict = update_data.dict(exclude_unset=True)
+        if update_dict.get('date_paiement_reelle'):
+            update_dict['date_paiement_reelle'] = datetime.fromisoformat(update_dict['date_paiement_reelle']).date()
+        
+        result = db_service_francais.update_paiement_loyer(paiement_id, update_dict)
+        if not result:
+            raise HTTPException(status_code=404, detail="Paiement de loyer non trouvé")
+        return result
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du paiement de loyer: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du paiement de loyer: {str(e)}")
+
+@app.get("/api/paiements-loyers/bail/{bail_id}")
+async def get_paiements_by_bail(bail_id: int):
+    """Récupérer tous les paiements pour un bail"""
+    try:
+        paiements = db_service_francais.get_paiements_by_bail(bail_id)
+        return {"data": paiements}
+    except Exception as e:
+        print(f"Erreur lors de la récupération des paiements pour le bail {bail_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des paiements: {str(e)}")
+
+@app.get("/api/paiements-loyers/building/{building_id}")
+async def get_paiements_by_building(
+    building_id: int,
+    start_year: int = Query(..., description="Année de début"),
+    start_month: int = Query(..., description="Mois de début (1-12)"),
+    end_year: int = Query(..., description="Année de fin"),
+    end_month: int = Query(..., description="Mois de fin (1-12)")
+):
+    """Récupérer les paiements de loyers pour un immeuble et une période"""
+    try:
+        paiements = db_service_francais.get_paiements_by_building_and_period(
+            [building_id], start_year, start_month, end_year, end_month
+        )
+        return {"data": paiements}
+    except Exception as e:
+        print(f"Erreur lors de la récupération des paiements pour l'immeuble {building_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des paiements: {str(e)}")
+
+@app.get("/api/paiements-loyers/get-or-create")
+async def get_or_create_paiement(
+    bail_id: int = Query(..., description="ID du bail"),
+    mois: int = Query(..., description="Mois (1-12)"),
+    annee: int = Query(..., description="Année")
+):
+    """Récupérer ou créer un paiement pour un bail, mois et année donnés"""
+    try:
+        paiement = db_service_francais.get_or_create_paiement(bail_id, mois, annee)
+        return paiement
+    except Exception as e:
+        print(f"Erreur lors de la récupération/création du paiement: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération/création du paiement: {str(e)}")
+
+@app.post("/api/migrate/paiements-loyers")
+async def migrate_paiements_loyers():
+    """Migration pour créer la table paiements_loyers"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Vérifier si la table existe déjà
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL sur Render
+                check_query = text("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_name = 'paiements_loyers'
+                """)
+            else:
+                # SQLite local
+                check_query = text("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name='paiements_loyers'
+                """)
+            
+            result = session.execute(check_query)
+            
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL
+                table_exists = result.fetchone() is not None
+            else:
+                # SQLite
+                table_exists = result.fetchone() is not None
+            
+            if table_exists:
+                return {"message": "La table 'paiements_loyers' existe déjà", "success": True}
+            
+            # Créer la table
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL
+                create_query = text("""
+                    CREATE TABLE paiements_loyers (
+                        id_paiement SERIAL PRIMARY KEY,
+                        id_bail INTEGER NOT NULL,
+                        mois INTEGER NOT NULL,
+                        annee INTEGER NOT NULL,
+                        paye BOOLEAN NOT NULL DEFAULT FALSE,
+                        date_paiement_reelle DATE,
+                        montant_paye DECIMAL(10, 2),
+                        notes TEXT,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT unique_paiement_bail_mois_annee UNIQUE (id_bail, mois, annee),
+                        FOREIGN KEY (id_bail) REFERENCES baux(id_bail)
+                    )
+                """)
+            else:
+                # SQLite
+                create_query = text("""
+                    CREATE TABLE paiements_loyers (
+                        id_paiement INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id_bail INTEGER NOT NULL,
+                        mois INTEGER NOT NULL,
+                        annee INTEGER NOT NULL,
+                        paye BOOLEAN NOT NULL DEFAULT FALSE,
+                        date_paiement_reelle DATE,
+                        montant_paye DECIMAL(10, 2),
+                        notes TEXT,
+                        date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (id_bail) REFERENCES baux(id_bail),
+                        UNIQUE (id_bail, mois, annee)
+                    )
+                """)
+            
+            session.execute(create_query)
+            session.commit()
+            
+            return {"message": "Table 'paiements_loyers' créée avec succès", "success": True}
+            
+    except Exception as e:
+        print(f"Erreur lors de la migration paiements_loyers: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 

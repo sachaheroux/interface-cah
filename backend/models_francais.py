@@ -209,3 +209,41 @@ class Transaction(Base):
             "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }
 
+class PaiementLoyer(Base):
+    """Modèle pour le suivi des paiements de loyers"""
+    __tablename__ = "paiements_loyers"
+    
+    id_paiement = Column(Integer, primary_key=True, index=True)
+    id_bail = Column(Integer, ForeignKey("baux.id_bail"), nullable=False, index=True)
+    mois = Column(Integer, nullable=False)  # 1-12
+    annee = Column(Integer, nullable=False)  # 2024, 2025, etc.
+    paye = Column(Boolean, default=False, nullable=False)
+    date_paiement_reelle = Column(Date, nullable=True)  # Date réelle si différente du 1er
+    montant_paye = Column(DECIMAL(10, 2), nullable=True)  # Montant réel si différent du loyer
+    notes = Column(Text, nullable=True)  # Notes optionnelles
+    date_creation = Column(DateTime, default=datetime.utcnow)
+    date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relations
+    bail = relationship("Bail", backref="paiements")
+    
+    # Contrainte unique pour éviter les doublons
+    __table_args__ = (
+        UniqueConstraint('id_bail', 'mois', 'annee', name='unique_paiement_bail_mois_annee'),
+    )
+    
+    def to_dict(self):
+        """Convertir en dictionnaire pour l'API"""
+        return {
+            "id_paiement": self.id_paiement,
+            "id_bail": self.id_bail,
+            "mois": self.mois,
+            "annee": self.annee,
+            "paye": self.paye,
+            "date_paiement_reelle": self.date_paiement_reelle.isoformat() if self.date_paiement_reelle else None,
+            "montant_paye": float(self.montant_paye) if self.montant_paye else None,
+            "notes": self.notes,
+            "date_creation": self.date_creation.isoformat() if self.date_creation else None,
+            "date_modification": self.date_modification.isoformat() if self.date_modification else None
+        }
+

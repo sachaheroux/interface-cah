@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import Buildings from './pages/Buildings'
 import Tenants from './pages/Tenants'
 import Leases from './pages/Leases'
+import RentPayments from './pages/RentPayments'
 import Transactions from './pages/Transactions'
 import ProfitabilityAnalysis from './pages/ProfitabilityAnalysis'
 import MortgageAnalysis from './pages/MortgageAnalysis'
@@ -46,6 +47,7 @@ function AppContent() {
             <Route path="/buildings/mortgage" element={<MortgageAnalysis />} />
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/leases" element={<Leases />} />
+            <Route path="/rent-payments" element={<RentPayments />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/contractors" element={<Contractors />} />
