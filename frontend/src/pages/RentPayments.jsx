@@ -7,8 +7,8 @@ const RentPayments = () => {
   const [selectedBuilding, setSelectedBuilding] = useState(null)
   const [leases, setLeases] = useState([])
   const [payments, setPayments] = useState({})
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
+  const [displayYear, setDisplayYear] = useState(new Date().getFullYear())
+  const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
   const [loading, setLoading] = useState(false)
   const [showDetails, setShowDetails] = useState(null)
 
@@ -87,9 +87,8 @@ const RentPayments = () => {
   // Générer les mois à afficher (12 derniers mois + 3 mois futurs)
   const generateMonths = () => {
     const months = []
-    const currentDate = new Date()
-    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1)
-    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 3, 1)
+    const startDate = new Date(displayYear, displayMonth - 1, 1)
+    const endDate = new Date(displayYear, displayMonth + 10, 1) // 12 mois à partir du mois sélectionné
     
     let date = new Date(startDate)
     while (date <= endDate) {
@@ -214,6 +213,69 @@ const RentPayments = () => {
           </div>
         </div>
 
+        {/* Navigation temporelle */}
+        {selectedBuilding && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5" />
+              Navigation temporelle
+            </h3>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Année:</label>
+                <select
+                  value={displayYear}
+                  onChange={(e) => setDisplayYear(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() - 5 + i
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Mois de début:</label>
+                <select
+                  value={displayMonth}
+                  onChange={(e) => setDisplayMonth(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const month = i + 1
+                    const date = new Date(2024, month - 1, 1)
+                    return (
+                      <option key={month} value={month}>
+                        {date.toLocaleDateString('fr-CA', { month: 'long' })}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+              
+              <button
+                onClick={() => {
+                  setDisplayYear(new Date().getFullYear())
+                  setDisplayMonth(new Date().getMonth() + 1)
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Aujourd'hui
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mt-3">
+              Affichage de 12 mois à partir de {new Date(displayYear, displayMonth - 1, 1).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+        )}
+
         {/* Tableau des paiements */}
         {selectedBuilding && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -223,14 +285,14 @@ const RentPayments = () => {
                 Paiements - {selectedBuilding.nom_immeuble}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {leases.length} locataire(s) actif(s)
+                {leases.length} unité(s) avec bail actif
               </p>
             </div>
 
             {leases.length === 0 ? (
               <div className="p-12 text-center">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Aucun locataire actif dans cet immeuble</p>
+                <p className="text-gray-500">Aucune unité avec bail actif dans cet immeuble</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -238,10 +300,7 @@ const RentPayments = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Locataire / Unité
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loyer
+                        Unité
                       </th>
                       {months.map(({ year, month, label }) => (
                         <th key={`${year}-${month}`} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
@@ -254,17 +313,9 @@ const RentPayments = () => {
                     {leases.map(lease => (
                       <tr key={lease.id_bail}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {lease.locataire?.nom_complet || 'N/A'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {lease.locataire?.unite?.adresse_unite || 'N/A'}
-                            </div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {lease.locataire?.unite?.adresse_unite || 'N/A'}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${lease.prix_loyer?.toLocaleString() || '0'}
                         </td>
                         {months.map(({ year, month }) => {
                           const payment = getPayment(lease.id_bail, year, month)
