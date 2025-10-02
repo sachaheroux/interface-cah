@@ -842,8 +842,8 @@ async def upload_document(file: UploadFile = File(...), context: str = "document
         
         if result["success"]:
             print(f"✅ Document uploadé vers Backblaze B2: {result['filename']}")
-        return {
-            "message": "Document uploadé avec succès",
+            return {
+                "message": "Document uploadé avec succès",
                 "filename": result["filename"],
                 "original_filename": result["original_filename"],
                 "s3_key": result["s3_key"],
