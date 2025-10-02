@@ -459,7 +459,7 @@ async def get_tenant(tenant_id: int):
     try:
         tenant = db_service_francais.get_tenant(tenant_id)
         if not tenant:
-        raise HTTPException(status_code=404, detail="Locataire non trouvé")
+            raise HTTPException(status_code=404, detail="Locataire non trouvé")
         return {"data": tenant}
     except HTTPException:
         raise
