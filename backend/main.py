@@ -278,7 +278,7 @@ async def delete_lease(lease_id: int):
         return {"message": "Bail et PDF supprimés avec succès"}
     except HTTPException:
         raise
-                except Exception as e:
+    except Exception as e:
         print(f"Erreur lors de la suppression du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
