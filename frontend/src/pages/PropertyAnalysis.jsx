@@ -249,21 +249,24 @@ const PropertyAnalysis = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* En-tête */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Calculator className="h-8 w-8 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Analyse d'Achat de Propriété</h1>
-              <p className="text-gray-600 mt-1">Calculez la rentabilité d'un investissement immobilier</p>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Calculator className="h-8 w-8 text-primary-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Analyse d'Achat de Propriété</h1>
+            <p className="text-gray-600">
+              Calculez la rentabilité d'un investissement immobilier
+            </p>
           </div>
         </div>
+      </div>
 
+      {/* Configuration */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration de l'analyse</h2>
+        
         {/* Indicateur de progression */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -299,10 +302,8 @@ const PropertyAnalysis = () => {
           </div>
         </div>
 
-        {/* Formulaire */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          {currentStep === 1 && (
-            <div>
+        {currentStep === 1 && (
+          <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations de base</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -356,8 +357,8 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-          {currentStep === 2 && (
-            <div>
+        {currentStep === 2 && (
+          <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Financement</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -397,8 +398,8 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-          {currentStep === 3 && (
-            <div>
+        {currentStep === 3 && (
+          <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Revenus locatifs</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -420,8 +421,8 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-          {currentStep === 4 && (
-            <div>
+        {currentStep === 4 && (
+          <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Dépenses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -491,8 +492,8 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-          {currentStep === 5 && (
-            <div>
+        {currentStep === 5 && (
+          <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Analyse</h2>
               <div className="text-center">
                 <button
@@ -511,8 +512,8 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="flex justify-between mt-8">
+        {/* Navigation */}
+        <div className="flex justify-between mt-8">
             <button
               onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
               disabled={currentStep === 1}
@@ -538,70 +539,69 @@ const PropertyAnalysis = () => {
                 Analyser
               </button>
             )}
-          </div>
         </div>
+      </div>
 
-        {/* Résultats */}
-        {results && (
-          <div className="mt-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <BarChart3 className="h-6 w-6" />
-                Résultats de l'analyse
-              </h2>
+      {/* Résultats */}
+      {results && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <BarChart3 className="h-6 w-6" />
+            Résultats de l'analyse
+          </h2>
 
-              {/* Métriques principales */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-blue-50 p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <DollarSign className="h-6 w-6 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-blue-900">Cash Flow Net</h3>
-                  </div>
-                  <p className={`text-2xl font-bold ${
-                    results.cashFlowNet >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {formatCurrency(results.cashFlowNet)}
-                  </p>
-                </div>
-
-                <div className="bg-green-50 p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                    <h3 className="text-lg font-semibold text-green-900">Valeur de revente</h3>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(results.valeurRevente)}
-                  </p>
-                </div>
-
-                <div className="bg-purple-50 p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <PieChart className="h-6 w-6 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-purple-900">Rendement brut</h3>
-                  </div>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {results.rendementBrut.toFixed(2)}%
-                  </p>
-                </div>
-
-                <div className="bg-orange-50 p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Calculator className="h-6 w-6 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-orange-900">Rendement net</h3>
-                  </div>
-                  <p className={`text-2xl font-bold ${
-                    results.rendementNet >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {results.rendementNet.toFixed(2)}%
-                  </p>
-                </div>
+          {/* Métriques principales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+                <h3 className="text-lg font-semibold text-blue-900">Cash Flow Net</h3>
               </div>
+              <p className={`text-2xl font-bold ${
+                results.cashFlowNet >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(results.cashFlowNet)}
+              </p>
+            </div>
 
-              {/* Détails financiers */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du prêt</h3>
-                  <div className="space-y-3">
+            <div className="bg-green-50 p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+                <h3 className="text-lg font-semibold text-green-900">Valeur de revente</h3>
+              </div>
+              <p className="text-2xl font-bold text-green-600">
+                {formatCurrency(results.valeurRevente)}
+              </p>
+            </div>
+
+            <div className="bg-purple-50 p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <PieChart className="h-6 w-6 text-purple-600" />
+                <h3 className="text-lg font-semibold text-purple-900">Rendement brut</h3>
+              </div>
+              <p className="text-2xl font-bold text-purple-600">
+                {results.rendementBrut.toFixed(2)}%
+              </p>
+            </div>
+
+            <div className="bg-orange-50 p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <Calculator className="h-6 w-6 text-orange-600" />
+                <h3 className="text-lg font-semibold text-orange-900">Rendement net</h3>
+              </div>
+              <p className={`text-2xl font-bold ${
+                results.rendementNet >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {results.rendementNet.toFixed(2)}%
+              </p>
+            </div>
+          </div>
+
+          {/* Détails financiers */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du prêt</h3>
+              <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Mensualité:</span>
                       <span className="font-semibold">{formatCurrency(results.mensualite)}</span>
@@ -618,12 +618,12 @@ const PropertyAnalysis = () => {
                       <span className="text-gray-600">Intérêts payés:</span>
                       <span className="font-semibold text-red-600">{formatCurrency(results.totalInteretsPayes)}</span>
                     </div>
-                  </div>
-                </div>
+              </div>
+            </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenus et dépenses</h3>
-                  <div className="space-y-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenus et dépenses</h3>
+              <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Revenus locatifs:</span>
                       <span className="font-semibold text-green-600">{formatCurrency(results.revenusLocatifsCumules)}</span>
@@ -648,49 +648,60 @@ const PropertyAnalysis = () => {
                       <span className="text-gray-600">Réparations:</span>
                       <span className="font-semibold text-red-600">{formatCurrency(results.reparations)}</span>
                     </div>
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
 
-              {/* Graphique d'évolution */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Évolution sur {results.anneesAnalyse} ans</h3>
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <div className="h-64 flex items-end justify-between gap-2">
+          {/* Graphique d'évolution */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Évolution sur {results.anneesAnalyse} ans</h3>
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <div className="h-80 flex items-end justify-between gap-3">
                     {results.donneesAnnueles.map((data, index) => {
                       const maxValue = Math.max(
                         ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
                       )
                       
-                      const revenusHeight = (data.revenusCumules / maxValue) * 200
-                      const depensesHeight = (data.depensesCumules / maxValue) * 200
-                      const valeurHeight = (data.valeurPropriete / maxValue) * 200
+                      const revenusHeight = (data.revenusCumules / maxValue) * 280
+                      const depensesHeight = (data.depensesCumules / maxValue) * 280
+                      const valeurHeight = (data.valeurPropriete / maxValue) * 280
                       
                       return (
-                        <div key={index} className="flex flex-col items-center gap-1 flex-1">
-                          <div className="flex flex-col items-end w-full">
-                            <div
-                              className="w-full bg-green-500 rounded-t"
-                              style={{ height: `${revenusHeight}px` }}
-                              title={`Revenus: ${formatCurrency(data.revenusCumules)}`}
+                        <div key={index} className="flex flex-col items-center flex-1">
+                          <div className="flex flex-col items-center mb-3">
+                            <div className="text-sm font-medium text-gray-700 mb-1">Année {index + 1}</div>
+                            <div className="text-xs text-gray-600 text-center">
+                              {formatCurrency(data.valeurPropriete)}
+                            </div>
+                          </div>
+                          
+                          <div className="w-full max-w-20 flex flex-col justify-end" style={{ height: '280px' }}>
+                            {/* Valeur propriété (bleu) */}
+                            <div 
+                              className="w-full bg-blue-500 rounded-t"
+                              style={{ height: `${valeurHeight}px` }}
+                              title={`Valeur propriété: ${formatCurrency(data.valeurPropriete)}`}
                             />
-                            <div
+                            
+                            {/* Dépenses (rouge) */}
+                            <div 
                               className="w-full bg-red-500"
                               style={{ height: `${depensesHeight}px` }}
                               title={`Dépenses: ${formatCurrency(data.depensesCumules)}`}
                             />
-                            <div
-                              className="w-full bg-blue-500 rounded-b"
-                              style={{ height: `${valeurHeight}px` }}
-                              title={`Valeur: ${formatCurrency(data.valeurPropriete)}`}
+                            
+                            {/* Revenus (vert) */}
+                            <div 
+                              className="w-full bg-green-500 rounded-b"
+                              style={{ height: `${revenusHeight}px` }}
+                              title={`Revenus: ${formatCurrency(data.revenusCumules)}`}
                             />
                           </div>
-                          <span className="text-xs text-gray-600 mt-2">{data.annee}</span>
                         </div>
                       )
                     })}
                   </div>
-                  <div className="flex justify-center gap-6 mt-4">
+              <div className="flex justify-center gap-8 mt-6">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-green-500 rounded"></div>
                       <span className="text-sm text-gray-600">Revenus</span>
@@ -703,50 +714,48 @@ const PropertyAnalysis = () => {
                       <div className="w-4 h-4 bg-blue-500 rounded"></div>
                       <span className="text-sm text-gray-600">Valeur propriété</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Boutons d'action */}
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={() => {
-                    setResults(null)
-                    setCurrentStep(1)
-                    setFormData({
-                      prixAchat: '',
-                      miseDeFond: '',
-                      tauxInteret: '',
-                      anneesRemboursement: '',
-                      revenuLocatifAnnuel: '',
-                      taxesTotales: '',
-                      assurancesTotales: '',
-                      fraisOuverture: '',
-                      entretienTerrain: '',
-                      anneesAnalyse: ''
-                    })
-                  }}
-                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Nouvelle analyse
-                </button>
-                
-                <button
-                  onClick={() => {
-                    // TODO: Implémenter l'export PDF
-                    alert('Export PDF à implémenter')
-                  }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Exporter PDF
-                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Boutons d'action */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => {
+                setResults(null)
+                setCurrentStep(1)
+                setFormData({
+                  prixAchat: '',
+                  miseDeFond: '',
+                  tauxInteret: '',
+                  anneesRemboursement: '',
+                  revenuLocatifAnnuel: '',
+                  taxesTotales: '',
+                  assurancesTotales: '',
+                  fraisOuverture: '',
+                  entretienTerrain: '',
+                  anneesAnalyse: ''
+                })
+              }}
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Nouvelle analyse
+            </button>
+                
+            <button
+              onClick={() => {
+                // TODO: Implémenter l'export PDF
+                alert('Export PDF à implémenter')
+              }}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Exporter PDF
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
