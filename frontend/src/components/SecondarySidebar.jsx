@@ -34,6 +34,7 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis' },
         { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage' },
+        { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis' },
         { name: 'Rapports', icon: FileText },
         { name: 'Maintenance', icon: Wrench },
       ]
@@ -53,6 +54,15 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Configuration', icon: SettingsIcon, active: true },
         { name: 'Graphiques', icon: BarChart3 },
         { name: 'Tableau détaillé', icon: FileText },
+      ]
+    
+    case '/buildings/property-analysis':
+      return [
+        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
+        { name: 'Nouvelle analyse', icon: Plus, active: true },
+        { name: 'Historique', icon: Clock },
+        { name: 'Comparaisons', icon: BarChart3 },
+        { name: 'Export PDF', icon: Download },
       ]
     
     case '/tenants':

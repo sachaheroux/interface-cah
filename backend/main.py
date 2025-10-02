@@ -264,7 +264,7 @@ async def delete_lease(lease_id: int):
                 # Supprimer le PDF
                 if storage_service.delete_pdf(pdf_key):
                     print(f"✅ PDF du bail supprimé de Backblaze B2: {pdf_key}")
-                else:
+        else:
                     print(f"⚠️ PDF du bail non trouvé sur Backblaze B2: {pdf_key}")
             except Exception as pdf_error:
                 print(f"⚠️ Erreur lors de la suppression du PDF du bail: {pdf_error}")
@@ -278,7 +278,7 @@ async def delete_lease(lease_id: int):
         return {"message": "Bail et PDF supprimés avec succès"}
     except HTTPException:
         raise
-    except Exception as e:
+                except Exception as e:
         print(f"Erreur lors de la suppression du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
@@ -459,7 +459,7 @@ async def get_tenant(tenant_id: int):
     try:
         tenant = db_service_francais.get_tenant(tenant_id)
         if not tenant:
-            raise HTTPException(status_code=404, detail="Locataire non trouvé")
+        raise HTTPException(status_code=404, detail="Locataire non trouvé")
         return {"data": tenant}
     except HTTPException:
         raise
@@ -842,8 +842,8 @@ async def upload_document(file: UploadFile = File(...), context: str = "document
         
         if result["success"]:
             print(f"✅ Document uploadé vers Backblaze B2: {result['filename']}")
-            return {
-                "message": "Document uploadé avec succès",
+        return {
+            "message": "Document uploadé avec succès",
                 "filename": result["filename"],
                 "original_filename": result["original_filename"],
                 "s3_key": result["s3_key"],
@@ -1405,13 +1405,13 @@ async def migrate_transactions_table():
                     result = session.execute(text("SELECT * FROM transactions"))
                     existing_data = [dict(row._mapping) for row in result.fetchall()]
                     print(f"📦 Sauvegarde de {len(existing_data)} transactions existantes")
-                
-                # Supprimer l'ancienne table
+            
+            # Supprimer l'ancienne table
                 session.execute(text("DROP TABLE IF EXISTS transactions"))
                 print("🗑️ Ancienne table supprimée")
-                
+            
                 # Créer la nouvelle table avec la bonne structure
-                session.execute(text("""
+            session.execute(text("""
                     CREATE TABLE transactions (
                         id_transaction INTEGER PRIMARY KEY AUTOINCREMENT,
                         id_immeuble INTEGER NOT NULL,
@@ -1427,8 +1427,8 @@ async def migrate_transactions_table():
                         date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
                         date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (id_immeuble) REFERENCES immeubles (id_immeuble) ON DELETE CASCADE
-                    )
-                """))
+                )
+            """))
                 print("✅ Nouvelle table créée")
                 
                 # Réinsérer les données existantes avec des valeurs par défaut
@@ -1453,8 +1453,8 @@ async def migrate_transactions_table():
                         data.get('date_creation', '2025-01-01 00:00:00'),
                         data.get('date_modification', '2025-01-01 00:00:00')
                     ))
-                
-                session.commit()
+            
+            session.commit()
                 print(f"✅ {len(existing_data)} transactions migrées")
                 
                 return {"message": f"Table transactions migrée avec succès. {len(existing_data)} transactions migrées."}
@@ -1650,7 +1650,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 # Passer au mois suivant
                 if current_date.month == 12:
                     current_date = current_date.replace(year=current_date.year + 1, month=1)
-                else:
+        else:
                     current_date = current_date.replace(month=current_date.month + 1)
         
         # Traiter les transactions
@@ -1689,7 +1689,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             try:
                 building_id = building.id_immeuble
                 print(f"🔍 DEBUG - building_id récupéré: {building_id}")
-            except Exception as e:
+    except Exception as e:
                 print(f"❌ ERREUR lors de l'accès à building.id_immeuble: {e}")
                 print(f"❌ Building type: {type(building)}")
                 print(f"❌ Building content: {building}")

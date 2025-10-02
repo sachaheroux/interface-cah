@@ -114,6 +114,23 @@ def create_local_db():
         )
     """)
     
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS paiements_loyers (
+            id_paiement INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_bail INTEGER NOT NULL,
+            mois INTEGER NOT NULL,
+            annee INTEGER NOT NULL,
+            paye BOOLEAN NOT NULL DEFAULT FALSE,
+            date_paiement_reelle DATE,
+            montant_paye DECIMAL(10, 2),
+            notes TEXT,
+            date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+            date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_bail) REFERENCES baux (id_bail) ON DELETE CASCADE,
+            UNIQUE (id_bail, mois, annee)
+        )
+    """)
+    
     conn.commit()
     conn.close()
     print(f"✅ Base de données locale créée: {LOCAL_DB_PATH}")
@@ -294,6 +311,56 @@ def fetch_and_insert_data():
     except Exception as e:
         print(f"   ❌ Exception: {e}")
     
+    # 6. Paiements de loyers
+    print("📥 Récupération des paiements de loyers...")
+    try:
+        # Récupérer tous les baux pour obtenir leurs paiements
+        response = requests.get(f"{RENDER_API_BASE}/api/leases")
+        if response.status_code == 200:
+            data = response.json()
+            leases = data.get('data', [])
+            print(f"   {len(leases)} baux trouvés, récupération des paiements...")
+            
+            cursor.execute("DELETE FROM paiements_loyers")
+            paiements_count = 0
+            
+            for lease in leases:
+                lease_id = lease.get('id_bail')
+                if lease_id:
+                    try:
+                        paiements_response = requests.get(f"{RENDER_API_BASE}/api/paiements-loyers/bail/{lease_id}")
+                        if paiements_response.status_code == 200:
+                            paiements_data = paiements_response.json()
+                            paiements = paiements_data.get('data', [])
+                            
+                            for paiement in paiements:
+                                cursor.execute("""
+                                    INSERT INTO paiements_loyers (id_paiement, id_bail, mois, annee, paye, 
+                                                               date_paiement_reelle, montant_paye, notes, 
+                                                               date_creation, date_modification)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """, (
+                                    paiement.get('id_paiement'),
+                                    paiement.get('id_bail'),
+                                    paiement.get('mois'),
+                                    paiement.get('annee'),
+                                    paiement.get('paye', False),
+                                    paiement.get('date_paiement_reelle'),
+                                    paiement.get('montant_paye'),
+                                    paiement.get('notes', ''),
+                                    paiement.get('date_creation'),
+                                    paiement.get('date_modification')
+                                ))
+                                paiements_count += 1
+                    except Exception as e:
+                        print(f"   ⚠️ Erreur pour le bail {lease_id}: {e}")
+            
+            print(f"   {paiements_count} paiements de loyers trouvés")
+        else:
+            print(f"   ❌ Erreur: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"   ❌ Exception: {e}")
+    
     conn.commit()
     conn.close()
     print("✅ Données insérées dans la base locale")
@@ -306,7 +373,7 @@ def show_summary():
     print("\n📊 RÉSUMÉ DES DONNÉES:")
     
     # Compter les enregistrements
-    tables = ['immeubles', 'unites', 'locataires', 'baux', 'transactions']
+    tables = ['immeubles', 'unites', 'locataires', 'baux', 'transactions', 'paiements_loyers']
     for table in tables:
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         count = cursor.fetchone()[0]
@@ -322,6 +389,12 @@ def show_summary():
     cursor.execute("SELECT id_unite, adresse_unite, type FROM unites LIMIT 3")
     for row in cursor.fetchall():
         print(f"   ID: {row[0]}, Adresse: {row[1]}, Type: {row[2]}")
+    
+    print("\n💰 EXEMPLES DE PAIEMENTS DE LOYERS:")
+    cursor.execute("SELECT id_paiement, id_bail, mois, annee, paye FROM paiements_loyers LIMIT 3")
+    for row in cursor.fetchall():
+        status = "✅ Payé" if row[4] else "❌ Non payé"
+        print(f"   ID: {row[0]}, Bail: {row[1]}, {row[2]}/{row[3]}: {status}")
     
     conn.close()
 
