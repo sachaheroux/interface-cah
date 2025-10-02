@@ -264,7 +264,7 @@ async def delete_lease(lease_id: int):
                 # Supprimer le PDF
                 if storage_service.delete_pdf(pdf_key):
                     print(f"✅ PDF du bail supprimé de Backblaze B2: {pdf_key}")
-        else:
+                else:
                     print(f"⚠️ PDF du bail non trouvé sur Backblaze B2: {pdf_key}")
             except Exception as pdf_error:
                 print(f"⚠️ Erreur lors de la suppression du PDF du bail: {pdf_error}")
