@@ -264,7 +264,7 @@ async def delete_lease(lease_id: int):
                 # Supprimer le PDF
                 if storage_service.delete_pdf(pdf_key):
                     print(f"✅ PDF du bail supprimé de Backblaze B2: {pdf_key}")
-                else:
+        else:
                     print(f"⚠️ PDF du bail non trouvé sur Backblaze B2: {pdf_key}")
             except Exception as pdf_error:
                 print(f"⚠️ Erreur lors de la suppression du PDF du bail: {pdf_error}")
@@ -278,7 +278,7 @@ async def delete_lease(lease_id: int):
         return {"message": "Bail et PDF supprimés avec succès"}
     except HTTPException:
         raise
-    except Exception as e:
+                except Exception as e:
         print(f"Erreur lors de la suppression du bail: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
 
@@ -459,7 +459,7 @@ async def get_tenant(tenant_id: int):
     try:
         tenant = db_service_francais.get_tenant(tenant_id)
         if not tenant:
-            raise HTTPException(status_code=404, detail="Locataire non trouvé")
+        raise HTTPException(status_code=404, detail="Locataire non trouvé")
         return {"data": tenant}
     except HTTPException:
         raise
@@ -842,8 +842,8 @@ async def upload_document(file: UploadFile = File(...), context: str = "document
         
         if result["success"]:
             print(f"✅ Document uploadé vers Backblaze B2: {result['filename']}")
-            return {
-                "message": "Document uploadé avec succès",
+        return {
+            "message": "Document uploadé avec succès",
                 "filename": result["filename"],
                 "original_filename": result["original_filename"],
                 "s3_key": result["s3_key"],
@@ -1014,9 +1014,9 @@ async def get_transaction(transaction_id: int):
     """Récupérer une transaction spécifique par ID"""
     try:
         transaction = db_service_francais.get_transaction(transaction_id)
-        if not invoice:
+        if not transaction:
             raise HTTPException(status_code=404, detail="Transaction non trouvée")
-        return {"data": invoice}
+        return {"data": transaction}
     except HTTPException:
         raise
     except Exception as e:
@@ -1028,10 +1028,10 @@ async def create_transaction(transaction_data: TransactionCreateFrancais):
     """Créer une nouvelle transaction avec le format français"""
     try:
         # Convertir en dictionnaire pour le service
-        invoice_dict = transaction_data.dict()
+        transaction_dict = transaction_data.dict()
         
         # Créer la transaction via le service SQLite
-        new_transaction = db_service_francais.create_transaction(invoice_dict)
+        new_transaction = db_service_francais.create_transaction(transaction_dict)
         
         return {"data": new_transaction}
     except HTTPException:
@@ -1689,7 +1689,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             try:
                 building_id = building.id_immeuble
                 print(f"🔍 DEBUG - building_id récupéré: {building_id}")
-    except Exception as e:
+            except Exception as e:
                 print(f"❌ ERREUR lors de l'accès à building.id_immeuble: {e}")
                 print(f"❌ Building type: {type(building)}")
                 print(f"❌ Building content: {building}")
