@@ -205,8 +205,9 @@ const PropertyAnalysis = () => {
       // Résultats finaux
       valeurRevente,
       cashFlowNet,
+      investissementInitial: miseDeFond + fraisOuverture,
       rendementBrut: (revenusLocatifsCumules / prixAchat) * 100,
-      rendementNet: (cashFlowNet / prixAchat) * 100,
+      rendementNet: (cashFlowNet / (miseDeFond + fraisOuverture)) * 100,
 
       // Données pour graphiques
       donneesAnnueles
