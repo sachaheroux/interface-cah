@@ -656,61 +656,88 @@ const PropertyAnalysis = () => {
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Évolution sur {results.anneesAnalyse} ans</h3>
             <div className="bg-gray-50 p-6 rounded-lg">
-              <div className="overflow-x-auto">
-                <div className="h-96 flex items-end justify-start gap-4 min-w-full px-4">
-                  {results.donneesAnnueles.map((data, index) => {
+              <div className="flex gap-4">
+                {/* Axe Y avec les montants */}
+                <div className="flex flex-col justify-between h-96 py-2">
+                  {(() => {
                     const maxValue = Math.max(
                       ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
                     )
-                    
-                    const revenusHeight = (data.revenusCumules / maxValue) * 320
-                    const depensesHeight = (data.depensesCumules / maxValue) * 320
-                    const valeurHeight = (data.valeurPropriete / maxValue) * 320
-                    
-                    return (
-                      <div key={index} className="flex flex-col items-center" style={{ minWidth: '150px' }}>
-                        <div className="text-sm font-medium text-gray-700 mb-2">Année {index + 1}</div>
-                        
-                        <div className="flex items-end gap-2 h-80">
-                          {/* Revenus (vert) */}
-                          <div className="flex flex-col items-center">
-                            <div 
-                              className="w-10 bg-green-500 rounded-t"
-                              style={{ height: `${revenusHeight}px` }}
-                              title={`Revenus: ${formatCurrency(data.revenusCumules)}`}
-                            />
-                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
-                              {formatCurrency(data.revenusCumules)}
-                            </div>
-                          </div>
-                          
-                          {/* Dépenses (rouge) */}
-                          <div className="flex flex-col items-center">
-                            <div 
-                              className="w-10 bg-red-500 rounded-t"
-                              style={{ height: `${depensesHeight}px` }}
-                              title={`Dépenses: ${formatCurrency(data.depensesCumules)}`}
-                            />
-                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
-                              {formatCurrency(data.depensesCumules)}
-                            </div>
-                          </div>
-                          
-                          {/* Valeur propriété (bleu) */}
-                          <div className="flex flex-col items-center">
-                            <div 
-                              className="w-10 bg-blue-500 rounded-t"
-                              style={{ height: `${valeurHeight}px` }}
-                              title={`Valeur propriété: ${formatCurrency(data.valeurPropriete)}`}
-                            />
-                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
-                              {formatCurrency(data.valeurPropriete)}
-                            </div>
-                          </div>
+                    const step = maxValue / 5
+                    const labels = []
+                    for (let i = 5; i >= 0; i--) {
+                      labels.push(
+                        <div key={i} className="text-xs text-gray-600 text-right pr-2">
+                          {formatCurrency(step * i)}
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    }
+                    return labels
+                  })()}
+                </div>
+
+                {/* Graphique avec barres empilées */}
+                <div className="flex-1 overflow-x-auto">
+                  <div className="h-96 flex items-end justify-start gap-4 min-w-full">
+                    {results.donneesAnnueles.map((data, index) => {
+                      const maxValue = Math.max(
+                        ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
+                      )
+                      
+                      const revenusHeight = (data.revenusCumules / maxValue) * 360
+                      const depensesHeight = (data.depensesCumules / maxValue) * 360
+                      const valeurHeight = (data.valeurPropriete / maxValue) * 360
+                      
+                      return (
+                        <div key={index} className="flex flex-col items-center flex-1" style={{ minWidth: '80px' }}>
+                          <div className="flex flex-col items-center w-full h-full justify-end mb-2">
+                            <div className="w-full flex flex-col justify-end items-center" style={{ height: '360px' }}>
+                              {/* Valeur propriété (bleu) - en haut */}
+                              <div 
+                                className="w-full bg-blue-500 rounded-t flex items-center justify-center"
+                                style={{ height: `${valeurHeight}px`, minHeight: '2px' }}
+                                title={`Valeur propriété: ${formatCurrency(data.valeurPropriete)}`}
+                              >
+                                {valeurHeight > 30 && (
+                                  <span className="text-xs text-white font-semibold">
+                                    {formatCurrency(data.valeurPropriete)}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Dépenses (rouge) - au milieu */}
+                              <div 
+                                className="w-full bg-red-500 flex items-center justify-center"
+                                style={{ height: `${depensesHeight}px`, minHeight: '2px' }}
+                                title={`Dépenses: ${formatCurrency(data.depensesCumules)}`}
+                              >
+                                {depensesHeight > 30 && (
+                                  <span className="text-xs text-white font-semibold">
+                                    {formatCurrency(data.depensesCumules)}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Revenus (vert) - en bas */}
+                              <div 
+                                className="w-full bg-green-500 rounded-b flex items-center justify-center"
+                                style={{ height: `${revenusHeight}px`, minHeight: '2px' }}
+                                title={`Revenus: ${formatCurrency(data.revenusCumules)}`}
+                              >
+                                {revenusHeight > 30 && (
+                                  <span className="text-xs text-white font-semibold">
+                                    {formatCurrency(data.revenusCumules)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm font-medium text-gray-700 mt-2">Année {index + 1}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-center gap-8 mt-6">
