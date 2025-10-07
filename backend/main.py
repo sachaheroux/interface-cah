@@ -365,10 +365,14 @@ async def get_dashboard_data():
 async def get_buildings():
     """Récupérer tous les immeubles"""
     try:
+        print("📍 GET /api/buildings - Début")
         buildings = db_service_francais.get_buildings()
+        print(f"📍 GET /api/buildings - {len(buildings)} immeubles récupérés")
         return buildings
     except Exception as e:
         print(f"❌ Erreur lors du chargement des immeubles: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des immeubles: {str(e)}")
 
 @app.get("/api/buildings/{building_id}")
@@ -447,7 +451,9 @@ async def delete_building(building_id: int):
 async def get_tenants():
     """Récupérer tous les locataires"""
     try:
+        print("📍 GET /api/tenants - Début")
         tenants = db_service_francais.get_tenants()
+        print(f"📍 GET /api/tenants - {len(tenants)} locataires récupérés")
         return {"data": tenants}
     except Exception as e:
         print(f"Erreur lors du chargement des locataires: {e}")
