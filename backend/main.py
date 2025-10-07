@@ -2122,5 +2122,60 @@ async def migrate_paiements_loyers():
         print(f"Erreur lors de la migration paiements_loyers: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
 
+@app.post("/api/migrate/dette-restante")
+async def migrate_dette_restante():
+    """Migration pour ajouter la colonne dette_restante à la table immeubles"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Vérifier si la colonne existe déjà
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL sur Render
+                check_query = text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'immeubles' AND column_name = 'dette_restante'
+                """)
+                result = session.execute(check_query)
+                column_exists = result.fetchone() is not None
+                
+                if not column_exists:
+                    print("📝 Ajout de la colonne dette_restante à la table immeubles (PostgreSQL)...")
+                    alter_query = text("""
+                        ALTER TABLE immeubles 
+                        ADD COLUMN dette_restante DECIMAL(12, 2) DEFAULT 0
+                    """)
+                    session.execute(alter_query)
+                    session.commit()
+                    print("✅ Colonne dette_restante ajoutée avec succès!")
+                    return {"message": "Colonne 'dette_restante' ajoutée avec succès", "success": True}
+                else:
+                    print("ℹ️ La colonne dette_restante existe déjà")
+                    return {"message": "La colonne 'dette_restante' existe déjà", "success": True}
+            else:
+                # SQLite local
+                check_query = text("PRAGMA table_info(immeubles)")
+                result = session.execute(check_query)
+                columns = [row[1] for row in result]
+                
+                if 'dette_restante' not in columns:
+                    print("📝 Ajout de la colonne dette_restante à la table immeubles (SQLite)...")
+                    alter_query = text("""
+                        ALTER TABLE immeubles 
+                        ADD COLUMN dette_restante DECIMAL(12, 2) DEFAULT 0
+                    """)
+                    session.execute(alter_query)
+                    session.commit()
+                    print("✅ Colonne dette_restante ajoutée avec succès!")
+                    return {"message": "Colonne 'dette_restante' ajoutée avec succès", "success": True}
+                else:
+                    print("ℹ️ La colonne dette_restante existe déjà")
+                    return {"message": "La colonne 'dette_restante' existe déjà", "success": True}
+            
+    except Exception as e:
+        print(f"Erreur lors de la migration dette_restante: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
