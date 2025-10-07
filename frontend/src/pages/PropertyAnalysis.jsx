@@ -660,15 +660,25 @@ const PropertyAnalysis = () => {
                 {/* Axe Y avec les montants */}
                 <div className="flex flex-col justify-between h-96 py-2">
                   {(() => {
-                    const maxValue = Math.max(
-                      ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
+                    // Calculer la hauteur totale maximale (somme des 3 segments)
+                    const maxTotalValue = Math.max(
+                      ...results.donneesAnnueles.map(d => d.revenusCumules + d.depensesCumules + d.valeurPropriete)
                     )
-                    const step = maxValue / 5
+                    
+                    // Arrondir au million supérieur pour des chiffres ronds
+                    const roundedMax = Math.ceil(maxTotalValue / 100000) * 100000
+                    const step = roundedMax / 5
+                    
                     const labels = []
                     for (let i = 5; i >= 0; i--) {
+                      const value = step * i
                       labels.push(
-                        <div key={i} className="text-xs text-gray-600 text-right pr-2">
-                          {formatCurrency(step * i)}
+                        <div key={i} className="text-xs text-gray-600 text-right pr-2 whitespace-nowrap">
+                          {new Intl.NumberFormat('fr-CA', {
+                            style: 'currency',
+                            currency: 'CAD',
+                            maximumFractionDigits: 0
+                          }).format(value)}
                         </div>
                       )
                     }
@@ -680,13 +690,17 @@ const PropertyAnalysis = () => {
                 <div className="flex-1 overflow-x-auto">
                   <div className="h-96 flex items-end justify-start gap-4 min-w-full">
                     {results.donneesAnnueles.map((data, index) => {
-                      const maxValue = Math.max(
-                        ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
+                      // Calculer la hauteur totale maximale (somme des 3 segments)
+                      const maxTotalValue = Math.max(
+                        ...results.donneesAnnueles.map(d => d.revenusCumules + d.depensesCumules + d.valeurPropriete)
                       )
+                      const roundedMax = Math.ceil(maxTotalValue / 100000) * 100000
                       
-                      const revenusHeight = (data.revenusCumules / maxValue) * 360
-                      const depensesHeight = (data.depensesCumules / maxValue) * 360
-                      const valeurHeight = (data.valeurPropriete / maxValue) * 360
+                      // Calculer la hauteur de chaque segment proportionnellement à la somme totale
+                      const totalHeight = 360
+                      const revenusHeight = (data.revenusCumules / roundedMax) * totalHeight
+                      const depensesHeight = (data.depensesCumules / roundedMax) * totalHeight
+                      const valeurHeight = (data.valeurPropriete / roundedMax) * totalHeight
                       
                       return (
                         <div key={index} className="flex flex-col items-center flex-1" style={{ minWidth: '80px' }}>
