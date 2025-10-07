@@ -137,9 +137,9 @@ const PropertyAnalysis = () => {
       assurancesCumulees += assurancesTotales * Math.pow(1.02, k - 1)
     }
 
-    // Calcul du cash flow net
+    // Calcul du cash flow net (sans l'investissement initial)
     const capitalRembourse = capital - capitalRestant
-    const cashFlowNet = revenusLocatifsCumules - taxesCumulees - totalMensualites - assurancesCumulees - fraisOuverture - entretienCumule - fraisGestion - reparations - miseDeFond
+    const cashFlowNet = revenusLocatifsCumules - taxesCumulees - totalMensualites - assurancesCumulees - entretienCumule - fraisGestion - reparations
 
     // Calculs pour les graphiques
     const donneesAnnueles = []
