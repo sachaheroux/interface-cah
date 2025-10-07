@@ -656,51 +656,63 @@ const PropertyAnalysis = () => {
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Évolution sur {results.anneesAnalyse} ans</h3>
             <div className="bg-gray-50 p-6 rounded-lg">
-              <div className="h-80 flex items-end justify-between gap-3">
-                    {results.donneesAnnueles.map((data, index) => {
-                      const maxValue = Math.max(
-                        ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
-                      )
-                      
-                      const revenusHeight = (data.revenusCumules / maxValue) * 280
-                      const depensesHeight = (data.depensesCumules / maxValue) * 280
-                      const valeurHeight = (data.valeurPropriete / maxValue) * 280
-                      
-                      return (
-                        <div key={index} className="flex flex-col items-center flex-1">
-                          <div className="flex flex-col items-center mb-3">
-                            <div className="text-sm font-medium text-gray-700 mb-1">Année {index + 1}</div>
-                            <div className="text-xs text-gray-600 text-center">
-                              {formatCurrency(data.valeurPropriete)}
-                            </div>
-                          </div>
-                          
-                          <div className="w-full max-w-20 flex flex-col justify-end" style={{ height: '280px' }}>
-                            {/* Valeur propriété (bleu) */}
+              <div className="overflow-x-auto">
+                <div className="h-96 flex items-end justify-start gap-4 min-w-full px-4">
+                  {results.donneesAnnueles.map((data, index) => {
+                    const maxValue = Math.max(
+                      ...results.donneesAnnueles.map(d => Math.max(d.revenusCumules, d.depensesCumules, d.valeurPropriete))
+                    )
+                    
+                    const revenusHeight = (data.revenusCumules / maxValue) * 320
+                    const depensesHeight = (data.depensesCumules / maxValue) * 320
+                    const valeurHeight = (data.valeurPropriete / maxValue) * 320
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center" style={{ minWidth: '150px' }}>
+                        <div className="text-sm font-medium text-gray-700 mb-2">Année {index + 1}</div>
+                        
+                        <div className="flex items-end gap-2 h-80">
+                          {/* Revenus (vert) */}
+                          <div className="flex flex-col items-center">
                             <div 
-                              className="w-full bg-blue-500 rounded-t"
-                              style={{ height: `${valeurHeight}px` }}
-                              title={`Valeur propriété: ${formatCurrency(data.valeurPropriete)}`}
-                            />
-                            
-                            {/* Dépenses (rouge) */}
-                            <div 
-                              className="w-full bg-red-500"
-                              style={{ height: `${depensesHeight}px` }}
-                              title={`Dépenses: ${formatCurrency(data.depensesCumules)}`}
-                            />
-                            
-                            {/* Revenus (vert) */}
-                            <div 
-                              className="w-full bg-green-500 rounded-b"
+                              className="w-10 bg-green-500 rounded-t"
                               style={{ height: `${revenusHeight}px` }}
                               title={`Revenus: ${formatCurrency(data.revenusCumules)}`}
                             />
+                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
+                              {formatCurrency(data.revenusCumules)}
+                            </div>
+                          </div>
+                          
+                          {/* Dépenses (rouge) */}
+                          <div className="flex flex-col items-center">
+                            <div 
+                              className="w-10 bg-red-500 rounded-t"
+                              style={{ height: `${depensesHeight}px` }}
+                              title={`Dépenses: ${formatCurrency(data.depensesCumules)}`}
+                            />
+                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
+                              {formatCurrency(data.depensesCumules)}
+                            </div>
+                          </div>
+                          
+                          {/* Valeur propriété (bleu) */}
+                          <div className="flex flex-col items-center">
+                            <div 
+                              className="w-10 bg-blue-500 rounded-t"
+                              style={{ height: `${valeurHeight}px` }}
+                              title={`Valeur propriété: ${formatCurrency(data.valeurPropriete)}`}
+                            />
+                            <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">
+                              {formatCurrency(data.valeurPropriete)}
+                            </div>
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
               <div className="flex justify-center gap-8 mt-6">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-green-500 rounded"></div>
