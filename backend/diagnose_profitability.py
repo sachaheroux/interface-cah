@@ -5,7 +5,7 @@ import sys
 import traceback
 from datetime import datetime
 from database import SessionLocal
-from models import Immeuble, Unite, Locataire, Bail, Transaction
+from models_francais import Immeuble, Unite, Locataire, Bail, Transaction
 
 def diagnose_profitability():
     """Diagnostiquer les problèmes potentiels de l'analyse de rentabilité"""
