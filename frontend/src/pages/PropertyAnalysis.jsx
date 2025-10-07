@@ -137,16 +137,16 @@ const PropertyAnalysis = () => {
       assurancesCumulees += assurancesTotales * Math.pow(1.02, k - 1)
     }
 
-    // Calcul du cash flow net (sans l'investissement initial)
+    // Calcul du cash flow net (avec frais d'ouverture comme dépense, sans mise de fond qui est l'investissement)
     const capitalRembourse = capital - capitalRestant
-    const cashFlowNet = revenusLocatifsCumules - taxesCumulees - totalMensualites - assurancesCumulees - entretienCumule - fraisGestion - reparations
+    const cashFlowNet = revenusLocatifsCumules - taxesCumulees - totalMensualites - assurancesCumulees - fraisOuverture - entretienCumule - fraisGestion - reparations
 
     // Calculs pour les graphiques
     const donneesAnnueles = []
     let capitalAnnee = capital
     let valeurProprieteAnnee = prixAchat
     let revenusCumules = 0
-    let depensesCumules = miseDeFond + fraisOuverture
+    let depensesCumules = 0  // Commencer à 0 (sans l'investissement initial)
 
     for (let annee = 1; annee <= anneesAnalyse; annee++) {
       // Calculs pour cette année
@@ -156,11 +156,13 @@ const PropertyAnalysis = () => {
       const mensualitesAnnee = mensualite * 12
       const entretienAnnee = entretienTerrain * 12
       const gestionAnnee = revenusAnnee * 0.05
-      const reparationsAnnee = annee === anneesAnalyse ? reparations : 0 // Réparations seulement la dernière année
+      const reparationsAnnee = prixAchat * tauxReparations  // Réparations annuelles selon le taux
 
       // Mise à jour des totaux
       revenusCumules += revenusAnnee
-      depensesCumules += taxesAnnee + assurancesAnnee + mensualitesAnnee + entretienAnnee + gestionAnnee + reparationsAnnee
+      // Ajouter frais d'ouverture seulement la première année
+      const fraisOuvertureAnnee = annee === 1 ? fraisOuverture : 0
+      depensesCumules += taxesAnnee + assurancesAnnee + mensualitesAnnee + entretienAnnee + gestionAnnee + reparationsAnnee + fraisOuvertureAnnee
 
       // Calcul du capital restant
       for (let mois = 1; mois <= 12; mois++) {
@@ -210,9 +212,9 @@ const PropertyAnalysis = () => {
       // Résultats finaux
       valeurRevente,
       cashFlowNet,
-      investissementInitial: miseDeFond + fraisOuverture,
-      rendementBrut: ((cashFlowNet + valeurRevente - miseDeFond - fraisOuverture) / (miseDeFond + fraisOuverture)) * 100,
-      rendementNet: (cashFlowNet / (miseDeFond + fraisOuverture)) * 100,
+      investissementInitial: miseDeFond,  // Seulement la mise de fond est l'investissement
+      rendementBrut: ((cashFlowNet + valeurRevente - miseDeFond) / miseDeFond) * 100,
+      rendementNet: (cashFlowNet / miseDeFond) * 100,
 
       // Données pour graphiques
       donneesAnnueles
