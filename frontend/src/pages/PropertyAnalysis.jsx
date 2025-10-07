@@ -25,7 +25,8 @@ const PropertyAnalysis = () => {
     assurancesTotales: '',
     fraisOuverture: '',
     entretienTerrain: '',
-    anneesAnalyse: ''
+    anneesAnalyse: '',
+    tauxReparations: '1.5'  // 1.5% par défaut
   })
 
   // États pour les résultats
@@ -68,6 +69,9 @@ const PropertyAnalysis = () => {
     if (!formData.anneesAnalyse || parseInt(formData.anneesAnalyse) <= 0) {
       newErrors.anneesAnalyse = 'Le nombre d\'années d\'analyse doit être supérieur à 0'
     }
+    if (!formData.tauxReparations || parseFloat(formData.tauxReparations) < 0 || parseFloat(formData.tauxReparations) > 10) {
+      newErrors.tauxReparations = 'Le taux de réparations doit être entre 0 et 10%'
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -90,6 +94,7 @@ const PropertyAnalysis = () => {
     const fraisOuverture = parseFloat(formData.fraisOuverture)
     const entretienTerrain = parseFloat(formData.entretienTerrain)
     const anneesAnalyse = parseInt(formData.anneesAnalyse)
+    const tauxReparations = parseFloat(formData.tauxReparations) / 100  // Convertir % en décimal
 
     // Calculs du prêt hypothécaire
     const capital = prixAchat - miseDeFond
@@ -118,7 +123,7 @@ const PropertyAnalysis = () => {
     const totalMensualites = mensualite * 12 * anneesAnalyse
     const taxesCumulees = taxesTotales * anneesAnalyse
     const entretienCumule = entretienTerrain * 12 * anneesAnalyse
-    const reparations = prixAchat * 0.03 // 3% comme dans le code VB
+    const reparations = prixAchat * tauxReparations * anneesAnalyse // % annuel défini par l'utilisateur
 
     // Appréciation de la propriété (1.9% par an comme dans le code VB)
     let valeurRevente = prixAchat
@@ -489,6 +494,24 @@ const PropertyAnalysis = () => {
                   />
                   {errors.entretienTerrain && <p className="text-red-500 text-sm mt-1">{errors.entretienTerrain}</p>}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Taux de réparations annuel (% de la valeur) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.tauxReparations}
+                    onChange={(e) => handleInputChange('tauxReparations', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.tauxReparations ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Ex: 1.5"
+                  />
+                  {errors.tauxReparations && <p className="text-red-500 text-sm mt-1">{errors.tauxReparations}</p>}
+                  <p className="text-gray-500 text-sm mt-1">Recommandé: 1-2% (1.5% par défaut)</p>
+                </div>
               </div>
             </div>
           )}
@@ -788,7 +811,8 @@ const PropertyAnalysis = () => {
                   assurancesTotales: '',
                   fraisOuverture: '',
                   entretienTerrain: '',
-                  anneesAnalyse: ''
+                  anneesAnalyse: '',
+                  tauxReparations: '1.5'
                 })
               }}
               className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center gap-2"
