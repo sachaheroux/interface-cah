@@ -1638,14 +1638,26 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             current_date = max(start_date, lease_start)
             end_lease_date = min(end_date, lease_end) if lease_end else end_date
             
-            while current_date <= end_lease_date:
+            # Protection contre les boucles infinies
+            max_iterations = 1000
+            iteration_count = 0
+            
+            while current_date <= end_lease_date and iteration_count < max_iterations:
+                iteration_count += 1
                 month_key = current_date.strftime("%Y-%m")
                 
                 # Vérifier si le paiement est confirmé (si nécessaire)
                 should_count_payment = True
                 if confirmed_payments_only:
                     payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
-                    should_count_payment = confirmed_payments.get(payment_key, False)
+                    # Si le paiement existe dans la table, vérifier s'il est coché
+                    # Sinon, compter le loyer par défaut (système de suivi pas encore utilisé pour ce mois)
+                    if payment_key in confirmed_payments:
+                        should_count_payment = confirmed_payments[payment_key]
+                        print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé'}")
+                    else:
+                        should_count_payment = True  # Par défaut, compter si pas encore dans le système
+                        print(f"🔍 DEBUG - Paiement {payment_key}: ℹ️ Pas encore dans le système, compté par défaut")
                 
                 if should_count_payment:
                     monthly_data[month_key]["revenue"] += loyer
@@ -1658,6 +1670,10 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                     current_date = current_date.replace(year=current_date.year + 1, month=1)
                 else:
                     current_date = current_date.replace(month=current_date.month + 1)
+            
+            # Vérifier si on a atteint la limite d'itérations
+            if iteration_count >= max_iterations:
+                print(f"⚠️ WARNING - Limite d'itérations atteinte pour le bail {lease.id_bail}")
         
         # Traiter les transactions
         print(f"🔍 DEBUG - Traitement des transactions...")
