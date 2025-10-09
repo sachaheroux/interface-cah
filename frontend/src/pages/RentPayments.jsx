@@ -336,7 +336,7 @@ const RentPayments = () => {
                         </td>
                         {months.map(({ year, month }) => {
                           const payment = getPayment(lease.id_bail, year, month)
-                          const isPaid = payment?.paye || false
+                          const isPaid = !!payment  // Si le paiement existe, il est payé
                           const isActive = isLeaseActiveForMonth(lease, year, month)
                           
                           return (
