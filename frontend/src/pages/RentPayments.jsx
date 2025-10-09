@@ -7,7 +7,11 @@ const RentPayments = () => {
   const [selectedBuilding, setSelectedBuilding] = useState(null)
   const [leases, setLeases] = useState([])
   const [payments, setPayments] = useState({})
-  // Pas besoin de displayYear/displayMonth car on affiche toujours les 12 derniers mois
+  // Initialiser avec 12 mois AVANT aujourd'hui
+  const today = new Date()
+  const twelveMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 11, 1)
+  const [displayYear, setDisplayYear] = useState(twelveMonthsAgo.getFullYear())
+  const [displayMonth, setDisplayMonth] = useState(twelveMonthsAgo.getMonth() + 1)
   const [loading, setLoading] = useState(false)
   const [showDetails, setShowDetails] = useState(null)
 
@@ -83,12 +87,11 @@ const RentPayments = () => {
     }
   }, [selectedBuilding])
 
-  // Générer les mois à afficher (12 derniers mois avant aujourd'hui)
+  // Générer les mois à afficher (12 mois à partir du mois sélectionné)
   const generateMonths = () => {
     const months = []
-    const today = new Date()
-    const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1) // 11 mois avant + mois actuel = 12 mois
-    const endDate = new Date(today.getFullYear(), today.getMonth(), 1) // Mois actuel
+    const startDate = new Date(displayYear, displayMonth - 1, 1)
+    const endDate = new Date(displayYear, displayMonth + 10, 1) // 12 mois à partir du mois sélectionné
     
     let date = new Date(startDate)
     while (date <= endDate) {
@@ -213,12 +216,67 @@ const RentPayments = () => {
           </div>
         </div>
 
-        {/* Info: Affichage automatique des 12 derniers mois */}
+        {/* Navigation temporelle */}
         {selectedBuilding && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Affichage automatique des 12 derniers mois (jusqu'à aujourd'hui)
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5" />
+              Navigation temporelle
+            </h3>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Année:</label>
+                <select
+                  value={displayYear}
+                  onChange={(e) => setDisplayYear(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() - 5 + i
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Mois de début:</label>
+                <select
+                  value={displayMonth}
+                  onChange={(e) => setDisplayMonth(parseInt(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const month = i + 1
+                    const date = new Date(2024, month - 1, 1)
+                    return (
+                      <option key={month} value={month}>
+                        {date.toLocaleDateString('fr-CA', { month: 'long' })}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+              
+              <button
+                onClick={() => {
+                  const today = new Date()
+                  const twelveMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 11, 1)
+                  setDisplayYear(twelveMonthsAgo.getFullYear())
+                  setDisplayMonth(twelveMonthsAgo.getMonth() + 1)
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                12 derniers mois
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mt-3">
+              Affichage de 12 mois à partir de {new Date(displayYear, displayMonth - 1, 1).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}
             </p>
           </div>
         )}
