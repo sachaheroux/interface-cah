@@ -31,7 +31,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       return [
         { name: 'Tous les immeubles', icon: List, active: viewMode === 'list' },
         { name: 'Toutes les unités', icon: Users, active: viewMode === 'units' },
-        { name: 'Vue carte', icon: MapPin, active: viewMode === 'map' },
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis' },
         { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage' },
         { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis' },
@@ -46,7 +45,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       return [
         { name: 'Tous les immeubles', icon: List, href: '/buildings' },
         { name: 'Toutes les unités', icon: Users, href: '/buildings' },
-        { name: 'Vue carte', icon: MapPin, href: '/buildings' },
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis', active: pathname === '/buildings/analysis' },
         { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage', active: pathname === '/buildings/mortgage' },
         { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis', active: pathname === '/buildings/property-analysis' },
@@ -221,9 +219,7 @@ export default function SecondarySidebar() {
               
               // Gestion spéciale pour la page Buildings
               if (location.pathname === '/buildings') {
-                if (item.name === 'Vue carte') {
-                  window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'map' }))
-                } else if (item.name === 'Tous les immeubles') {
+                if (item.name === 'Tous les immeubles') {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
                 } else if (item.name === 'Toutes les unités') {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'units' }))
