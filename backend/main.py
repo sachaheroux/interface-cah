@@ -1656,7 +1656,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 # Passer au mois suivant
                 if current_date.month == 12:
                     current_date = current_date.replace(year=current_date.year + 1, month=1)
-        else:
+                else:
                     current_date = current_date.replace(month=current_date.month + 1)
         
         # Traiter les transactions
