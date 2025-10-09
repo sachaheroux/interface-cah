@@ -123,24 +123,26 @@ const RentPayments = () => {
     return checkDate >= leaseStart && checkDate <= leaseEnd
   }
 
-  // Créer ou mettre à jour un paiement
+  // Créer ou supprimer un paiement
   const togglePayment = async (leaseId, year, month, isPaid) => {
     try {
       const existingPayment = getPayment(leaseId, year, month)
       
-      if (existingPayment) {
-        // Mettre à jour le paiement existant
-        await api.put(`/api/paiements-loyers/${existingPayment.id_paiement}`, {
-          paye: isPaid
-        })
+      if (isPaid) {
+        // Si on coche, créer le paiement (s'il n'existe pas déjà)
+        if (!existingPayment) {
+          await api.post('/api/paiements-loyers', {
+            id_bail: leaseId,
+            mois: month,
+            annee: year,
+            paye: true
+          })
+        }
       } else {
-        // Créer un nouveau paiement
-        await api.post('/api/paiements-loyers', {
-          id_bail: leaseId,
-          mois: month,
-          annee: year,
-          paye: isPaid
-        })
+        // Si on décoche, supprimer complètement le paiement
+        if (existingPayment) {
+          await api.delete(`/api/paiements-loyers/${existingPayment.id_paiement}`)
+        }
       }
       
       // Recharger les paiements
