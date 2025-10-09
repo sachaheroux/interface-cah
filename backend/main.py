@@ -1599,19 +1599,32 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         confirmed_payments = {}
         if confirmed_payments_only:
             print(f"🔍 DEBUG - Récupération des paiements confirmés...")
+            print(f"🔍 DEBUG - confirmed_payments_only = {confirmed_payments_only}")
             try:
+                building_ids_list = [building.id_immeuble for building in buildings]
+                print(f"🔍 DEBUG - Building IDs: {building_ids_list}")
+                print(f"🔍 DEBUG - Période: {start_date.year}-{start_date.month} à {end_date.year}-{end_date.month}")
+                
                 payments_response = db_service_francais.get_paiements_by_building_and_period(
-                    [building.id_immeuble for building in buildings], 
+                    building_ids_list, 
                     start_date.year, start_date.month, 
                     end_date.year, end_date.month
                 )
+                
+                print(f"🔍 DEBUG - Nombre de paiements récupérés: {len(payments_response)}")
+                
                 # Organiser les paiements par bail et mois
                 for payment in payments_response:
                     key = f"{payment['id_bail']}_{payment['annee']}_{payment['mois']}"
                     confirmed_payments[key] = payment['paye']
-                print(f"🔍 DEBUG - {len(confirmed_payments)} paiements confirmés récupérés")
+                    print(f"🔍 DEBUG - Paiement enregistré: {key} = {payment['paye']}")
+                
+                print(f"🔍 DEBUG - Total paiements dans le dictionnaire: {len(confirmed_payments)}")
+                print(f"🔍 DEBUG - Clés des paiements: {list(confirmed_payments.keys())[:10]}")  # Afficher les 10 premières clés
             except Exception as e:
                 print(f"❌ ERREUR lors de la récupération des paiements confirmés: {e}")
+                import traceback
+                traceback.print_exc()
                 confirmed_payments = {}
 
         # Créer des dictionnaires pour les données mensuelles et par immeuble

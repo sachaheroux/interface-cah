@@ -84,11 +84,12 @@ const RentPayments = () => {
     }
   }, [selectedBuilding])
 
-  // Générer les mois à afficher (12 derniers mois + 3 mois futurs)
+  // Générer les mois à afficher (12 derniers mois avant aujourd'hui)
   const generateMonths = () => {
     const months = []
-    const startDate = new Date(displayYear, displayMonth - 1, 1)
-    const endDate = new Date(displayYear, displayMonth + 10, 1) // 12 mois à partir du mois sélectionné
+    const today = new Date()
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1) // 11 mois avant + mois actuel = 12 mois
+    const endDate = new Date(today.getFullYear(), today.getMonth(), 1) // Mois actuel
     
     let date = new Date(startDate)
     while (date <= endDate) {
