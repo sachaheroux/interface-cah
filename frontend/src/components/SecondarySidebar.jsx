@@ -40,18 +40,18 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       ]
     
     case '/buildings/analysis':
-      return [
-        { name: 'Retour aux immeubles', icon: Home, href: '/buildings' }
-      ]
-    
     case '/buildings/mortgage':
-      return [
-        { name: 'Retour aux immeubles', icon: Home, href: '/buildings' }
-      ]
-    
     case '/buildings/property-analysis':
+      // Utiliser la même sidebar que /buildings
       return [
-        { name: 'Retour aux immeubles', icon: Home, href: '/buildings' }
+        { name: 'Tous les immeubles', icon: List, href: '/buildings' },
+        { name: 'Toutes les unités', icon: Users, href: '/buildings' },
+        { name: 'Vue carte', icon: MapPin, href: '/buildings' },
+        { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis', active: pathname === '/buildings/analysis' },
+        { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage', active: pathname === '/buildings/mortgage' },
+        { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis', active: pathname === '/buildings/property-analysis' },
+        { name: 'Rapports', icon: FileText },
+        { name: 'Maintenance', icon: Wrench },
       ]
     
     case '/tenants':
