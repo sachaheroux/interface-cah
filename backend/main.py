@@ -2126,6 +2126,84 @@ async def clear_all_paiements_loyers():
         print(f"❌ Erreur lors de la suppression: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
+@app.post("/api/migrate/remove-paye-column")
+async def migrate_remove_paye_column():
+    """Migration pour supprimer la colonne 'paye' de paiements_loyers"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Vérifier si la colonne existe
+            if os.environ.get("DATABASE_URL"):
+                # PostgreSQL sur Render
+                check_query = text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'paiements_loyers' AND column_name = 'paye'
+                """)
+                result = session.execute(check_query)
+                column_exists = result.fetchone() is not None
+                
+                if column_exists:
+                    # Supprimer la colonne
+                    drop_query = text("ALTER TABLE paiements_loyers DROP COLUMN paye")
+                    session.execute(drop_query)
+                    session.commit()
+                    print("✅ Colonne 'paye' supprimée de paiements_loyers sur PostgreSQL")
+                    return {"message": "Colonne 'paye' supprimée avec succès", "success": True}
+                else:
+                    return {"message": "La colonne 'paye' n'existe pas", "success": True}
+            else:
+                # SQLite local - plus complexe, il faut recréer la table
+                check_query = text("PRAGMA table_info(paiements_loyers)")
+                result = session.execute(check_query)
+                columns = [row[1] for row in result.fetchall()]
+                
+                if 'paye' in columns:
+                    # SQLite ne supporte pas DROP COLUMN facilement, on doit recréer la table
+                    print("⚠️  SQLite: Recréation de la table sans la colonne 'paye'")
+                    
+                    # 1. Créer une nouvelle table temporaire sans 'paye'
+                    session.execute(text("""
+                        CREATE TABLE paiements_loyers_new (
+                            id_paiement INTEGER PRIMARY KEY AUTOINCREMENT,
+                            id_bail INTEGER NOT NULL,
+                            mois INTEGER NOT NULL,
+                            annee INTEGER NOT NULL,
+                            date_paiement_reelle DATE NOT NULL,
+                            montant_paye DECIMAL(10, 2) NOT NULL,
+                            notes TEXT,
+                            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (id_bail) REFERENCES baux(id_bail),
+                            UNIQUE(id_bail, mois, annee)
+                        )
+                    """))
+                    
+                    # 2. Copier les données (sans la colonne 'paye')
+                    session.execute(text("""
+                        INSERT INTO paiements_loyers_new 
+                        (id_paiement, id_bail, mois, annee, date_paiement_reelle, montant_paye, notes, date_creation, date_modification)
+                        SELECT id_paiement, id_bail, mois, annee, date_paiement_reelle, montant_paye, notes, date_creation, date_modification
+                        FROM paiements_loyers
+                    """))
+                    
+                    # 3. Supprimer l'ancienne table
+                    session.execute(text("DROP TABLE paiements_loyers"))
+                    
+                    # 4. Renommer la nouvelle table
+                    session.execute(text("ALTER TABLE paiements_loyers_new RENAME TO paiements_loyers"))
+                    
+                    session.commit()
+                    print("✅ Colonne 'paye' supprimée de paiements_loyers sur SQLite")
+                    return {"message": "Colonne 'paye' supprimée avec succès (SQLite)", "success": True}
+                else:
+                    return {"message": "La colonne 'paye' n'existe pas", "success": True}
+                    
+    except Exception as e:
+        print(f"❌ Erreur lors de la migration: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
+
 @app.post("/api/migrate/paiements-loyers")
 async def migrate_paiements_loyers():
     """Migration pour créer la table paiements_loyers"""

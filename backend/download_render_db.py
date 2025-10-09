@@ -120,9 +120,8 @@ def create_local_db():
             id_bail INTEGER NOT NULL,
             mois INTEGER NOT NULL,
             annee INTEGER NOT NULL,
-            paye BOOLEAN NOT NULL DEFAULT FALSE,
-            date_paiement_reelle DATE,
-            montant_paye DECIMAL(10, 2),
+            date_paiement_reelle DATE NOT NULL,
+            montant_paye DECIMAL(10, 2) NOT NULL,
             notes TEXT,
             date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
             date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -335,16 +334,15 @@ def fetch_and_insert_data():
                             
                             for paiement in paiements:
                                 cursor.execute("""
-                                    INSERT INTO paiements_loyers (id_paiement, id_bail, mois, annee, paye, 
+                                    INSERT INTO paiements_loyers (id_paiement, id_bail, mois, annee, 
                                                                date_paiement_reelle, montant_paye, notes, 
                                                                date_creation, date_modification)
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """, (
                                     paiement.get('id_paiement'),
                                     paiement.get('id_bail'),
                                     paiement.get('mois'),
                                     paiement.get('annee'),
-                                    paiement.get('paye', False),
                                     paiement.get('date_paiement_reelle'),
                                     paiement.get('montant_paye'),
                                     paiement.get('notes', ''),
@@ -391,10 +389,9 @@ def show_summary():
         print(f"   ID: {row[0]}, Adresse: {row[1]}, Type: {row[2]}")
     
     print("\n💰 EXEMPLES DE PAIEMENTS DE LOYERS:")
-    cursor.execute("SELECT id_paiement, id_bail, mois, annee, paye FROM paiements_loyers LIMIT 3")
+    cursor.execute("SELECT id_paiement, id_bail, mois, annee, montant_paye FROM paiements_loyers LIMIT 3")
     for row in cursor.fetchall():
-        status = "✅ Payé" if row[4] else "❌ Non payé"
-        print(f"   ID: {row[0]}, Bail: {row[1]}, {row[2]}/{row[3]}: {status}")
+        print(f"   ID: {row[0]}, Bail: {row[1]}, {row[2]}/{row[3]}: {row[4]}$ ✅ Payé")
     
     conn.close()
 
