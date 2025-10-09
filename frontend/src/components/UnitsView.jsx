@@ -98,7 +98,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           buildingName: buildingName,
           // Titre simple pour l'en-tête de la carte (sans ville/code postal)
           simpleTitle: simpleAddress,
-          status: unit.currentTenants?.length > 0 ? 'occupied' : 'vacant',
+          status: currentTenants.length > 0 ? 'occupied' : 'vacant',
           currentTenants: currentTenants
         }
       })
@@ -159,7 +159,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
     // Filtrer par immeuble
     if (buildingFilter) {
-      filtered = filtered.filter(unit => unit.buildingId.toString() === buildingFilter)
+      filtered = filtered.filter(unit => unit.id_immeuble && unit.id_immeuble.toString() === buildingFilter)
     }
 
     setFilteredUnits(filtered)
