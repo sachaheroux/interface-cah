@@ -40,30 +40,9 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       ]
     
     case '/buildings/analysis':
-      return [
-        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
-        { name: 'Configuration', icon: SettingsIcon, active: true },
-        { name: 'Graphiques', icon: BarChart3 },
-        { name: 'Rapports', icon: FileText },
-        { name: 'Export', icon: Download },
-      ]
-    
     case '/buildings/mortgage':
-      return [
-        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
-        { name: 'Configuration', icon: SettingsIcon, active: true },
-        { name: 'Graphiques', icon: BarChart3 },
-        { name: 'Tableau détaillé', icon: FileText },
-      ]
-    
     case '/buildings/property-analysis':
-      return [
-        { name: 'Retour aux immeubles', icon: List, href: '/buildings' },
-        { name: 'Nouvelle analyse', icon: Plus, active: true },
-        { name: 'Historique', icon: Clock },
-        { name: 'Comparaisons', icon: BarChart3 },
-        { name: 'Export PDF', icon: Download },
-      ]
+      return null  // Pas de sidebar secondaire pour les pages d'analyse
     
     case '/tenants':
       return [
@@ -198,8 +177,8 @@ export default function SecondarySidebar() {
   
   const secondaryNav = getSecondaryNavigation(location.pathname, viewMode, reportsMode)
 
-  // Ne pas afficher la sidebar sur la page d'accueil
-  if (location.pathname === '/') {
+  // Ne pas afficher la sidebar sur la page d'accueil ou si pas de navigation secondaire
+  if (location.pathname === '/' || !secondaryNav) {
     return null
   }
 
