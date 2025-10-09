@@ -94,7 +94,10 @@ export default function Leases() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié'
-    return new Date(dateString).toLocaleDateString('fr-CA')
+    // Éviter les problèmes de fuseau horaire en créant la date localement
+    const [year, month, day] = dateString.split('-')
+    const localDate = new Date(year, month - 1, day)
+    return localDate.toLocaleDateString('fr-CA')
   }
 
   const formatCurrency = (amount) => {

@@ -12,17 +12,9 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
   // Extraire les options uniques des immeubles existants
   const getUniqueOptions = () => {
-    const cities = [...new Set(buildings.map(b => 
-      typeof b.address === 'string' ? '' : b.address?.city
-    ).filter(Boolean))].sort()
-    
-    const owners = [...new Set(buildings.map(b => 
-      b.contacts?.owner
-    ).filter(Boolean))].sort()
-    
-    const banks = [...new Set(buildings.map(b => 
-      b.contacts?.bank
-    ).filter(Boolean))].sort()
+    const cities = [...new Set(buildings.map(b => b.ville).filter(Boolean))].sort()
+    const owners = [...new Set(buildings.map(b => b.proprietaire).filter(Boolean))].sort()
+    const banks = [...new Set(buildings.map(b => b.banque).filter(Boolean))].sort()
 
     return { cities, owners, banks }
   }

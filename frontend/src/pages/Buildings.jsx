@@ -277,16 +277,15 @@ export default function Buildings() {
 
     // Filtre par ville
     if (filters.city) {
-      filtered = filtered.filter(building => {
-        const city = typeof building.address === 'string' ? '' : building.address?.city
-        return city === filters.city
-      })
+      filtered = filtered.filter(building => building.ville === filters.city)
     }
 
     // Filtre par année de construction
     if (filters.yearBuilt) {
       filtered = filtered.filter(building => {
-        const year = building.yearBuilt
+        const year = building.annee_construction
+        if (!year) return false
+        
         switch (filters.yearBuilt) {
           case '2020+':
             return year >= 2020
@@ -312,13 +311,13 @@ export default function Buildings() {
 
     // Filtre par propriétaire
     if (filters.owner) {
-      filtered = filtered.filter(building => building.contacts?.owner === filters.owner)
+      filtered = filtered.filter(building => building.proprietaire === filters.owner)
     }
 
     // Filtre par valeur actuelle
     if (filters.currentValue) {
       filtered = filtered.filter(building => {
-        const value = building.financials?.currentValue || 0
+        const value = building.valeur_actuel || 0
         switch (filters.currentValue) {
           case '0-500000':
             return value < 500000
@@ -336,7 +335,7 @@ export default function Buildings() {
 
     // Filtre par banque
     if (filters.bank) {
-      filtered = filtered.filter(building => building.contacts?.bank === filters.bank)
+      filtered = filtered.filter(building => building.banque === filters.bank)
     }
 
     setFilteredBuildings(filtered)
