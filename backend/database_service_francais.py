@@ -1039,20 +1039,33 @@ class DatabaseServiceFrancais:
                 ).first()
                 
                 if paiement:
+                    # Si le paiement existe mais que montant_paye est vide, le remplir avec le prix du bail
+                    if paiement.montant_paye is None or paiement.montant_paye == 0:
+                        bail = session.query(Bail).filter(Bail.id_bail == bail_id).first()
+                        if bail and bail.prix_loyer:
+                            paiement.montant_paye = bail.prix_loyer
+                            session.commit()
+                            session.refresh(paiement)
+                            print(f"✅ Montant payé mis à jour: {bail.prix_loyer}$ pour Bail {bail_id}, {mois}/{annee}")
                     return paiement.to_dict()
                 
-                # Créer un nouveau paiement
+                # Récupérer le bail pour obtenir le prix du loyer
+                bail = session.query(Bail).filter(Bail.id_bail == bail_id).first()
+                montant_loyer = float(bail.prix_loyer) if bail and bail.prix_loyer else 0
+                
+                # Créer un nouveau paiement avec le montant du bail
                 nouveau_paiement = PaiementLoyer(
                     id_bail=bail_id,
                     mois=mois,
                     annee=annee,
-                    paye=False
+                    paye=False,
+                    montant_paye=montant_loyer  # Remplir automatiquement avec le prix du bail
                 )
                 session.add(nouveau_paiement)
                 session.commit()
                 session.refresh(nouveau_paiement)
                 
-                print(f"✅ Nouveau paiement créé: Bail {bail_id}, {mois}/{annee}")
+                print(f"✅ Nouveau paiement créé: Bail {bail_id}, {mois}/{annee}, Montant: {montant_loyer}$")
                 return nouveau_paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la récupération/création du paiement: {e}")

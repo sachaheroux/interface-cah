@@ -1613,11 +1613,14 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 
                 print(f"🔍 DEBUG - Nombre de paiements récupérés: {len(payments_response)}")
                 
-                # Organiser les paiements par bail et mois
+                # Organiser les paiements par bail et mois (stocker paye ET montant_paye)
                 for payment in payments_response:
                     key = f"{payment['id_bail']}_{payment['annee']}_{payment['mois']}"
-                    confirmed_payments[key] = payment['paye']
-                    print(f"🔍 DEBUG - Paiement enregistré: {key} = {payment['paye']}")
+                    confirmed_payments[key] = {
+                        'paye': payment['paye'],
+                        'montant_paye': float(payment.get('montant_paye', 0))
+                    }
+                    print(f"🔍 DEBUG - Paiement enregistré: {key} = Payé:{payment['paye']}, Montant:{payment.get('montant_paye', 0)}$")
                 
                 print(f"🔍 DEBUG - Total paiements dans le dictionnaire: {len(confirmed_payments)}")
                 print(f"🔍 DEBUG - Clés des paiements: {list(confirmed_payments.keys())[:10]}")  # Afficher les 10 premières clés
@@ -1636,9 +1639,9 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         for lease in leases:
             # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
             building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
-            loyer = float(lease.prix_loyer or 0)
+            loyer_bail = float(lease.prix_loyer or 0)  # Loyer du bail (par défaut)
             
-            print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {loyer}")
+            print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer bail: {loyer_bail}$")
             
             if building_id is None:
                 print(f"❌ WARNING - building_id est None pour le bail {lease.id_bail}")
@@ -1659,19 +1662,29 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 iteration_count += 1
                 month_key = current_date.strftime("%Y-%m")
                 
-                # Vérifier si le paiement est confirmé (si nécessaire)
+                # Vérifier si le paiement est confirmé et obtenir le montant payé
                 should_count_payment = True
+                montant_a_compter = loyer_bail  # Par défaut, utiliser le loyer du bail
+                
                 if confirmed_payments_only:
                     payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
-                    # Ne compter QUE si le paiement est explicitement coché comme payé
-                    should_count_payment = confirmed_payments.get(payment_key, False)
-                    print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé ou non enregistré'}")
+                    payment_info = confirmed_payments.get(payment_key)
+                    
+                    if payment_info:
+                        # Le paiement existe dans la table
+                        should_count_payment = payment_info['paye']
+                        montant_a_compter = payment_info['montant_paye'] if payment_info['montant_paye'] > 0 else loyer_bail
+                        print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé'}, Montant: {montant_a_compter}$")
+                    else:
+                        # Le paiement n'existe pas encore dans la table
+                        should_count_payment = False
+                        print(f"🔍 DEBUG - Paiement {payment_key}: ❌ Non enregistré")
                 
                 if should_count_payment:
-                    monthly_data[month_key]["revenue"] += loyer
-                    monthly_data[month_key]["netCashflow"] += loyer
-                    building_data[building_id]["revenue"] += loyer
-                    building_data[building_id]["netCashflow"] += loyer
+                    monthly_data[month_key]["revenue"] += montant_a_compter
+                    monthly_data[month_key]["netCashflow"] += montant_a_compter
+                    building_data[building_id]["revenue"] += montant_a_compter
+                    building_data[building_id]["netCashflow"] += montant_a_compter
                 
                 # Passer au mois suivant
                 if current_date.month == 12:
