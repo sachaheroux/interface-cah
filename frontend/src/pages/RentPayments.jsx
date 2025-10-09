@@ -7,8 +7,7 @@ const RentPayments = () => {
   const [selectedBuilding, setSelectedBuilding] = useState(null)
   const [leases, setLeases] = useState([])
   const [payments, setPayments] = useState({})
-  const [displayYear, setDisplayYear] = useState(new Date().getFullYear())
-  const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
+  // Pas besoin de displayYear/displayMonth car on affiche toujours les 12 derniers mois
   const [loading, setLoading] = useState(false)
   const [showDetails, setShowDetails] = useState(null)
 
@@ -214,65 +213,12 @@ const RentPayments = () => {
           </div>
         </div>
 
-        {/* Navigation temporelle */}
+        {/* Info: Affichage automatique des 12 derniers mois */}
         {selectedBuilding && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-              <Calendar className="h-5 w-5" />
-              Navigation temporelle
-            </h3>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Année:</label>
-                <select
-                  value={displayYear}
-                  onChange={(e) => setDisplayYear(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {Array.from({ length: 10 }, (_, i) => {
-                    const year = new Date().getFullYear() - 5 + i
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    )
-                  })}
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Mois de début:</label>
-                <select
-                  value={displayMonth}
-                  onChange={(e) => setDisplayMonth(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const month = i + 1
-                    const date = new Date(2024, month - 1, 1)
-                    return (
-                      <option key={month} value={month}>
-                        {date.toLocaleDateString('fr-CA', { month: 'long' })}
-                      </option>
-                    )
-                  })}
-                </select>
-              </div>
-              
-              <button
-                onClick={() => {
-                  setDisplayYear(new Date().getFullYear())
-                  setDisplayMonth(new Date().getMonth() + 1)
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Aujourd'hui
-              </button>
-            </div>
-            
-            <p className="text-sm text-gray-600 mt-3">
-              Affichage de 12 mois à partir de {new Date(displayYear, displayMonth - 1, 1).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Affichage automatique des 12 derniers mois (jusqu'à aujourd'hui)
             </p>
           </div>
         )}

@@ -1663,14 +1663,9 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 should_count_payment = True
                 if confirmed_payments_only:
                     payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
-                    # Si le paiement existe dans la table, vérifier s'il est coché
-                    # Sinon, compter le loyer par défaut (système de suivi pas encore utilisé pour ce mois)
-                    if payment_key in confirmed_payments:
-                        should_count_payment = confirmed_payments[payment_key]
-                        print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé'}")
-                    else:
-                        should_count_payment = True  # Par défaut, compter si pas encore dans le système
-                        print(f"🔍 DEBUG - Paiement {payment_key}: ℹ️ Pas encore dans le système, compté par défaut")
+                    # Ne compter QUE si le paiement est explicitement coché comme payé
+                    should_count_payment = confirmed_payments.get(payment_key, False)
+                    print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé ou non enregistré'}")
                 
                 if should_count_payment:
                     monthly_data[month_key]["revenue"] += loyer
