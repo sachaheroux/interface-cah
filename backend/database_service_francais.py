@@ -940,20 +940,37 @@ class DatabaseServiceFrancais:
         """Créer un paiement de loyer"""
         try:
             with self.get_session() as session:
+                # Récupérer le bail pour obtenir le prix du loyer
+                bail = session.query(Bail).filter(Bail.id_bail == paiement_data['id_bail']).first()
+                
+                # Si on crée avec paye=True et que montant_paye n'est pas fourni, utiliser le prix du bail
+                montant_paye = paiement_data.get('montant_paye')
+                if paiement_data.get('paye', False) and not montant_paye:
+                    if bail and bail.prix_loyer:
+                        montant_paye = bail.prix_loyer
+                        print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
+                
+                # Si on crée avec paye=True et que date_paiement_reelle n'est pas fournie, utiliser le 1er du mois
+                date_paiement_reelle = paiement_data.get('date_paiement_reelle')
+                if paiement_data.get('paye', False) and not date_paiement_reelle:
+                    from datetime import date
+                    date_paiement_reelle = date(paiement_data['annee'], paiement_data['mois'], 1)
+                    print(f"✅ Date de paiement auto-remplie: {date_paiement_reelle}")
+                
                 paiement = PaiementLoyer(
                     id_bail=paiement_data['id_bail'],
                     mois=paiement_data['mois'],
                     annee=paiement_data['annee'],
                     paye=paiement_data.get('paye', False),
-                    date_paiement_reelle=paiement_data.get('date_paiement_reelle'),
-                    montant_paye=paiement_data.get('montant_paye'),
+                    date_paiement_reelle=date_paiement_reelle,
+                    montant_paye=montant_paye,
                     notes=paiement_data.get('notes')
                 )
                 session.add(paiement)
                 session.commit()
                 session.refresh(paiement)
                 
-                print(f"✅ Paiement de loyer créé: Bail {paiement.id_bail}, {paiement.mois}/{paiement.annee}")
+                print(f"✅ Paiement de loyer créé: Bail {paiement.id_bail}, {paiement.mois}/{paiement.annee}, Payé: {paiement.paye}, Montant: {paiement.montant_paye}$")
                 return paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création du paiement de loyer: {e}")
