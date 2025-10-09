@@ -967,6 +967,14 @@ class DatabaseServiceFrancais:
                 if not paiement:
                     return None
                 
+                # Si on coche "payé" et que montant_paye est vide, aller chercher le prix du bail
+                if 'paye' in update_data and update_data['paye'] is True:
+                    if (paiement.montant_paye is None or paiement.montant_paye == 0) and 'montant_paye' not in update_data:
+                        bail = session.query(Bail).filter(Bail.id_bail == paiement.id_bail).first()
+                        if bail and bail.prix_loyer:
+                            paiement.montant_paye = bail.prix_loyer
+                            print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
+                
                 # Mettre à jour les champs
                 if 'paye' in update_data:
                     paiement.paye = update_data['paye']
@@ -980,7 +988,7 @@ class DatabaseServiceFrancais:
                 paiement.date_modification = datetime.utcnow()
                 session.commit()
                 
-                print(f"✅ Paiement de loyer mis à jour: ID {paiement_id}")
+                print(f"✅ Paiement de loyer mis à jour: ID {paiement_id}, Payé: {paiement.paye}, Montant: {paiement.montant_paye}$")
                 return paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la mise à jour du paiement de loyer {paiement_id}: {e}")
