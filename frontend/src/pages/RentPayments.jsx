@@ -154,13 +154,21 @@ const RentPayments = () => {
   // Ouvrir les détails d'un paiement
   const openPaymentDetails = async (leaseId, year, month) => {
     try {
-      const payment = await api.get(`/api/paiements-loyers/get-or-create?bail_id=${leaseId}&mois=${month}&annee=${year}`)
-      setShowDetails({
-        payment: payment.data,
-        leaseId,
-        year,
-        month
-      })
+      // Récupérer le paiement existant
+      const existingPayment = getPayment(leaseId, year, month)
+      
+      if (existingPayment) {
+        // Le paiement existe, l'afficher
+        setShowDetails({
+          payment: existingPayment,
+          leaseId,
+          year,
+          month
+        })
+      } else {
+        // Le paiement n'existe pas, on ne peut pas le modifier
+        alert('Veuillez d\'abord cocher le paiement avant de le modifier.')
+      }
     } catch (error) {
       console.error('Erreur lors de l\'ouverture des détails:', error)
     }
@@ -169,11 +177,19 @@ const RentPayments = () => {
   // Mettre à jour les détails d'un paiement
   const updatePaymentDetails = async (updatedPayment) => {
     try {
-      await api.put(`/api/paiements-loyers/${updatedPayment.id_paiement}`, updatedPayment)
+      // Envoyer seulement les champs modifiables
+      const updateData = {
+        date_paiement_reelle: updatedPayment.date_paiement_reelle,
+        montant_paye: updatedPayment.montant_paye,
+        notes: updatedPayment.notes
+      }
+      
+      await api.put(`/api/paiements-loyers/${updatedPayment.id_paiement}`, updateData)
       setShowDetails(null)
       await loadPaymentsForLeases(leases)
     } catch (error) {
       console.error('Erreur lors de la mise à jour des détails:', error)
+      alert('Erreur lors de la mise à jour du paiement')
     }
   }
 
@@ -390,7 +406,7 @@ const RentPayments = () => {
                   </label>
                   <input
                     type="date"
-                    value={showDetails.payment.date_paiement_reelle || ''}
+                    value={showDetails.payment.date_paiement_reelle ? showDetails.payment.date_paiement_reelle.split('T')[0] : ''}
                     onChange={(e) => setShowDetails({
                       ...showDetails,
                       payment: {
