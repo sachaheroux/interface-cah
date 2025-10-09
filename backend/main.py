@@ -2084,6 +2084,40 @@ async def get_or_create_paiement(
         print(f"Erreur lors de la récupération/création du paiement: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération/création du paiement: {str(e)}")
 
+@app.delete("/api/paiements-loyers/clear-all")
+async def clear_all_paiements_loyers():
+    """DANGER: Supprimer TOUTES les données de la table paiements_loyers"""
+    try:
+        from sqlalchemy import text
+        
+        with db_service_francais.get_session() as session:
+            # Compter avant suppression
+            result = session.execute(text("SELECT COUNT(*) FROM paiements_loyers"))
+            count_before = result.scalar()
+            
+            print(f"⚠️  Suppression de {count_before} paiements de loyers...")
+            
+            # Supprimer toutes les données
+            session.execute(text("DELETE FROM paiements_loyers"))
+            session.commit()
+            
+            # Vérifier après suppression
+            result = session.execute(text("SELECT COUNT(*) FROM paiements_loyers"))
+            count_after = result.scalar()
+            
+            print(f"✅ Table paiements_loyers vidée. {count_before} enregistrements supprimés, {count_after} restants")
+            
+            return {
+                "message": f"Table paiements_loyers vidée avec succès",
+                "deleted_count": count_before,
+                "remaining_count": count_after,
+                "success": True
+            }
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de la suppression: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
 @app.post("/api/migrate/paiements-loyers")
 async def migrate_paiements_loyers():
     """Migration pour créer la table paiements_loyers"""
