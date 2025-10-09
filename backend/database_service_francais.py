@@ -613,15 +613,57 @@ class DatabaseServiceFrancais:
             print(f"❌ Erreur lors de la récupération du bail: {e}")
             raise e
 
+    def check_lease_overlap(self, session, id_locataire: int, date_debut, date_fin, exclude_lease_id: int = None) -> bool:
+        """Vérifier s'il y a un chevauchement de baux pour un locataire"""
+        # Récupérer le locataire pour obtenir l'unité
+        locataire = session.query(Locataire).filter(Locataire.id_locataire == id_locataire).first()
+        if not locataire or not locataire.id_unite:
+            return False  # Pas d'unité, pas de chevauchement possible
+        
+        # Chercher tous les baux pour la même unité
+        query = session.query(Bail).join(Locataire).filter(
+            Locataire.id_unite == locataire.id_unite,
+            Bail.date_debut.isnot(None),
+            Bail.date_fin.isnot(None)
+        )
+        
+        # Exclure le bail en cours de modification
+        if exclude_lease_id:
+            query = query.filter(Bail.id_bail != exclude_lease_id)
+        
+        existing_leases = query.all()
+        
+        # Vérifier les chevauchements
+        for existing_lease in existing_leases:
+            # Chevauchement si:
+            # - Le nouveau bail commence pendant un bail existant
+            # - Le nouveau bail se termine pendant un bail existant
+            # - Le nouveau bail englobe complètement un bail existant
+            if (date_debut <= existing_lease.date_fin and date_fin >= existing_lease.date_debut):
+                print(f"⚠️ Chevauchement détecté avec le bail #{existing_lease.id_bail} ({existing_lease.date_debut} - {existing_lease.date_fin})")
+                return True
+        
+        return False
+    
     def create_lease(self, lease_data: Dict[str, Any]) -> Dict[str, Any]:
         """Créer un nouveau bail"""
         try:
             with self.get_session() as session:
+                # Parser les dates
+                date_debut = datetime.strptime(lease_data.get('date_debut'), '%Y-%m-%d').date() if lease_data.get('date_debut') else None
+                date_fin = datetime.strptime(lease_data.get('date_fin'), '%Y-%m-%d').date() if lease_data.get('date_fin') else None
+                id_locataire = lease_data.get('id_locataire')
+                
+                # Vérifier les chevauchements
+                if date_debut and date_fin and id_locataire:
+                    if self.check_lease_overlap(session, id_locataire, date_debut, date_fin):
+                        raise ValueError("Un bail existe déjà pour cette unité durant cette période. Les baux ne peuvent pas se chevaucher.")
+                
                 # Utiliser directement les données françaises du frontend
                 lease = Bail(
-                    id_locataire=lease_data.get('id_locataire'),
-                    date_debut=datetime.strptime(lease_data.get('date_debut'), '%Y-%m-%d').date() if lease_data.get('date_debut') else None,
-                    date_fin=datetime.strptime(lease_data.get('date_fin'), '%Y-%m-%d').date() if lease_data.get('date_fin') else None,
+                    id_locataire=id_locataire,
+                    date_debut=date_debut,
+                    date_fin=date_fin,
                     prix_loyer=lease_data.get('prix_loyer', 0),
                     methode_paiement=lease_data.get('methode_paiement', 'Virement bancaire'),
                     pdf_bail=lease_data.get('pdf_bail', '')
@@ -645,11 +687,20 @@ class DatabaseServiceFrancais:
                 if not lease:
                     return None
                 
+                # Préparer les nouvelles dates pour validation
+                new_date_debut = datetime.strptime(update_data['date_debut'], '%Y-%m-%d').date() if 'date_debut' in update_data else lease.date_debut
+                new_date_fin = datetime.strptime(update_data['date_fin'], '%Y-%m-%d').date() if 'date_fin' in update_data else lease.date_fin
+                
+                # Vérifier les chevauchements si les dates changent
+                if ('date_debut' in update_data or 'date_fin' in update_data) and new_date_debut and new_date_fin:
+                    if self.check_lease_overlap(session, lease.id_locataire, new_date_debut, new_date_fin, exclude_lease_id=lease_id):
+                        raise ValueError("Un bail existe déjà pour cette unité durant cette période. Les baux ne peuvent pas se chevaucher.")
+                
                 # Mettre à jour les champs
                 if 'date_debut' in update_data:
-                    lease.date_debut = datetime.strptime(update_data['date_debut'], '%Y-%m-%d').date()
+                    lease.date_debut = new_date_debut
                 if 'date_fin' in update_data:
-                    lease.date_fin = datetime.strptime(update_data['date_fin'], '%Y-%m-%d').date()
+                    lease.date_fin = new_date_fin
                 if 'prix_loyer' in update_data:
                     lease.prix_loyer = update_data['prix_loyer']
                 if 'methode_paiement' in update_data:
