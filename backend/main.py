@@ -1595,104 +1595,56 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             }
         }
         
-        # Récupérer les paiements confirmés si nécessaire
-        confirmed_payments = {}
-        if confirmed_payments_only:
-            print(f"🔍 DEBUG - Récupération des paiements confirmés...")
-            print(f"🔍 DEBUG - confirmed_payments_only = {confirmed_payments_only}")
-            try:
-                building_ids_list = [building.id_immeuble for building in buildings]
-                print(f"🔍 DEBUG - Building IDs: {building_ids_list}")
-                print(f"🔍 DEBUG - Période: {start_date.year}-{start_date.month} à {end_date.year}-{end_date.month}")
-                
-                payments_response = db_service_francais.get_paiements_by_building_and_period(
-                    building_ids_list, 
-                    start_date.year, start_date.month, 
-                    end_date.year, end_date.month
-                )
-                
-                print(f"🔍 DEBUG - Nombre de paiements récupérés: {len(payments_response)}")
-                
-                # Organiser les paiements par bail et mois (stocker montant_paye)
-                # Note: Si un paiement existe, cela signifie qu'il est payé
-                for payment in payments_response:
-                    key = f"{payment['id_bail']}_{payment['annee']}_{payment['mois']}"
-                    confirmed_payments[key] = float(payment.get('montant_paye', 0))
-                    print(f"🔍 DEBUG - Paiement enregistré: {key} = Montant:{payment.get('montant_paye', 0)}$")
-                
-                print(f"🔍 DEBUG - Total paiements dans le dictionnaire: {len(confirmed_payments)}")
-                print(f"🔍 DEBUG - Clés des paiements: {list(confirmed_payments.keys())[:10]}")  # Afficher les 10 premières clés
-            except Exception as e:
-                print(f"❌ ERREUR lors de la récupération des paiements confirmés: {e}")
-                import traceback
-                traceback.print_exc()
-                confirmed_payments = {}
-
         # Créer des dictionnaires pour les données mensuelles et par immeuble
         monthly_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
         building_data = defaultdict(lambda: {"revenue": 0, "expenses": 0, "netCashflow": 0})
         
-        # Traiter les baux pour les revenus
-        print(f"🔍 DEBUG - Traitement des baux...")
-        for lease in leases:
-            # Obtenir l'ID de l'immeuble via la relation locataire -> unite -> immeuble
-            building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
-            loyer_bail = float(lease.prix_loyer or 0)  # Loyer du bail (par défaut)
+        # Traiter les paiements de loyers comme revenus
+        print(f"🔍 Récupération des paiements de loyers...")
+        try:
+            building_ids_list = [building.id_immeuble for building in buildings]
             
-            print(f"🔍 DEBUG - Traitement bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer bail: {loyer_bail}$")
+            payments_response = db_service_francais.get_paiements_by_building_and_period(
+                building_ids_list, 
+                start_date.year, start_date.month, 
+                end_date.year, end_date.month
+            )
             
-            if building_id is None:
-                print(f"❌ WARNING - building_id est None pour le bail {lease.id_bail}")
-                continue
+            print(f"✅ {len(payments_response)} paiements récupérés")
             
-            # Convertir les dates en datetime pour la comparaison
-            lease_start = lease.date_debut if isinstance(lease.date_debut, datetime) else datetime.combine(lease.date_debut, datetime.min.time())
-            lease_end = lease.date_fin if isinstance(lease.date_fin, datetime) else datetime.combine(lease.date_fin, datetime.min.time()) if lease.date_fin else None
-            
-            current_date = max(start_date, lease_start)
-            end_lease_date = min(end_date, lease_end) if lease_end else end_date
-            
-            # Protection contre les boucles infinies
-            max_iterations = 1000
-            iteration_count = 0
-            
-            while current_date <= end_lease_date and iteration_count < max_iterations:
-                iteration_count += 1
-                month_key = current_date.strftime("%Y-%m")
-                
-                # Vérifier si le paiement est confirmé et obtenir le montant payé
-                should_count_payment = True
-                montant_a_compter = loyer_bail  # Par défaut, utiliser le loyer du bail
-                
-                if confirmed_payments_only:
-                    payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
-                    montant_paye = confirmed_payments.get(payment_key)
+            # Traiter chaque paiement comme un revenu
+            for payment_dict in payments_response:
+                try:
+                    montant = float(payment_dict.get('montant_paye', 0))
+                    annee = payment_dict.get('annee')
+                    mois = payment_dict.get('mois')
+                    id_bail = payment_dict.get('id_bail')
                     
-                    if montant_paye is not None:
-                        # Le paiement existe dans la table = il est payé
-                        should_count_payment = True
-                        montant_a_compter = montant_paye if montant_paye > 0 else loyer_bail
-                        print(f"🔍 DEBUG - Paiement {payment_key}: ✅ Payé, Montant: {montant_a_compter}$")
+                    # Trouver le bail correspondant pour obtenir l'immeuble
+                    lease = next((l for l in leases if l.id_bail == id_bail), None)
+                    if lease and lease.locataire and lease.locataire.unite:
+                        building_id = lease.locataire.unite.id_immeuble
+                        
+                        if building_id and montant > 0:
+                            month_key = f"{annee}-{mois:02d}"
+                            
+                            # Ajouter le revenu
+                            monthly_data[month_key]["revenue"] += montant
+                            monthly_data[month_key]["netCashflow"] += montant
+                            building_data[building_id]["revenue"] += montant
+                            building_data[building_id]["netCashflow"] += montant
+                            
+                            print(f"✅ Revenu ajouté: {month_key}, Immeuble {building_id}, Montant: {montant}$")
                     else:
-                        # Le paiement n'existe pas dans la table = il n'est pas payé
-                        should_count_payment = False
-                        print(f"🔍 DEBUG - Paiement {payment_key}: ❌ Non payé")
-                
-                if should_count_payment:
-                    monthly_data[month_key]["revenue"] += montant_a_compter
-                    monthly_data[month_key]["netCashflow"] += montant_a_compter
-                    building_data[building_id]["revenue"] += montant_a_compter
-                    building_data[building_id]["netCashflow"] += montant_a_compter
-                
-                # Passer au mois suivant
-                if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
-                else:
-                    current_date = current_date.replace(month=current_date.month + 1)
-            
-            # Vérifier si on a atteint la limite d'itérations
-            if iteration_count >= max_iterations:
-                print(f"⚠️ WARNING - Limite d'itérations atteinte pour le bail {lease.id_bail}")
+                        print(f"⚠️ Paiement ignoré - bail {id_bail} non trouvé ou sans immeuble")
+                        
+                except Exception as e:
+                    print(f"❌ Erreur traitement paiement: {e}")
+                    
+        except Exception as e:
+            print(f"❌ ERREUR récupération paiements: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Traiter les transactions
         print(f"🔍 DEBUG - Traitement des transactions...")
