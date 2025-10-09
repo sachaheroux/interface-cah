@@ -252,8 +252,7 @@ const PropertyAnalysis = () => {
     { id: 1, title: 'Informations de base', icon: Home },
     { id: 2, title: 'Financement', icon: DollarSign },
     { id: 3, title: 'Revenus locatifs', icon: TrendingUp },
-    { id: 4, title: 'Dépenses', icon: TrendingDown },
-    { id: 5, title: 'Analyse', icon: Calendar }
+    { id: 4, title: 'Dépenses', icon: TrendingDown }
   ]
 
   return (
@@ -518,25 +517,6 @@ const PropertyAnalysis = () => {
             </div>
           )}
 
-        {currentStep === 5 && (
-          <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Analyse</h2>
-              <div className="text-center">
-                <button
-                  onClick={calculateAnalysis}
-                  disabled={loading}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                  {loading ? (
-                    <RefreshCw className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Calculator className="h-5 w-5" />
-                  )}
-                  {loading ? 'Calcul en cours...' : 'Analyser la propriété'}
-                </button>
-              </div>
-            </div>
-          )}
 
         {/* Navigation */}
         <div className="flex justify-between mt-8">
@@ -548,9 +528,9 @@ const PropertyAnalysis = () => {
               Précédent
             </button>
             
-            {currentStep < 5 ? (
+            {currentStep < 4 ? (
               <button
-                onClick={() => setCurrentStep(Math.min(5, currentStep + 1))}
+                onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Suivant
@@ -559,10 +539,14 @@ const PropertyAnalysis = () => {
               <button
                 onClick={calculateAnalysis}
                 disabled={loading}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <Calculator className="h-4 w-4" />
-                Analyser
+                {loading ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Calculator className="h-5 w-5" />
+                )}
+                {loading ? 'Calcul en cours...' : 'Analyser la propriété'}
               </button>
             )}
         </div>
