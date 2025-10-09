@@ -940,16 +940,22 @@ class DatabaseServiceFrancais:
         """Créer un paiement de loyer (existence = payé)"""
         try:
             with self.get_session() as session:
+                print(f"🔍 Création paiement pour bail {paiement_data['id_bail']}, {paiement_data['mois']}/{paiement_data['annee']}")
+                
                 # Récupérer le bail pour obtenir le prix du loyer
                 bail = session.query(Bail).filter(Bail.id_bail == paiement_data['id_bail']).first()
                 if not bail:
                     raise ValueError(f"Bail {paiement_data['id_bail']} non trouvé")
                 
+                print(f"🔍 Bail trouvé: prix_loyer = {bail.prix_loyer}")
+                
                 # Montant payé: utiliser celui fourni ou le prix du bail par défaut
                 montant_paye = paiement_data.get('montant_paye')
                 if not montant_paye:
-                    montant_paye = bail.prix_loyer
-                    print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
+                    if not bail.prix_loyer:
+                        raise ValueError(f"Le bail {bail.id_bail} n'a pas de prix_loyer défini")
+                    montant_paye = float(bail.prix_loyer)
+                    print(f"✅ Montant payé auto-rempli: {montant_paye}$ (depuis bail #{bail.id_bail})")
                 
                 # Date de paiement: utiliser celle fournie ou le 1er du mois par défaut
                 date_paiement_reelle = paiement_data.get('date_paiement_reelle')
@@ -957,6 +963,8 @@ class DatabaseServiceFrancais:
                     from datetime import date
                     date_paiement_reelle = date(paiement_data['annee'], paiement_data['mois'], 1)
                     print(f"✅ Date de paiement auto-remplie: {date_paiement_reelle}")
+                
+                print(f"🔍 Création avec: montant={montant_paye}, date={date_paiement_reelle}")
                 
                 paiement = PaiementLoyer(
                     id_bail=paiement_data['id_bail'],
@@ -974,6 +982,8 @@ class DatabaseServiceFrancais:
                 return paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création du paiement de loyer: {e}")
+            import traceback
+            traceback.print_exc()
             raise e
     
     def update_paiement_loyer(self, paiement_id: int, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
