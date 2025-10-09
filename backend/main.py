@@ -1510,7 +1510,7 @@ async def get_profitability_analysis(
     start_month: int = Query(..., description="Mois de début (1-12)"),
     end_year: int = Query(..., description="Année de fin"),
     end_month: int = Query(..., description="Mois de fin (1-12)"),
-    confirmed_payments_only: bool = Query(False, description="Ne compter que les loyers confirmés payés")
+    confirmed_payments_only: bool = Query(True, description="Ne compter que les loyers confirmés payés")
 ):
     """Récupérer l'analyse de rentabilité avec les vraies données"""
     try:
