@@ -974,6 +974,12 @@ class DatabaseServiceFrancais:
                         if bail and bail.prix_loyer:
                             paiement.montant_paye = bail.prix_loyer
                             print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
+                    
+                    # Si on coche "payé" et que date_paiement_reelle est vide, mettre le 1er du mois
+                    if paiement.date_paiement_reelle is None and 'date_paiement_reelle' not in update_data:
+                        from datetime import date
+                        paiement.date_paiement_reelle = date(paiement.annee, paiement.mois, 1)
+                        print(f"✅ Date de paiement auto-remplie: {paiement.date_paiement_reelle}")
                 
                 # Mettre à jour les champs
                 if 'paye' in update_data:

@@ -112,6 +112,17 @@ const RentPayments = () => {
     return leasePayments.find(p => p.annee === year && p.mois === month)
   }
 
+  // Vérifier si le bail est actif pour un mois donné
+  const isLeaseActiveForMonth = (lease, year, month) => {
+    if (!lease.date_debut || !lease.date_fin) return false
+    
+    const leaseStart = new Date(lease.date_debut)
+    const leaseEnd = new Date(lease.date_fin)
+    const checkDate = new Date(year, month - 1, 1) // Premier jour du mois
+    
+    return checkDate >= leaseStart && checkDate <= leaseEnd
+  }
+
   // Créer ou mettre à jour un paiement
   const togglePayment = async (leaseId, year, month, isPaid) => {
     try {
@@ -325,27 +336,32 @@ const RentPayments = () => {
                         {months.map(({ year, month }) => {
                           const payment = getPayment(lease.id_bail, year, month)
                           const isPaid = payment?.paye || false
+                          const isActive = isLeaseActiveForMonth(lease, year, month)
                           
                           return (
                             <td key={`${lease.id_bail}-${year}-${month}`} className="px-3 py-4 text-center">
-                              <div className="flex flex-col items-center gap-1">
-                                <button
-                                  onClick={() => togglePayment(lease.id_bail, year, month, !isPaid)}
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                    isPaid 
-                                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                                      : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
-                                  }`}
-                                >
-                                  {isPaid ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                                </button>
-                                <button
-                                  onClick={() => openPaymentDetails(lease.id_bail, year, month)}
-                                  className="text-xs text-gray-500 hover:text-blue-600"
-                                >
-                                  <Edit3 className="h-3 w-3" />
-                                </button>
-                              </div>
+                              {isActive ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <button
+                                    onClick={() => togglePayment(lease.id_bail, year, month, !isPaid)}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                      isPaid 
+                                        ? 'bg-green-500 text-white hover:bg-green-600' 
+                                        : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
+                                    }`}
+                                  >
+                                    {isPaid ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                  </button>
+                                  <button
+                                    onClick={() => openPaymentDetails(lease.id_bail, year, month)}
+                                    className="text-xs text-gray-500 hover:text-blue-600"
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="text-gray-300">-</div>
+                              )}
                             </td>
                           )
                         })}
