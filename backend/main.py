@@ -1613,14 +1613,12 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 
                 print(f"🔍 DEBUG - Nombre de paiements récupérés: {len(payments_response)}")
                 
-                # Organiser les paiements par bail et mois (stocker paye ET montant_paye)
+                # Organiser les paiements par bail et mois (stocker montant_paye)
+                # Note: Si un paiement existe, cela signifie qu'il est payé
                 for payment in payments_response:
                     key = f"{payment['id_bail']}_{payment['annee']}_{payment['mois']}"
-                    confirmed_payments[key] = {
-                        'paye': payment['paye'],
-                        'montant_paye': float(payment.get('montant_paye', 0))
-                    }
-                    print(f"🔍 DEBUG - Paiement enregistré: {key} = Payé:{payment['paye']}, Montant:{payment.get('montant_paye', 0)}$")
+                    confirmed_payments[key] = float(payment.get('montant_paye', 0))
+                    print(f"🔍 DEBUG - Paiement enregistré: {key} = Montant:{payment.get('montant_paye', 0)}$")
                 
                 print(f"🔍 DEBUG - Total paiements dans le dictionnaire: {len(confirmed_payments)}")
                 print(f"🔍 DEBUG - Clés des paiements: {list(confirmed_payments.keys())[:10]}")  # Afficher les 10 premières clés
@@ -1668,17 +1666,17 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                 
                 if confirmed_payments_only:
                     payment_key = f"{lease.id_bail}_{current_date.year}_{current_date.month}"
-                    payment_info = confirmed_payments.get(payment_key)
+                    montant_paye = confirmed_payments.get(payment_key)
                     
-                    if payment_info:
-                        # Le paiement existe dans la table
-                        should_count_payment = payment_info['paye']
-                        montant_a_compter = payment_info['montant_paye'] if payment_info['montant_paye'] > 0 else loyer_bail
-                        print(f"🔍 DEBUG - Paiement {payment_key}: {'✅ Payé' if should_count_payment else '❌ Non payé'}, Montant: {montant_a_compter}$")
+                    if montant_paye is not None:
+                        # Le paiement existe dans la table = il est payé
+                        should_count_payment = True
+                        montant_a_compter = montant_paye if montant_paye > 0 else loyer_bail
+                        print(f"🔍 DEBUG - Paiement {payment_key}: ✅ Payé, Montant: {montant_a_compter}$")
                     else:
-                        # Le paiement n'existe pas encore dans la table
+                        # Le paiement n'existe pas dans la table = il n'est pas payé
                         should_count_payment = False
-                        print(f"🔍 DEBUG - Paiement {payment_key}: ❌ Non enregistré")
+                        print(f"🔍 DEBUG - Paiement {payment_key}: ❌ Non payé")
                 
                 if should_count_payment:
                     monthly_data[month_key]["revenue"] += montant_a_compter
@@ -2001,13 +1999,11 @@ class PaiementLoyerCreate(BaseModel):
     id_bail: int
     mois: int
     annee: int
-    paye: bool = False
     date_paiement_reelle: Optional[str] = None
     montant_paye: Optional[float] = None
     notes: Optional[str] = None
 
 class PaiementLoyerUpdate(BaseModel):
-    paye: Optional[bool] = None
     date_paiement_reelle: Optional[str] = None
     montant_paye: Optional[float] = None
     notes: Optional[str] = None
@@ -2041,6 +2037,18 @@ async def update_paiement_loyer(paiement_id: int, update_data: PaiementLoyerUpda
     except Exception as e:
         print(f"Erreur lors de la mise à jour du paiement de loyer: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du paiement de loyer: {str(e)}")
+
+@app.delete("/api/paiements-loyers/{paiement_id}")
+async def delete_paiement_loyer(paiement_id: int):
+    """Supprimer un paiement de loyer"""
+    try:
+        result = db_service_francais.delete_paiement_loyer(paiement_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Paiement de loyer non trouvé")
+        return {"success": True, "message": "Paiement supprimé avec succès"}
+    except Exception as e:
+        print(f"Erreur lors de la suppression du paiement de loyer: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du paiement de loyer: {str(e)}")
 
 @app.get("/api/paiements-loyers/bail/{bail_id}")
 async def get_paiements_by_bail(bail_id: int):

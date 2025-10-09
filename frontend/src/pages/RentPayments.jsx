@@ -134,8 +134,7 @@ const RentPayments = () => {
           await api.post('/api/paiements-loyers', {
             id_bail: leaseId,
             mois: month,
-            annee: year,
-            paye: true
+            annee: year
           })
         }
       } else {

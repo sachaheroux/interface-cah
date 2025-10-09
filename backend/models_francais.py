@@ -210,16 +210,18 @@ class Transaction(Base):
         }
 
 class PaiementLoyer(Base):
-    """Modèle pour le suivi des paiements de loyers"""
+    """Modèle pour le suivi des paiements de loyers
+    Note: Si un paiement existe dans cette table, cela signifie qu'il est payé.
+    Si un paiement n'existe pas, cela signifie qu'il n'est pas payé.
+    """
     __tablename__ = "paiements_loyers"
     
     id_paiement = Column(Integer, primary_key=True, index=True)
     id_bail = Column(Integer, ForeignKey("baux.id_bail"), nullable=False, index=True)
     mois = Column(Integer, nullable=False)  # 1-12
     annee = Column(Integer, nullable=False)  # 2024, 2025, etc.
-    paye = Column(Boolean, default=False, nullable=False)
-    date_paiement_reelle = Column(Date, nullable=True)  # Date réelle si différente du 1er
-    montant_paye = Column(DECIMAL(10, 2), nullable=True)  # Montant réel si différent du loyer
+    date_paiement_reelle = Column(Date, nullable=False)  # Date de paiement (par défaut le 1er du mois)
+    montant_paye = Column(DECIMAL(10, 2), nullable=False)  # Montant payé (par défaut le prix du bail)
     notes = Column(Text, nullable=True)  # Notes optionnelles
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -239,7 +241,6 @@ class PaiementLoyer(Base):
             "id_bail": self.id_bail,
             "mois": self.mois,
             "annee": self.annee,
-            "paye": self.paye,
             "date_paiement_reelle": self.date_paiement_reelle.isoformat() if self.date_paiement_reelle else None,
             "montant_paye": float(self.montant_paye) if self.montant_paye else None,
             "notes": self.notes,

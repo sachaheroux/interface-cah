@@ -937,22 +937,23 @@ class DatabaseServiceFrancais:
     # ========================================
     
     def create_paiement_loyer(self, paiement_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Créer un paiement de loyer"""
+        """Créer un paiement de loyer (existence = payé)"""
         try:
             with self.get_session() as session:
                 # Récupérer le bail pour obtenir le prix du loyer
                 bail = session.query(Bail).filter(Bail.id_bail == paiement_data['id_bail']).first()
+                if not bail:
+                    raise ValueError(f"Bail {paiement_data['id_bail']} non trouvé")
                 
-                # Si on crée avec paye=True et que montant_paye n'est pas fourni, utiliser le prix du bail
+                # Montant payé: utiliser celui fourni ou le prix du bail par défaut
                 montant_paye = paiement_data.get('montant_paye')
-                if paiement_data.get('paye', False) and not montant_paye:
-                    if bail and bail.prix_loyer:
-                        montant_paye = bail.prix_loyer
-                        print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
+                if not montant_paye:
+                    montant_paye = bail.prix_loyer
+                    print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
                 
-                # Si on crée avec paye=True et que date_paiement_reelle n'est pas fournie, utiliser le 1er du mois
+                # Date de paiement: utiliser celle fournie ou le 1er du mois par défaut
                 date_paiement_reelle = paiement_data.get('date_paiement_reelle')
-                if paiement_data.get('paye', False) and not date_paiement_reelle:
+                if not date_paiement_reelle:
                     from datetime import date
                     date_paiement_reelle = date(paiement_data['annee'], paiement_data['mois'], 1)
                     print(f"✅ Date de paiement auto-remplie: {date_paiement_reelle}")
@@ -961,7 +962,6 @@ class DatabaseServiceFrancais:
                     id_bail=paiement_data['id_bail'],
                     mois=paiement_data['mois'],
                     annee=paiement_data['annee'],
-                    paye=paiement_data.get('paye', False),
                     date_paiement_reelle=date_paiement_reelle,
                     montant_paye=montant_paye,
                     notes=paiement_data.get('notes')
@@ -970,7 +970,7 @@ class DatabaseServiceFrancais:
                 session.commit()
                 session.refresh(paiement)
                 
-                print(f"✅ Paiement de loyer créé: Bail {paiement.id_bail}, {paiement.mois}/{paiement.annee}, Payé: {paiement.paye}, Montant: {paiement.montant_paye}$")
+                print(f"✅ Paiement de loyer créé: Bail {paiement.id_bail}, {paiement.mois}/{paiement.annee}, Montant: {paiement.montant_paye}$")
                 return paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la création du paiement de loyer: {e}")
@@ -984,23 +984,7 @@ class DatabaseServiceFrancais:
                 if not paiement:
                     return None
                 
-                # Si on coche "payé" et que montant_paye est vide, aller chercher le prix du bail
-                if 'paye' in update_data and update_data['paye'] is True:
-                    if (paiement.montant_paye is None or paiement.montant_paye == 0) and 'montant_paye' not in update_data:
-                        bail = session.query(Bail).filter(Bail.id_bail == paiement.id_bail).first()
-                        if bail and bail.prix_loyer:
-                            paiement.montant_paye = bail.prix_loyer
-                            print(f"✅ Montant payé auto-rempli: {bail.prix_loyer}$ (depuis bail #{bail.id_bail})")
-                    
-                    # Si on coche "payé" et que date_paiement_reelle est vide, mettre le 1er du mois
-                    if paiement.date_paiement_reelle is None and 'date_paiement_reelle' not in update_data:
-                        from datetime import date
-                        paiement.date_paiement_reelle = date(paiement.annee, paiement.mois, 1)
-                        print(f"✅ Date de paiement auto-remplie: {paiement.date_paiement_reelle}")
-                
                 # Mettre à jour les champs
-                if 'paye' in update_data:
-                    paiement.paye = update_data['paye']
                 if 'date_paiement_reelle' in update_data:
                     paiement.date_paiement_reelle = update_data['date_paiement_reelle']
                 if 'montant_paye' in update_data:
@@ -1011,10 +995,27 @@ class DatabaseServiceFrancais:
                 paiement.date_modification = datetime.utcnow()
                 session.commit()
                 
-                print(f"✅ Paiement de loyer mis à jour: ID {paiement_id}, Payé: {paiement.paye}, Montant: {paiement.montant_paye}$")
+                print(f"✅ Paiement de loyer mis à jour: ID {paiement_id}, Montant: {paiement.montant_paye}$")
                 return paiement.to_dict()
         except Exception as e:
             print(f"❌ Erreur lors de la mise à jour du paiement de loyer {paiement_id}: {e}")
+            raise e
+    
+    def delete_paiement_loyer(self, paiement_id: int) -> bool:
+        """Supprimer un paiement de loyer"""
+        try:
+            with self.get_session() as session:
+                paiement = session.query(PaiementLoyer).filter(PaiementLoyer.id_paiement == paiement_id).first()
+                if not paiement:
+                    return False
+                
+                session.delete(paiement)
+                session.commit()
+                
+                print(f"✅ Paiement de loyer supprimé: ID {paiement_id}")
+                return True
+        except Exception as e:
+            print(f"❌ Erreur lors de la suppression du paiement de loyer {paiement_id}: {e}")
             raise e
     
     def get_paiements_by_bail(self, bail_id: int) -> List[Dict[str, Any]]:
@@ -1070,27 +1071,23 @@ class DatabaseServiceFrancais:
                 ).first()
                 
                 if paiement:
-                    # Si le paiement existe mais que montant_paye est vide, le remplir avec le prix du bail
-                    if paiement.montant_paye is None or paiement.montant_paye == 0:
-                        bail = session.query(Bail).filter(Bail.id_bail == bail_id).first()
-                        if bail and bail.prix_loyer:
-                            paiement.montant_paye = bail.prix_loyer
-                            session.commit()
-                            session.refresh(paiement)
-                            print(f"✅ Montant payé mis à jour: {bail.prix_loyer}$ pour Bail {bail_id}, {mois}/{annee}")
                     return paiement.to_dict()
                 
                 # Récupérer le bail pour obtenir le prix du loyer
                 bail = session.query(Bail).filter(Bail.id_bail == bail_id).first()
-                montant_loyer = float(bail.prix_loyer) if bail and bail.prix_loyer else 0
+                if not bail:
+                    raise ValueError(f"Bail {bail_id} non trouvé")
                 
-                # Créer un nouveau paiement avec le montant du bail
+                montant_loyer = float(bail.prix_loyer) if bail.prix_loyer else 0
+                
+                # Créer un nouveau paiement avec le montant du bail et la date par défaut
+                from datetime import date
                 nouveau_paiement = PaiementLoyer(
                     id_bail=bail_id,
                     mois=mois,
                     annee=annee,
-                    paye=False,
-                    montant_paye=montant_loyer  # Remplir automatiquement avec le prix du bail
+                    date_paiement_reelle=date(annee, mois, 1),
+                    montant_paye=montant_loyer
                 )
                 session.add(nouveau_paiement)
                 session.commit()
