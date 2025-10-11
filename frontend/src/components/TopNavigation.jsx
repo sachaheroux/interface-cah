@@ -49,14 +49,14 @@ export default function TopNavigation() {
                   key={item.name}
                   to={item.href}
                   className={clsx(
-                    'flex flex-col sm:flex-row items-center px-1 sm:px-2 lg:px-4 py-1 sm:py-2 text-xs sm:text-sm lg:text-base font-medium rounded-lg transition-colors duration-200 whitespace-nowrap',
+                    'flex flex-col sm:flex-row items-center px-1 sm:px-1.5 lg:px-2 xl:px-4 py-1 sm:py-2 text-xs sm:text-xs lg:text-sm xl:text-base font-medium rounded-lg transition-colors duration-200 whitespace-nowrap',
                     isActive 
                       ? 'bg-primary-100 text-primary-700' 
                       : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                   )}
                 >
-                  <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 sm:mr-2" />
-                  <span className="text-xs sm:text-sm lg:text-base">{item.name}</span>
+                  <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-4 lg:w-4 xl:h-5 xl:w-5 sm:mr-1.5 lg:mr-2" />
+                  <span className="text-xs sm:text-xs lg:text-sm xl:text-base">{item.name}</span>
                 </Link>
               )
             })}
