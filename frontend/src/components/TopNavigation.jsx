@@ -38,9 +38,9 @@ export default function TopNavigation() {
           <h1 className="text-lg font-bold text-gray-900 sm:hidden">CAH</h1>
         </div>
         
-        {/* Navigation horizontale */}
-        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4 overflow-x-auto lg:overflow-x-visible scrollbar-hide">
-          <div className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 min-w-max lg:min-w-0 lg:justify-center lg:flex-1">
+        {/* Navigation horizontale - s'adapte automatiquement à la largeur */}
+        <nav className="flex-1 overflow-x-auto scrollbar-hide mx-1 sm:mx-2">
+          <div className="flex justify-center items-center h-full gap-[0.2vw] min-w-max">
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
@@ -49,14 +49,16 @@ export default function TopNavigation() {
                   key={item.name}
                   to={item.href}
                   className={clsx(
-                    'flex flex-col sm:flex-row items-center px-1 sm:px-1.5 lg:px-2 xl:px-4 py-1 sm:py-2 text-xs sm:text-xs lg:text-sm xl:text-base font-medium rounded-lg transition-colors duration-200 whitespace-nowrap',
+                    'flex flex-col sm:flex-row items-center justify-center rounded-lg transition-colors duration-200 whitespace-nowrap font-medium',
+                    'px-[0.5vw] sm:px-[0.8vw] py-1 sm:py-2',
+                    'text-[0.65rem] sm:text-[0.75rem] lg:text-[0.85rem] xl:text-[0.95rem]',
                     isActive 
                       ? 'bg-primary-100 text-primary-700' 
                       : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                   )}
                 >
-                  <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-4 lg:w-4 xl:h-5 xl:w-5 sm:mr-1.5 lg:mr-2" />
-                  <span className="text-xs sm:text-xs lg:text-sm xl:text-base">{item.name}</span>
+                  <Icon className="h-[0.8rem] w-[0.8rem] sm:h-[0.9rem] sm:w-[0.9rem] lg:h-[1rem] lg:w-[1rem] sm:mr-1" />
+                  <span>{item.name}</span>
                 </Link>
               )
             })}
