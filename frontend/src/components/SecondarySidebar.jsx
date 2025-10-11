@@ -55,13 +55,17 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
     case '/tenants':
     case '/leases':
     case '/rent-payments':
-    case '/transactions':
       // Utiliser la même sidebar pour toutes les pages liées aux locataires
       return [
         { name: 'Tous les locataires', icon: Users, href: '/tenants', active: pathname === '/tenants' },
         { name: 'Gérer les baux', icon: FileText, href: '/leases', active: pathname === '/leases' },
         { name: 'Suivi des paiements', icon: DollarSign, href: '/rent-payments', active: pathname === '/rent-payments' },
-        { name: 'Transactions', icon: TrendingUp, href: '/transactions', active: pathname === '/transactions' },
+      ]
+    
+    case '/transactions':
+      // Sidebar dédiée pour les transactions
+      return [
+        { name: 'Toutes les transactions', icon: DollarSign, active: true },
       ]
     
     
@@ -166,7 +170,8 @@ export default function SecondarySidebar() {
       <div className="p-3 lg:p-4">
         <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
           {(location.pathname === '/buildings' || location.pathname === '/buildings/analysis' || location.pathname === '/buildings/mortgage' || location.pathname === '/buildings/property-analysis') && 'Gestion Immeubles'}
-          {(location.pathname === '/tenants' || location.pathname === '/leases' || location.pathname === '/rent-payments' || location.pathname === '/transactions') && 'Gestion Locataires'}
+          {(location.pathname === '/tenants' || location.pathname === '/leases' || location.pathname === '/rent-payments') && 'Gestion Locataires'}
+          {location.pathname === '/transactions' && 'Gestion Transactions'}
           {location.pathname === '/employees' && 'Employés & Temps'}
           {location.pathname === '/contractors' && 'Sous-traitants'}
           {location.pathname === '/projects' && 'Projets Construction'}
