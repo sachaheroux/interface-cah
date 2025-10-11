@@ -242,10 +242,9 @@ export default function Tenants() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
             <option value="">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="pending">En attente</option>
-            <option value="inactive">Inactif</option>
-            <option value="former">Ancien locataire</option>
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+            <option value="suspendu">Suspendu</option>
           </select>
 
           {/* Bouton effacer filtres */}

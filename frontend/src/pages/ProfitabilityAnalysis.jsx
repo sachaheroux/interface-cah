@@ -150,14 +150,9 @@ export default function ProfitabilityAnalysis() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <BarChart3 className="h-8 w-8 text-primary-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analyse de Rentabilité</h1>
-            <p className="text-gray-600">
-              Analysez la performance financière de vos immeubles
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestion des Immeubles</h1>
+          <p className="text-gray-600 mt-1">Analysez la performance financière de vos immeubles</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
