@@ -40,7 +40,7 @@ export default function TopNavigation() {
         
         {/* Navigation horizontale - s'adapte automatiquement à la largeur */}
         <nav className="flex-1 overflow-x-auto scrollbar-hide mx-1 sm:mx-2">
-          <div className="flex justify-center items-center h-full gap-[0.2vw] min-w-max">
+          <div className="flex justify-center items-center h-full min-w-max" style={{ gap: 'max(0.2vw, 0.25rem)' }}>
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
@@ -50,14 +50,24 @@ export default function TopNavigation() {
                   to={item.href}
                   className={clsx(
                     'flex flex-col sm:flex-row items-center justify-center rounded-lg transition-colors duration-200 whitespace-nowrap font-medium',
-                    'px-[0.5vw] sm:px-[0.8vw] py-1 sm:py-2',
-                    'text-[0.65rem] sm:text-[0.75rem] lg:text-[0.85rem] xl:text-[0.95rem]',
+                    'py-1 sm:py-2',
                     isActive 
                       ? 'bg-primary-100 text-primary-700' 
                       : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
                   )}
+                  style={{
+                    paddingLeft: 'clamp(0.25rem, 0.8vw, 1rem)',
+                    paddingRight: 'clamp(0.25rem, 0.8vw, 1rem)',
+                    fontSize: 'clamp(0.7rem, 0.9vw, 1rem)'
+                  }}
                 >
-                  <Icon className="h-[0.8rem] w-[0.8rem] sm:h-[0.9rem] sm:w-[0.9rem] lg:h-[1rem] lg:w-[1rem] sm:mr-1" />
+                  <Icon 
+                    className="sm:mr-1.5" 
+                    style={{ 
+                      width: 'clamp(0.8rem, 1vw, 1.25rem)', 
+                      height: 'clamp(0.8rem, 1vw, 1.25rem)' 
+                    }} 
+                  />
                   <span>{item.name}</span>
                 </Link>
               )
