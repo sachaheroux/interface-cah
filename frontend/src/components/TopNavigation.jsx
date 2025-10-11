@@ -39,8 +39,8 @@ export default function TopNavigation() {
         </div>
         
         {/* Navigation horizontale */}
-        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4 overflow-x-auto md:overflow-x-visible scrollbar-hide">
-          <div className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 min-w-max md:min-w-0 md:justify-center md:flex-1">
+        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4 overflow-x-auto lg:overflow-x-visible scrollbar-hide">
+          <div className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 min-w-max lg:min-w-0 lg:justify-center lg:flex-1">
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
