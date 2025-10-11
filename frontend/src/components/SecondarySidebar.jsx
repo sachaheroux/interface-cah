@@ -53,44 +53,15 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       ]
     
     case '/tenants':
-      return [
-        { name: 'Tous les locataires', icon: Users, active: true },
-        { name: 'Actifs', icon: List },
-        { name: 'En attente', icon: Clock },
-        { name: 'Ajouter locataire', icon: Plus },
-        { name: 'Gérer les baux', icon: FileText, href: '/leases' },
-        { name: 'Suivi des paiements', icon: DollarSign, href: '/rent-payments' },
-        { name: 'Transactions', icon: TrendingUp, href: '/transactions' },
-      ]
-    
     case '/leases':
-      return [
-        { name: 'Tous les baux', icon: FileText, active: true },
-        { name: 'Actifs', icon: List },
-        { name: 'Expirés', icon: Clock },
-        { name: 'À venir', icon: Calendar },
-        { name: 'Nouveau bail', icon: Plus },
-        { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
-      ]
-    
     case '/rent-payments':
-      return [
-        { name: 'Suivi des paiements', icon: DollarSign, active: true },
-        { name: 'Configuration', icon: SettingsIcon },
-        { name: 'Rapports', icon: FileText },
-        { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
-      ]
-    
     case '/transactions':
+      // Utiliser la même sidebar pour toutes les pages liées aux locataires
       return [
-        { name: 'Toutes les transactions', icon: DollarSign, active: true },
-        { name: 'Loyers', icon: List },
-        { name: 'Factures', icon: FileText },
-        { name: 'Maintenance', icon: Wrench },
-        { name: 'Revenus', icon: TrendingUp },
-        { name: 'Dépenses', icon: TrendingDown },
-        { name: 'Nouvelle transaction', icon: Plus },
-        { name: 'Retour aux locataires', icon: Users, href: '/tenants' },
+        { name: 'Tous les locataires', icon: Users, href: '/tenants', active: pathname === '/tenants' },
+        { name: 'Gérer les baux', icon: FileText, href: '/leases', active: pathname === '/leases' },
+        { name: 'Suivi des paiements', icon: DollarSign, href: '/rent-payments', active: pathname === '/rent-payments' },
+        { name: 'Transactions', icon: TrendingUp, href: '/transactions', active: pathname === '/transactions' },
       ]
     
     
