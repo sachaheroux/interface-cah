@@ -39,26 +39,28 @@ export default function TopNavigation() {
         </div>
         
         {/* Navigation horizontale */}
-        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4">
-          {navigation.map((item) => {
-            const Icon = item.icon
-            const isActive = location.pathname === item.href
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={clsx(
-                  'flex flex-col sm:flex-row items-center px-1 sm:px-2 lg:px-4 py-1 sm:py-2 text-xs sm:text-sm lg:text-base font-medium rounded-lg transition-colors duration-200',
-                  isActive 
-                    ? 'bg-primary-100 text-primary-700' 
-                    : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
-                )}
-              >
-                <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 sm:mr-2" />
-                <span className="text-xs sm:text-sm lg:text-base">{item.name}</span>
-              </Link>
-            )
-          })}
+        <nav className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 flex-1 justify-center mx-1 sm:mx-4 overflow-x-auto md:overflow-x-visible scrollbar-hide">
+          <div className="flex space-x-0.5 sm:space-x-1 lg:space-x-2 min-w-max md:min-w-0 md:justify-center md:flex-1">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={clsx(
+                    'flex flex-col sm:flex-row items-center px-1 sm:px-2 lg:px-4 py-1 sm:py-2 text-xs sm:text-sm lg:text-base font-medium rounded-lg transition-colors duration-200 whitespace-nowrap',
+                    isActive 
+                      ? 'bg-primary-100 text-primary-700' 
+                      : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
+                  )}
+                >
+                  <Icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 sm:mr-2" />
+                  <span className="text-xs sm:text-sm lg:text-base">{item.name}</span>
+                </Link>
+              )
+            })}
+          </div>
         </nav>
 
         {/* Right side */}
