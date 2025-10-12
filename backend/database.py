@@ -15,6 +15,9 @@ from sqlalchemy.orm import sessionmaker
 # Vérifier si on est sur Render avec une base de données PostgreSQL
 RENDER_DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# Initialiser DATABASE_PATH par défaut (pour compatibilité)
+DATABASE_PATH = None
+
 if RENDER_DATABASE_URL:
     # Sur Render avec base de données PostgreSQL
     print(f"🗄️ Base de données Render PostgreSQL détectée")
@@ -23,6 +26,7 @@ if RENDER_DATABASE_URL:
         echo=False,
         pool_pre_ping=True
     )
+    DATABASE_PATH = None  # Pas utilisé avec PostgreSQL
 else:
     # Configuration SQLite locale
     if os.environ.get("ENVIRONMENT") == "development" or os.name == 'nt':
@@ -56,14 +60,23 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class DatabaseManager:
     """Gestionnaire de base de données SQLite"""
     
-    def __init__(self, db_path: str = DATABASE_PATH):
-        self.db_path = db_path
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path or DATABASE_PATH
         self.connection = None
         self.engine = engine
         self.SessionLocal = SessionLocal
     
     def connect(self):
         """Établir une connexion à la base de données"""
+        # Si on utilise PostgreSQL, pas besoin de connexion SQLite
+        if RENDER_DATABASE_URL:
+            print("ℹ️ Utilisation de PostgreSQL, pas de connexion SQLite")
+            return True
+            
+        if not self.db_path:
+            print("⚠️ Aucun chemin de base de données SQLite défini")
+            return False
+            
         try:
             self.connection = sqlite3.connect(
                 self.db_path,
