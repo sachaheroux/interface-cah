@@ -10,8 +10,12 @@ Script de configuration initiale du système d'authentification
 
 import os
 import sys
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from datetime import datetime, date
+
+# Charger les variables d'environnement
+load_dotenv()
 
 # Services
 import auth_service

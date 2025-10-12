@@ -6,6 +6,10 @@ Vérifie que tout est prêt
 
 import os
 import sys
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 print("\n" + "="*70)
 print("🔍 VÉRIFICATION PRÉ-SETUP AUTHENTICATION")
