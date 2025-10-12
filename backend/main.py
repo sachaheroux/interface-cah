@@ -2292,5 +2292,361 @@ async def migrate_dette_restante():
         print(f"Erreur lors de la migration dette_restante: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
 
+# ============================================================================
+# ENDPOINT TEMPORAIRE POUR SETUP AUTHENTIFICATION (À SUPPRIMER APRÈS USAGE)
+# ============================================================================
+
+@app.post("/api/setup-authentication")
+async def setup_authentication():
+    """
+    Endpoint temporaire pour initialiser le système d'authentification
+    Crée les tables, la compagnie de Sacha, son compte admin, et migre les données
+    ⚠️ À SUPPRIMER APRÈS LA PREMIÈRE EXÉCUTION RÉUSSIE
+    """
+    try:
+        from sqlalchemy import create_engine, text
+        from sqlalchemy.orm import sessionmaker
+        import bcrypt
+        from datetime import datetime
+        
+        print("\n" + "="*70)
+        print("🚀 DÉBUT DU SETUP D'AUTHENTIFICATION SUR RENDER")
+        print("="*70)
+        
+        # Récupérer l'URL de la base de données
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            raise Exception("DATABASE_URL non configurée")
+        
+        print(f"📊 Connexion à la base de données...")
+        engine = create_engine(database_url)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        
+        with SessionLocal() as session:
+            # ÉTAPE 1: Créer les tables d'authentification dans le schéma public
+            print("\n1️⃣ Création des tables d'authentification (schéma public)...")
+            
+            # Table compagnies
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.compagnies (
+                    id_compagnie SERIAL PRIMARY KEY,
+                    nom_compagnie VARCHAR(255) NOT NULL UNIQUE,
+                    email_compagnie VARCHAR(255),
+                    telephone_compagnie VARCHAR(50),
+                    adresse_compagnie VARCHAR(255),
+                    site_web VARCHAR(255),
+                    numero_entreprise VARCHAR(50),
+                    schema_name VARCHAR(255) NOT NULL UNIQUE,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table utilisateurs
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.utilisateurs (
+                    id_utilisateur SERIAL PRIMARY KEY,
+                    id_compagnie INTEGER REFERENCES public.compagnies(id_compagnie) ON DELETE CASCADE,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    mot_de_passe_hash VARCHAR(255) NOT NULL,
+                    nom VARCHAR(255) NOT NULL,
+                    prenom VARCHAR(255) NOT NULL,
+                    age INTEGER,
+                    sexe VARCHAR(50),
+                    date_de_naissance DATE,
+                    telephone VARCHAR(50),
+                    poste VARCHAR(255),
+                    role VARCHAR(50) DEFAULT 'employe',
+                    statut VARCHAR(50) DEFAULT 'en_attente',
+                    est_admin_principal BOOLEAN DEFAULT FALSE,
+                    code_verification_email VARCHAR(6),
+                    code_verification_email_expiration TIMESTAMP,
+                    code_reset_mdp VARCHAR(6),
+                    code_reset_mdp_expiration TIMESTAMP,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table demandes_acces
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.demandes_acces (
+                    id_demande SERIAL PRIMARY KEY,
+                    id_compagnie INTEGER NOT NULL REFERENCES public.compagnies(id_compagnie) ON DELETE CASCADE,
+                    id_utilisateur INTEGER NOT NULL REFERENCES public.utilisateurs(id_utilisateur) ON DELETE CASCADE,
+                    statut VARCHAR(50) DEFAULT 'en_attente',
+                    traite_par INTEGER REFERENCES public.utilisateurs(id_utilisateur),
+                    date_traitement TIMESTAMP,
+                    commentaire_refus TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            session.commit()
+            print("✅ Tables d'authentification créées")
+            
+            # ÉTAPE 2: Créer la compagnie de Sacha
+            print("\n2️⃣ Création de la compagnie 'CAH Immobilier'...")
+            
+            # Vérifier si la compagnie existe déjà
+            check_company = session.execute(text("""
+                SELECT id_compagnie FROM public.compagnies WHERE nom_compagnie = 'CAH Immobilier'
+            """)).fetchone()
+            
+            if check_company:
+                company_id = check_company[0]
+                print(f"ℹ️ Compagnie existe déjà (ID: {company_id})")
+            else:
+                session.execute(text("""
+                    INSERT INTO public.compagnies 
+                    (nom_compagnie, email_compagnie, schema_name, date_creation)
+                    VALUES ('CAH Immobilier', 'sacha.heroux87@gmail.com', 'cah_immobilier', CURRENT_TIMESTAMP)
+                """))
+                session.commit()
+                
+                company_id = session.execute(text("""
+                    SELECT id_compagnie FROM public.compagnies WHERE nom_compagnie = 'CAH Immobilier'
+                """)).fetchone()[0]
+                
+                print(f"✅ Compagnie 'CAH Immobilier' créée (ID: {company_id})")
+            
+            # ÉTAPE 3: Créer le compte admin de Sacha
+            print("\n3️⃣ Création du compte admin pour Sacha...")
+            
+            # Vérifier si l'utilisateur existe déjà
+            check_user = session.execute(text("""
+                SELECT id_utilisateur FROM public.utilisateurs WHERE email = 'sacha.heroux87@gmail.com'
+            """)).fetchone()
+            
+            if check_user:
+                print(f"ℹ️ Utilisateur existe déjà (ID: {check_user[0]})")
+            else:
+                # Hasher le mot de passe
+                password = "Champion2024!"
+                password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                
+                session.execute(text("""
+                    INSERT INTO public.utilisateurs 
+                    (id_compagnie, email, mot_de_passe_hash, nom, prenom, role, statut, est_admin_principal, date_creation)
+                    VALUES (:company_id, 'sacha.heroux87@gmail.com', :password_hash, 'Heroux', 'Sacha', 'admin', 'actif', TRUE, CURRENT_TIMESTAMP)
+                """), {"company_id": company_id, "password_hash": password_hash})
+                session.commit()
+                
+                print("✅ Compte admin créé pour sacha.heroux87@gmail.com")
+            
+            # ÉTAPE 4: Créer le schéma dédié pour CAH Immobilier
+            print("\n4️⃣ Création du schéma 'cah_immobilier'...")
+            
+            session.execute(text("CREATE SCHEMA IF NOT EXISTS cah_immobilier"))
+            session.commit()
+            print("✅ Schéma 'cah_immobilier' créé")
+            
+            # ÉTAPE 5: Créer les tables dans le nouveau schéma
+            print("\n5️⃣ Création des tables de données dans 'cah_immobilier'...")
+            
+            session.execute(text("SET search_path TO cah_immobilier, public"))
+            
+            # Créer toutes les tables (immeubles, unites, locataires, baux, transactions, paiements_loyers)
+            # (Je vais copier le schéma actuel du public vers le nouveau schéma)
+            
+            # Table immeubles
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.immeubles (
+                    id_immeuble SERIAL PRIMARY KEY,
+                    adresse TEXT NOT NULL,
+                    ville TEXT,
+                    code_postal TEXT,
+                    nombre_unites INTEGER,
+                    annee_construction INTEGER,
+                    type_batiment TEXT,
+                    superficie_terrain DECIMAL(10, 2),
+                    prix_achete DECIMAL(12, 2),
+                    valeur_actuel DECIMAL(12, 2),
+                    dette_restante DECIMAL(12, 2) DEFAULT 0,
+                    mise_de_fond DECIMAL(12, 2),
+                    taux_interet DECIMAL(5, 2),
+                    duree_hypotheque INTEGER,
+                    banque TEXT,
+                    proprietaire TEXT,
+                    notes TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table unites
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.unites (
+                    id_unite SERIAL PRIMARY KEY,
+                    id_immeuble INTEGER REFERENCES cah_immobilier.immeubles(id_immeuble) ON DELETE CASCADE,
+                    numero_unite TEXT NOT NULL,
+                    nombre_chambres INTEGER,
+                    nombre_salles_bain DECIMAL(3, 1),
+                    superficie DECIMAL(10, 2),
+                    loyer_mensuel DECIMAL(10, 2),
+                    statut TEXT,
+                    notes TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table locataires
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.locataires (
+                    id_locataire SERIAL PRIMARY KEY,
+                    nom TEXT NOT NULL,
+                    prenom TEXT NOT NULL,
+                    email TEXT,
+                    telephone TEXT,
+                    date_naissance DATE,
+                    profession TEXT,
+                    employeur TEXT,
+                    revenu_annuel DECIMAL(12, 2),
+                    statut TEXT DEFAULT 'actif',
+                    notes TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table baux
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.baux (
+                    id_bail SERIAL PRIMARY KEY,
+                    id_locataire INTEGER REFERENCES cah_immobilier.locataires(id_locataire) ON DELETE CASCADE,
+                    id_unite INTEGER REFERENCES cah_immobilier.unites(id_unite) ON DELETE CASCADE,
+                    date_debut DATE NOT NULL,
+                    date_fin DATE NOT NULL,
+                    prix_loyer DECIMAL(10, 2) NOT NULL,
+                    depot_garantie DECIMAL(10, 2),
+                    conditions_speciales TEXT,
+                    pdf_bail TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table transactions
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.transactions (
+                    id_transaction SERIAL PRIMARY KEY,
+                    id_immeuble INTEGER REFERENCES cah_immobilier.immeubles(id_immeuble) ON DELETE CASCADE,
+                    type TEXT NOT NULL,
+                    categorie TEXT,
+                    montant DECIMAL(12, 2) NOT NULL,
+                    date_de_transaction DATE NOT NULL,
+                    methode_de_paiement TEXT,
+                    reference TEXT,
+                    source TEXT,
+                    pdf_transaction TEXT,
+                    notes TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            
+            # Table paiements_loyers
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS cah_immobilier.paiements_loyers (
+                    id_paiement SERIAL PRIMARY KEY,
+                    id_bail INTEGER REFERENCES cah_immobilier.baux(id_bail) ON DELETE CASCADE,
+                    mois INTEGER NOT NULL,
+                    annee INTEGER NOT NULL,
+                    date_paiement_reelle DATE NOT NULL,
+                    montant_paye DECIMAL(10, 2) NOT NULL,
+                    notes TEXT,
+                    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(id_bail, mois, annee)
+                )
+            """))
+            
+            session.commit()
+            print("✅ Tables de données créées dans 'cah_immobilier'")
+            
+            # ÉTAPE 6: Migrer les données existantes depuis public vers cah_immobilier
+            print("\n6️⃣ Migration des données existantes...")
+            
+            # Compter les données à migrer
+            counts = {}
+            for table in ['immeubles', 'unites', 'locataires', 'baux', 'transactions', 'paiements_loyers']:
+                count = session.execute(text(f"SELECT COUNT(*) FROM public.{table}")).scalar()
+                counts[table] = count
+                print(f"   📊 {table}: {count} entrées")
+            
+            # Migrer les données
+            if counts['immeubles'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.immeubles 
+                    SELECT * FROM public.immeubles
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            if counts['unites'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.unites 
+                    SELECT * FROM public.unites
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            if counts['locataires'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.locataires 
+                    SELECT * FROM public.locataires
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            if counts['baux'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.baux 
+                    SELECT * FROM public.baux
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            if counts['transactions'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.transactions 
+                    SELECT * FROM public.transactions
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            if counts['paiements_loyers'] > 0:
+                session.execute(text("""
+                    INSERT INTO cah_immobilier.paiements_loyers 
+                    SELECT * FROM public.paiements_loyers
+                    ON CONFLICT DO NOTHING
+                """))
+            
+            session.commit()
+            print("✅ Données migrées avec succès")
+            
+            # Réinitialiser le search_path
+            session.execute(text("SET search_path TO public"))
+            session.commit()
+        
+        print("\n" + "="*70)
+        print("✅ SETUP D'AUTHENTIFICATION TERMINÉ AVEC SUCCÈS !")
+        print("="*70)
+        
+        return {
+            "success": True,
+            "message": "Setup d'authentification terminé avec succès",
+            "details": {
+                "compagnie_creee": "CAH Immobilier",
+                "schema": "cah_immobilier",
+                "admin_email": "sacha.heroux87@gmail.com",
+                "donnees_migrees": counts
+            }
+        }
+        
+    except Exception as e:
+        print(f"\n❌ ERREUR DURANT LE SETUP: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur durant le setup: {str(e)}")
+
+# ============================================================================
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
