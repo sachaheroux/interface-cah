@@ -74,19 +74,18 @@ export default function Register() {
     try {
       const registerData = {
         email: formData.email,
-        password: formData.password,
+        mot_de_passe: formData.password,
         nom: formData.nom,
         prenom: formData.prenom,
         telephone: formData.telephone || null,
-        date_de_naissance: formData.date_de_naissance || null,
-        age: formData.age ? parseInt(formData.age) : null,
+        date_naissance: formData.date_de_naissance || null,
         sexe: formData.sexe || null,
         poste: formData.poste || null
       }
 
       const response = await api.post('/api/auth/register', registerData)
       
-      setUserId(response.data.user.id_utilisateur)
+      setUserId(response.data.user_id)
       setStep(3) // Passer à l'étape de vérification email
     } catch (err) {
       console.error('Erreur d\'inscription:', err)
