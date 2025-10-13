@@ -843,7 +843,17 @@ async def create_sacha(db: Session = Depends(get_auth_db)):
         # Vérifier si Sacha existe déjà
         existing = db.query(Utilisateur).filter_by(email="sacha.heroux87@gmail.com").first()
         if existing:
-            return {"message": "Sacha existe déjà", "user_id": existing.id_utilisateur}
+            # Mettre à jour son mot de passe avec le nouveau hash
+            existing.mot_de_passe_hash = auth_service.hash_password("Champion2024!")
+            existing.statut = "actif"
+            existing.est_admin_principal = True
+            existing.email_verifie = True
+            db.commit()
+            return {
+                "message": "Sacha existe déjà - mot de passe mis à jour",
+                "user_id": existing.id_utilisateur,
+                "statut": existing.statut
+            }
         
         # Trouver la compagnie CAH Immobilier
         company = db.query(Compagnie).filter_by(nom_compagnie="CAH Immobilier").first()
