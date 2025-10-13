@@ -834,6 +834,47 @@ async def debug_users(db: Session = Depends(get_auth_db)):
     except Exception as e:
         return {"error": str(e)}
 
+@router.post("/debug/migrate-code-acces")
+async def migrate_code_acces(db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Ajouter la colonne code_acces et générer un code pour CAH Immobilier
+    """
+    try:
+        from sqlalchemy import text
+        from auth_database_service import engine
+        
+        with engine.connect() as conn:
+            # Vérifier si la colonne existe
+            result = conn.execute(text("PRAGMA table_info(compagnies)"))
+            columns = [row[1] for row in result]
+            
+            if 'code_acces' not in columns:
+                # Ajouter la colonne
+                conn.execute(text("ALTER TABLE compagnies ADD COLUMN code_acces VARCHAR(20)"))
+                conn.commit()
+        
+        # Générer un code pour CAH Immobilier
+        company = db.query(Compagnie).filter_by(nom_compagnie="CAH Immobilier").first()
+        if company and not company.code_acces:
+            code_acces = auth_service.generate_company_access_code()
+            company.code_acces = code_acces
+            db.commit()
+            return {
+                "success": True,
+                "message": "Migration réussie",
+                "code_acces": code_acces
+            }
+        elif company:
+            return {
+                "success": True,
+                "message": "Code déjà existant",
+                "code_acces": company.code_acces
+            }
+        else:
+            return {"error": "Compagnie non trouvée"}
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.post("/debug/create-sacha")
 async def create_sacha(db: Session = Depends(get_auth_db)):
     """

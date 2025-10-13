@@ -54,18 +54,23 @@ def create_default_company():
         
         company_id = None
         if not existing:
+            # Générer un code d'accès unique
+            import auth_service
+            code_acces = auth_service.generate_company_access_code()
+            
             # Créer la compagnie par défaut
             default_company = Compagnie(
                 nom_compagnie="CAH Immobilier",
                 email_compagnie="sacha.heroux87@gmail.com",
                 schema_name="cah_database",  # Pointe vers cah_database.db
+                code_acces=code_acces,
                 date_creation=datetime.utcnow()
             )
             db.add(default_company)
             db.commit()
             db.refresh(default_company)
             company_id = default_company.id_compagnie
-            print(f"✅ Compagnie 'CAH Immobilier' créée (ID: {company_id})")
+            print(f"✅ Compagnie 'CAH Immobilier' créée (ID: {company_id}, Code: {code_acces})")
         else:
             company_id = existing.id_compagnie
             print(f"ℹ️ Compagnie 'CAH Immobilier' existe déjà (ID: {company_id})")

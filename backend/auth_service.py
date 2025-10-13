@@ -122,6 +122,19 @@ def generate_reset_code(length: int = 8) -> str:
     return generate_verification_code(length)
 
 
+def generate_company_access_code() -> str:
+    """
+    Générer un code d'accès unique pour une compagnie
+    Format: XXX-XXX (6 caractères alphanumériques en majuscules)
+    
+    Returns:
+        Code d'accès au format XXX-XXX
+    """
+    characters = string.ascii_uppercase + string.digits
+    code = ''.join(secrets.choice(characters) for _ in range(6))
+    return f"{code[:3]}-{code[3:]}"
+
+
 def is_code_expired(expiration_date: datetime) -> bool:
     """
     Vérifier si un code a expiré

@@ -25,6 +25,7 @@ class Compagnie(Base):
     site_web = Column(String(255))
     numero_entreprise = Column(String(100))  # NEQ ou autre
     schema_name = Column(String(100), nullable=False, unique=True, index=True)  # Nom du schéma PostgreSQL
+    code_acces = Column(String(20), unique=True, index=True)  # Code unique pour rejoindre la compagnie
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -44,6 +45,7 @@ class Compagnie(Base):
             "site_web": self.site_web,
             "numero_entreprise": self.numero_entreprise,
             "schema_name": self.schema_name,
+            "code_acces": self.code_acces,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }
