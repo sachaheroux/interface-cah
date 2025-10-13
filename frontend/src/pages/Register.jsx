@@ -16,7 +16,8 @@ export default function Register() {
     date_de_naissance: '',
     age: '',
     sexe: '',
-    poste: ''
+    poste: '',
+    role: 'employe' // Par défaut employé
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -105,16 +106,34 @@ export default function Register() {
     setLoading(true)
 
     try {
+      // Vérifier l'email
       await api.post('/api/auth/verify-email', {
-        user_id: userId,
+        email: formData.email,
         code: verificationCode
       })
 
-      // Rediriger vers la page de setup de compagnie
-      navigate('/setup-company', { 
+      // Récupérer le token JWT pour la requête suivante
+      const loginResponse = await api.post('/api/auth/login', {
+        email: formData.email,
+        mot_de_passe: formData.password
+      })
+
+      const { token } = loginResponse.data
+      localStorage.setItem('auth_token', token)
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      // Rejoindre automatiquement CAH Immobilier avec le rôle choisi
+      await api.post('/api/auth/setup-company', {
+        action: 'join',
+        id_compagnie: 1, // CAH Immobilier
+        role: formData.role
+      })
+
+      // Rediriger vers une page d'attente d'approbation
+      navigate('/pending-approval', { 
         state: { 
           email: formData.email,
-          userId: userId 
+          role: formData.role 
         } 
       })
     } catch (err) {
@@ -341,6 +360,46 @@ export default function Register() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Choix du rôle */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-900 mb-3">
+                  Rôle souhaité dans CAH Immobilier *
+                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center p-3 bg-white border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="employe"
+                      checked={formData.role === 'employe'}
+                      onChange={(e) => handleChange('role', e.target.value)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div className="ml-3">
+                      <div className="font-medium text-gray-900">Employé</div>
+                      <div className="text-sm text-gray-600">Accès limité aux fonctionnalités employés</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center p-3 bg-white border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={formData.role === 'admin'}
+                      onChange={(e) => handleChange('role', e.target.value)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div className="ml-3">
+                      <div className="font-medium text-gray-900">Administrateur</div>
+                      <div className="text-sm text-gray-600">Accès complet à toutes les fonctionnalités</div>
+                    </div>
+                  </label>
+                </div>
+                <p className="mt-3 text-xs text-gray-600">
+                  ⓘ Votre demande sera soumise à l'approbation de l'administrateur principal
+                </p>
               </div>
 
               <div className="flex space-x-4">

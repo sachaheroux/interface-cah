@@ -24,6 +24,7 @@ import UnitReportDetails from './pages/UnitReportDetails'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import CompanySetup from './pages/CompanySetup'
+import PendingApproval from './pages/PendingApproval'
 
 // Composant pour protéger les routes (authentification requise)
 function ProtectedRoute({ children }) {
@@ -63,6 +64,7 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/setup-company" element={<CompanySetup />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
             
             {/* Pages protégées */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
