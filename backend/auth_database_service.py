@@ -98,6 +98,8 @@ def create_default_admin_user(db: SessionLocal, company_id: int):
                 nom="Heroux",
                 prenom="Sacha",
                 role="admin",
+                est_admin_principal=True,
+                statut="actif",
                 email_verifie=True,
                 date_creation=datetime.utcnow()
             )
