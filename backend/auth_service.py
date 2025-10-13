@@ -7,18 +7,15 @@ Gestion JWT, bcrypt, codes de vérification
 import os
 import secrets
 import string
+import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 
 # Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production-12345")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30  # Token valide 30 jours (session persistante)
-
-# Configuration bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # ==========================================
@@ -27,12 +24,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """
-    Hasher un mot de passe avec bcrypt
+    Hasher un mot de passe avec bcrypt directement
     Limite à 72 bytes pour compatibilité bcrypt
     """
-    # Bcrypt a une limite de 72 bytes, tronquer si nécessaire
-    password_bytes = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(password_bytes)
+    # Bcrypt a une limite de 72 bytes
+    password_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -40,8 +39,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Vérifier un mot de passe contre son hash
     """
     # Même limitation à 72 bytes pour la vérification
-    password_bytes = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.verify(password_bytes, hashed_password)
+    password_bytes = plain_password.encode('utf-8')[:72]
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
 # ==========================================
