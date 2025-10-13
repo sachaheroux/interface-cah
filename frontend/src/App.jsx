@@ -22,6 +22,7 @@ import Settings from './pages/Settings'
 import Reports from './pages/Reports'
 import UnitReportDetails from './pages/UnitReportDetails'
 import Login from './pages/Login'
+import Register from './pages/Register'
 
 // Composant pour protéger les routes (authentification requise)
 function ProtectedRoute({ children }) {
@@ -59,6 +60,7 @@ function AppContent() {
           <Routes>
             {/* Pages publiques */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             
             {/* Pages protégées */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
