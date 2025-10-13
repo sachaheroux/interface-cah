@@ -14,10 +14,10 @@ from sqlalchemy.orm import Session
 import auth_service
 import email_service
 from models_auth import Compagnie, Utilisateur, DemandeAcces
-from database_service_francais import DatabaseService
+from auth_database_service import get_auth_db, get_company_database_path
 
 # Router
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 # ==========================================
 # MODÈLES PYDANTIC (Validation des données)
@@ -70,17 +70,9 @@ class ApprovalAction(BaseModel):
 # ==========================================
 # DÉPENDANCES
 # ==========================================
+# Note: get_auth_db est maintenant importé de auth_database_service
 
-def get_db():
-    """Obtenir une session de base de données (schéma public pour auth)"""
-    db_service = DatabaseService()
-    session = db_service.get_session()
-    try:
-        yield session
-    finally:
-        session.close()
-
-def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> Utilisateur:
+def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_auth_db)) -> Utilisateur:
     """
     Middleware pour obtenir l'utilisateur connecté à partir du token JWT
     """
@@ -117,7 +109,7 @@ def require_admin(current_user: Utilisateur = Depends(get_current_user)) -> Util
 # ==========================================
 
 @router.post("/register")
-async def register(data: RegisterRequest, db: Session = Depends(get_db)):
+async def register(data: RegisterRequest, db: Session = Depends(get_auth_db)):
     """
     Étape 1 : Inscription d'un nouvel utilisateur
     - Crée le compte utilisateur (en attente)
@@ -192,7 +184,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'inscription: {str(e)}")
 
 @router.post("/verify-email")
-async def verify_email(data: VerifyEmailRequest, db: Session = Depends(get_db)):
+async def verify_email(data: VerifyEmailRequest, db: Session = Depends(get_auth_db)):
     """
     Étape 2 : Vérifier l'email avec le code reçu
     """
@@ -234,7 +226,7 @@ async def verify_email(data: VerifyEmailRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la vérification: {str(e)}")
 
 @router.post("/resend-verification")
-async def resend_verification(email: EmailStr, db: Session = Depends(get_db)):
+async def resend_verification(email: EmailStr, db: Session = Depends(get_auth_db)):
     """
     Renvoyer un code de vérification
     """
@@ -281,7 +273,7 @@ async def resend_verification(email: EmailStr, db: Session = Depends(get_db)):
 # ==========================================
 
 @router.post("/login")
-async def login(data: LoginRequest, db: Session = Depends(get_db)):
+async def login(data: LoginRequest, db: Session = Depends(get_auth_db)):
     """
     Connexion d'un utilisateur
     Retourne un token JWT
@@ -370,7 +362,7 @@ async def logout():
 async def setup_company(
     data: CompanySetupRequest, 
     current_user: Utilisateur = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_auth_db)
 ):
     """
     Étape 3 : Créer ou rejoindre une compagnie
@@ -498,7 +490,7 @@ async def setup_company(
         raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
 @router.get("/companies")
-async def list_companies(db: Session = Depends(get_db)):
+async def list_companies(db: Session = Depends(get_auth_db)):
     """
     Lister toutes les compagnies disponibles (pour rejoindre)
     """
@@ -517,7 +509,7 @@ async def list_companies(db: Session = Depends(get_db)):
 # ==========================================
 
 @router.post("/forgot-password")
-async def forgot_password(data: PasswordResetRequest, db: Session = Depends(get_db)):
+async def forgot_password(data: PasswordResetRequest, db: Session = Depends(get_auth_db)):
     """
     Demander un code de réinitialisation de mot de passe
     """
@@ -559,7 +551,7 @@ async def forgot_password(data: PasswordResetRequest, db: Session = Depends(get_
         raise HTTPException(status_code=500, detail="Erreur lors de l'envoi du code")
 
 @router.post("/reset-password")
-async def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_db)):
+async def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_auth_db)):
     """
     Réinitialiser le mot de passe avec le code reçu
     """
@@ -608,7 +600,7 @@ async def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_d
 @router.get("/pending-requests")
 async def get_pending_requests(
     current_user: Utilisateur = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_auth_db)
 ):
     """
     Obtenir les demandes d'accès en attente pour la compagnie de l'admin
@@ -632,7 +624,7 @@ async def get_pending_requests(
 async def approve_request(
     data: ApprovalAction,
     current_user: Utilisateur = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_auth_db)
 ):
     """
     Approuver ou refuser une demande d'accès

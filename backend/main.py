@@ -26,6 +26,7 @@ from monitoring_service import database_monitor
 # Import des routes d'authentification
 try:
     from auth_routes import router as auth_router
+    from auth_database_service import init_auth_database
     AUTH_ENABLED = True
     print("✅ Routes d'authentification chargées")
 except ImportError as e:
@@ -50,10 +51,18 @@ async def startup_event():
     print("🗄️ Initialisation de la base de données SQLite...")
     
     if init_database():
-        print("✅ Base de données initialisée avec succès")
+        print("✅ Base de données principale initialisée avec succès")
     else:
-        print("❌ Erreur lors de l'initialisation de la base de données")
+        print("❌ Erreur lors de l'initialisation de la base de données principale")
         raise Exception("Impossible d'initialiser la base de données")
+    
+    # Initialiser la base de données d'authentification (si activée)
+    if AUTH_ENABLED:
+        print("🔐 Initialisation de la base de données d'authentification...")
+        if init_auth_database():
+            print("✅ Base de données d'authentification initialisée avec succès")
+        else:
+            print("⚠️ Erreur lors de l'initialisation de la DB auth (non bloquant)")
 
 # Configuration CORS pour permettre les requêtes du frontend
 app.add_middleware(
