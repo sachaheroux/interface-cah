@@ -39,8 +39,14 @@ export default function Login() {
 
       // Vérifier si l'utilisateur a une compagnie
       if (user.id_compagnie) {
-        // Rediriger vers le dashboard
-        navigate('/buildings')
+        // Rediriger selon le rôle
+        if (user.role === 'admin') {
+          navigate('/buildings')
+        } else if (user.role === 'employe') {
+          navigate('/employees')
+        } else {
+          navigate('/buildings') // Fallback
+        }
       } else {
         // Rediriger vers la configuration de compagnie
         navigate('/setup-company')

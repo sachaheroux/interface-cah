@@ -17,14 +17,14 @@ import {
 import clsx from 'clsx'
 
 const navigation = [
-  { name: 'Immeubles', href: '/buildings', icon: Building2 },
-  { name: 'Locataires', href: '/tenants', icon: Users },
-  { name: 'Transactions', href: '/transactions', icon: Receipt },
-  { name: 'Employés', href: '/employees', icon: UserCheck },
-  { name: 'Sous-traitants', href: '/contractors', icon: Truck },
-  { name: 'Projets', href: '/projects', icon: Hammer },
-  { name: 'Documents', href: '/documents', icon: FileText },
-  { name: 'Paramètres', href: '/settings', icon: Settings },
+  { name: 'Immeubles', href: '/buildings', icon: Building2, role: 'admin' },
+  { name: 'Locataires', href: '/tenants', icon: Users, role: 'admin' },
+  { name: 'Transactions', href: '/transactions', icon: Receipt, role: 'admin' },
+  { name: 'Employés', href: '/employees', icon: UserCheck, role: 'admin' },
+  { name: 'Sous-traitants', href: '/contractors', icon: Truck, role: 'admin' },
+  { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
+  { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
+  { name: 'Paramètres', href: '/settings', icon: Settings, role: 'admin' },
 ]
 
 export default function TopNavigation() {
@@ -64,7 +64,22 @@ export default function TopNavigation() {
         {/* Navigation horizontale - s'adapte automatiquement à la largeur */}
         <nav className="flex-1 overflow-x-auto scrollbar-hide mx-1 sm:mx-2">
           <div className="flex justify-center items-center h-full min-w-max" style={{ gap: 'max(0.2vw, 0.25rem)' }}>
-            {navigation.map((item) => {
+            {navigation
+              .filter((item) => {
+                // Filtrer selon le rôle utilisateur
+                if (!user) return false
+                
+                // Si l'utilisateur est admin, il voit tout
+                if (user.role === 'admin') return true
+                
+                // Si l'utilisateur est employé, il ne voit que l'onglet Employés
+                if (user.role === 'employe') {
+                  return item.name === 'Employés'
+                }
+                
+                return false
+              })
+              .map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
               return (

@@ -40,6 +40,7 @@ function ProtectedRoute({ children }) {
 // Composant pour vérifier le statut de l'utilisateur
 function StatusProtectedRoute({ children }) {
   const [userStatus, setUserStatus] = React.useState(null)
+  const [userRole, setUserRole] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
   
   React.useEffect(() => {
@@ -62,6 +63,7 @@ function StatusProtectedRoute({ children }) {
         if (response.ok) {
           const userData = await response.json()
           setUserStatus(userData.user.statut)
+          setUserRole(userData.user.role)
         } else {
           // Token invalide, rediriger vers login
           localStorage.removeItem('auth_token')
@@ -123,6 +125,75 @@ function StatusProtectedRoute({ children }) {
   return children
 }
 
+// Composant pour protéger les routes admin
+function AdminProtectedRoute({ children }) {
+  const [userRole, setUserRole] = React.useState(null)
+  const [loading, setLoading] = React.useState(true)
+  
+  React.useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setLoading(false)
+          return
+        }
+        
+        const response = await fetch('https://interface-cah-backend.onrender.com/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const userData = await response.json()
+          setUserRole(userData.user.role)
+        } else {
+          setUserRole('invalid')
+        }
+      } catch (error) {
+        console.error('Erreur vérification rôle:', error)
+        setUserRole('error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    checkUserRole()
+  }, [])
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification des permissions...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  if (userRole !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Accès refusé</h1>
+          <p className="text-gray-600">Cette section est réservée aux administrateurs.</p>
+          <button 
+            onClick={() => window.location.href = '/employees'}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retour aux Employés
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
+  return children
+}
+
 function AppContent() {
   const location = useLocation()
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
@@ -153,22 +224,22 @@ function AppContent() {
             <Route path="/pending-approval" element={<PendingApproval />} />
             
             {/* Pages protégées */}
-            <Route path="/" element={<StatusProtectedRoute><Dashboard /></StatusProtectedRoute>} />
-            <Route path="/buildings" element={<StatusProtectedRoute><Buildings /></StatusProtectedRoute>} />
-            <Route path="/buildings/analysis" element={<StatusProtectedRoute><ProfitabilityAnalysis /></StatusProtectedRoute>} />
-            <Route path="/buildings/mortgage" element={<StatusProtectedRoute><MortgageAnalysis /></StatusProtectedRoute>} />
-            <Route path="/buildings/property-analysis" element={<StatusProtectedRoute><PropertyAnalysis /></StatusProtectedRoute>} />
-            <Route path="/tenants" element={<StatusProtectedRoute><Tenants /></StatusProtectedRoute>} />
-            <Route path="/leases" element={<StatusProtectedRoute><Leases /></StatusProtectedRoute>} />
-            <Route path="/rent-payments" element={<StatusProtectedRoute><RentPayments /></StatusProtectedRoute>} />
-            <Route path="/transactions" element={<StatusProtectedRoute><Transactions /></StatusProtectedRoute>} />
+            <Route path="/" element={<AdminProtectedRoute><Dashboard /></AdminProtectedRoute>} />
+            <Route path="/buildings" element={<AdminProtectedRoute><Buildings /></AdminProtectedRoute>} />
+            <Route path="/buildings/analysis" element={<AdminProtectedRoute><ProfitabilityAnalysis /></AdminProtectedRoute>} />
+            <Route path="/buildings/mortgage" element={<AdminProtectedRoute><MortgageAnalysis /></AdminProtectedRoute>} />
+            <Route path="/buildings/property-analysis" element={<AdminProtectedRoute><PropertyAnalysis /></AdminProtectedRoute>} />
+            <Route path="/tenants" element={<AdminProtectedRoute><Tenants /></AdminProtectedRoute>} />
+            <Route path="/leases" element={<AdminProtectedRoute><Leases /></AdminProtectedRoute>} />
+            <Route path="/rent-payments" element={<AdminProtectedRoute><RentPayments /></AdminProtectedRoute>} />
+            <Route path="/transactions" element={<AdminProtectedRoute><Transactions /></AdminProtectedRoute>} />
             <Route path="/employees" element={<StatusProtectedRoute><Employees /></StatusProtectedRoute>} />
-            <Route path="/contractors" element={<StatusProtectedRoute><Contractors /></StatusProtectedRoute>} />
-            <Route path="/projects" element={<StatusProtectedRoute><Projects /></StatusProtectedRoute>} />
-            <Route path="/documents" element={<StatusProtectedRoute><Documents /></StatusProtectedRoute>} />
-            <Route path="/settings" element={<StatusProtectedRoute><Settings /></StatusProtectedRoute>} />
-            <Route path="/reports" element={<StatusProtectedRoute><Reports /></StatusProtectedRoute>} />
-            <Route path="/unit-reports/:unitId/:year" element={<StatusProtectedRoute><UnitReportDetails /></StatusProtectedRoute>} />
+            <Route path="/contractors" element={<AdminProtectedRoute><Contractors /></AdminProtectedRoute>} />
+            <Route path="/projects" element={<AdminProtectedRoute><Projects /></AdminProtectedRoute>} />
+            <Route path="/documents" element={<AdminProtectedRoute><Documents /></AdminProtectedRoute>} />
+            <Route path="/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
+            <Route path="/reports" element={<AdminProtectedRoute><Reports /></AdminProtectedRoute>} />
+            <Route path="/unit-reports/:unitId/:year" element={<AdminProtectedRoute><UnitReportDetails /></AdminProtectedRoute>} />
           </Routes>
         </main>
       </div>
