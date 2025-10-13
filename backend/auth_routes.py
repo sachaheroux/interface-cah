@@ -959,6 +959,36 @@ async def cleanup_all_users(db: Session = Depends(get_auth_db)):
         db.rollback()
         return {"error": str(e)}
 
+@router.post("/debug/delete-user-by-email")
+async def delete_user_by_email(data: dict, db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Supprimer un utilisateur par email
+    """
+    try:
+        from models_auth import Utilisateur
+        
+        email = data.get("email")
+        if not email:
+            return {"error": "Email requis"}
+        
+        # Trouver l'utilisateur
+        user = db.query(Utilisateur).filter(Utilisateur.email == email).first()
+        
+        if not user:
+            return {"success": True, "message": f"Aucun utilisateur trouvé avec l'email {email}"}
+        
+        # Supprimer l'utilisateur
+        db.delete(user)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Utilisateur {email} supprimé avec succès"
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
 @router.post("/debug/migrate-code-acces")
 async def migrate_code_acces(db: Session = Depends(get_auth_db)):
     """
