@@ -112,7 +112,7 @@ export default function Register() {
 
     try {
       // Vérifier l'email
-      await api.post('/api/auth/verify-email', {
+      const response = await api.post('/api/auth/verify-email', {
         email: formData.email,
         code: verificationCode
       })
