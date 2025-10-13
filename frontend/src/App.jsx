@@ -1,6 +1,6 @@
 import React from 'react'
 // Test deploiement - ligne propre
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import TopNavigation from './components/TopNavigation'
 import SecondarySidebar from './components/SecondarySidebar'
 import './utils/cleanupMigration'
@@ -21,43 +21,62 @@ import Documents from './pages/Documents'
 import Settings from './pages/Settings'
 import Reports from './pages/Reports'
 import UnitReportDetails from './pages/UnitReportDetails'
+import Login from './pages/Login'
+
+// Composant pour protéger les routes (authentification requise)
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('auth_token')
+  
+  if (!token) {
+    return <Navigate to="/login" replace />
+  }
+  
+  return children
+}
 
 function AppContent() {
   const location = useLocation()
-  const showSecondarySidebar = location.pathname !== '/'
+  const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation horizontale fixe en haut */}
-      <TopNavigation />
+      {/* Navigation horizontale fixe en haut (sauf pages auth) */}
+      {!isAuthPage && <TopNavigation />}
       
       
       {/* Contenu principal */}
-      <div className="flex pt-20 sm:pt-16">
+      <div className={`flex ${!isAuthPage ? 'pt-20 sm:pt-16' : ''}`}>
         {/* Sidebar secondaire conditionnelle */}
-        <SecondarySidebar />
+        {!isAuthPage && <SecondarySidebar />}
         
         {/* Zone de contenu principal */}
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-3 lg:p-6 ${
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 ${
+          isAuthPage ? '' : 'p-3 lg:p-6'
+        } ${
           showSecondarySidebar ? 'md:ml-48 lg:ml-64' : ''
         }`}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/buildings" element={<Buildings />} />
-            <Route path="/buildings/analysis" element={<ProfitabilityAnalysis />} />
-            <Route path="/buildings/mortgage" element={<MortgageAnalysis />} />
-            <Route path="/buildings/property-analysis" element={<PropertyAnalysis />} />
-            <Route path="/tenants" element={<Tenants />} />
-            <Route path="/leases" element={<Leases />} />
-            <Route path="/rent-payments" element={<RentPayments />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/contractors" element={<Contractors />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/unit-reports/:unitId/:year" element={<UnitReportDetails />} />
+            {/* Pages publiques */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Pages protégées */}
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/buildings" element={<ProtectedRoute><Buildings /></ProtectedRoute>} />
+            <Route path="/buildings/analysis" element={<ProtectedRoute><ProfitabilityAnalysis /></ProtectedRoute>} />
+            <Route path="/buildings/mortgage" element={<ProtectedRoute><MortgageAnalysis /></ProtectedRoute>} />
+            <Route path="/buildings/property-analysis" element={<ProtectedRoute><PropertyAnalysis /></ProtectedRoute>} />
+            <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
+            <Route path="/leases" element={<ProtectedRoute><Leases /></ProtectedRoute>} />
+            <Route path="/rent-payments" element={<ProtectedRoute><RentPayments /></ProtectedRoute>} />
+            <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+            <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+            <Route path="/contractors" element={<ProtectedRoute><Contractors /></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/unit-reports/:unitId/:year" element={<ProtectedRoute><UnitReportDetails /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

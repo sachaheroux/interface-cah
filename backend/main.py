@@ -23,11 +23,24 @@ from backup_service import backup_service
 from validation_service import data_validator, consistency_checker, ValidationLevel
 from monitoring_service import database_monitor
 
+# Import des routes d'authentification
+try:
+    from auth_routes import router as auth_router
+    AUTH_ENABLED = True
+    print("✅ Routes d'authentification chargées")
+except ImportError as e:
+    AUTH_ENABLED = False
+    print(f"⚠️ Routes d'authentification non disponibles: {e}")
+
 app = FastAPI(
     title="Interface CAH API",
     description="API pour la gestion de construction - Interface CAH",
     version="1.0.0"
 )
+
+# Inclure les routes d'authentification si disponibles
+if AUTH_ENABLED:
+    app.include_router(auth_router, prefix="/api/auth", tags=["Authentification"])
 
 # Initialiser la base de données au démarrage
 @app.on_event("startup")
