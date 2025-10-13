@@ -117,10 +117,17 @@ async def register(data: RegisterRequest, db: Session = Depends(get_auth_db)):
     - Envoie un code de vérification par email
     """
     try:
-        # Vérifier que l'email n'existe pas déjà
+        # Vérifier si l'email existe déjà
         existing_user = db.query(Utilisateur).filter(Utilisateur.email == data.email).first()
+        
         if existing_user:
-            raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
+            # Si l'utilisateur existe et est vérifié, refuser
+            if existing_user.email_verifie:
+                raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
+            
+            # Si l'utilisateur existe mais n'est pas vérifié, le supprimer pour permettre une nouvelle inscription
+            db.delete(existing_user)
+            db.commit()
         
         # Valider le mot de passe
         is_valid, error_msg = auth_service.is_strong_password(data.mot_de_passe)
@@ -907,6 +914,38 @@ async def cleanup_pending_users(db: Session = Depends(get_auth_db)):
         return {
             "success": True,
             "message": f"Supprimé {deleted_count} utilisateurs en attente",
+            "deleted_emails": deleted_emails
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
+@router.post("/debug/cleanup-all-users")
+async def cleanup_all_users(db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Supprimer TOUS les utilisateurs (sauf Sacha)
+    """
+    try:
+        from models_auth import Utilisateur
+        
+        # Trouver tous les utilisateurs
+        all_users = db.query(Utilisateur).all()
+        
+        deleted_count = 0
+        deleted_emails = []
+        
+        for user in all_users:
+            # Ne pas supprimer Sacha
+            if user.email != "sacha.heroux87@gmail.com":
+                deleted_emails.append(user.email)
+                db.delete(user)
+                deleted_count += 1
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Supprimé {deleted_count} utilisateurs",
             "deleted_emails": deleted_emails
         }
     except Exception as e:
