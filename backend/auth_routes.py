@@ -52,6 +52,7 @@ class CompanySetupRequest(BaseModel):
     numero_entreprise: Optional[str] = None
     # Pour rejoindre une compagnie
     id_compagnie: Optional[int] = None
+    code_acces: Optional[str] = None  # Code d'accès de la compagnie
     role: str = Field(default="employe", description="'admin' ou 'employe'")
 
 class PasswordResetRequest(BaseModel):
@@ -424,13 +425,13 @@ async def setup_company(
             }
             
         elif data.action == "join":
-            # Rejoindre une compagnie existante
-            if not data.id_compagnie:
-                raise HTTPException(status_code=400, detail="L'ID de la compagnie est requis")
+            # Rejoindre une compagnie existante avec code d'accès
+            if not data.code_acces:
+                raise HTTPException(status_code=400, detail="Le code d'accès est requis")
             
-            company = db.query(Compagnie).filter(Compagnie.id_compagnie == data.id_compagnie).first()
+            company = db.query(Compagnie).filter(Compagnie.code_acces == data.code_acces).first()
             if not company:
-                raise HTTPException(status_code=404, detail="Compagnie non trouvée")
+                raise HTTPException(status_code=404, detail="Code d'accès invalide")
             
             # Mettre à jour l'utilisateur
             current_user.id_compagnie = company.id_compagnie

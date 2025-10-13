@@ -17,7 +17,8 @@ export default function Register() {
     age: '',
     sexe: '',
     poste: '',
-    role: 'employe' // Par défaut employé
+    role: 'employe', // Par défaut employé
+    code_acces: '' // Code d'accès à la compagnie
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -56,6 +57,10 @@ export default function Register() {
     }
     if (!formData.nom || !formData.prenom) {
       setError('Nom et prénom sont obligatoires')
+      return false
+    }
+    if (!formData.code_acces || formData.code_acces.length < 6) {
+      setError('Code d\'accès à la compagnie requis (format: XXX-XXX)')
       return false
     }
     return true
@@ -122,10 +127,10 @@ export default function Register() {
       localStorage.setItem('auth_token', token)
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
-      // Rejoindre automatiquement CAH Immobilier avec le rôle choisi
+      // Rejoindre automatiquement la compagnie avec le code d'accès
       await api.post('/api/auth/setup-company', {
         action: 'join',
-        id_compagnie: 1, // CAH Immobilier
+        code_acces: formData.code_acces,
         role: formData.role
       })
 
@@ -288,6 +293,25 @@ export default function Register() {
                     placeholder="Confirmez votre mot de passe"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Code d'accès compagnie *</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.code_acces}
+                    onChange={(e) => handleChange('code_acces', e.target.value.toUpperCase())}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="YRX-6HF"
+                    maxLength={7}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Demandez ce code à votre administrateur principal
+                </p>
               </div>
 
               <button
