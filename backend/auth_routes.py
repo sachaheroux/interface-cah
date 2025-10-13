@@ -922,6 +922,60 @@ async def approve_request_email(request_id: int, db: Session = Depends(get_auth_
             "message": f"Erreur: {str(e)}"
         }
 
+@router.post("/debug/approve-user-by-email")
+async def approve_user_by_email(data: dict, db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Approuver un utilisateur par email
+    """
+    try:
+        from models_auth import Utilisateur, DemandeAcces
+        
+        email = data.get("email")
+        if not email:
+            return {"error": "Email requis"}
+        
+        # Trouver l'utilisateur
+        user = db.query(Utilisateur).filter(Utilisateur.email == email).first()
+        
+        if not user:
+            return {"error": f"Utilisateur {email} non trouvé"}
+        
+        # Trouver la demande d'accès
+        demande = db.query(DemandeAcces).filter(DemandeAcces.id_utilisateur == user.id_utilisateur).first()
+        
+        if not demande:
+            return {"error": f"Aucune demande d'accès trouvée pour {email}"}
+        
+        # Approuver la demande
+        demande.statut = "approuve"
+        user.statut = "actif"
+        
+        db.commit()
+        
+        # Envoyer email de confirmation
+        try:
+            email_service.send_approval_notification(
+                user.email,
+                user.nom,
+                user.prenom,
+                "CAH Immobilier"
+            )
+            email_sent = True
+        except Exception as e:
+            email_sent = False
+            print(f"Erreur envoi email: {e}")
+        
+        return {
+            "success": True,
+            "message": f"Utilisateur {email} approuvé avec succès",
+            "email_sent": email_sent,
+            "user": user.to_dict()
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
 @router.get("/debug/env-check")
 async def check_env():
     """
