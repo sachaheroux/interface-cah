@@ -954,7 +954,7 @@ async def approve_request_email(request_id: int, db: Session = Depends(get_auth_
             <body>
                 <h1 class="success">✅ Demande approuvée !</h1>
                 <p>L'utilisateur <strong>{user.prenom} {user.nom}</strong> peut maintenant se connecter.</p>
-                <p class="info">Email de confirmation: {'Envoyé' if email_sent else 'Erreur lors de l\'envoi'}</p>
+                <p class="info">Email de confirmation: {'Envoyé' if email_sent else 'Erreur lors de l envoi'}</p>
                 <p><a href="https://interface-cah.vercel.app/login">Se connecter à Interface CAH</a></p>
             </body>
         </html>
