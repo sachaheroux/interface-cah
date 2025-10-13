@@ -865,7 +865,7 @@ async def send_test_email(data: dict):
         test_code = auth_service.generate_verification_code()
         
         # Envoyer l'email
-        await email_service.send_verification_email(email, "Test", "User", test_code)
+        email_service.send_verification_email(email, "Test", "User", test_code)
         
         return {
             "success": True,
