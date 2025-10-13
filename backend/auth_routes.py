@@ -803,3 +803,34 @@ async def approve_request_from_email(request_id: int, action: str):
         """
         return HTMLResponse(content=html_content, status_code=500)
 
+# ==========================================
+# ENDPOINT DE DIAGNOSTIC (TEMPORAIRE)
+# ==========================================
+
+@router.get("/debug/users")
+async def debug_users(db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Voir les utilisateurs dans la DB auth
+    """
+    try:
+        users = db.query(Utilisateur).all()
+        return {
+            "total_users": len(users),
+            "users": [
+                {
+                    "id": u.id_utilisateur,
+                    "email": u.email,
+                    "nom": u.nom,
+                    "prenom": u.prenom,
+                    "role": u.role,
+                    "statut": u.statut,
+                    "email_verifie": u.email_verifie,
+                    "est_admin_principal": u.est_admin_principal,
+                    "id_compagnie": u.id_compagnie
+                }
+                for u in users
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
