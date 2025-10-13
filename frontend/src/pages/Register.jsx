@@ -117,15 +117,10 @@ export default function Register() {
         code: verificationCode
       })
 
-      // Récupérer le token JWT pour la requête suivante
-      const loginResponse = await api.post('/api/auth/login', {
-        email: formData.email,
-        mot_de_passe: formData.password
-      })
-
-      const { token } = loginResponse.data
-      localStorage.setItem('auth_token', token)
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      // Sauvegarder le token reçu directement de la vérification
+      const { access_token } = response.data
+      localStorage.setItem('auth_token', access_token)
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
 
       // Rejoindre automatiquement la compagnie avec le code d'accès
       await api.post('/api/auth/setup-company', {

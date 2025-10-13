@@ -213,10 +213,14 @@ async def verify_email(data: VerifyEmailRequest, db: Session = Depends(get_auth_
         
         db.commit()
         
+        # Générer un token pour l'utilisateur vérifié
+        access_token = auth_service.create_access_token(data={"sub": user.email})
+        
         return {
             "success": True,
             "message": "Email vérifié avec succès",
-            "user_id": user.id_utilisateur
+            "access_token": access_token,
+            "user": user.to_dict()
         }
         
     except HTTPException:
