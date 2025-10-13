@@ -126,7 +126,7 @@ function StatusProtectedRoute({ children }) {
 function AppContent() {
   const location = useLocation()
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company' || location.pathname === '/pending-approval'
 
   return (
     <div className="min-h-screen bg-gray-50">
