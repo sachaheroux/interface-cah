@@ -326,10 +326,10 @@ def send_verification_email(to_email: str, nom: str, prenom: str, code: str) -> 
     return send_email(to_email, subject, html_content)
 
 
-def send_access_request_notification(to_email: str, admin_nom: str, user_info: dict, company_name: str) -> bool:
+def send_access_request_notification(to_email: str, admin_nom: str, user_info: dict, company_name: str, request_id: int) -> bool:
     """Envoyer une notification de demande d'accès à l'admin"""
     subject = f"Nouvelle demande d'accès - {company_name}"
-    html_content = get_access_request_email_template(admin_nom, user_info, company_name)
+    html_content = get_access_request_email_template(admin_nom, user_info, company_name, request_id)
     return send_email(to_email, subject, html_content)
 
 

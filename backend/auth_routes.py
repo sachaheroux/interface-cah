@@ -494,7 +494,8 @@ async def setup_company(
                     admin.email,
                     admin.nom,
                     user_info,
-                    company.nom_compagnie
+                    company.nom_compagnie,
+                    demande.id_demande
                 )
             
             return {
