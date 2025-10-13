@@ -875,6 +875,40 @@ async def send_test_email(data: dict):
     except Exception as e:
         return {"error": str(e)}
 
+@router.post("/debug/cleanup-pending-users")
+async def cleanup_pending_users(db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Nettoyer les utilisateurs en attente (sauf Sacha)
+    """
+    try:
+        from models_auth import Utilisateur
+        
+        # Trouver tous les utilisateurs en attente
+        pending_users = db.query(Utilisateur).filter(
+            Utilisateur.statut == "en_attente"
+        ).all()
+        
+        deleted_count = 0
+        deleted_emails = []
+        
+        for user in pending_users:
+            # Ne pas supprimer Sacha
+            if user.email != "sacha.heroux87@gmail.com":
+                deleted_emails.append(user.email)
+                db.delete(user)
+                deleted_count += 1
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Supprimé {deleted_count} utilisateurs en attente",
+            "deleted_emails": deleted_emails
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
 @router.post("/debug/migrate-code-acces")
 async def migrate_code_acces(db: Session = Depends(get_auth_db)):
     """
