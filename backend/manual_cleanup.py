@@ -19,16 +19,14 @@ def manual_cleanup():
         response = requests.get(f"{RENDER_URL}/api/auth/debug/users", timeout=30)
         print(f"Status: {response.status_code}")
         if response.status_code == 200:
-            users = response.json()
-            print(f"Nombre d'utilisateurs: {len(users)}")
+            data = response.json()
+            users = data.get("users", [])
+            print(f"Nombre d'utilisateurs: {data.get('total_users', 0)}")
             print("\nDétails des utilisateurs:")
             for i, user in enumerate(users):
                 print(f"\n--- Utilisateur {i+1} ---")
-                if isinstance(user, dict):
-                    for key, value in user.items():
-                        print(f"  {key}: {value}")
-                else:
-                    print(f"  Utilisateur: {user}")
+                for key, value in user.items():
+                    print(f"  {key}: {value}")
         else:
             print(f"❌ Erreur: {response.text}")
     except Exception as e:

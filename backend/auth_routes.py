@@ -101,8 +101,14 @@ def get_current_user(authorization: Optional[str] = Header(None), db: Session = 
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
-    if user.statut != "actif":
-        raise HTTPException(status_code=403, detail="Compte non actif")
+    # Vérifier le statut (sauf pour les utilisateurs en attente qui peuvent rejoindre une compagnie)
+    if user.statut not in ["actif", "en_attente"]:
+        if user.statut == "refuse":
+            raise HTTPException(status_code=403, detail="Votre demande d'accès a été refusée")
+        elif user.statut == "inactif":
+            raise HTTPException(status_code=403, detail="Votre compte est inactif")
+        else:
+            raise HTTPException(status_code=403, detail="Compte non actif")
     
     return user
 
