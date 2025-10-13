@@ -835,6 +835,46 @@ async def debug_users(db: Session = Depends(get_auth_db)):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/debug/env-check")
+async def check_env():
+    """
+    TEMPORAIRE: Vérifier les variables d'environnement SMTP
+    """
+    import os
+    return {
+        "SMTP_SERVER": os.getenv("SMTP_SERVER"),
+        "SMTP_PORT": os.getenv("SMTP_PORT"),
+        "SMTP_USERNAME": os.getenv("SMTP_USERNAME"),
+        "SMTP_PASSWORD": "***" if os.getenv("SMTP_PASSWORD") else None,
+        "FROM_EMAIL": os.getenv("FROM_EMAIL"),
+        "FROM_NAME": os.getenv("FROM_NAME")
+    }
+
+@router.post("/debug/send-test-email")
+async def send_test_email(data: dict):
+    """
+    TEMPORAIRE: Envoyer un email de test
+    """
+    try:
+        email = data.get("email")
+        if not email:
+            return {"error": "Email requis"}
+        
+        # Générer un code de test
+        import auth_service
+        test_code = auth_service.generate_verification_code()
+        
+        # Envoyer l'email
+        await email_service.send_verification_email(email, "Test", "User", test_code)
+        
+        return {
+            "success": True,
+            "message": f"Email de test envoyé à {email}",
+            "test_code": test_code
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.post("/debug/migrate-code-acces")
 async def migrate_code_acces(db: Session = Depends(get_auth_db)):
     """
