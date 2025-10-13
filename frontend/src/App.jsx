@@ -52,7 +52,7 @@ function StatusProtectedRoute({ children }) {
         }
         
         // Appeler l'API pour vérifier le statut de l'utilisateur
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch('https://interface-cah-backend.onrender.com/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
