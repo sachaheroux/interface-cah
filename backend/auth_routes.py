@@ -834,3 +834,52 @@ async def debug_users(db: Session = Depends(get_auth_db)):
     except Exception as e:
         return {"error": str(e)}
 
+@router.post("/debug/create-sacha")
+async def create_sacha(db: Session = Depends(get_auth_db)):
+    """
+    TEMPORAIRE: Créer l'utilisateur Sacha manuellement
+    """
+    try:
+        # Vérifier si Sacha existe déjà
+        existing = db.query(Utilisateur).filter_by(email="sacha.heroux87@gmail.com").first()
+        if existing:
+            return {"message": "Sacha existe déjà", "user_id": existing.id_utilisateur}
+        
+        # Trouver la compagnie CAH Immobilier
+        company = db.query(Compagnie).filter_by(nom_compagnie="CAH Immobilier").first()
+        if not company:
+            return {"error": "Compagnie CAH Immobilier non trouvée"}
+        
+        # Créer Sacha
+        sacha = Utilisateur(
+            id_compagnie=company.id_compagnie,
+            email="sacha.heroux87@gmail.com",
+            mot_de_passe_hash=auth_service.hash_password("Champion2024!"),
+            nom="Heroux",
+            prenom="Sacha",
+            role="admin",
+            est_admin_principal=True,
+            statut="actif",
+            email_verifie=True,
+            date_creation=datetime.utcnow()
+        )
+        
+        db.add(sacha)
+        db.commit()
+        db.refresh(sacha)
+        
+        return {
+            "success": True,
+            "message": "Utilisateur Sacha créé avec succès",
+            "user": {
+                "id": sacha.id_utilisateur,
+                "email": sacha.email,
+                "role": sacha.role,
+                "statut": sacha.statut
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
