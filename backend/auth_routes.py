@@ -86,11 +86,18 @@ def get_current_user(authorization: Optional[str] = Header(None), db: Session = 
     if not payload:
         raise HTTPException(status_code=401, detail="Token expiré ou invalide")
     
+    # Le token contient 'sub' (email) ou 'user_id'
     user_id = payload.get("user_id")
-    if not user_id:
+    email = payload.get("sub")
+    
+    if not user_id and not email:
         raise HTTPException(status_code=401, detail="Token invalide")
     
-    user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == user_id).first()
+    # Chercher l'utilisateur par ID ou par email
+    if user_id:
+        user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == user_id).first()
+    else:
+        user = db.query(Utilisateur).filter(Utilisateur.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     
