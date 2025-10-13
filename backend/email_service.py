@@ -138,8 +138,10 @@ def get_verification_email_template(nom: str, prenom: str, code: str) -> str:
     return get_email_base_template(content)
 
 
-def get_access_request_email_template(admin_nom: str, user_info: dict, company_name: str) -> str:
+def get_access_request_email_template(admin_nom: str, user_info: dict, company_name: str, request_id: int) -> str:
     """Template pour notifier l'admin d'une nouvelle demande d'accès"""
+    backend_url = os.getenv('BACKEND_URL', 'http://localhost:8000')
+    
     content = f"""
         <h2>Nouvelle demande d'accès 📬</h2>
         <p>Bonjour {admin_nom},</p>
@@ -153,11 +155,20 @@ def get_access_request_email_template(admin_nom: str, user_info: dict, company_n
             <p><strong>Rôle demandé:</strong> {user_info.get('role', 'employe').upper()}</p>
         </div>
         
-        <p>Connectez-vous à Interface CAH pour approuver ou refuser cette demande.</p>
+        <p>Cliquez sur l'un des boutons ci-dessous pour traiter cette demande :</p>
         
-        <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/admin/approvals" class="button">
-            Gérer les demandes
-        </a>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{backend_url}/api/auth/approve-request-email?request_id={request_id}&action=approve" 
+               class="button" 
+               style="background-color: #10B981; margin-right: 10px;">
+                ✓ Approuver
+            </a>
+            <a href="{backend_url}/api/auth/approve-request-email?request_id={request_id}&action=reject" 
+               class="button" 
+               style="background-color: #EF4444;">
+                ✗ Refuser
+            </a>
+        </div>
     """
     return get_email_base_template(content)
 
