@@ -37,6 +37,92 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+// Composant pour vérifier le statut de l'utilisateur
+function StatusProtectedRoute({ children }) {
+  const [userStatus, setUserStatus] = React.useState(null)
+  const [loading, setLoading] = React.useState(true)
+  
+  React.useEffect(() => {
+    const checkUserStatus = async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setLoading(false)
+          return
+        }
+        
+        // Appeler l'API pour vérifier le statut de l'utilisateur
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const userData = await response.json()
+          setUserStatus(userData.user.statut)
+        } else {
+          // Token invalide, rediriger vers login
+          localStorage.removeItem('auth_token')
+          setUserStatus('invalid')
+        }
+      } catch (error) {
+        console.error('Erreur vérification statut:', error)
+        setUserStatus('error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    checkUserStatus()
+  }, [])
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification du statut...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  if (userStatus === 'invalid' || userStatus === 'error') {
+    return <Navigate to="/login" replace />
+  }
+  
+  if (userStatus === 'en_attente') {
+    return <Navigate to="/pending-approval" replace />
+  }
+  
+  if (userStatus === 'refuse') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Accès refusé</h1>
+          <p className="text-gray-600">Votre demande d'accès a été refusée.</p>
+        </div>
+      </div>
+    )
+  }
+  
+  if (userStatus === 'inactif') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Compte inactif</h1>
+          <p className="text-gray-600">Votre compte a été désactivé.</p>
+        </div>
+      </div>
+    )
+  }
+  
+  // Statut 'actif' - autoriser l'accès
+  return children
+}
+
 function AppContent() {
   const location = useLocation()
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
@@ -67,22 +153,22 @@ function AppContent() {
             <Route path="/pending-approval" element={<PendingApproval />} />
             
             {/* Pages protégées */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/buildings" element={<ProtectedRoute><Buildings /></ProtectedRoute>} />
-            <Route path="/buildings/analysis" element={<ProtectedRoute><ProfitabilityAnalysis /></ProtectedRoute>} />
-            <Route path="/buildings/mortgage" element={<ProtectedRoute><MortgageAnalysis /></ProtectedRoute>} />
-            <Route path="/buildings/property-analysis" element={<ProtectedRoute><PropertyAnalysis /></ProtectedRoute>} />
-            <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
-            <Route path="/leases" element={<ProtectedRoute><Leases /></ProtectedRoute>} />
-            <Route path="/rent-payments" element={<ProtectedRoute><RentPayments /></ProtectedRoute>} />
-            <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-            <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-            <Route path="/contractors" element={<ProtectedRoute><Contractors /></ProtectedRoute>} />
-            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-            <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-            <Route path="/unit-reports/:unitId/:year" element={<ProtectedRoute><UnitReportDetails /></ProtectedRoute>} />
+            <Route path="/" element={<StatusProtectedRoute><Dashboard /></StatusProtectedRoute>} />
+            <Route path="/buildings" element={<StatusProtectedRoute><Buildings /></StatusProtectedRoute>} />
+            <Route path="/buildings/analysis" element={<StatusProtectedRoute><ProfitabilityAnalysis /></StatusProtectedRoute>} />
+            <Route path="/buildings/mortgage" element={<StatusProtectedRoute><MortgageAnalysis /></StatusProtectedRoute>} />
+            <Route path="/buildings/property-analysis" element={<StatusProtectedRoute><PropertyAnalysis /></StatusProtectedRoute>} />
+            <Route path="/tenants" element={<StatusProtectedRoute><Tenants /></StatusProtectedRoute>} />
+            <Route path="/leases" element={<StatusProtectedRoute><Leases /></StatusProtectedRoute>} />
+            <Route path="/rent-payments" element={<StatusProtectedRoute><RentPayments /></StatusProtectedRoute>} />
+            <Route path="/transactions" element={<StatusProtectedRoute><Transactions /></StatusProtectedRoute>} />
+            <Route path="/employees" element={<StatusProtectedRoute><Employees /></StatusProtectedRoute>} />
+            <Route path="/contractors" element={<StatusProtectedRoute><Contractors /></StatusProtectedRoute>} />
+            <Route path="/projects" element={<StatusProtectedRoute><Projects /></StatusProtectedRoute>} />
+            <Route path="/documents" element={<StatusProtectedRoute><Documents /></StatusProtectedRoute>} />
+            <Route path="/settings" element={<StatusProtectedRoute><Settings /></StatusProtectedRoute>} />
+            <Route path="/reports" element={<StatusProtectedRoute><Reports /></StatusProtectedRoute>} />
+            <Route path="/unit-reports/:unitId/:year" element={<StatusProtectedRoute><UnitReportDetails /></StatusProtectedRoute>} />
           </Routes>
         </main>
       </div>

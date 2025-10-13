@@ -860,6 +860,68 @@ async def debug_users(db: Session = Depends(get_auth_db)):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/me")
+async def get_current_user_info(current_user: Utilisateur = Depends(get_current_user)):
+    """
+    Obtenir les informations de l'utilisateur connecté
+    """
+    return {
+        "success": True,
+        "user": current_user.to_dict()
+    }
+
+@router.get("/approve-request-email")
+async def approve_request_email(request_id: int, db: Session = Depends(get_auth_db)):
+    """
+    Endpoint pour approuver une demande d'accès via email
+    """
+    try:
+        from models_auth import DemandeAcces, Utilisateur
+        
+        # Trouver la demande
+        demande = db.query(DemandeAcces).filter(DemandeAcces.id_demande == request_id).first()
+        
+        if not demande:
+            return {
+                "success": False,
+                "message": "Demande non trouvée"
+            }
+        
+        # Trouver l'utilisateur
+        user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == demande.id_utilisateur).first()
+        
+        if not user:
+            return {
+                "success": False,
+                "message": "Utilisateur non trouvé"
+            }
+        
+        # Approuver la demande
+        demande.statut = "approuve"
+        user.statut = "actif"
+        
+        db.commit()
+        
+        # Envoyer email de confirmation
+        email_service.send_approval_notification(
+            user.email,
+            user.nom,
+            user.prenom,
+            "CAH Immobilier"  # TODO: Récupérer le nom de la compagnie
+        )
+        
+        return {
+            "success": True,
+            "message": f"Demande d'accès de {user.prenom} {user.nom} approuvée avec succès"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {
+            "success": False,
+            "message": f"Erreur: {str(e)}"
+        }
+
 @router.get("/debug/env-check")
 async def check_env():
     """
