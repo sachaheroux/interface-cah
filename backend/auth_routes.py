@@ -875,6 +875,8 @@ async def approve_request_email(request_id: int, db: Session = Depends(get_auth_
     """
     Endpoint pour approuver une demande d'accès via email
     """
+    from fastapi.responses import HTMLResponse
+    
     try:
         from models_auth import DemandeAcces, Utilisateur
         
@@ -882,19 +884,43 @@ async def approve_request_email(request_id: int, db: Session = Depends(get_auth_
         demande = db.query(DemandeAcces).filter(DemandeAcces.id_demande == request_id).first()
         
         if not demande:
-            return {
-                "success": False,
-                "message": "Demande non trouvée"
-            }
+            html_content = """
+            <html>
+                <head>
+                    <title>Erreur</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .error { color: red; font-size: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="error">❌ Demande non trouvée</h1>
+                    <p>Cette demande d'accès n'existe pas ou a déjà été traitée.</p>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=html_content)
         
         # Trouver l'utilisateur
         user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == demande.id_utilisateur).first()
         
         if not user:
-            return {
-                "success": False,
-                "message": "Utilisateur non trouvé"
-            }
+            html_content = """
+            <html>
+                <head>
+                    <title>Erreur</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .error { color: red; font-size: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="error">❌ Utilisateur non trouvé</h1>
+                    <p>L'utilisateur associé à cette demande n'existe pas.</p>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=html_content)
         
         # Approuver la demande
         demande.statut = "approuve"
@@ -903,24 +929,152 @@ async def approve_request_email(request_id: int, db: Session = Depends(get_auth_
         db.commit()
         
         # Envoyer email de confirmation
-        email_service.send_approval_notification(
-            user.email,
-            user.nom,
-            user.prenom,
-            "CAH Immobilier"  # TODO: Récupérer le nom de la compagnie
-        )
+        try:
+            email_service.send_approval_notification(
+                user.email,
+                user.nom,
+                user.prenom,
+                "CAH Immobilier"
+            )
+            email_sent = True
+        except Exception as e:
+            email_sent = False
+            print(f"Erreur envoi email: {e}")
         
-        return {
-            "success": True,
-            "message": f"Demande d'accès de {user.prenom} {user.nom} approuvée avec succès"
-        }
+        html_content = f"""
+        <html>
+            <head>
+                <title>Demande approuvée</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                    .success {{ color: green; font-size: 24px; }}
+                    .info {{ color: #666; margin: 20px 0; }}
+                </style>
+            </head>
+            <body>
+                <h1 class="success">✅ Demande approuvée !</h1>
+                <p>L'utilisateur <strong>{user.prenom} {user.nom}</strong> peut maintenant se connecter.</p>
+                <p class="info">Email de confirmation: {'Envoyé' if email_sent else 'Erreur lors de l\'envoi'}</p>
+                <p><a href="https://interface-cah.vercel.app/login">Se connecter à Interface CAH</a></p>
+            </body>
+        </html>
+        """
+        
+        return HTMLResponse(content=html_content)
         
     except Exception as e:
         db.rollback()
-        return {
-            "success": False,
-            "message": f"Erreur: {str(e)}"
-        }
+        html_content = f"""
+        <html>
+            <head>
+                <title>Erreur</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                    .error {{ color: red; font-size: 24px; }}
+                </style>
+            </head>
+            <body>
+                <h1 class="error">❌ Erreur</h1>
+                <p>Une erreur s'est produite: {str(e)}</p>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+
+@router.get("/reject-request-email")
+async def reject_request_email(request_id: int, db: Session = Depends(get_auth_db)):
+    """
+    Endpoint pour refuser une demande d'accès via email
+    """
+    from fastapi.responses import HTMLResponse
+    
+    try:
+        from models_auth import DemandeAcces, Utilisateur
+        
+        # Trouver la demande
+        demande = db.query(DemandeAcces).filter(DemandeAcces.id_demande == request_id).first()
+        
+        if not demande:
+            html_content = """
+            <html>
+                <head>
+                    <title>Erreur</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .error { color: red; font-size: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="error">❌ Demande non trouvée</h1>
+                    <p>Cette demande d'accès n'existe pas ou a déjà été traitée.</p>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=html_content)
+        
+        # Trouver l'utilisateur
+        user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == demande.id_utilisateur).first()
+        
+        if not user:
+            html_content = """
+            <html>
+                <head>
+                    <title>Erreur</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .error { color: red; font-size: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="error">❌ Utilisateur non trouvé</h1>
+                    <p>L'utilisateur associé à cette demande n'existe pas.</p>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=html_content)
+        
+        # Refuser la demande
+        demande.statut = "refuse"
+        user.statut = "refuse"
+        
+        db.commit()
+        
+        html_content = f"""
+        <html>
+            <head>
+                <title>Demande refusée</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                    .error {{ color: red; font-size: 24px; }}
+                </style>
+            </head>
+            <body>
+                <h1 class="error">❌ Demande refusée</h1>
+                <p>L'utilisateur <strong>{user.prenom} {user.nom}</strong> ne peut pas accéder au système.</p>
+            </body>
+        </html>
+        """
+        
+        return HTMLResponse(content=html_content)
+        
+    except Exception as e:
+        db.rollback()
+        html_content = f"""
+        <html>
+            <head>
+                <title>Erreur</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                    .error {{ color: red; font-size: 24px; }}
+                </style>
+            </head>
+            <body>
+                <h1 class="error">❌ Erreur</h1>
+                <p>Une erreur s'est produite: {str(e)}</p>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
 
 @router.post("/debug/approve-user-by-email")
 async def approve_user_by_email(data: dict, db: Session = Depends(get_auth_db)):

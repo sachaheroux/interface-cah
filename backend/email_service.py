@@ -158,12 +158,12 @@ def get_access_request_email_template(admin_nom: str, user_info: dict, company_n
         <p>Cliquez sur l'un des boutons ci-dessous pour traiter cette demande :</p>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{backend_url}/api/auth/approve-request-email?request_id={request_id}&action=approve" 
+            <a href="{backend_url}/api/auth/approve-request-email?request_id={request_id}" 
                class="button" 
                style="background-color: #10B981; margin-right: 10px;">
                 ✓ Approuver
             </a>
-            <a href="{backend_url}/api/auth/approve-request-email?request_id={request_id}&action=reject" 
+            <a href="{backend_url}/api/auth/reject-request-email?request_id={request_id}" 
                class="button" 
                style="background-color: #EF4444;">
                 ✗ Refuser
