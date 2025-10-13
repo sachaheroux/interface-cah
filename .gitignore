@@ -112,4 +112,11 @@ dist
 
 # Temporary folders
 tmp/
-temp/ 
+temp/
+
+# SQLite databases and temp files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3 
