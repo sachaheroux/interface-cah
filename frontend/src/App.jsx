@@ -23,6 +23,7 @@ import Reports from './pages/Reports'
 import UnitReportDetails from './pages/UnitReportDetails'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import CompanySetup from './pages/CompanySetup'
 
 // Composant pour protéger les routes (authentification requise)
 function ProtectedRoute({ children }) {
@@ -38,7 +39,7 @@ function ProtectedRoute({ children }) {
 function AppContent() {
   const location = useLocation()
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,6 +62,7 @@ function AppContent() {
             {/* Pages publiques */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/setup-company" element={<CompanySetup />} />
             
             {/* Pages protégées */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
