@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { UserCheck, Plus, Clock, User, Edit, Trash2, Phone, Mail } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { employeesService } from '../services/api'
 import EmployeeForm from '../components/EmployeeForm'
 
@@ -9,9 +10,20 @@ export default function Employees() {
   const [showForm, setShowForm] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [successMessage, setSuccessMessage] = useState('')
+  const [user, setUser] = useState(null)
+  const location = useLocation()
 
   useEffect(() => {
     fetchEmployees()
+    // Récupérer les infos utilisateur pour déterminer le rôle
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr))
+      } catch (e) {
+        console.error('Erreur parsing user:', e)
+      }
+    }
   }, [])
 
   const fetchEmployees = async () => {
@@ -71,30 +83,64 @@ export default function Employees() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employés Construction</h1>
-          <p className="text-gray-600 mt-1">Gestion des employés de construction</p>
-        </div>
-        <button 
-          onClick={handleCreateEmployee}
-          className="btn-primary flex items-center"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Nouvel Employé
-        </button>
-      </div>
-
-      {/* Message de succès */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-          {successMessage}
+    <div className="flex">
+      {/* Sidebar pour les admins */}
+      {user?.role === 'admin' && (
+        <div className="w-64 bg-white shadow-sm border-r border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Gestion Employés</h2>
+          <nav className="space-y-2">
+            <Link
+              to="/employees"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                location.pathname === '/employees'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
+              }`}
+            >
+              <UserCheck className="h-5 w-5 mr-3" />
+              Liste des Employés
+            </Link>
+            <Link
+              to="/punch-management"
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                location.pathname === '/punch-management'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
+              }`}
+            >
+              <Clock className="h-5 w-5 mr-3" />
+              Gestion des Pointages
+            </Link>
+          </nav>
         </div>
       )}
 
-      {/* Liste des employés */}
+      {/* Contenu principal */}
+      <div className={`flex-1 ${user?.role === 'admin' ? 'p-6' : ''}`}>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Employés Construction</h1>
+              <p className="text-gray-600 mt-1">Gestion des employés de construction</p>
+            </div>
+            <button 
+              onClick={handleCreateEmployee}
+              className="btn-primary flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Nouvel Employé
+            </button>
+          </div>
+
+          {/* Message de succès */}
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              {successMessage}
+            </div>
+          )}
+
+          {/* Liste des employés */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {employees.length === 0 ? (
           <div className="col-span-full text-center py-12">
@@ -169,6 +215,8 @@ export default function Employees() {
         employee={editingEmployee}
         onSuccess={handleFormSuccess}
       />
+        </div>
+      </div>
     </div>
   )
 } 
