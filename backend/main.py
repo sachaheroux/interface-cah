@@ -2771,15 +2771,17 @@ if CONSTRUCTION_ENABLED:
     async def migrate_add_taux_horaire(db: Session = Depends(get_construction_db)):
         """Migration : Ajouter la colonne taux_horaire à la table employes"""
         try:
+            from sqlalchemy import text
+            
             # Vérifier si la colonne existe déjà
-            cursor = db.execute("PRAGMA table_info(employes)")
-            columns = [row[1] for row in cursor.fetchall()]
+            result = db.execute(text("PRAGMA table_info(employes)"))
+            columns = [row[1] for row in result.fetchall()]
             
             if 'taux_horaire' in columns:
                 return {"success": True, "message": "Colonne taux_horaire existe déjà"}
             
             # Ajouter la colonne
-            db.execute("ALTER TABLE employes ADD COLUMN taux_horaire FLOAT")
+            db.execute(text("ALTER TABLE employes ADD COLUMN taux_horaire FLOAT"))
             db.commit()
             
             return {"success": True, "message": "Colonne taux_horaire ajoutée avec succès"}
