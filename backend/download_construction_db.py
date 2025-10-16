@@ -100,6 +100,7 @@ def create_local_database():
                 poste TEXT,
                 numero TEXT,
                 adresse_courriel TEXT,
+                taux_horaire REAL,
                 date_creation TEXT,
                 date_modification TEXT
             )

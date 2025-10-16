@@ -2790,6 +2790,34 @@ if CONSTRUCTION_ENABLED:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur migration: {e}")
     
+    @app.get("/api/construction/debug/employes-structure")
+    async def debug_employes_structure(db: Session = Depends(get_construction_db)):
+        """Debug : Vérifier la structure de la table employes"""
+        try:
+            from sqlalchemy import text
+            
+            # Vérifier la structure de la table
+            result = db.execute(text("PRAGMA table_info(employes)"))
+            columns = result.fetchall()
+            
+            # Compter les employés
+            count_result = db.execute(text("SELECT COUNT(*) FROM employes"))
+            count = count_result.fetchone()[0]
+            
+            # Récupérer quelques employés
+            employees_result = db.execute(text("SELECT * FROM employes LIMIT 5"))
+            employees = employees_result.fetchall()
+            
+            return {
+                "success": True,
+                "structure": [{"name": col[1], "type": col[2], "not_null": col[3]} for col in columns],
+                "count": count,
+                "sample_data": [dict(zip([col[1] for col in columns], emp)) for emp in employees]
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
     # ==========================================
     # ENDPOINTS PROJETS
     # ==========================================
