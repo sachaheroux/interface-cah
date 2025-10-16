@@ -379,6 +379,22 @@ export const employeesService = {
   deleteEmployee: (id) => api.delete(`/api/construction/employes/${id}`),
 }
 
+export const projectsService = {
+  getProjects: async () => {
+    try {
+      const response = await api.get('/api/construction/projets')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API construction projects failed, using fallback data')
+      return { data: [] }
+    }
+  },
+  getProject: (id) => api.get(`/api/construction/projets/${id}`),
+  createProject: (data) => api.post('/api/construction/projets', data),
+  updateProject: (id, data) => api.put(`/api/construction/projets/${id}`, data),
+  deleteProject: (id) => api.delete(`/api/construction/projets/${id}`),
+}
+
 export const punchsService = {
   getPunchs: async () => {
     try {

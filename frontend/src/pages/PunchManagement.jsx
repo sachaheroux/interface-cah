@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, Calendar, Plus, User, Building, Edit, Trash2, Filter, Download } from 'lucide-react'
 import PunchFormDesktop from '../components/PunchFormDesktop'
-import { employeesService, punchsService } from '../services/api'
+import { employeesService, punchsService, projectsService } from '../services/api'
 import api from '../services/api'
 
 export default function PunchManagement() {
@@ -29,12 +29,12 @@ export default function PunchManagement() {
       const [punchsRes, employeesRes, projectsRes] = await Promise.all([
         punchsService.getPunchs(),
         employeesService.getEmployees(),
-        api.get('/api/construction/projets')
+        projectsService.getProjects()
       ])
       
       setPunchs(punchsRes.data || [])
       setEmployees(employeesRes.data || [])
-      setProjects(projectsRes.data?.data || [])
+      setProjects(projectsRes.data || [])
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err)
     } finally {

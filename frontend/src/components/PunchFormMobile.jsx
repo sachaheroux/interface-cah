@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, Calendar, MapPin, Save, X, User, Building } from 'lucide-react'
-import { employeesService, punchsService } from '../services/api'
+import { employeesService, punchsService, projectsService } from '../services/api'
 import api from '../services/api'
 
 export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
@@ -47,10 +47,8 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
 
   const fetchProjects = async () => {
     try {
-      const response = await api.get('/api/construction/projets')
-      if (response.data.success) {
-        setProjects(response.data.data || [])
-      }
+      const response = await projectsService.getProjects()
+      setProjects(response.data || [])
     } catch (err) {
       console.error('Erreur lors du chargement des projets:', err)
     }
@@ -304,14 +302,29 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
                   <MapPin className="h-4 w-4 inline mr-1" />
                   Section travaillée *
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.section}
                   onChange={(e) => handleChange('section', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Ex: Fondation, Toiture, Charpente, etc."
                   required
-                />
+                >
+                  <option value="">Sélectionner une section</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Excavation et fondation">Excavation et fondation</option>
+                  <option value="Structure du batiment">Structure du bâtiment</option>
+                  <option value="Toiture">Toiture</option>
+                  <option value="Préparation intérieur">Préparation intérieur</option>
+                  <option value="Fenêtres">Fenêtres</option>
+                  <option value="Gypse">Gypse</option>
+                  <option value="Joint">Joint</option>
+                  <option value="Portes">Portes</option>
+                  <option value="Peinture">Peinture</option>
+                  <option value="Plancher">Plancher</option>
+                  <option value="Armoire">Armoire</option>
+                  <option value="Revêtement souple">Revêtement souple</option>
+                  <option value="Patio arrière">Patio arrière</option>
+                  <option value="Autres">Autres</option>
+                </select>
               </div>
             </div>
           )}
