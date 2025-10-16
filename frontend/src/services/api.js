@@ -422,7 +422,7 @@ export const punchsService = {
 // Données de fallback pour les projets (VIDÉES)
 const fallbackProjects = []
 
-export const projectsService = {
+export const realEstateProjectsService = {
   getProjects: async () => {
     try {
       return await api.get('/api/projects')
