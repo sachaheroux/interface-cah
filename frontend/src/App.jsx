@@ -25,6 +25,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import CompanySetup from './pages/CompanySetup'
 import PendingApproval from './pages/PendingApproval'
+import EmployeePunchMobile from './pages/EmployeePunchMobile'
+import PunchManagement from './pages/PunchManagement'
 
 // Composant pour protéger les routes (authentification requise)
 function ProtectedRoute({ children }) {
@@ -234,6 +236,8 @@ function AppContent() {
             <Route path="/rent-payments" element={<AdminProtectedRoute><RentPayments /></AdminProtectedRoute>} />
             <Route path="/transactions" element={<AdminProtectedRoute><Transactions /></AdminProtectedRoute>} />
             <Route path="/employees" element={<StatusProtectedRoute><Employees /></StatusProtectedRoute>} />
+            <Route path="/employee-punch" element={<StatusProtectedRoute><EmployeePunchMobile /></StatusProtectedRoute>} />
+            <Route path="/punch-management" element={<AdminProtectedRoute><PunchManagement /></AdminProtectedRoute>} />
             <Route path="/contractors" element={<AdminProtectedRoute><Contractors /></AdminProtectedRoute>} />
             <Route path="/projects" element={<AdminProtectedRoute><Projects /></AdminProtectedRoute>} />
             <Route path="/documents" element={<AdminProtectedRoute><Documents /></AdminProtectedRoute>} />

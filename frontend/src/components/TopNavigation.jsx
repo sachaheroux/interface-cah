@@ -12,7 +12,8 @@ import {
   Bell,
   User,
   LogOut,
-  UserCircle
+  UserCircle,
+  Clock
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Locataires', href: '/tenants', icon: Users, role: 'admin' },
   { name: 'Transactions', href: '/transactions', icon: Receipt, role: 'admin' },
   { name: 'Employés', href: '/employees', icon: UserCheck, role: 'admin' },
+  { name: 'Pointages', href: '/punch-management', icon: Clock, role: 'admin' },
   { name: 'Sous-traitants', href: '/contractors', icon: Truck, role: 'admin' },
   { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
   { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
@@ -72,9 +74,9 @@ export default function TopNavigation() {
                 // Si l'utilisateur est admin, il voit tout
                 if (user.role === 'admin') return true
                 
-                // Si l'utilisateur est employé, il ne voit que l'onglet Employés
+                // Si l'utilisateur est employé, il ne voit que l'onglet Pointage
                 if (user.role === 'employe') {
-                  return item.name === 'Employés'
+                  return item.name === 'Pointages'
                 }
                 
                 return false
@@ -82,10 +84,16 @@ export default function TopNavigation() {
               .map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
+              
+              // Pour les employés, rediriger vers la page mobile de pointage
+              const href = (user?.role === 'employe' && item.name === 'Pointages') 
+                ? '/employee-punch' 
+                : item.href
+              
               return (
                 <Link
                   key={item.name}
-                  to={item.href}
+                  to={href}
                   className={clsx(
                     'flex flex-col sm:flex-row items-center justify-center rounded-lg transition-colors duration-200 whitespace-nowrap font-medium',
                     'py-1 sm:py-2',
