@@ -2,7 +2,7 @@ services:
   - type: web
     name: interface-cah-backend
     env: python
-    plan: free
+    plan: starter  # Changé de 'free' à 'starter' pour le disque persistant
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -12,3 +12,8 @@ services:
         value: /opt/render/project/src/data
       - key: ENVIRONMENT
         value: production
+    # Configuration du disque persistant
+    disk:
+      name: cah-persistent-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1  # 1GB devrait être suffisant pour les bases de données
