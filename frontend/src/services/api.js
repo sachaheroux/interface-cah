@@ -366,16 +366,17 @@ const fallbackEmployees = []
 export const employeesService = {
   getEmployees: async () => {
     try {
-      return await api.get('/api/employees')
+      const response = await api.get('/api/construction/employes')
+      return { data: response.data.data || [] }
     } catch (error) {
-      console.warn('API employees failed, using fallback data')
+      console.warn('API construction employees failed, using fallback data')
       return { data: fallbackEmployees }
     }
   },
-  getEmployee: (id) => api.get(`/api/employees/${id}`),
-  createEmployee: (data) => api.post('/api/employees', data),
-  updateEmployee: (id, data) => api.put(`/api/employees/${id}`, data),
-  deleteEmployee: (id) => api.delete(`/api/employees/${id}`),
+  getEmployee: (id) => api.get(`/api/construction/employes/${id}`),
+  createEmployee: (data) => api.post('/api/construction/employes', data),
+  updateEmployee: (id, data) => api.put(`/api/construction/employes/${id}`, data),
+  deleteEmployee: (id) => api.delete(`/api/construction/employes/${id}`),
 }
 
 // Données de fallback pour les projets (VIDÉES)

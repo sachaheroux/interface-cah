@@ -2733,6 +2733,13 @@ if CONSTRUCTION_ENABLED:
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
     
+    class EmployeUpdate(BaseModel):
+        prenom: Optional[str] = None
+        nom: Optional[str] = None
+        poste: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
     class SousTraitantCreate(BaseModel):
         nom: str
         rue: Optional[str] = None
@@ -2895,6 +2902,56 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'employé: {e}")
+    
+    @app.get("/api/construction/employes/{employe_id}")
+    async def get_employe(employe_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer un employé par ID"""
+        try:
+            employe = db.query(Employe).filter(Employe.id_employe == employe_id).first()
+            if not employe:
+                raise HTTPException(status_code=404, detail="Employé non trouvé")
+            return {"success": True, "data": employe.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de l'employé: {e}")
+    
+    @app.put("/api/construction/employes/{employe_id}")
+    async def update_employe(employe_id: int, employe_data: EmployeUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour un employé"""
+        try:
+            employe = db.query(Employe).filter(Employe.id_employe == employe_id).first()
+            if not employe:
+                raise HTTPException(status_code=404, detail="Employé non trouvé")
+            
+            for field, value in employe_data.dict(exclude_unset=True).items():
+                setattr(employe, field, value)
+            
+            db.commit()
+            db.refresh(employe)
+            return {"success": True, "data": employe.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de l'employé: {e}")
+    
+    @app.delete("/api/construction/employes/{employe_id}")
+    async def delete_employe(employe_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer un employé"""
+        try:
+            employe = db.query(Employe).filter(Employe.id_employe == employe_id).first()
+            if not employe:
+                raise HTTPException(status_code=404, detail="Employé non trouvé")
+            
+            db.delete(employe)
+            db.commit()
+            return {"success": True, "message": "Employé supprimé avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de l'employé: {e}")
     
     # ==========================================
     # ENDPOINTS SOUS-TRAITANTS
