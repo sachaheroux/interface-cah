@@ -2693,6 +2693,7 @@ async def setup_authentication():
 if CONSTRUCTION_ENABLED:
     from sqlalchemy.orm import Session
     from sqlalchemy import desc
+    from fastapi import Depends
     
     # ==========================================
     # MODÈLES PYDANTIC POUR CONSTRUCTION
