@@ -276,6 +276,7 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
                   value={formData.date}
                   onChange={(e) => handleChange('date', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
                   required
                 />
               </div>
