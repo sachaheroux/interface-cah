@@ -170,6 +170,7 @@ class Employe(ConstructionBase):
     poste = Column(String(100))  # ouvrier, contremaitre, etc.
     numero = Column(String(20))
     adresse_courriel = Column(String(255))
+    taux_horaire = Column(Float)  # Taux horaire en dollars
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -184,6 +185,7 @@ class Employe(ConstructionBase):
             "poste": self.poste,
             "numero": self.numero,
             "adresse_courriel": self.adresse_courriel,
+            "taux_horaire": self.taux_horaire,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }

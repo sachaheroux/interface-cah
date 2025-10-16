@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, User, Mail, Phone, Briefcase } from 'lucide-react'
+import { X, User, Mail, Phone, Briefcase, DollarSign } from 'lucide-react'
 import { employeesService } from '../services/api'
 
 export default function EmployeeForm({ isOpen, onClose, employee = null, onSuccess }) {
@@ -8,7 +8,8 @@ export default function EmployeeForm({ isOpen, onClose, employee = null, onSucce
     nom: '',
     poste: '',
     numero: '',
-    adresse_courriel: ''
+    adresse_courriel: '',
+    taux_horaire: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +22,8 @@ export default function EmployeeForm({ isOpen, onClose, employee = null, onSucce
         nom: employee.nom || '',
         poste: employee.poste || '',
         numero: employee.numero || '',
-        adresse_courriel: employee.adresse_courriel || ''
+        adresse_courriel: employee.adresse_courriel || '',
+        taux_horaire: employee.taux_horaire || ''
       })
     } else {
       setFormData({
@@ -29,7 +31,8 @@ export default function EmployeeForm({ isOpen, onClose, employee = null, onSucce
         nom: '',
         poste: '',
         numero: '',
-        adresse_courriel: ''
+        adresse_courriel: '',
+        taux_horaire: ''
       })
     }
     setError('')
@@ -192,6 +195,25 @@ export default function EmployeeForm({ isOpen, onClose, employee = null, onSucce
                 onChange={(e) => handleChange('adresse_courriel', e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="employe@exemple.com"
+              />
+            </div>
+          </div>
+
+          {/* Taux horaire */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Taux horaire ($)
+            </label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.taux_horaire}
+                onChange={(e) => handleChange('taux_horaire', e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="25.00"
               />
             </div>
           </div>

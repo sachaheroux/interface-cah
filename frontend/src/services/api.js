@@ -379,6 +379,30 @@ export const employeesService = {
   deleteEmployee: (id) => api.delete(`/api/construction/employes/${id}`),
 }
 
+export const punchsService = {
+  getPunchs: async () => {
+    try {
+      const response = await api.get('/api/construction/punchs-employes')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API construction punchs failed, using fallback data')
+      return { data: [] }
+    }
+  },
+  getPunchsByEmployee: async (employeeId) => {
+    try {
+      const response = await api.get(`/api/construction/punchs-employes/employe/${employeeId}`)
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API construction punchs by employee failed, using fallback data')
+      return { data: [] }
+    }
+  },
+  createPunch: (data) => api.post('/api/construction/punchs-employes', data),
+  updatePunch: (id, data) => api.put(`/api/construction/punchs-employes/${id}`, data),
+  deletePunch: (id) => api.delete(`/api/construction/punchs-employes/${id}`),
+}
+
 // Données de fallback pour les projets (VIDÉES)
 const fallbackProjects = []
 

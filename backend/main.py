@@ -2732,6 +2732,7 @@ if CONSTRUCTION_ENABLED:
         poste: Optional[str] = None
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
+        taux_horaire: Optional[float] = None
     
     class EmployeUpdate(BaseModel):
         prenom: Optional[str] = None
@@ -2739,6 +2740,7 @@ if CONSTRUCTION_ENABLED:
         poste: Optional[str] = None
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
+        taux_horaire: Optional[float] = None
     
     class SousTraitantCreate(BaseModel):
         nom: str
@@ -2748,6 +2750,18 @@ if CONSTRUCTION_ENABLED:
         code_postal: Optional[str] = None
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
+    
+    class PunchEmployeCreate(BaseModel):
+        id_employe: int
+        id_projet: int
+        date: str  # Format YYYY-MM-DD
+        heure_travaillee: float
+        section: Optional[str] = None
+    
+    class PunchEmployeUpdate(BaseModel):
+        date: Optional[str] = None
+        heure_travaillee: Optional[float] = None
+        section: Optional[str] = None
     
     # ==========================================
     # ENDPOINTS PROJETS
@@ -2952,6 +2966,93 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de l'employé: {e}")
+    
+    # ==========================================
+    # ENDPOINTS PUNCHS EMPLOYÉS
+    # ==========================================
+    
+    @app.get("/api/construction/punchs-employes")
+    async def get_punchs_employes(db: Session = Depends(get_construction_db)):
+        """Récupérer tous les pointages d'employés"""
+        try:
+            punchs = db.query(PunchEmploye).order_by(desc(PunchEmploye.date)).all()
+            return {"success": True, "data": [punch.to_dict() for punch in punchs]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des pointages: {e}")
+    
+    @app.get("/api/construction/punchs-employes/employe/{employe_id}")
+    async def get_punchs_by_employe(employe_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer les pointages d'un employé spécifique"""
+        try:
+            punchs = db.query(PunchEmploye).filter(PunchEmploye.id_employe == employe_id).order_by(desc(PunchEmploye.date)).all()
+            return {"success": True, "data": [punch.to_dict() for punch in punchs]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des pointages: {e}")
+    
+    @app.post("/api/construction/punchs-employes")
+    async def create_punch_employe(punch_data: PunchEmployeCreate, db: Session = Depends(get_construction_db)):
+        """Créer un nouveau pointage d'employé"""
+        try:
+            # Convertir la date string en objet Date
+            from datetime import datetime
+            punch_date = datetime.strptime(punch_data.date, "%Y-%m-%d").date()
+            
+            nouveau_punch = PunchEmploye(
+                id_employe=punch_data.id_employe,
+                id_projet=punch_data.id_projet,
+                date=punch_date,
+                heure_travaillee=punch_data.heure_travaillee,
+                section=punch_data.section
+            )
+            db.add(nouveau_punch)
+            db.commit()
+            db.refresh(nouveau_punch)
+            return {"success": True, "data": nouveau_punch.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création du pointage: {e}")
+    
+    @app.put("/api/construction/punchs-employes/{punch_id}")
+    async def update_punch_employe(punch_id: int, punch_data: PunchEmployeUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour un pointage d'employé"""
+        try:
+            punch = db.query(PunchEmploye).filter(PunchEmploye.id_punch == punch_id).first()
+            if not punch:
+                raise HTTPException(status_code=404, detail="Pointage non trouvé")
+            
+            # Convertir la date si fournie
+            if punch_data.date:
+                from datetime import datetime
+                punch.date = datetime.strptime(punch_data.date, "%Y-%m-%d").date()
+            
+            for field, value in punch_data.dict(exclude_unset=True, exclude={'date'}).items():
+                setattr(punch, field, value)
+            
+            db.commit()
+            db.refresh(punch)
+            return {"success": True, "data": punch.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du pointage: {e}")
+    
+    @app.delete("/api/construction/punchs-employes/{punch_id}")
+    async def delete_punch_employe(punch_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer un pointage d'employé"""
+        try:
+            punch = db.query(PunchEmploye).filter(PunchEmploye.id_punch == punch_id).first()
+            if not punch:
+                raise HTTPException(status_code=404, detail="Pointage non trouvé")
+            
+            db.delete(punch)
+            db.commit()
+            return {"success": True, "message": "Pointage supprimé avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du pointage: {e}")
     
     # ==========================================
     # ENDPOINTS SOUS-TRAITANTS
