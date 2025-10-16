@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
@@ -14,7 +14,9 @@ import {
   X,
   Clock,
   Calendar,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -36,6 +38,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   
   // Vérifier si on est sur une page liée aux employés
   const isEmployeesSection = location.pathname.startsWith('/employees') || location.pathname.startsWith('/punch-management')
+  
+  // État pour gérer l'ouverture/fermeture des sous-menus
+  const [expandedMenus, setExpandedMenus] = useState({
+    employees: isEmployeesSection
+  })
+
+  const toggleMenu = (menuName) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuName]: !prev[menuName]
+    }))
+  }
 
   return (
     <>
@@ -58,23 +72,42 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 const Icon = item.icon
                 const isActive = location.pathname === item.href
                 const isEmployeesItem = item.name === 'Employés & Temps'
+                const isExpanded = expandedMenus.employees
                 
                 return (
                   <div key={item.name}>
-                    <Link
-                      to={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={clsx(
-                        'nav-item',
-                        isActive && 'active'
-                      )}
-                    >
-                      <Icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </Link>
+                    {isEmployeesItem ? (
+                      <button
+                        onClick={() => toggleMenu('employees')}
+                        className={clsx(
+                          'nav-item w-full text-left',
+                          isActive && 'active'
+                        )}
+                      >
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                        {isExpanded ? (
+                          <ChevronDown className="ml-auto h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        )}
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={clsx(
+                          'nav-item',
+                          isActive && 'active'
+                        )}
+                      >
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </Link>
+                    )}
                     
                     {/* Sous-menus pour Employés & Temps */}
-                    {isEmployeesItem && isEmployeesSection && (
+                    {isEmployeesItem && isExpanded && (
                       <div className="ml-8 mt-1 space-y-1">
                         <Link
                           to="/employees"
@@ -135,22 +168,41 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
               const Icon = item.icon
               const isActive = location.pathname === item.href
               const isEmployeesItem = item.name === 'Employés & Temps'
+              const isExpanded = expandedMenus.employees
               
               return (
                 <div key={item.name}>
-                  <Link
-                    to={item.href}
-                    className={clsx(
-                      'nav-item',
-                      isActive && 'active'
-                    )}
-                  >
-                    <Icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
+                  {isEmployeesItem ? (
+                    <button
+                      onClick={() => toggleMenu('employees')}
+                      className={clsx(
+                        'nav-item w-full text-left',
+                        isActive && 'active'
+                      )}
+                    >
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                      {isExpanded ? (
+                        <ChevronDown className="ml-auto h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="ml-auto h-4 w-4" />
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={clsx(
+                        'nav-item',
+                        isActive && 'active'
+                      )}
+                    >
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  )}
                   
                   {/* Sous-menus pour Employés & Temps */}
-                  {isEmployeesItem && isEmployeesSection && (
+                  {isEmployeesItem && isExpanded && (
                     <div className="ml-8 mt-1 space-y-1">
                       <Link
                         to="/employees"
