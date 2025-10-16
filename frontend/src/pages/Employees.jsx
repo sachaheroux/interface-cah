@@ -83,75 +83,20 @@ export default function Employees() {
   }
 
   return (
-    <div className="flex">
-      {/* Sidebar pour les admins */}
-      {user?.role === 'admin' && (
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Employés & Temps</h2>
-          <nav className="space-y-2">
-            <Link
-              to="/employees"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                location.pathname === '/employees'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
-              }`}
-            >
-              <UserCheck className="h-5 w-5 mr-3" />
-              Tous les employés
-            </Link>
-            <Link
-              to="/punch-management"
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                location.pathname === '/punch-management'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
-              }`}
-            >
-              <FileText className="h-5 w-5 mr-3" />
-              Feuilles de temps
-            </Link>
-            <button className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Calendar className="h-5 w-5 mr-3" />
-              Horaires
-            </button>
-            <button 
-              onClick={handleCreateEmployee}
-              className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Plus className="h-5 w-5 mr-3" />
-              Ajouter employé
-            </button>
-            <button className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <FileText className="h-5 w-5 mr-3" />
-              Rapports RH
-            </button>
-            <button className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <DollarSign className="h-5 w-5 mr-3" />
-              Paie
-            </button>
-          </nav>
-        </div>
-      )}
-
-      {/* Contenu principal */}
-      <div className={`flex-1 ${user?.role === 'admin' ? 'p-6' : ''}`}>
-        <div className="space-y-6">
+    <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Employés Construction</h1>
               <p className="text-gray-600 mt-1">Gestion des employés de construction</p>
             </div>
-            {user?.role !== 'admin' && (
-              <button 
-                onClick={handleCreateEmployee}
-                className="btn-primary flex items-center"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Nouvel Employé
-              </button>
-            )}
+            <button 
+              onClick={handleCreateEmployee}
+              className="btn-primary flex items-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Nouvel Employé
+            </button>
           </div>
 
           {/* Message de succès */}
@@ -236,8 +181,6 @@ export default function Employees() {
         employee={editingEmployee}
         onSuccess={handleFormSuccess}
       />
-        </div>
-      </div>
     </div>
   )
 } 

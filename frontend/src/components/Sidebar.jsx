@@ -11,7 +11,10 @@ import {
   Hammer, 
   FileText, 
   Settings,
-  X
+  X,
+  Clock,
+  Calendar,
+  DollarSign
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -30,6 +33,9 @@ const navigation = [
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation()
+  
+  // Vérifier si on est sur une page liée aux employés
+  const isEmployeesSection = location.pathname.startsWith('/employees') || location.pathname.startsWith('/punch-management')
 
   return (
     <>
@@ -51,19 +57,62 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
               {navigation.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.href
+                const isEmployeesItem = item.name === 'Employés & Temps'
+                
                 return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={clsx(
-                      'nav-item',
-                      isActive && 'active'
+                  <div key={item.name}>
+                    <Link
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={clsx(
+                        'nav-item',
+                        isActive && 'active'
+                      )}
+                    >
+                      <Icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </Link>
+                    
+                    {/* Sous-menus pour Employés & Temps */}
+                    {isEmployeesItem && isEmployeesSection && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        <Link
+                          to="/employees"
+                          onClick={() => setSidebarOpen(false)}
+                          className={clsx(
+                            'nav-item text-sm',
+                            location.pathname === '/employees' && 'active'
+                          )}
+                        >
+                          <UserCheck className="mr-3 h-4 w-4" />
+                          Tous les employés
+                        </Link>
+                        <Link
+                          to="/punch-management"
+                          onClick={() => setSidebarOpen(false)}
+                          className={clsx(
+                            'nav-item text-sm',
+                            location.pathname === '/punch-management' && 'active'
+                          )}
+                        >
+                          <FileText className="mr-3 h-4 w-4" />
+                          Feuilles de temps
+                        </Link>
+                        <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                          <Calendar className="mr-3 h-4 w-4" />
+                          Horaires
+                        </div>
+                        <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                          <FileText className="mr-3 h-4 w-4" />
+                          Rapports RH
+                        </div>
+                        <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                          <DollarSign className="mr-3 h-4 w-4" />
+                          Paie
+                        </div>
+                      </div>
                     )}
-                  >
-                    <Icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
+                  </div>
                 )
               })}
             </nav>
@@ -85,18 +134,59 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
+              const isEmployeesItem = item.name === 'Employés & Temps'
+              
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={clsx(
-                    'nav-item',
-                    isActive && 'active'
+                <div key={item.name}>
+                  <Link
+                    to={item.href}
+                    className={clsx(
+                      'nav-item',
+                      isActive && 'active'
+                    )}
+                  >
+                    <Icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                  
+                  {/* Sous-menus pour Employés & Temps */}
+                  {isEmployeesItem && isEmployeesSection && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      <Link
+                        to="/employees"
+                        className={clsx(
+                          'nav-item text-sm',
+                          location.pathname === '/employees' && 'active'
+                        )}
+                      >
+                        <UserCheck className="mr-3 h-4 w-4" />
+                        Tous les employés
+                      </Link>
+                      <Link
+                        to="/punch-management"
+                        className={clsx(
+                          'nav-item text-sm',
+                          location.pathname === '/punch-management' && 'active'
+                        )}
+                      >
+                        <FileText className="mr-3 h-4 w-4" />
+                        Feuilles de temps
+                      </Link>
+                      <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                        <Calendar className="mr-3 h-4 w-4" />
+                        Horaires
+                      </div>
+                      <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                        <FileText className="mr-3 h-4 w-4" />
+                        Rapports RH
+                      </div>
+                      <div className="nav-item text-sm cursor-not-allowed opacity-50">
+                        <DollarSign className="mr-3 h-4 w-4" />
+                        Paie
+                      </div>
+                    </div>
                   )}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
+                </div>
               )
             })}
           </nav>
