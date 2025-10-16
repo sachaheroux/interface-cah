@@ -5,24 +5,54 @@ import { employeesService, punchsService } from '../services/api'
 
 export default function EmployeePunchMobile() {
   const [employee, setEmployee] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
   const [punchs, setPunchs] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(true) // S'ouvre directement sur le formulaire
   const [successMessage, setSuccessMessage] = useState('')
   const [currentWeek, setCurrentWeek] = useState(new Date())
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    // Simuler une connexion employé (en attendant le vrai système d'auth)
-    const mockEmployee = {
-      id_employe: 1,
-      prenom: "Sacha",
-      nom: "Héroux",
-      poste: "Charpentier",
-      taux_horaire: 35.00
+    // Récupérer l'utilisateur connecté et trouver l'employé correspondant
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        setCurrentUser(user)
+        // Charger les employés pour trouver celui qui correspond
+        fetchEmployeesAndMatch(user)
+      } catch (e) {
+        console.error('Erreur parsing user:', e)
+      }
     }
-    setEmployee(mockEmployee)
-    fetchPunchs(mockEmployee.id_employe)
   }, [])
+
+  const fetchEmployeesAndMatch = async (user) => {
+    try {
+      setLoading(true)
+      const response = await employeesService.getEmployees()
+      const employees = response.data || []
+      
+      // Trouver l'employé correspondant
+      const matchedEmployee = employees.find(emp => 
+        emp.prenom.toLowerCase() === user.prenom?.toLowerCase() && 
+        emp.nom.toLowerCase() === user.nom?.toLowerCase()
+      )
+      
+      if (matchedEmployee) {
+        setEmployee(matchedEmployee)
+        fetchPunchs(matchedEmployee.id_employe)
+      } else {
+        setError('Aucune fiche employé trouvée avec votre nom. Veuillez demander à l\'administrateur de créer votre fiche employé.')
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des employés:', err)
+      setError('Erreur lors du chargement des données')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchPunchs = async (employeeId) => {
     try {
@@ -112,13 +142,19 @@ export default function EmployeePunchMobile() {
     )
   }
 
-  if (!employee) {
+  if (!employee && error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Non connecté</h2>
-          <p className="text-gray-600">Veuillez vous connecter pour accéder au pointage</p>
+        <div className="text-center max-w-md mx-auto p-6">
+          <User className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Fiche employé manquante</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retour à la connexion
+          </button>
         </div>
       </div>
     )

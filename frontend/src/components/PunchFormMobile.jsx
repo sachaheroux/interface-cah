@@ -4,7 +4,7 @@ import { employeesService, punchsService, projectsService } from '../services/ap
 import api from '../services/api'
 
 export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
-  const [step, setStep] = useState(1) // 1: Employé, 2: Projet, 3: Détails
+  const [step, setStep] = useState(1) // 1: Projet, 2: Détails (étape employé supprimée)
   const [formData, setFormData] = useState({
     id_employe: '',
     id_projet: '',
@@ -16,10 +16,23 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [currentUser, setCurrentUser] = useState(null)
+  const [matchedEmployee, setMatchedEmployee] = useState(null)
 
   // Initialiser le formulaire
   useEffect(() => {
     if (isOpen) {
+      // Récupérer l'utilisateur connecté
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          setCurrentUser(user)
+        } catch (e) {
+          console.error('Erreur parsing user:', e)
+        }
+      }
+      
       // Date par défaut = aujourd'hui
       const today = new Date().toISOString().split('T')[0]
       setFormData({
@@ -35,6 +48,23 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
       fetchProjects()
     }
   }, [isOpen])
+
+  // Trouver l'employé correspondant à l'utilisateur connecté
+  useEffect(() => {
+    if (currentUser && employees.length > 0) {
+      const employee = employees.find(emp => 
+        emp.prenom.toLowerCase() === currentUser.prenom?.toLowerCase() && 
+        emp.nom.toLowerCase() === currentUser.nom?.toLowerCase()
+      )
+      
+      if (employee) {
+        setMatchedEmployee(employee)
+        setFormData(prev => ({ ...prev, id_employe: employee.id_employe }))
+      } else {
+        setError('Aucune fiche employé trouvée avec votre nom. Veuillez demander à l\'administrateur de créer votre fiche employé.')
+      }
+    }
+  }, [currentUser, employees])
 
   const fetchEmployees = async () => {
     try {
@@ -60,11 +90,7 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
   }
 
   const handleNext = () => {
-    if (step === 1 && !formData.id_employe) {
-      setError('Veuillez sélectionner un employé')
-      return
-    }
-    if (step === 2 && !formData.id_projet) {
+    if (step === 1 && !formData.id_projet) {
       setError('Veuillez sélectionner un projet')
       return
     }
@@ -78,6 +104,10 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
   }
 
   const validateForm = () => {
+    if (!formData.id_employe) {
+      setError('Employé non trouvé - contactez l\'administrateur')
+      return false
+    }
     if (!formData.date) {
       setError('Veuillez sélectionner une date')
       return false
@@ -138,12 +168,11 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                Pointage - Étape {step}/3
+                Pointage - Étape {step}/2
               </h2>
               <p className="text-xs text-gray-600">
-                {step === 1 && 'Sélectionner l\'employé'}
-                {step === 2 && 'Choisir le projet'}
-                {step === 3 && 'Détails du pointage'}
+                {step === 1 && 'Choisir le projet'}
+                {step === 2 && 'Détails du pointage'}
               </p>
             </div>
           </div>
@@ -158,7 +187,7 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
         {/* Progress Bar */}
         <div className="px-4 py-2 bg-gray-50">
           <div className="flex space-x-2">
-            {[1, 2, 3].map((stepNum) => (
+            {[1, 2].map((stepNum) => (
               <div
                 key={stepNum}
                 className={`flex-1 h-2 rounded-full ${
@@ -177,42 +206,22 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Étape 1: Sélection Employé */}
+          {/* Étape 1: Sélection Projet */}
           {step === 1 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <User className="h-4 w-4 inline mr-1" />
-                  Sélectionner l'employé *
-                </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {employees.map((employee) => (
-                    <button
-                      key={employee.id_employe}
-                      type="button"
-                      onClick={() => handleChange('id_employe', employee.id_employe)}
-                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                        formData.id_employe === employee.id_employe
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="font-medium">
-                        {employee.prenom} {employee.nom}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {employee.poste} • ${employee.taux_horaire}/h
-                      </div>
-                    </button>
-                  ))}
+              {/* Affichage de l'employé trouvé */}
+              {matchedEmployee && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="text-sm text-green-700 mb-1">Employé identifié</div>
+                  <div className="font-medium text-green-800">
+                    {matchedEmployee.prenom} {matchedEmployee.nom}
+                  </div>
+                  <div className="text-sm text-green-600">
+                    {matchedEmployee.poste} • ${matchedEmployee.taux_horaire}/h
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Étape 2: Sélection Projet */}
-          {step === 2 && (
-            <div className="space-y-4">
+              )}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Building className="h-4 w-4 inline mr-1" />
@@ -242,8 +251,8 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Étape 3: Détails du pointage */}
-          {step === 3 && (
+          {/* Étape 2: Détails du pointage */}
+          {step === 2 && (
             <div className="space-y-4">
               {/* Résumé */}
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -341,7 +350,7 @@ export default function PunchFormMobile({ isOpen, onClose, onSuccess }) {
               </button>
             )}
             
-            {step < 3 ? (
+            {step < 2 ? (
               <button
                 type="button"
                 onClick={handleNext}
