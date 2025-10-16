@@ -2764,6 +2764,31 @@ if CONSTRUCTION_ENABLED:
         section: Optional[str] = None
     
     # ==========================================
+    # ENDPOINTS DE MIGRATION CONSTRUCTION
+    # ==========================================
+    
+    @app.post("/api/construction/migrate/add-taux-horaire")
+    async def migrate_add_taux_horaire(db: Session = Depends(get_construction_db)):
+        """Migration : Ajouter la colonne taux_horaire à la table employes"""
+        try:
+            # Vérifier si la colonne existe déjà
+            cursor = db.execute("PRAGMA table_info(employes)")
+            columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'taux_horaire' in columns:
+                return {"success": True, "message": "Colonne taux_horaire existe déjà"}
+            
+            # Ajouter la colonne
+            db.execute("ALTER TABLE employes ADD COLUMN taux_horaire FLOAT")
+            db.commit()
+            
+            return {"success": True, "message": "Colonne taux_horaire ajoutée avec succès"}
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur migration: {e}")
+    
+    # ==========================================
     # ENDPOINTS PROJETS
     # ==========================================
     
