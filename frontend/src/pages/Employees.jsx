@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { UserCheck, Plus, Clock, User, Edit, Trash2 } from 'lucide-react'
+import { UserCheck, Plus, Clock, User, Edit, Trash2, Phone, Mail } from 'lucide-react'
 import { employeesService } from '../services/api'
 import EmployeeForm from '../components/EmployeeForm'
 
@@ -128,36 +128,34 @@ export default function Employees() {
               <div className="space-y-2 mb-4">
                 {employee.numero && (
                   <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2" />
+                    <Phone className="h-4 w-4 mr-2" />
                     {employee.numero}
                   </div>
                 )}
                 {employee.adresse_courriel && (
                   <div className="flex items-center text-sm text-gray-600">
-                    <User className="h-4 w-4 mr-2" />
+                    <Mail className="h-4 w-4 mr-2" />
                     {employee.adresse_courriel}
                   </div>
                 )}
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => handleEditEmployee(employee)}
-                    className="btn-secondary text-sm flex items-center"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Modifier
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteEmployee(employee)}
-                    className="btn-secondary text-sm flex items-center text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Supprimer
-                  </button>
-                </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleEditEmployee(employee)}
+                  className="flex-1 btn-secondary text-sm py-2"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Modifier
+                </button>
+                <button 
+                  onClick={() => handleDeleteEmployee(employee)}
+                  className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm"
+                  title="Supprimer l'employé"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))
