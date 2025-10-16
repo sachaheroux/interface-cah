@@ -33,6 +33,16 @@ except ImportError as e:
     AUTH_ENABLED = False
     print(f"⚠️ Routes d'authentification non disponibles: {e}")
 
+# Import des services de construction
+try:
+    from database_construction import get_construction_db, init_construction_database
+    from models_construction import Projet, Fournisseur, MatierePremiere, Commande, LigneCommande, Employe, PunchEmploye, SousTraitant, FactureST
+    CONSTRUCTION_ENABLED = True
+    print("✅ Services de construction chargés")
+except ImportError as e:
+    CONSTRUCTION_ENABLED = False
+    print(f"⚠️ Services de construction non disponibles: {e}")
+
 app = FastAPI(
     title="Interface CAH API",
     description="API pour la gestion de construction - Interface CAH",
@@ -63,6 +73,14 @@ async def startup_event():
             print("✅ Base de données d'authentification initialisée avec succès")
         else:
             print("⚠️ Erreur lors de l'initialisation de la DB auth (non bloquant)")
+    
+    # Initialiser la base de données de construction (si activée)
+    if CONSTRUCTION_ENABLED:
+        print("🏗️ Initialisation de la base de données de construction...")
+        if init_construction_database():
+            print("✅ Base de données de construction initialisée avec succès")
+        else:
+            print("⚠️ Erreur lors de l'initialisation de la DB construction (non bloquant)")
 
 # Configuration CORS pour permettre les requêtes du frontend
 app.add_middleware(
@@ -2667,6 +2685,262 @@ async def setup_authentication():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur durant le setup: {str(e)}")
+
+# ==========================================
+# ROUTES API CONSTRUCTION
+# ==========================================
+
+if CONSTRUCTION_ENABLED:
+    from sqlalchemy.orm import Session
+    from sqlalchemy import desc
+    
+    # ==========================================
+    # MODÈLES PYDANTIC POUR CONSTRUCTION
+    # ==========================================
+    
+    class ProjetCreate(BaseModel):
+        nom: str
+        date_debut: Optional[datetime] = None
+        date_fin_prevue: Optional[datetime] = None
+        date_fin_reelle: Optional[datetime] = None
+        notes: Optional[str] = None
+    
+    class ProjetUpdate(BaseModel):
+        nom: Optional[str] = None
+        date_debut: Optional[datetime] = None
+        date_fin_prevue: Optional[datetime] = None
+        date_fin_reelle: Optional[datetime] = None
+        notes: Optional[str] = None
+    
+    class FournisseurCreate(BaseModel):
+        nom: str
+        rue: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
+    class MatierePremiereCreate(BaseModel):
+        nom: str
+        notes: Optional[str] = None
+    
+    class EmployeCreate(BaseModel):
+        prenom: str
+        nom: str
+        poste: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
+    class SousTraitantCreate(BaseModel):
+        nom: str
+        rue: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
+    # ==========================================
+    # ENDPOINTS PROJETS
+    # ==========================================
+    
+    @app.get("/api/construction/projets")
+    async def get_projets(db: Session = Depends(get_construction_db)):
+        """Récupérer tous les projets"""
+        try:
+            projets = db.query(Projet).order_by(desc(Projet.date_creation)).all()
+            return {"success": True, "data": [projet.to_dict() for projet in projets]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des projets: {e}")
+    
+    @app.post("/api/construction/projets")
+    async def create_projet(projet_data: ProjetCreate, db: Session = Depends(get_construction_db)):
+        """Créer un nouveau projet"""
+        try:
+            nouveau_projet = Projet(**projet_data.dict())
+            db.add(nouveau_projet)
+            db.commit()
+            db.refresh(nouveau_projet)
+            return {"success": True, "data": nouveau_projet.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création du projet: {e}")
+    
+    @app.get("/api/construction/projets/{projet_id}")
+    async def get_projet(projet_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer un projet par ID"""
+        try:
+            projet = db.query(Projet).filter(Projet.id_projet == projet_id).first()
+            if not projet:
+                raise HTTPException(status_code=404, detail="Projet non trouvé")
+            return {"success": True, "data": projet.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du projet: {e}")
+    
+    @app.put("/api/construction/projets/{projet_id}")
+    async def update_projet(projet_id: int, projet_data: ProjetUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour un projet"""
+        try:
+            projet = db.query(Projet).filter(Projet.id_projet == projet_id).first()
+            if not projet:
+                raise HTTPException(status_code=404, detail="Projet non trouvé")
+            
+            for field, value in projet_data.dict(exclude_unset=True).items():
+                setattr(projet, field, value)
+            
+            db.commit()
+            db.refresh(projet)
+            return {"success": True, "data": projet.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du projet: {e}")
+    
+    @app.delete("/api/construction/projets/{projet_id}")
+    async def delete_projet(projet_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer un projet"""
+        try:
+            projet = db.query(Projet).filter(Projet.id_projet == projet_id).first()
+            if not projet:
+                raise HTTPException(status_code=404, detail="Projet non trouvé")
+            
+            db.delete(projet)
+            db.commit()
+            return {"success": True, "message": "Projet supprimé avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du projet: {e}")
+    
+    # ==========================================
+    # ENDPOINTS FOURNISSEURS
+    # ==========================================
+    
+    @app.get("/api/construction/fournisseurs")
+    async def get_fournisseurs(db: Session = Depends(get_construction_db)):
+        """Récupérer tous les fournisseurs"""
+        try:
+            fournisseurs = db.query(Fournisseur).order_by(Fournisseur.nom).all()
+            return {"success": True, "data": [fournisseur.to_dict() for fournisseur in fournisseurs]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des fournisseurs: {e}")
+    
+    @app.post("/api/construction/fournisseurs")
+    async def create_fournisseur(fournisseur_data: FournisseurCreate, db: Session = Depends(get_construction_db)):
+        """Créer un nouveau fournisseur"""
+        try:
+            nouveau_fournisseur = Fournisseur(**fournisseur_data.dict())
+            db.add(nouveau_fournisseur)
+            db.commit()
+            db.refresh(nouveau_fournisseur)
+            return {"success": True, "data": nouveau_fournisseur.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création du fournisseur: {e}")
+    
+    # ==========================================
+    # ENDPOINTS MATIÈRES PREMIÈRES
+    # ==========================================
+    
+    @app.get("/api/construction/matieres-premieres")
+    async def get_matieres_premieres(db: Session = Depends(get_construction_db)):
+        """Récupérer toutes les matières premières"""
+        try:
+            matieres = db.query(MatierePremiere).order_by(MatierePremiere.nom).all()
+            return {"success": True, "data": [matiere.to_dict() for matiere in matieres]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des matières premières: {e}")
+    
+    @app.post("/api/construction/matieres-premieres")
+    async def create_matiere_premiere(matiere_data: MatierePremiereCreate, db: Session = Depends(get_construction_db)):
+        """Créer une nouvelle matière première"""
+        try:
+            nouvelle_matiere = MatierePremiere(**matiere_data.dict())
+            db.add(nouvelle_matiere)
+            db.commit()
+            db.refresh(nouvelle_matiere)
+            return {"success": True, "data": nouvelle_matiere.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la matière première: {e}")
+    
+    # ==========================================
+    # ENDPOINTS EMPLOYÉS
+    # ==========================================
+    
+    @app.get("/api/construction/employes")
+    async def get_employes(db: Session = Depends(get_construction_db)):
+        """Récupérer tous les employés"""
+        try:
+            employes = db.query(Employe).order_by(Employe.nom, Employe.prenom).all()
+            return {"success": True, "data": [employe.to_dict() for employe in employes]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des employés: {e}")
+    
+    @app.post("/api/construction/employes")
+    async def create_employe(employe_data: EmployeCreate, db: Session = Depends(get_construction_db)):
+        """Créer un nouvel employé"""
+        try:
+            nouvel_employe = Employe(**employe_data.dict())
+            db.add(nouvel_employe)
+            db.commit()
+            db.refresh(nouvel_employe)
+            return {"success": True, "data": nouvel_employe.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'employé: {e}")
+    
+    # ==========================================
+    # ENDPOINTS SOUS-TRAITANTS
+    # ==========================================
+    
+    @app.get("/api/construction/sous-traitants")
+    async def get_sous_traitants(db: Session = Depends(get_construction_db)):
+        """Récupérer tous les sous-traitants"""
+        try:
+            sous_traitants = db.query(SousTraitant).order_by(SousTraitant.nom).all()
+            return {"success": True, "data": [st.to_dict() for st in sous_traitants]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des sous-traitants: {e}")
+    
+    @app.post("/api/construction/sous-traitants")
+    async def create_sous_traitant(st_data: SousTraitantCreate, db: Session = Depends(get_construction_db)):
+        """Créer un nouveau sous-traitant"""
+        try:
+            nouveau_st = SousTraitant(**st_data.dict())
+            db.add(nouveau_st)
+            db.commit()
+            db.refresh(nouveau_st)
+            return {"success": True, "data": nouveau_st.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création du sous-traitant: {e}")
+    
+    # ==========================================
+    # ENDPOINT DE TEST CONSTRUCTION
+    # ==========================================
+    
+    @app.get("/api/construction/test")
+    async def test_construction_api():
+        """Test de l'API construction"""
+        return {
+            "success": True,
+            "message": "API Construction fonctionnelle",
+            "timestamp": datetime.utcnow().isoformat(),
+            "tables": [
+                "projets", "fournisseurs", "matieres_premieres", 
+                "commandes", "lignes_commande", "employes", 
+                "punchs_employes", "sous_traitants", "factures_st"
+            ]
+        }
+
+else:
+    print("⚠️ API Construction non disponible - modules non chargés")
 
 # ============================================================================
 
