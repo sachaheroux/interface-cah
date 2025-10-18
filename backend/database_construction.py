@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
 Service de base de données pour les projets de construction
-Utilise EXACTEMENT la même configuration que database.py
+Utilise EXACTEMENT le même fichier SQLite que la partie locative
 """
 
-from database import db_manager
+from database import db_manager, engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 
-# Utiliser EXACTEMENT la même configuration que database.py
-construction_engine = db_manager.engine
-CONSTRUCTION_DATABASE_PATH = db_manager.db_path
+# Utiliser EXACTEMENT le même moteur et fichier que database.py
+construction_engine = engine  # Même moteur que la partie locative
+CONSTRUCTION_DATABASE_PATH = db_manager.db_path  # Même fichier SQLite
 
 # Session factory
 ConstructionSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=construction_engine)
@@ -46,15 +46,17 @@ def get_construction_db_context():
 def init_construction_database():
     """
     Initialiser la base de données construction avec toutes les tables
+    Utilise le même fichier SQLite que la partie locative
     """
     try:
         print("🏗️ Initialisation de la base de données construction...")
+        print(f"📁 Utilise le même fichier que la partie locative: {CONSTRUCTION_DATABASE_PATH}")
         
-        # Créer toutes les tables
+        # Créer toutes les tables dans le même fichier SQLite
         ConstructionBase.metadata.create_all(bind=construction_engine)
         
         print("✅ Base de données construction initialisée avec succès")
-        print(f"📁 Utilise la même base que la partie locative")
+        print("📁 Tables construction ajoutées au fichier SQLite existant")
         
         return True
         
