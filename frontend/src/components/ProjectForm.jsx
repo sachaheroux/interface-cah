@@ -92,10 +92,10 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
 
       if (project) {
         await projectsService.updateProject(project.id_projet, submitData)
-        onSuccess(`Projet "${formData.nom}" mis à jour avec succès.`)
+        onSuccess()
       } else {
         await projectsService.createProject(submitData)
-        onSuccess(`Projet "${formData.nom}" créé avec succès.`)
+        onSuccess()
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du projet:', error)

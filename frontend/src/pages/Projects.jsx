@@ -8,7 +8,6 @@ export default function Projects() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
-  const [successMessage, setSuccessMessage] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   useEffect(() => {
@@ -41,22 +40,15 @@ export default function Projects() {
   const handleDeleteProject = async (project) => {
     try {
       await projectsService.deleteProject(project.id_projet)
-      setSuccessMessage(`Le projet "${project.nom}" a été supprimé avec succès.`)
       fetchProjects()
       setDeleteConfirm(null)
     } catch (error) {
       console.error("Erreur lors de la suppression du projet:", error)
-      if (error.response?.status === 400) {
-        setSuccessMessage(`Impossible de supprimer le projet "${project.nom}": ${error.response.data.detail}`)
-      } else {
-        setSuccessMessage(`Erreur lors de la suppression du projet "${project.nom}".`)
-      }
       setDeleteConfirm(null)
     }
   }
 
-  const handleFormSuccess = (message) => {
-    setSuccessMessage(message)
+  const handleFormSuccess = () => {
     setShowForm(false)
     fetchProjects()
   }
@@ -137,13 +129,6 @@ export default function Projects() {
           Nouveau Projet
         </button>
       </div>
-
-      {/* Message de succès */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-          {successMessage}
-        </div>
-      )}
 
       {/* Liste des projets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
