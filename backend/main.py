@@ -2952,11 +2952,26 @@ if CONSTRUCTION_ENABLED:
             date_fin_reelle = None
             
             if projet_data.date_debut:
-                date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d')
+                date_str = projet_data.date_debut.strip()
+                if ' ' in date_str:
+                    date_str = date_str.split(' ')[0]
+                elif 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                date_debut = datetime.strptime(date_str, '%Y-%m-%d')
             if projet_data.date_fin_prevue:
-                date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d')
+                date_str = projet_data.date_fin_prevue.strip()
+                if ' ' in date_str:
+                    date_str = date_str.split(' ')[0]
+                elif 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                date_fin_prevue = datetime.strptime(date_str, '%Y-%m-%d')
             if projet_data.date_fin_reelle:
-                date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d')
+                date_str = projet_data.date_fin_reelle.strip()
+                if ' ' in date_str:
+                    date_str = date_str.split(' ')[0]
+                elif 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                date_fin_reelle = datetime.strptime(date_str, '%Y-%m-%d')
             
             nouveau_projet = Projet(
                 nom=projet_data.nom,
@@ -3020,17 +3035,33 @@ if CONSTRUCTION_ENABLED:
             # Gérer les dates (peuvent être None ou chaîne vide)
             if projet_data.date_debut is not None:
                 if projet_data.date_debut and projet_data.date_debut.strip():
-                    projet.date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d')
+                    # Extraire seulement la partie date (YYYY-MM-DD) si format complet
+                    date_str = projet_data.date_debut.strip()
+                    if ' ' in date_str:
+                        date_str = date_str.split(' ')[0]
+                    elif 'T' in date_str:
+                        date_str = date_str.split('T')[0]
+                    projet.date_debut = datetime.strptime(date_str, '%Y-%m-%d')
                 else:
                     projet.date_debut = None
             if projet_data.date_fin_prevue is not None:
                 if projet_data.date_fin_prevue and projet_data.date_fin_prevue.strip():
-                    projet.date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d')
+                    date_str = projet_data.date_fin_prevue.strip()
+                    if ' ' in date_str:
+                        date_str = date_str.split(' ')[0]
+                    elif 'T' in date_str:
+                        date_str = date_str.split('T')[0]
+                    projet.date_fin_prevue = datetime.strptime(date_str, '%Y-%m-%d')
                 else:
                     projet.date_fin_prevue = None
             if projet_data.date_fin_reelle is not None:
                 if projet_data.date_fin_reelle and projet_data.date_fin_reelle.strip():
-                    projet.date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d')
+                    date_str = projet_data.date_fin_reelle.strip()
+                    if ' ' in date_str:
+                        date_str = date_str.split(' ')[0]
+                    elif 'T' in date_str:
+                        date_str = date_str.split('T')[0]
+                    projet.date_fin_reelle = datetime.strptime(date_str, '%Y-%m-%d')
                 else:
                     projet.date_fin_reelle = None
             

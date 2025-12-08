@@ -19,13 +19,26 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return ''
+    // Gérer différents formats de date
+    // Format ISO: "2025-09-15T00:00:00" ou "2025-09-15 00:00:00.000000"
+    let date = dateString
+    if (dateString.includes('T')) {
+      date = dateString.split('T')[0]
+    } else if (dateString.includes(' ')) {
+      date = dateString.split(' ')[0]
+    }
+    return date
+  }
+
   useEffect(() => {
     if (project) {
       setFormData({
         nom: project.nom || '',
-        date_debut: project.date_debut ? project.date_debut.split('T')[0] : '',
-        date_fin_prevue: project.date_fin_prevue ? project.date_fin_prevue.split('T')[0] : '',
-        date_fin_reelle: project.date_fin_reelle ? project.date_fin_reelle.split('T')[0] : '',
+        date_debut: formatDateForInput(project.date_debut),
+        date_fin_prevue: formatDateForInput(project.date_fin_prevue),
+        date_fin_reelle: formatDateForInput(project.date_fin_reelle),
         notes: project.notes || '',
         adresse: project.adresse || '',
         ville: project.ville || '',
