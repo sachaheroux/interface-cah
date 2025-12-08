@@ -67,23 +67,57 @@ def check_projects():
                     # Créer un dictionnaire avec les données
                     project_dict = dict(zip(column_names, project))
                     
-                    # Afficher toutes les colonnes
-                    for col_name, value in project_dict.items():
-                        if value is not None:
-                            # Formater les dates
-                            if 'date' in col_name.lower() and isinstance(value, str):
-                                print(f"   {col_name}: {value}")
-                            elif isinstance(value, float):
-                                if 'pourcentage' in col_name.lower():
-                                    print(f"   {col_name}: {value}%")
-                                elif 'budget' in col_name.lower() or 'cout' in col_name.lower() or 'marge' in col_name.lower():
-                                    print(f"   {col_name}: ${value:,.2f}")
+                    # Afficher toutes les colonnes, organisées par catégorie
+                    base_fields = ['id_projet', 'nom', 'date_debut', 'date_fin_prevue', 'date_fin_reelle', 'notes', 'date_creation', 'date_modification']
+                    new_fields = ['adresse', 'ville', 'province', 'code_postal', 'budget_total']
+                    
+                    # Informations de base
+                    print("   📋 Informations de base:")
+                    for col_name in base_fields:
+                        if col_name in project_dict:
+                            value = project_dict[col_name]
+                            if value is not None:
+                                if 'date' in col_name.lower():
+                                    print(f"      • {col_name}: {value}")
                                 else:
-                                    print(f"   {col_name}: {value}")
+                                    print(f"      • {col_name}: {value}")
                             else:
-                                print(f"   {col_name}: {value}")
+                                print(f"      • {col_name}: (vide)")
+                    
+                    # Nouveaux champs (adresse et budget)
+                    print("   📍 Adresse:")
+                    for col_name in ['adresse', 'ville', 'province', 'code_postal']:
+                        if col_name in project_dict:
+                            value = project_dict[col_name]
+                            if value is not None:
+                                print(f"      • {col_name}: {value}")
+                            else:
+                                print(f"      • {col_name}: (vide)")
+                    
+                    # Budget
+                    if 'budget_total' in project_dict:
+                        budget = project_dict['budget_total']
+                        if budget is not None:
+                            print(f"   💰 Budget total: ${budget:,.2f}")
                         else:
-                            print(f"   {col_name}: (vide)")
+                            print(f"   💰 Budget total: (vide)")
+                    
+                    # Autres champs (si présents)
+                    other_fields = [col for col in project_dict.keys() if col not in base_fields + new_fields]
+                    if other_fields:
+                        print("   📝 Autres champs:")
+                        for col_name in other_fields:
+                            value = project_dict[col_name]
+                            if value is not None:
+                                if isinstance(value, float):
+                                    if 'budget' in col_name.lower() or 'cout' in col_name.lower() or 'marge' in col_name.lower():
+                                        print(f"      • {col_name}: ${value:,.2f}")
+                                    else:
+                                        print(f"      • {col_name}: {value}")
+                                else:
+                                    print(f"      • {col_name}: {value}")
+                            else:
+                                print(f"      • {col_name}: (vide)")
             else:
                 print("⚠️ Aucun projet trouvé dans la base de données")
             

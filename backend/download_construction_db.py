@@ -35,6 +35,11 @@ def create_local_database():
                 date_fin_prevue TEXT,
                 date_fin_reelle TEXT,
                 notes TEXT,
+                adresse TEXT,
+                ville TEXT,
+                province TEXT,
+                code_postal TEXT,
+                budget_total REAL DEFAULT 0,
                 date_creation TEXT,
                 date_modification TEXT
             )

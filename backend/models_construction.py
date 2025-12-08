@@ -15,51 +15,27 @@ class Projet(ConstructionBase):
     
     id_projet = Column(Integer, primary_key=True, index=True)
     nom = Column(String(255), nullable=False)
-    description = Column(Text)
-    adresse = Column(String(255))
-    ville = Column(String(100))
-    province = Column(String(50))
-    code_postal = Column(String(10))
     
     # Dates importantes
     date_debut = Column(DateTime)
     date_fin_prevue = Column(DateTime)
     date_fin_reelle = Column(DateTime)
     
-    # Informations financières
-    budget_total = Column(Float, default=0)
-    cout_actuel = Column(Float, default=0)
-    marge_beneficiaire = Column(Float, default=0)
-    
-    # Statut et progression
-    statut = Column(String(50), default="planification")  # planification, en_cours, termine, suspendu, annule
-    progression_pourcentage = Column(Float, default=0)
-    
-    # Informations de contact
-    client_nom = Column(String(255))
-    client_telephone = Column(String(20))
-    client_email = Column(String(255))
-    
-    # Équipe de projet
-    chef_projet = Column(String(255))
-    architecte = Column(String(255))
-    entrepreneur_principal = Column(String(255))
-    
-    # Documents et fichiers
-    plans_pdf = Column(String(500))  # Chemin vers le fichier PDF
-    permis_construction = Column(String(100))
-    numero_permis = Column(String(50))
-    
-    # Notes et observations
+    # Notes
     notes = Column(Text)
-    risques_identifies = Column(Text)
-    ameliorations_futures = Column(Text)
+    
+    # Adresse
+    adresse = Column(String(255))
+    ville = Column(String(100))
+    province = Column(String(50))
+    code_postal = Column(String(10))
+    
+    # Budget
+    budget_total = Column(Float, default=0)
     
     # Métadonnées
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    cree_par = Column(String(255))
-    modifie_par = Column(String(255))
     
     # Relations
     commandes = relationship("Commande", back_populates="projet")
@@ -70,35 +46,17 @@ class Projet(ConstructionBase):
         return {
             "id_projet": self.id_projet,
             "nom": self.nom,
-            "description": self.description,
+            "date_debut": self.date_debut.isoformat() if self.date_debut else None,
+            "date_fin_prevue": self.date_fin_prevue.isoformat() if self.date_fin_prevue else None,
+            "date_fin_reelle": self.date_fin_reelle.isoformat() if self.date_fin_reelle else None,
+            "notes": self.notes,
             "adresse": self.adresse,
             "ville": self.ville,
             "province": self.province,
             "code_postal": self.code_postal,
-            "date_debut": self.date_debut.isoformat() if self.date_debut else None,
-            "date_fin_prevue": self.date_fin_prevue.isoformat() if self.date_fin_prevue else None,
-            "date_fin_reelle": self.date_fin_reelle.isoformat() if self.date_fin_reelle else None,
             "budget_total": self.budget_total,
-            "cout_actuel": self.cout_actuel,
-            "marge_beneficiaire": self.marge_beneficiaire,
-            "statut": self.statut,
-            "progression_pourcentage": self.progression_pourcentage,
-            "client_nom": self.client_nom,
-            "client_telephone": self.client_telephone,
-            "client_email": self.client_email,
-            "chef_projet": self.chef_projet,
-            "architecte": self.architecte,
-            "entrepreneur_principal": self.entrepreneur_principal,
-            "plans_pdf": self.plans_pdf,
-            "permis_construction": self.permis_construction,
-            "numero_permis": self.numero_permis,
-            "notes": self.notes,
-            "risques_identifies": self.risques_identifies,
-            "ameliorations_futures": self.ameliorations_futures,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
-            "date_modification": self.date_modification.isoformat() if self.date_modification else None,
-            "cree_par": self.cree_par,
-            "modifie_par": self.modifie_par
+            "date_modification": self.date_modification.isoformat() if self.date_modification else None
         }
 
 class Fournisseur(ConstructionBase):
