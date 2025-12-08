@@ -88,10 +88,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                   <div key={item.name}>
                     {isEmployeesItem ? (
                       <button
-                        onClick={() => toggleMenu('employees')}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          toggleMenu('employees')
+                        }}
                         className={clsx(
                           'nav-item w-full text-left',
-                          isActive && 'active'
+                          (isActive || isExpanded) && 'active'
                         )}
                       >
                         <Icon className="mr-3 h-5 w-5" />
@@ -130,17 +133,24 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                           <UserCheck className="mr-3 h-4 w-4" />
                           Tous les employés
                         </Link>
-                        <Link
-                          to="/punch-management"
-                          onClick={() => setSidebarOpen(false)}
-                          className={clsx(
-                            'nav-item text-sm',
-                            location.pathname === '/punch-management' && 'active'
-                          )}
-                        >
-                          <FileText className="mr-3 h-4 w-4" />
-                          Feuilles de temps
-                        </Link>
+                      <Link
+                        to="/punch-management"
+                        onClick={(e) => {
+                          setSidebarOpen(false)
+                          // S'assurer que le menu reste ouvert
+                          setExpandedMenus(prev => ({
+                            ...prev,
+                            employees: true
+                          }))
+                        }}
+                        className={clsx(
+                          'nav-item text-sm',
+                          location.pathname === '/punch-management' && 'active'
+                        )}
+                      >
+                        <FileText className="mr-3 h-4 w-4" />
+                        Feuilles de temps
+                      </Link>
                         <div className="nav-item text-sm cursor-not-allowed opacity-50">
                           <Calendar className="mr-3 h-4 w-4" />
                           Horaires
@@ -184,10 +194,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 <div key={item.name}>
                   {isEmployeesItem ? (
                     <button
-                      onClick={() => toggleMenu('employees')}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        toggleMenu('employees')
+                      }}
                       className={clsx(
                         'nav-item w-full text-left',
-                        isActive && 'active'
+                        (isActive || isExpanded) && 'active'
                       )}
                     >
                       <Icon className="mr-3 h-5 w-5" />
@@ -226,8 +239,17 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       </Link>
                       <Link
                         to="/punch-management"
+                        onClick={(e) => {
+                          // S'assurer que le menu reste ouvert et que la navigation fonctionne
+                          setExpandedMenus(prev => ({
+                            ...prev,
+                            employees: true
+                          }))
+                          // Ne pas empêcher la navigation par défaut
+                          // Le Link de React Router gère déjà la navigation
+                        }}
                         className={clsx(
-                          'nav-item text-sm',
+                          'nav-item text-sm cursor-pointer',
                           location.pathname === '/punch-management' && 'active'
                         )}
                       >
