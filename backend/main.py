@@ -2701,32 +2701,15 @@ if CONSTRUCTION_ENABLED:
     
     class ProjetCreate(BaseModel):
         nom: str
-        description: Optional[str] = None
+        date_debut: Optional[str] = None  # Format YYYY-MM-DD
+        date_fin_prevue: Optional[str] = None  # Format YYYY-MM-DD
+        date_fin_reelle: Optional[str] = None  # Format YYYY-MM-DD
+        notes: Optional[str] = None
         adresse: Optional[str] = None
         ville: Optional[str] = None
         province: Optional[str] = None
         code_postal: Optional[str] = None
-        date_debut: Optional[str] = None  # Format YYYY-MM-DD
-        date_fin_prevue: Optional[str] = None  # Format YYYY-MM-DD
-        date_fin_reelle: Optional[str] = None  # Format YYYY-MM-DD
         budget_total: Optional[float] = 0
-        cout_actuel: Optional[float] = 0
-        marge_beneficiaire: Optional[float] = 0
-        statut: Optional[str] = "planification"
-        progression_pourcentage: Optional[float] = 0
-        client_nom: Optional[str] = None
-        client_telephone: Optional[str] = None
-        client_email: Optional[str] = None
-        chef_projet: Optional[str] = None
-        architecte: Optional[str] = None
-        entrepreneur_principal: Optional[str] = None
-        plans_pdf: Optional[str] = None
-        permis_construction: Optional[str] = None
-        numero_permis: Optional[str] = None
-        notes: Optional[str] = None
-        risques_identifies: Optional[str] = None
-        ameliorations_futures: Optional[str] = None
-        cree_par: Optional[str] = None
     
     class ProjetUpdate(BaseModel):
         nom: Optional[str] = None
@@ -2811,6 +2794,53 @@ if CONSTRUCTION_ENABLED:
     # ENDPOINTS DE MIGRATION CONSTRUCTION
     # ==========================================
     
+    @app.post("/api/construction/migrate/add-projet-columns")
+    async def migrate_add_projet_columns(db: Session = Depends(get_construction_db)):
+        """Ajouter les colonnes manquantes à la table projets"""
+        try:
+            from sqlalchemy import text
+            
+            # Colonnes à ajouter
+            columns_to_add = [
+                ("adresse", "VARCHAR(255)"),
+                ("ville", "VARCHAR(100)"),
+                ("province", "VARCHAR(50)"),
+                ("code_postal", "VARCHAR(10)"),
+                ("budget_total", "FLOAT DEFAULT 0")
+            ]
+            
+            # Vérifier quelles colonnes existent déjà
+            result = db.execute(text("PRAGMA table_info(projets)"))
+            existing_columns = [col[1] for col in result.fetchall()]
+            
+            added_columns = []
+            skipped_columns = []
+            
+            for col_name, col_type in columns_to_add:
+                if col_name not in existing_columns:
+                    try:
+                        db.execute(text(f"ALTER TABLE projets ADD COLUMN {col_name} {col_type}"))
+                        added_columns.append(col_name)
+                        print(f"✅ Colonne '{col_name}' ajoutée")
+                    except Exception as e:
+                        print(f"❌ Erreur lors de l'ajout de '{col_name}': {e}")
+                else:
+                    skipped_columns.append(col_name)
+                    print(f"ℹ️ Colonne '{col_name}' existe déjà")
+            
+            db.commit()
+            
+            return {
+                "success": True,
+                "message": f"Migration terminée: {len(added_columns)} colonne(s) ajoutée(s)",
+                "added_columns": added_columns,
+                "skipped_columns": skipped_columns
+            }
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur migration: {e}")
+    
     @app.post("/api/construction/migrate/add-taux-horaire")
     async def migrate_add_taux_horaire(db: Session = Depends(get_construction_db)):
         """Migration : Ajouter la colonne taux_horaire à la table employes"""
@@ -2870,8 +2900,45 @@ if CONSTRUCTION_ENABLED:
     async def get_projets(db: Session = Depends(get_construction_db)):
         """Récupérer tous les projets"""
         try:
-            projets = db.query(Projet).order_by(desc(Projet.date_creation)).all()
-            return {"success": True, "data": [projet.to_dict() for projet in projets]}
+            from sqlalchemy import text
+            
+            # Vérifier quelles colonnes existent dans la table
+            result = db.execute(text("PRAGMA table_info(projets)"))
+            existing_columns = [col[1] for col in result.fetchall()]
+            
+            # Colonnes de base qui doivent exister
+            base_columns = ['id_projet', 'nom', 'date_debut', 'date_fin_prevue', 'date_fin_reelle', 'notes', 'date_creation', 'date_modification']
+            # Colonnes optionnelles à ajouter
+            optional_columns = ['adresse', 'ville', 'province', 'code_postal', 'budget_total']
+            
+            # Construire la liste des colonnes à sélectionner
+            columns_to_select = [col for col in base_columns if col in existing_columns]
+            columns_to_select.extend([col for col in optional_columns if col in existing_columns])
+            
+            # Construire la requête SQL
+            columns_str = ', '.join(columns_to_select)
+            query = f"SELECT {columns_str} FROM projets ORDER BY date_creation DESC"
+            
+            result = db.execute(text(query))
+            rows = result.fetchall()
+            
+            # Convertir les résultats en dictionnaires
+            projets_data = []
+            for row in rows:
+                projet_dict = {}
+                for idx, col_name in enumerate(columns_to_select):
+                    value = row[idx]
+                    # Formater les dates
+                    if 'date' in col_name.lower() and value:
+                        if isinstance(value, str):
+                            projet_dict[col_name] = value
+                        else:
+                            projet_dict[col_name] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
+                    else:
+                        projet_dict[col_name] = value
+                projets_data.append(projet_dict)
+            
+            return {"success": True, "data": projets_data}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des projets: {e}")
     
@@ -2893,32 +2960,15 @@ if CONSTRUCTION_ENABLED:
             
             nouveau_projet = Projet(
                 nom=projet_data.nom,
-                description=projet_data.description,
+                date_debut=date_debut,
+                date_fin_prevue=date_fin_prevue,
+                date_fin_reelle=date_fin_reelle,
+                notes=projet_data.notes,
                 adresse=projet_data.adresse,
                 ville=projet_data.ville,
                 province=projet_data.province,
                 code_postal=projet_data.code_postal,
-                date_debut=date_debut,
-                date_fin_prevue=date_fin_prevue,
-                date_fin_reelle=date_fin_reelle,
-                budget_total=projet_data.budget_total or 0,
-                cout_actuel=projet_data.cout_actuel or 0,
-                marge_beneficiaire=projet_data.marge_beneficiaire or 0,
-                statut=projet_data.statut or "planification",
-                progression_pourcentage=projet_data.progression_pourcentage or 0,
-                client_nom=projet_data.client_nom,
-                client_telephone=projet_data.client_telephone,
-                client_email=projet_data.client_email,
-                chef_projet=projet_data.chef_projet,
-                architecte=projet_data.architecte,
-                entrepreneur_principal=projet_data.entrepreneur_principal,
-                plans_pdf=projet_data.plans_pdf,
-                permis_construction=projet_data.permis_construction,
-                numero_permis=projet_data.numero_permis,
-                notes=projet_data.notes,
-                risques_identifies=projet_data.risques_identifies,
-                ameliorations_futures=projet_data.ameliorations_futures,
-                cree_par=projet_data.cree_par
+                budget_total=projet_data.budget_total or 0
             )
             
             db.add(nouveau_projet)
@@ -2954,8 +3004,6 @@ if CONSTRUCTION_ENABLED:
             # Mettre à jour les champs fournis
             if projet_data.nom is not None:
                 projet.nom = projet_data.nom
-            if projet_data.description is not None:
-                projet.description = projet_data.description
             if projet_data.adresse is not None:
                 projet.adresse = projet_data.adresse
             if projet_data.ville is not None:
@@ -2972,40 +3020,8 @@ if CONSTRUCTION_ENABLED:
                 projet.date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d') if projet_data.date_fin_reelle else None
             if projet_data.budget_total is not None:
                 projet.budget_total = projet_data.budget_total
-            if projet_data.cout_actuel is not None:
-                projet.cout_actuel = projet_data.cout_actuel
-            if projet_data.marge_beneficiaire is not None:
-                projet.marge_beneficiaire = projet_data.marge_beneficiaire
-            if projet_data.statut is not None:
-                projet.statut = projet_data.statut
-            if projet_data.progression_pourcentage is not None:
-                projet.progression_pourcentage = projet_data.progression_pourcentage
-            if projet_data.client_nom is not None:
-                projet.client_nom = projet_data.client_nom
-            if projet_data.client_telephone is not None:
-                projet.client_telephone = projet_data.client_telephone
-            if projet_data.client_email is not None:
-                projet.client_email = projet_data.client_email
-            if projet_data.chef_projet is not None:
-                projet.chef_projet = projet_data.chef_projet
-            if projet_data.architecte is not None:
-                projet.architecte = projet_data.architecte
-            if projet_data.entrepreneur_principal is not None:
-                projet.entrepreneur_principal = projet_data.entrepreneur_principal
-            if projet_data.plans_pdf is not None:
-                projet.plans_pdf = projet_data.plans_pdf
-            if projet_data.permis_construction is not None:
-                projet.permis_construction = projet_data.permis_construction
-            if projet_data.numero_permis is not None:
-                projet.numero_permis = projet_data.numero_permis
             if projet_data.notes is not None:
                 projet.notes = projet_data.notes
-            if projet_data.risques_identifies is not None:
-                projet.risques_identifies = projet_data.risques_identifies
-            if projet_data.ameliorations_futures is not None:
-                projet.ameliorations_futures = projet_data.ameliorations_futures
-            if projet_data.modifie_par is not None:
-                projet.modifie_par = projet_data.modifie_par
             
             projet.date_modification = datetime.utcnow()
             db.commit()

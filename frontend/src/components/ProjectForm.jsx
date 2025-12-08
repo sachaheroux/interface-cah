@@ -1,113 +1,51 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, Calendar, MapPin, DollarSign, User, FileText, AlertTriangle, CheckCircle } from 'lucide-react'
+import { X, Save, Calendar, MapPin, DollarSign, FileText } from 'lucide-react'
 import { projectsService } from '../services/api'
 
 export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
   const [formData, setFormData] = useState({
     nom: '',
-    description: '',
+    date_debut: '',
+    date_fin_prevue: '',
+    date_fin_reelle: '',
+    notes: '',
     adresse: '',
     ville: '',
     province: '',
     code_postal: '',
-    date_debut: '',
-    date_fin_prevue: '',
-    date_fin_reelle: '',
-    budget_total: '',
-    cout_actuel: '',
-    marge_beneficiaire: '',
-    statut: 'planification',
-    progression_pourcentage: '',
-    client_nom: '',
-    client_telephone: '',
-    client_email: '',
-    chef_projet: '',
-    architecte: '',
-    entrepreneur_principal: '',
-    plans_pdf: '',
-    permis_construction: '',
-    numero_permis: '',
-    notes: '',
-    risques_identifies: '',
-    ameliorations_futures: '',
-    cree_par: '',
-    modifie_par: ''
+    budget_total: ''
   })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const statutOptions = [
-    { value: 'planification', label: 'Planification' },
-    { value: 'en_cours', label: 'En cours' },
-    { value: 'termine', label: 'Terminé' },
-    { value: 'suspendu', label: 'Suspendu' },
-    { value: 'annule', label: 'Annulé' }
-  ]
-
   useEffect(() => {
     if (project) {
       setFormData({
         nom: project.nom || '',
-        description: project.description || '',
+        date_debut: project.date_debut ? project.date_debut.split('T')[0] : '',
+        date_fin_prevue: project.date_fin_prevue ? project.date_fin_prevue.split('T')[0] : '',
+        date_fin_reelle: project.date_fin_reelle ? project.date_fin_reelle.split('T')[0] : '',
+        notes: project.notes || '',
         adresse: project.adresse || '',
         ville: project.ville || '',
         province: project.province || '',
         code_postal: project.code_postal || '',
-        date_debut: project.date_debut ? project.date_debut.split('T')[0] : '',
-        date_fin_prevue: project.date_fin_prevue ? project.date_fin_prevue.split('T')[0] : '',
-        date_fin_reelle: project.date_fin_reelle ? project.date_fin_reelle.split('T')[0] : '',
-        budget_total: project.budget_total || '',
-        cout_actuel: project.cout_actuel || '',
-        marge_beneficiaire: project.marge_beneficiaire || '',
-        statut: project.statut || 'planification',
-        progression_pourcentage: project.progression_pourcentage || '',
-        client_nom: project.client_nom || '',
-        client_telephone: project.client_telephone || '',
-        client_email: project.client_email || '',
-        chef_projet: project.chef_projet || '',
-        architecte: project.architecte || '',
-        entrepreneur_principal: project.entrepreneur_principal || '',
-        plans_pdf: project.plans_pdf || '',
-        permis_construction: project.permis_construction || '',
-        numero_permis: project.numero_permis || '',
-        notes: project.notes || '',
-        risques_identifies: project.risques_identifies || '',
-        ameliorations_futures: project.ameliorations_futures || '',
-        cree_par: project.cree_par || '',
-        modifie_par: project.modifie_par || ''
+        budget_total: project.budget_total || ''
       })
     } else {
       // Réinitialiser le formulaire pour un nouveau projet
       setFormData({
         nom: '',
-        description: '',
+        date_debut: '',
+        date_fin_prevue: '',
+        date_fin_reelle: '',
+        notes: '',
         adresse: '',
         ville: '',
         province: '',
         code_postal: '',
-        date_debut: '',
-        date_fin_prevue: '',
-        date_fin_reelle: '',
-        budget_total: '',
-        cout_actuel: '',
-        marge_beneficiaire: '',
-        statut: 'planification',
-        progression_pourcentage: '',
-        client_nom: '',
-        client_telephone: '',
-        client_email: '',
-        chef_projet: '',
-        architecte: '',
-        entrepreneur_principal: '',
-        plans_pdf: '',
-        permis_construction: '',
-        numero_permis: '',
-        notes: '',
-        risques_identifies: '',
-        ameliorations_futures: '',
-        cree_par: '',
-        modifie_par: ''
+        budget_total: ''
       })
     }
   }, [project])
@@ -128,11 +66,7 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
       // Préparer les données pour l'API
       const submitData = {
         ...formData,
-        budget_total: formData.budget_total ? parseFloat(formData.budget_total) : 0,
-        cout_actuel: formData.cout_actuel ? parseFloat(formData.cout_actuel) : 0,
-        marge_beneficiaire: formData.marge_beneficiaire ? parseFloat(formData.marge_beneficiaire) : 0,
-        progression_pourcentage: formData.progression_pourcentage ? parseFloat(formData.progression_pourcentage) : 0,
-        cree_par: project ? formData.modifie_par : formData.cree_par || 'Admin'
+        budget_total: formData.budget_total ? parseFloat(formData.budget_total) : 0
       }
 
       if (project) {
@@ -177,48 +111,16 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
               Informations de base
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom du projet *
-                </label>
-                <input
-                  type="text"
-                  value={formData.nom}
-                  onChange={(e) => handleChange('nom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Statut
-                </label>
-                <select
-                  value={formData.statut}
-                  onChange={(e) => handleChange('statut', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {statutOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Nom du projet *
               </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                rows={3}
+              <input
+                type="text"
+                value={formData.nom}
+                onChange={(e) => handleChange('nom', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Description détaillée du projet..."
+                required
               />
             </div>
           </div>
@@ -327,255 +229,45 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
             </div>
           </div>
 
-          {/* Informations financières */}
+          {/* Budget */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <DollarSign className="h-5 w-5 mr-2" />
-              Informations financières
+              Budget
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget total ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.budget_total}
-                  onChange={(e) => handleChange('budget_total', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Coût actuel ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.cout_actuel}
-                  onChange={(e) => handleChange('cout_actuel', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Marge bénéficiaire ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.marge_beneficiaire}
-                  onChange={(e) => handleChange('marge_beneficiaire', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Progression (%)
+                Budget total ($)
               </label>
               <input
                 type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={formData.progression_pourcentage}
-                onChange={(e) => handleChange('progression_pourcentage', e.target.value)}
+                step="0.01"
+                value={formData.budget_total}
+                onChange={(e) => handleChange('budget_total', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
-          {/* Informations client */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Informations client
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom du client
-                </label>
-                <input
-                  type="text"
-                  value={formData.client_nom}
-                  onChange={(e) => handleChange('client_nom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.client_telephone}
-                  onChange={(e) => handleChange('client_telephone', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.client_email}
-                  onChange={(e) => handleChange('client_email', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Équipe de projet */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Équipe de projet
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Chef de projet
-                </label>
-                <input
-                  type="text"
-                  value={formData.chef_projet}
-                  onChange={(e) => handleChange('chef_projet', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Architecte
-                </label>
-                <input
-                  type="text"
-                  value={formData.architecte}
-                  onChange={(e) => handleChange('architecte', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Entrepreneur principal
-                </label>
-                <input
-                  type="text"
-                  value={formData.entrepreneur_principal}
-                  onChange={(e) => handleChange('entrepreneur_principal', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Documents et permis */}
+          {/* Notes */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <FileText className="h-5 w-5 mr-2" />
-              Documents et permis
+              Notes
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plans PDF
-                </label>
-                <input
-                  type="text"
-                  value={formData.plans_pdf}
-                  onChange={(e) => handleChange('plans_pdf', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Chemin vers le fichier PDF"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Permis de construction
-                </label>
-                <input
-                  type="text"
-                  value={formData.permis_construction}
-                  onChange={(e) => handleChange('permis_construction', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Numéro de permis
-                </label>
-                <input
-                  type="text"
-                  value={formData.numero_permis}
-                  onChange={(e) => handleChange('numero_permis', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notes et observations */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <AlertTriangle className="h-5 w-5 mr-2" />
-              Notes et observations
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes générales
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => handleChange('notes', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Notes importantes sur le projet..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Risques identifiés
-                </label>
-                <textarea
-                  value={formData.risques_identifies}
-                  onChange={(e) => handleChange('risques_identifies', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Risques potentiels identifiés..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Améliorations futures
-                </label>
-                <textarea
-                  value={formData.ameliorations_futures}
-                  onChange={(e) => handleChange('ameliorations_futures', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Améliorations suggérées pour de futurs projets..."
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notes générales
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => handleChange('notes', e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Notes importantes sur le projet..."
+              />
             </div>
           </div>
 
