@@ -2786,6 +2786,8 @@ if CONSTRUCTION_ENABLED:
         section: Optional[str] = None
     
     class PunchEmployeUpdate(BaseModel):
+        id_employe: Optional[int] = None
+        id_projet: Optional[int] = None
         date: Optional[str] = None
         heure_travaillee: Optional[float] = None
         section: Optional[str] = None
@@ -3289,14 +3291,26 @@ if CONSTRUCTION_ENABLED:
             if not punch:
                 raise HTTPException(status_code=404, detail="Pointage non trouvé")
             
-            # Convertir la date si fournie
-            if punch_data.date:
+            # Mettre à jour les champs fournis
+            if punch_data.id_employe is not None:
+                punch.id_employe = punch_data.id_employe
+            if punch_data.id_projet is not None:
+                punch.id_projet = punch_data.id_projet
+            if punch_data.date is not None:
                 from datetime import datetime
-                punch.date = datetime.strptime(punch_data.date, "%Y-%m-%d").date()
+                # Extraire seulement la partie date si format complet
+                date_str = punch_data.date.strip()
+                if ' ' in date_str:
+                    date_str = date_str.split(' ')[0]
+                elif 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                punch.date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            if punch_data.heure_travaillee is not None:
+                punch.heure_travaillee = punch_data.heure_travaillee
+            if punch_data.section is not None:
+                punch.section = punch_data.section
             
-            for field, value in punch_data.dict(exclude_unset=True, exclude={'date'}).items():
-                setattr(punch, field, value)
-            
+            punch.date_modification = datetime.utcnow()
             db.commit()
             db.refresh(punch)
             return {"success": True, "data": punch.to_dict()}

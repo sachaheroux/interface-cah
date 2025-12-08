@@ -221,9 +221,32 @@ def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
     conn = sqlite3.connect(LOCAL_DB_PATH)
     cursor = conn.cursor()
     
-    # Préparer les colonnes et valeurs
+    # Obtenir les colonnes de la table existante
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    table_columns = [col[1] for col in cursor.fetchall()]
+    
+    # Filtrer les colonnes pour ne garder que celles qui existent dans la table
+    # et exclure les relations imbriquées (objets/dictionnaires)
     first_item = data[0]
-    columns = list(first_item.keys())
+    all_keys = list(first_item.keys())
+    
+    # Colonnes à exclure (relations imbriquées)
+    excluded_columns = ['employe', 'projet', 'fournisseur', 'commande', 'matiere_premiere', 
+                        'sous_traitant', 'lignes_commande', 'factures_st', 'commandes', 
+                        'punchs_employes', 'factures_st']
+    
+    # Filtrer : garder seulement les colonnes qui sont dans la table ET qui ne sont pas des objets
+    columns = []
+    for col in all_keys:
+        if col in table_columns and col not in excluded_columns:
+            # Vérifier que ce n'est pas un objet/dictionnaire
+            if not isinstance(first_item.get(col), dict):
+                columns.append(col)
+    
+    if not columns:
+        print(f"⚠️ Aucune colonne valide trouvée pour '{table_name}'")
+        conn.close()
+        return
     
     # S'assurer que la table a toutes les colonnes nécessaires
     ensure_table_columns(table_name, columns, conn)
@@ -236,13 +259,19 @@ def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
     insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
     
     # Insérer chaque élément
+    inserted_count = 0
     for item in data:
-        values = [item.get(col) for col in columns]
-        cursor.execute(insert_sql, values)
+        try:
+            values = [item.get(col) for col in columns]
+            cursor.execute(insert_sql, values)
+            inserted_count += 1
+        except Exception as e:
+            print(f"   ⚠️ Erreur lors de l'insertion d'un élément: {e}")
+            print(f"   Données: {item}")
     
     conn.commit()
     conn.close()
-    print(f"✅ {len(data)} éléments insérés dans '{table_name}'")
+    print(f"✅ {inserted_count}/{len(data)} éléments insérés dans '{table_name}'")
 
 def download_all_construction_data():
     """Télécharger toutes les données de construction"""

@@ -11,7 +11,7 @@ export default function PunchManagement() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
-  const [successMessage, setSuccessMessage] = useState('')
+  const [editingPunch, setEditingPunch] = useState(null)
   const [filters, setFilters] = useState({
     employee: '',
     project: '',
@@ -44,13 +44,14 @@ export default function PunchManagement() {
 
   const handleCreatePunch = () => {
     setSelectedEmployee(null)
+    setEditingPunch(null)
     setShowForm(true)
   }
 
   const handleEditPunch = (punch) => {
-    // Pour l'instant, on ne peut que créer de nouveaux pointages
-    // L'édition sera ajoutée plus tard
-    console.log('Édition de pointage:', punch)
+    setEditingPunch(punch)
+    setSelectedEmployee(null)
+    setShowForm(true)
   }
 
   const handleDeletePunch = async (punch) => {
@@ -60,19 +61,16 @@ export default function PunchManagement() {
 
     try {
       await punchsService.deletePunch(punch.id_punch)
-      setSuccessMessage('Pointage supprimé avec succès')
       fetchData()
-      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err) {
       console.error('Erreur lors de la suppression:', err)
     }
   }
 
-  const handleFormSuccess = (message) => {
-    setSuccessMessage(message)
+  const handleFormSuccess = () => {
     setShowForm(false)
+    setEditingPunch(null)
     fetchData()
-    setTimeout(() => setSuccessMessage(''), 3000)
   }
 
   const formatDate = (dateString) => {
@@ -162,13 +160,6 @@ export default function PunchManagement() {
       </div>
 
       <div className="px-6 py-6">
-        {/* Message de succès */}
-        {successMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-            {successMessage}
-          </div>
-        )}
-
         {/* Filtres */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center mb-4">
@@ -375,8 +366,12 @@ export default function PunchManagement() {
       {/* Formulaire modal */}
       <PunchFormDesktop
         isOpen={showForm}
-        onClose={() => setShowForm(false)}
+        onClose={() => {
+          setShowForm(false)
+          setEditingPunch(null)
+        }}
         employee={selectedEmployee}
+        punch={editingPunch}
         onSuccess={handleFormSuccess}
       />
     </div>

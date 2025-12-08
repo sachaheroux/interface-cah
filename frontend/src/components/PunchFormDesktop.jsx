@@ -3,7 +3,7 @@ import { Clock, Calendar, MapPin, Save, X, User, Building, Edit, Trash2 } from '
 import { employeesService, punchsService, projectsService } from '../services/api'
 import api from '../services/api'
 
-export default function PunchFormDesktop({ isOpen, onClose, employee = null, onSuccess }) {
+export default function PunchFormDesktop({ isOpen, onClose, employee = null, punch = null, onSuccess }) {
   const [formData, setFormData] = useState({
     id_employe: '',
     id_projet: '',
@@ -16,23 +16,47 @@ export default function PunchFormDesktop({ isOpen, onClose, employee = null, onS
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Fonction pour formater la date pour l'input
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return ''
+    // Gérer différents formats de date
+    let date = dateString
+    if (dateString.includes('T')) {
+      date = dateString.split('T')[0]
+    } else if (dateString.includes(' ')) {
+      date = dateString.split(' ')[0]
+    }
+    return date
+  }
+
   // Initialiser le formulaire
   useEffect(() => {
     if (isOpen) {
-      // Date par défaut = aujourd'hui
-      const today = new Date().toISOString().split('T')[0]
-      setFormData({
-        id_employe: employee ? employee.id_employe : '',
-        id_projet: '',
-        date: today,
-        heure_travaillee: '',
-        section: ''
-      })
+      if (punch) {
+        // Mode édition : charger les données du punch
+        setFormData({
+          id_employe: punch.id_employe || '',
+          id_projet: punch.id_projet || '',
+          date: formatDateForInput(punch.date),
+          heure_travaillee: punch.heure_travaillee || '',
+          section: punch.section || ''
+        })
+      } else {
+        // Mode création : valeurs par défaut
+        const today = new Date().toISOString().split('T')[0]
+        setFormData({
+          id_employe: employee ? employee.id_employe : '',
+          id_projet: '',
+          date: today,
+          heure_travaillee: '',
+          section: ''
+        })
+      }
       setError('')
       fetchEmployees()
       fetchProjects()
     }
-  }, [isOpen, employee])
+  }, [isOpen, employee, punch])
 
   const fetchEmployees = async () => {
     try {
@@ -98,8 +122,15 @@ export default function PunchFormDesktop({ isOpen, onClose, employee = null, onS
         section: formData.section
       }
 
-      await punchsService.createPunch(punchData)
-      onSuccess?.('Pointage enregistré avec succès')
+      if (punch) {
+        // Mode édition
+        await punchsService.updatePunch(punch.id_punch, punchData)
+        onSuccess?.()
+      } else {
+        // Mode création
+        await punchsService.createPunch(punchData)
+        onSuccess?.()
+      }
       onClose()
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err)
@@ -130,9 +161,11 @@ export default function PunchFormDesktop({ isOpen, onClose, employee = null, onS
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {employee ? `Pointage - ${employee.prenom} ${employee.nom}` : 'Nouveau Pointage'}
+                {punch ? 'Modifier le Pointage' : employee ? `Pointage - ${employee.prenom} ${employee.nom}` : 'Nouveau Pointage'}
               </h2>
-              <p className="text-sm text-gray-600">Enregistrer les heures travaillées</p>
+              <p className="text-sm text-gray-600">
+                {punch ? 'Modifier les heures travaillées' : 'Enregistrer les heures travaillées'}
+              </p>
             </div>
           </div>
           <button
@@ -317,7 +350,7 @@ export default function PunchFormDesktop({ isOpen, onClose, employee = null, onS
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Enregistrer le pointage
+                  {punch ? 'Mettre à jour' : 'Enregistrer le pointage'}
                 </>
               )}
             </button>
