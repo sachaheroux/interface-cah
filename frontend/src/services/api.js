@@ -974,4 +974,20 @@ export const reportsService = {
   }
 }
 
+export const contractorsService = {
+  getContractors: async () => {
+    try {
+      const response = await api.get('/api/construction/sous-traitants')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API contractors failed')
+      return { data: [] }
+    }
+  },
+  getContractor: (id) => api.get(`/api/construction/sous-traitants/${id}`),
+  createContractor: (data) => api.post('/api/construction/sous-traitants', data),
+  updateContractor: (id, data) => api.put(`/api/construction/sous-traitants/${id}`, data),
+  deleteContractor: (id) => api.delete(`/api/construction/sous-traitants/${id}`),
+}
+
 export default api 

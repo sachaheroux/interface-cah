@@ -2778,6 +2778,15 @@ if CONSTRUCTION_ENABLED:
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
     
+    class SousTraitantUpdate(BaseModel):
+        nom: Optional[str] = None
+        rue: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
     class PunchEmployeCreate(BaseModel):
         id_employe: int
         id_projet: int
@@ -3362,6 +3371,79 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la création du sous-traitant: {e}")
+    
+    @app.get("/api/construction/sous-traitants/{st_id}")
+    async def get_sous_traitant(st_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer un sous-traitant par ID"""
+        try:
+            st = db.query(SousTraitant).filter(SousTraitant.id_st == st_id).first()
+            if not st:
+                raise HTTPException(status_code=404, detail="Sous-traitant non trouvé")
+            return {"success": True, "data": st.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du sous-traitant: {e}")
+    
+    @app.put("/api/construction/sous-traitants/{st_id}")
+    async def update_sous_traitant(st_id: int, st_data: SousTraitantUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour un sous-traitant"""
+        try:
+            st = db.query(SousTraitant).filter(SousTraitant.id_st == st_id).first()
+            if not st:
+                raise HTTPException(status_code=404, detail="Sous-traitant non trouvé")
+            
+            # Mettre à jour les champs fournis
+            if st_data.nom is not None:
+                st.nom = st_data.nom
+            if st_data.rue is not None:
+                st.rue = st_data.rue if st_data.rue else None
+            if st_data.ville is not None:
+                st.ville = st_data.ville if st_data.ville else None
+            if st_data.province is not None:
+                st.province = st_data.province if st_data.province else None
+            if st_data.code_postal is not None:
+                st.code_postal = st_data.code_postal if st_data.code_postal else None
+            if st_data.numero is not None:
+                st.numero = st_data.numero if st_data.numero else None
+            if st_data.adresse_courriel is not None:
+                st.adresse_courriel = st_data.adresse_courriel if st_data.adresse_courriel else None
+            
+            st.date_modification = datetime.utcnow()
+            db.commit()
+            db.refresh(st)
+            return {"success": True, "data": st.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du sous-traitant: {e}")
+    
+    @app.delete("/api/construction/sous-traitants/{st_id}")
+    async def delete_sous_traitant(st_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer un sous-traitant (avec vérification des dépendances)"""
+        try:
+            st = db.query(SousTraitant).filter(SousTraitant.id_st == st_id).first()
+            if not st:
+                raise HTTPException(status_code=404, detail="Sous-traitant non trouvé")
+            
+            # Vérifier s'il y a des factures associées
+            factures_count = db.query(FactureST).filter(FactureST.id_st == st_id).count()
+            
+            if factures_count > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Impossible de supprimer ce sous-traitant car {factures_count} facture(s) y sont associée(s). Supprimez d'abord les factures."
+                )
+            
+            db.delete(st)
+            db.commit()
+            return {"success": True, "message": "Sous-traitant supprimé avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du sous-traitant: {e}")
     
     # ==========================================
     # ENDPOINT DE TEST CONSTRUCTION
