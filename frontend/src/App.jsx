@@ -226,24 +226,27 @@ function AppContent() {
             <Route path="/pending-approval" element={<PendingApproval />} />
             
             {/* Pages protégées */}
-            <Route path="/" element={<AdminProtectedRoute><Dashboard /></AdminProtectedRoute>} />
-            <Route path="/buildings" element={<AdminProtectedRoute><Buildings /></AdminProtectedRoute>} />
-            <Route path="/buildings/analysis" element={<AdminProtectedRoute><ProfitabilityAnalysis /></AdminProtectedRoute>} />
-            <Route path="/buildings/mortgage" element={<AdminProtectedRoute><MortgageAnalysis /></AdminProtectedRoute>} />
-            <Route path="/buildings/property-analysis" element={<AdminProtectedRoute><PropertyAnalysis /></AdminProtectedRoute>} />
-            <Route path="/tenants" element={<AdminProtectedRoute><Tenants /></AdminProtectedRoute>} />
-            <Route path="/leases" element={<AdminProtectedRoute><Leases /></AdminProtectedRoute>} />
-            <Route path="/rent-payments" element={<AdminProtectedRoute><RentPayments /></AdminProtectedRoute>} />
-            <Route path="/transactions" element={<AdminProtectedRoute><Transactions /></AdminProtectedRoute>} />
-            <Route path="/employees" element={<StatusProtectedRoute><Employees /></StatusProtectedRoute>} />
-            <Route path="/employee-punch" element={<StatusProtectedRoute><EmployeePunchMobile /></StatusProtectedRoute>} />
-            <Route path="/punch-management" element={<AdminProtectedRoute><PunchManagement /></AdminProtectedRoute>} />
-            <Route path="/contractors" element={<AdminProtectedRoute><Contractors /></AdminProtectedRoute>} />
-            <Route path="/projects" element={<AdminProtectedRoute><Projects /></AdminProtectedRoute>} />
-            <Route path="/documents" element={<AdminProtectedRoute><Documents /></AdminProtectedRoute>} />
-            <Route path="/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
-            <Route path="/reports" element={<AdminProtectedRoute><Reports /></AdminProtectedRoute>} />
-            <Route path="/unit-reports/:unitId/:year" element={<AdminProtectedRoute><UnitReportDetails /></AdminProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><AdminProtectedRoute><Dashboard /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/buildings" element={<ProtectedRoute><AdminProtectedRoute><Buildings /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/buildings/analysis" element={<ProtectedRoute><AdminProtectedRoute><ProfitabilityAnalysis /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/buildings/mortgage" element={<ProtectedRoute><AdminProtectedRoute><MortgageAnalysis /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/buildings/property-analysis" element={<ProtectedRoute><AdminProtectedRoute><PropertyAnalysis /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/tenants" element={<ProtectedRoute><AdminProtectedRoute><Tenants /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/leases" element={<ProtectedRoute><AdminProtectedRoute><Leases /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/rent-payments" element={<ProtectedRoute><AdminProtectedRoute><RentPayments /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/transactions" element={<ProtectedRoute><AdminProtectedRoute><Transactions /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/employees" element={<ProtectedRoute><StatusProtectedRoute><Employees /></StatusProtectedRoute></ProtectedRoute>} />
+            <Route path="/employee-punch" element={<ProtectedRoute><StatusProtectedRoute><EmployeePunchMobile /></StatusProtectedRoute></ProtectedRoute>} />
+            <Route path="/punch-management" element={<ProtectedRoute><AdminProtectedRoute><PunchManagement /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/contractors" element={<ProtectedRoute><AdminProtectedRoute><Contractors /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><AdminProtectedRoute><Projects /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><AdminProtectedRoute><Documents /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><AdminProtectedRoute><Settings /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><AdminProtectedRoute><Reports /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/unit-reports/:unitId/:year" element={<ProtectedRoute><AdminProtectedRoute><UnitReportDetails /></AdminProtectedRoute></ProtectedRoute>} />
+            
+            {/* Route catch-all : rediriger vers login pour toutes les routes non définies */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </main>
       </div>

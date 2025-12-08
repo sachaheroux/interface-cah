@@ -2701,17 +2701,61 @@ if CONSTRUCTION_ENABLED:
     
     class ProjetCreate(BaseModel):
         nom: str
-        date_debut: Optional[datetime] = None
-        date_fin_prevue: Optional[datetime] = None
-        date_fin_reelle: Optional[datetime] = None
+        description: Optional[str] = None
+        adresse: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        date_debut: Optional[str] = None  # Format YYYY-MM-DD
+        date_fin_prevue: Optional[str] = None  # Format YYYY-MM-DD
+        date_fin_reelle: Optional[str] = None  # Format YYYY-MM-DD
+        budget_total: Optional[float] = 0
+        cout_actuel: Optional[float] = 0
+        marge_beneficiaire: Optional[float] = 0
+        statut: Optional[str] = "planification"
+        progression_pourcentage: Optional[float] = 0
+        client_nom: Optional[str] = None
+        client_telephone: Optional[str] = None
+        client_email: Optional[str] = None
+        chef_projet: Optional[str] = None
+        architecte: Optional[str] = None
+        entrepreneur_principal: Optional[str] = None
+        plans_pdf: Optional[str] = None
+        permis_construction: Optional[str] = None
+        numero_permis: Optional[str] = None
         notes: Optional[str] = None
+        risques_identifies: Optional[str] = None
+        ameliorations_futures: Optional[str] = None
+        cree_par: Optional[str] = None
     
     class ProjetUpdate(BaseModel):
         nom: Optional[str] = None
-        date_debut: Optional[datetime] = None
-        date_fin_prevue: Optional[datetime] = None
-        date_fin_reelle: Optional[datetime] = None
+        description: Optional[str] = None
+        adresse: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        date_debut: Optional[str] = None
+        date_fin_prevue: Optional[str] = None
+        date_fin_reelle: Optional[str] = None
+        budget_total: Optional[float] = None
+        cout_actuel: Optional[float] = None
+        marge_beneficiaire: Optional[float] = None
+        statut: Optional[str] = None
+        progression_pourcentage: Optional[float] = None
+        client_nom: Optional[str] = None
+        client_telephone: Optional[str] = None
+        client_email: Optional[str] = None
+        chef_projet: Optional[str] = None
+        architecte: Optional[str] = None
+        entrepreneur_principal: Optional[str] = None
+        plans_pdf: Optional[str] = None
+        permis_construction: Optional[str] = None
+        numero_permis: Optional[str] = None
         notes: Optional[str] = None
+        risques_identifies: Optional[str] = None
+        ameliorations_futures: Optional[str] = None
+        modifie_par: Optional[str] = None
     
     class FournisseurCreate(BaseModel):
         nom: str
@@ -2835,10 +2879,52 @@ if CONSTRUCTION_ENABLED:
     async def create_projet(projet_data: ProjetCreate, db: Session = Depends(get_construction_db)):
         """Créer un nouveau projet"""
         try:
-            nouveau_projet = Projet(**projet_data.dict())
+            # Convertir les dates string en objets datetime
+            date_debut = None
+            date_fin_prevue = None
+            date_fin_reelle = None
+            
+            if projet_data.date_debut:
+                date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d')
+            if projet_data.date_fin_prevue:
+                date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d')
+            if projet_data.date_fin_reelle:
+                date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d')
+            
+            nouveau_projet = Projet(
+                nom=projet_data.nom,
+                description=projet_data.description,
+                adresse=projet_data.adresse,
+                ville=projet_data.ville,
+                province=projet_data.province,
+                code_postal=projet_data.code_postal,
+                date_debut=date_debut,
+                date_fin_prevue=date_fin_prevue,
+                date_fin_reelle=date_fin_reelle,
+                budget_total=projet_data.budget_total or 0,
+                cout_actuel=projet_data.cout_actuel or 0,
+                marge_beneficiaire=projet_data.marge_beneficiaire or 0,
+                statut=projet_data.statut or "planification",
+                progression_pourcentage=projet_data.progression_pourcentage or 0,
+                client_nom=projet_data.client_nom,
+                client_telephone=projet_data.client_telephone,
+                client_email=projet_data.client_email,
+                chef_projet=projet_data.chef_projet,
+                architecte=projet_data.architecte,
+                entrepreneur_principal=projet_data.entrepreneur_principal,
+                plans_pdf=projet_data.plans_pdf,
+                permis_construction=projet_data.permis_construction,
+                numero_permis=projet_data.numero_permis,
+                notes=projet_data.notes,
+                risques_identifies=projet_data.risques_identifies,
+                ameliorations_futures=projet_data.ameliorations_futures,
+                cree_par=projet_data.cree_par
+            )
+            
             db.add(nouveau_projet)
             db.commit()
             db.refresh(nouveau_projet)
+            
             return {"success": True, "data": nouveau_projet.to_dict()}
         except Exception as e:
             db.rollback()
@@ -2865,11 +2951,65 @@ if CONSTRUCTION_ENABLED:
             if not projet:
                 raise HTTPException(status_code=404, detail="Projet non trouvé")
             
-            for field, value in projet_data.dict(exclude_unset=True).items():
-                setattr(projet, field, value)
+            # Mettre à jour les champs fournis
+            if projet_data.nom is not None:
+                projet.nom = projet_data.nom
+            if projet_data.description is not None:
+                projet.description = projet_data.description
+            if projet_data.adresse is not None:
+                projet.adresse = projet_data.adresse
+            if projet_data.ville is not None:
+                projet.ville = projet_data.ville
+            if projet_data.province is not None:
+                projet.province = projet_data.province
+            if projet_data.code_postal is not None:
+                projet.code_postal = projet_data.code_postal
+            if projet_data.date_debut is not None:
+                projet.date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d') if projet_data.date_debut else None
+            if projet_data.date_fin_prevue is not None:
+                projet.date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d') if projet_data.date_fin_prevue else None
+            if projet_data.date_fin_reelle is not None:
+                projet.date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d') if projet_data.date_fin_reelle else None
+            if projet_data.budget_total is not None:
+                projet.budget_total = projet_data.budget_total
+            if projet_data.cout_actuel is not None:
+                projet.cout_actuel = projet_data.cout_actuel
+            if projet_data.marge_beneficiaire is not None:
+                projet.marge_beneficiaire = projet_data.marge_beneficiaire
+            if projet_data.statut is not None:
+                projet.statut = projet_data.statut
+            if projet_data.progression_pourcentage is not None:
+                projet.progression_pourcentage = projet_data.progression_pourcentage
+            if projet_data.client_nom is not None:
+                projet.client_nom = projet_data.client_nom
+            if projet_data.client_telephone is not None:
+                projet.client_telephone = projet_data.client_telephone
+            if projet_data.client_email is not None:
+                projet.client_email = projet_data.client_email
+            if projet_data.chef_projet is not None:
+                projet.chef_projet = projet_data.chef_projet
+            if projet_data.architecte is not None:
+                projet.architecte = projet_data.architecte
+            if projet_data.entrepreneur_principal is not None:
+                projet.entrepreneur_principal = projet_data.entrepreneur_principal
+            if projet_data.plans_pdf is not None:
+                projet.plans_pdf = projet_data.plans_pdf
+            if projet_data.permis_construction is not None:
+                projet.permis_construction = projet_data.permis_construction
+            if projet_data.numero_permis is not None:
+                projet.numero_permis = projet_data.numero_permis
+            if projet_data.notes is not None:
+                projet.notes = projet_data.notes
+            if projet_data.risques_identifies is not None:
+                projet.risques_identifies = projet_data.risques_identifies
+            if projet_data.ameliorations_futures is not None:
+                projet.ameliorations_futures = projet_data.ameliorations_futures
+            if projet_data.modifie_par is not None:
+                projet.modifie_par = projet_data.modifie_par
             
+            projet.date_modification = datetime.utcnow()
             db.commit()
-            db.refresh(projet)
+            
             return {"success": True, "data": projet.to_dict()}
         except HTTPException:
             raise
@@ -2879,15 +3019,27 @@ if CONSTRUCTION_ENABLED:
     
     @app.delete("/api/construction/projets/{projet_id}")
     async def delete_projet(projet_id: int, db: Session = Depends(get_construction_db)):
-        """Supprimer un projet"""
+        """Supprimer un projet (avec vérification des dépendances)"""
         try:
             projet = db.query(Projet).filter(Projet.id_projet == projet_id).first()
             if not projet:
                 raise HTTPException(status_code=404, detail="Projet non trouvé")
             
+            # Vérifier s'il y a des dépendances
+            commandes_count = db.query(Commande).filter(Commande.id_projet == projet_id).count()
+            factures_count = db.query(FactureST).filter(FactureST.id_projet == projet_id).count()
+            punchs_count = db.query(PunchEmploye).filter(PunchEmploye.id_projet == projet_id).count()
+            
+            if commandes_count > 0 or factures_count > 0 or punchs_count > 0:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Impossible de supprimer le projet '{projet.nom}': {commandes_count} commandes, {factures_count} factures et {punchs_count} pointages associés. Supprimez d'abord ces éléments."
+                )
+            
             db.delete(projet)
             db.commit()
-            return {"success": True, "message": "Projet supprimé avec succès"}
+            
+            return {"success": True, "message": f"Projet '{projet.nom}' supprimé avec succès"}
         except HTTPException:
             raise
         except Exception as e:
