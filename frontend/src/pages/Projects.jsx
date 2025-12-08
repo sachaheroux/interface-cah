@@ -160,9 +160,6 @@ export default function Projects() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900 mb-1">{project.nom}</h3>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatutColor(project.statut)}`}>
-                    {getStatutLabel(project.statut)}
-                  </span>
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -182,18 +179,17 @@ export default function Projects() {
                 </div>
               </div>
 
-              {/* Description */}
-              {project.description && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {project.description}
-                </p>
-              )}
-
               {/* Adresse */}
-              {project.adresse && (
+              {(project.adresse || project.ville) && (
                 <div className="flex items-center text-gray-600 text-sm mb-2">
                   <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{project.adresse}, {project.ville}</span>
+                  <span>
+                    {project.adresse && `${project.adresse}`}
+                    {project.adresse && project.ville && ', '}
+                    {project.ville && `${project.ville}`}
+                    {project.province && `, ${project.province}`}
+                    {project.code_postal && ` ${project.code_postal}`}
+                  </span>
                 </div>
               )}
 
@@ -213,53 +209,23 @@ export default function Projects() {
                 )}
               </div>
 
-              {/* Informations financières */}
-              <div className="space-y-2 mb-4">
-                {project.budget_total > 0 && (
-                  <div className="flex items-center text-gray-700 text-sm">
-                    <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
-                    <span>Budget: {formatCurrency(project.budget_total)}</span>
-                  </div>
-                )}
-                {project.cout_actuel > 0 && (
-                  <div className="flex items-center text-gray-700 text-sm">
-                    <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
-                    <span>Coût actuel: {formatCurrency(project.cout_actuel)}</span>
-                  </div>
-                )}
-                {project.progression_pourcentage > 0 && (
-                  <div className="flex items-center text-gray-700 text-sm">
-                    <CheckCircle className="h-4 w-4 mr-2 text-gray-500" />
-                    <span>Progression: {project.progression_pourcentage}%</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Client */}
-              {project.client_nom && (
-                <div className="flex items-center text-gray-600 text-sm mb-2">
-                  <User className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{project.client_nom}</span>
+              {/* Budget */}
+              {project.budget_total > 0 && (
+                <div className="flex items-center text-gray-700 text-sm mb-4">
+                  <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
+                  <span>Budget: {formatCurrency(project.budget_total)}</span>
                 </div>
               )}
 
-              {/* Chef de projet */}
-              {project.chef_projet && (
-                <div className="flex items-center text-gray-600 text-sm mb-2">
-                  <User className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>Chef: {project.chef_projet}</span>
-                </div>
-              )}
-
-              {/* Notes importantes */}
-              {project.risques_identifies && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              {/* Notes */}
+              {project.notes && (
+                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-start">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
+                    <FileText className="h-4 w-4 text-gray-600 mr-2 mt-0.5" />
                     <div>
-                      <p className="text-yellow-800 text-xs font-medium mb-1">Risques identifiés:</p>
-                      <p className="text-yellow-700 text-xs line-clamp-2">
-                        {project.risques_identifies}
+                      <p className="text-gray-800 text-xs font-medium mb-1">Notes:</p>
+                      <p className="text-gray-700 text-xs line-clamp-3">
+                        {project.notes}
                       </p>
                     </div>
                   </div>

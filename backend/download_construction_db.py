@@ -185,6 +185,33 @@ def fetch_data_from_api(endpoint: str) -> List[Dict[str, Any]]:
         print(f"❌ Erreur de connexion: {e}")
         return []
 
+def ensure_table_columns(table_name: str, required_columns: List[str], conn: sqlite3.Connection):
+    """S'assurer que la table a toutes les colonnes nécessaires"""
+    cursor = conn.cursor()
+    
+    # Obtenir les colonnes existantes
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_columns = [col[1] for col in cursor.fetchall()]
+    
+    # Ajouter les colonnes manquantes
+    for col_name in required_columns:
+        if col_name not in existing_columns:
+            # Déterminer le type SQL approprié
+            if col_name in ['budget_total', 'cout_actuel', 'marge_beneficiaire', 'progression_pourcentage', 'taux_horaire', 'montant', 'quantite', 'heure_travaillee']:
+                col_type = "REAL DEFAULT 0"
+            elif col_name in ['id_projet', 'id_fournisseur', 'id_commande', 'id_matiere_premiere', 'id_employe', 'id_punch', 'id_st', 'id_facture', 'id_ligne']:
+                col_type = "INTEGER"
+            elif 'date' in col_name.lower():
+                col_type = "TEXT"
+            else:
+                col_type = "TEXT"
+            
+            try:
+                cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}")
+                print(f"   ✅ Colonne '{col_name}' ajoutée à la table '{table_name}'")
+            except Exception as e:
+                print(f"   ⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
+
 def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
     """Insérer les données dans la base locale"""
     if not data:
@@ -194,15 +221,18 @@ def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
     conn = sqlite3.connect(LOCAL_DB_PATH)
     cursor = conn.cursor()
     
+    # Préparer les colonnes et valeurs
+    first_item = data[0]
+    columns = list(first_item.keys())
+    
+    # S'assurer que la table a toutes les colonnes nécessaires
+    ensure_table_columns(table_name, columns, conn)
+    
     # Vider la table avant d'insérer
     cursor.execute(f"DELETE FROM {table_name}")
     print(f"🗑️ Table '{table_name}' vidée")
     
-    # Préparer les colonnes et valeurs
-    first_item = data[0]
-    columns = list(first_item.keys())
     placeholders = ', '.join(['?' for _ in columns])
-    
     insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
     
     # Insérer chaque élément

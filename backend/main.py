@@ -3004,24 +3004,39 @@ if CONSTRUCTION_ENABLED:
             # Mettre à jour les champs fournis
             if projet_data.nom is not None:
                 projet.nom = projet_data.nom
+            
+            # Gérer les champs optionnels (peuvent être None ou chaîne vide)
             if projet_data.adresse is not None:
-                projet.adresse = projet_data.adresse
+                projet.adresse = projet_data.adresse if projet_data.adresse else None
             if projet_data.ville is not None:
-                projet.ville = projet_data.ville
+                projet.ville = projet_data.ville if projet_data.ville else None
             if projet_data.province is not None:
-                projet.province = projet_data.province
+                projet.province = projet_data.province if projet_data.province else None
             if projet_data.code_postal is not None:
-                projet.code_postal = projet_data.code_postal
-            if projet_data.date_debut is not None:
-                projet.date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d') if projet_data.date_debut else None
-            if projet_data.date_fin_prevue is not None:
-                projet.date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d') if projet_data.date_fin_prevue else None
-            if projet_data.date_fin_reelle is not None:
-                projet.date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d') if projet_data.date_fin_reelle else None
-            if projet_data.budget_total is not None:
-                projet.budget_total = projet_data.budget_total
+                projet.code_postal = projet_data.code_postal if projet_data.code_postal else None
             if projet_data.notes is not None:
-                projet.notes = projet_data.notes
+                projet.notes = projet_data.notes if projet_data.notes else None
+            
+            # Gérer les dates (peuvent être None ou chaîne vide)
+            if projet_data.date_debut is not None:
+                if projet_data.date_debut and projet_data.date_debut.strip():
+                    projet.date_debut = datetime.strptime(projet_data.date_debut, '%Y-%m-%d')
+                else:
+                    projet.date_debut = None
+            if projet_data.date_fin_prevue is not None:
+                if projet_data.date_fin_prevue and projet_data.date_fin_prevue.strip():
+                    projet.date_fin_prevue = datetime.strptime(projet_data.date_fin_prevue, '%Y-%m-%d')
+                else:
+                    projet.date_fin_prevue = None
+            if projet_data.date_fin_reelle is not None:
+                if projet_data.date_fin_reelle and projet_data.date_fin_reelle.strip():
+                    projet.date_fin_reelle = datetime.strptime(projet_data.date_fin_reelle, '%Y-%m-%d')
+                else:
+                    projet.date_fin_reelle = None
+            
+            # Gérer le budget
+            if projet_data.budget_total is not None:
+                projet.budget_total = projet_data.budget_total if projet_data.budget_total else 0
             
             projet.date_modification = datetime.utcnow()
             db.commit()

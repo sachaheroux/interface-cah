@@ -65,7 +65,15 @@ export default function ProjectForm({ isOpen, onClose, project, onSuccess }) {
     try {
       // Préparer les données pour l'API
       const submitData = {
-        ...formData,
+        nom: formData.nom,
+        date_debut: formData.date_debut || null,
+        date_fin_prevue: formData.date_fin_prevue || null,
+        date_fin_reelle: formData.date_fin_reelle || null,
+        notes: formData.notes || null,
+        adresse: formData.adresse || null,
+        ville: formData.ville || null,
+        province: formData.province || null,
+        code_postal: formData.code_postal || null,
         budget_total: formData.budget_total ? parseFloat(formData.budget_total) : 0
       }
 
