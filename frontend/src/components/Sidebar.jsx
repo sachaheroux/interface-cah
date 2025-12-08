@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
@@ -43,6 +43,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [expandedMenus, setExpandedMenus] = useState({
     employees: isEmployeesSection
   })
+
+  // S'assurer que le menu est ouvert quand on est sur une page d'employés
+  useEffect(() => {
+    if (isEmployeesSection) {
+      setExpandedMenus(prev => ({
+        ...prev,
+        employees: true
+      }))
+    }
+  }, [location.pathname, isEmployeesSection])
 
   const toggleMenu = (menuName) => {
     setExpandedMenus(prev => ({

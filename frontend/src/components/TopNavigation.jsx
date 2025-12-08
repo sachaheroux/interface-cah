@@ -26,6 +26,8 @@ const navigation = [
   { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
   { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
   { name: 'Paramètres', href: '/settings', icon: Settings, role: 'admin' },
+  // Pointages uniquement pour les employés
+  { name: 'Pointages', href: '/employee-punch', icon: Clock, role: 'employe' },
 ]
 
 export default function TopNavigation() {
@@ -70,10 +72,12 @@ export default function TopNavigation() {
                 // Filtrer selon le rôle utilisateur
                 if (!user) return false
                 
-                // Si l'utilisateur est admin, il voit tout
-                if (user.role === 'admin') return true
+                // Si l'utilisateur est admin, il voit tout SAUF Pointages
+                if (user.role === 'admin') {
+                  return item.role !== 'employe'
+                }
                 
-                // Si l'utilisateur est employé, il ne voit que l'onglet Pointage
+                // Si l'utilisateur est employé, il ne voit que l'onglet Pointages
                 if (user.role === 'employe') {
                   return item.name === 'Pointages'
                 }
