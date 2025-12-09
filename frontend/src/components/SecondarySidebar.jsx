@@ -16,6 +16,7 @@ import {
   DollarSign,
   Clock,
   Truck,
+  Package,
   Hammer,
   Upload,
   Download,
@@ -90,22 +91,23 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       ]
     
     case '/contractors':
+    case '/suppliers':
       return [
-        { name: 'Tous les sous-traitants', icon: Truck, active: pathname === '/contractors', href: '/contractors' },
+        { name: 'Sous-traitants', icon: Truck, active: pathname === '/contractors', href: '/contractors' },
+        { name: 'Fournisseurs', icon: Package, active: pathname === '/suppliers', href: '/suppliers' },
+        { name: 'Factures', icon: DollarSign, href: '/invoices-st', active: pathname === '/invoices-st' },
         { name: 'Contrats actifs', icon: FileText },
         { name: 'Évaluations', icon: BarChart3 },
-        { name: 'Ajouter sous-traitant', icon: Plus },
-        { name: 'Factures', icon: DollarSign, href: '/invoices-st', active: pathname === '/invoices-st' },
         { name: 'Contacts', icon: List },
       ]
     
     case '/invoices-st':
       return [
-        { name: 'Tous les sous-traitants', icon: Truck, href: '/contractors' },
+        { name: 'Sous-traitants', icon: Truck, href: '/contractors' },
+        { name: 'Fournisseurs', icon: Package, href: '/suppliers' },
+        { name: 'Factures', icon: DollarSign, active: true, href: '/invoices-st' },
         { name: 'Contrats actifs', icon: FileText },
         { name: 'Évaluations', icon: BarChart3 },
-        { name: 'Ajouter sous-traitant', icon: Plus },
-        { name: 'Factures', icon: DollarSign, active: true, href: '/invoices-st' },
         { name: 'Contacts', icon: List },
       ]
     

@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Locataires', href: '/tenants', icon: Users, role: 'admin' },
   { name: 'Transactions', href: '/transactions', icon: Receipt, role: 'admin' },
   { name: 'Employés', href: '/employees', icon: UserCheck, role: 'admin' },
-  { name: 'Sous-traitants', href: '/contractors', icon: Truck, role: 'admin' },
+  { name: 'Fournisseurs & ST', href: '/contractors', icon: Truck, role: 'admin' },
   { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
   { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
   { name: 'Paramètres', href: '/settings', icon: Settings, role: 'admin' },

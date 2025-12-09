@@ -27,7 +27,7 @@ const navigation = [
   { name: 'Entretien & Réparations', href: '/maintenance', icon: Wrench },
   { name: 'Facturation & Dépenses', href: '/billing', icon: Receipt },
   { name: 'Employés & Temps', href: '/employees', icon: UserCheck },
-  { name: 'Sous-traitants', href: '/contractors', icon: Truck },
+  { name: 'Fournisseurs & ST', href: '/contractors', icon: Truck },
   { name: 'Projets de Construction', href: '/projects', icon: Hammer },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Paramètres', href: '/settings', icon: Settings },
