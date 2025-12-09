@@ -2750,6 +2750,15 @@ if CONSTRUCTION_ENABLED:
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
     
+    class FournisseurUpdate(BaseModel):
+        nom: Optional[str] = None
+        rue: Optional[str] = None
+        ville: Optional[str] = None
+        province: Optional[str] = None
+        code_postal: Optional[str] = None
+        numero: Optional[str] = None
+        adresse_courriel: Optional[str] = None
+    
     class MatierePremiereCreate(BaseModel):
         nom: str
         notes: Optional[str] = None
@@ -3153,6 +3162,19 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des fournisseurs: {e}")
     
+    @app.get("/api/construction/fournisseurs/{fournisseur_id}")
+    async def get_fournisseur(fournisseur_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer un fournisseur par ID"""
+        try:
+            fournisseur = db.query(Fournisseur).filter(Fournisseur.id_fournisseur == fournisseur_id).first()
+            if not fournisseur:
+                raise HTTPException(status_code=404, detail="Fournisseur non trouvé")
+            return {"success": True, "data": fournisseur.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du fournisseur: {e}")
+    
     @app.post("/api/construction/fournisseurs")
     async def create_fournisseur(fournisseur_data: FournisseurCreate, db: Session = Depends(get_construction_db)):
         """Créer un nouveau fournisseur"""
@@ -3165,6 +3187,66 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la création du fournisseur: {e}")
+    
+    @app.put("/api/construction/fournisseurs/{fournisseur_id}")
+    async def update_fournisseur(fournisseur_id: int, fournisseur_data: FournisseurUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour un fournisseur"""
+        try:
+            fournisseur = db.query(Fournisseur).filter(Fournisseur.id_fournisseur == fournisseur_id).first()
+            if not fournisseur:
+                raise HTTPException(status_code=404, detail="Fournisseur non trouvé")
+            
+            # Mettre à jour les champs fournis
+            if fournisseur_data.nom is not None:
+                fournisseur.nom = fournisseur_data.nom
+            if fournisseur_data.rue is not None:
+                fournisseur.rue = fournisseur_data.rue if fournisseur_data.rue else None
+            if fournisseur_data.ville is not None:
+                fournisseur.ville = fournisseur_data.ville if fournisseur_data.ville else None
+            if fournisseur_data.province is not None:
+                fournisseur.province = fournisseur_data.province if fournisseur_data.province else None
+            if fournisseur_data.code_postal is not None:
+                fournisseur.code_postal = fournisseur_data.code_postal if fournisseur_data.code_postal else None
+            if fournisseur_data.numero is not None:
+                fournisseur.numero = fournisseur_data.numero if fournisseur_data.numero else None
+            if fournisseur_data.adresse_courriel is not None:
+                fournisseur.adresse_courriel = fournisseur_data.adresse_courriel if fournisseur_data.adresse_courriel else None
+            
+            fournisseur.date_modification = datetime.utcnow()
+            db.commit()
+            db.refresh(fournisseur)
+            return {"success": True, "data": fournisseur.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour du fournisseur: {e}")
+    
+    @app.delete("/api/construction/fournisseurs/{fournisseur_id}")
+    async def delete_fournisseur(fournisseur_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer un fournisseur (avec vérification des dépendances)"""
+        try:
+            fournisseur = db.query(Fournisseur).filter(Fournisseur.id_fournisseur == fournisseur_id).first()
+            if not fournisseur:
+                raise HTTPException(status_code=404, detail="Fournisseur non trouvé")
+            
+            # Vérifier s'il y a des commandes associées
+            commandes_count = db.query(Commande).filter(Commande.id_fournisseur == fournisseur_id).count()
+            
+            if commandes_count > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Impossible de supprimer ce fournisseur car {commandes_count} commande(s) y sont associée(s). Supprimez d'abord les commandes."
+                )
+            
+            db.delete(fournisseur)
+            db.commit()
+            return {"success": True, "message": "Fournisseur supprimé avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du fournisseur: {e}")
     
     # ==========================================
     # ENDPOINTS MATIÈRES PREMIÈRES

@@ -1006,4 +1006,20 @@ export const invoicesSTService = {
   deleteInvoice: (id) => api.delete(`/api/construction/factures-st/${id}`),
 }
 
+export const suppliersService = {
+  getSuppliers: async () => {
+    try {
+      const response = await api.get('/api/construction/fournisseurs')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API suppliers failed')
+      return { data: [] }
+    }
+  },
+  getSupplier: (id) => api.get(`/api/construction/fournisseurs/${id}`),
+  createSupplier: (data) => api.post('/api/construction/fournisseurs', data),
+  updateSupplier: (id, data) => api.put(`/api/construction/fournisseurs/${id}`, data),
+  deleteSupplier: (id) => api.delete(`/api/construction/fournisseurs/${id}`),
+}
+
 export default api 

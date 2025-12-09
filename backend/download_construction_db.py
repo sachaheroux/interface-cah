@@ -197,6 +197,7 @@ def ensure_table_columns(table_name: str, required_columns: List[str], conn: sql
     existing_columns = [col[1] for col in cursor.fetchall()]
     
     # Ajouter les colonnes manquantes
+    added_count = 0
     for col_name in required_columns:
         if col_name not in existing_columns:
             # Déterminer le type SQL approprié
@@ -206,14 +207,21 @@ def ensure_table_columns(table_name: str, required_columns: List[str], conn: sql
                 col_type = "INTEGER"
             elif 'date' in col_name.lower():
                 col_type = "TEXT"
+            elif col_name == 'pdf_facture' or col_name == 'reference':
+                col_type = "TEXT"
             else:
                 col_type = "TEXT"
             
             try:
                 cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}")
+                conn.commit()
                 print(f"   ✅ Colonne '{col_name}' ajoutée à la table '{table_name}'")
+                added_count += 1
             except Exception as e:
                 print(f"   ⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
+    
+    if added_count > 0:
+        print(f"   📊 {added_count} colonne(s) ajoutée(s) à la table '{table_name}'")
 
 def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
     """Insérer les données dans la base locale"""
@@ -238,21 +246,32 @@ def insert_data_to_local_db(table_name: str, data: List[Dict[str, Any]]):
                         'sous_traitant', 'lignes_commande', 'factures_st', 'commandes', 
                         'punchs_employes', 'factures_st']
     
-    # Filtrer : garder seulement les colonnes qui sont dans la table ET qui ne sont pas des objets
-    columns = []
+    # Filtrer : garder seulement les colonnes qui ne sont pas des objets
+    # On va d'abord collecter toutes les colonnes valides des données
+    valid_columns_from_data = []
     for col in all_keys:
-        if col in table_columns and col not in excluded_columns:
+        if col not in excluded_columns:
             # Vérifier que ce n'est pas un objet/dictionnaire
             if not isinstance(first_item.get(col), dict):
-                columns.append(col)
+                valid_columns_from_data.append(col)
+    
+    # S'assurer que la table a toutes les colonnes nécessaires AVANT de filtrer
+    ensure_table_columns(table_name, valid_columns_from_data, conn)
+    
+    # Maintenant, obtenir à nouveau les colonnes de la table (après ajout éventuel)
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    table_columns = [col[1] for col in cursor.fetchall()]
+    
+    # Filtrer : garder seulement les colonnes qui sont dans la table ET qui sont dans les données
+    columns = []
+    for col in valid_columns_from_data:
+        if col in table_columns:
+            columns.append(col)
     
     if not columns:
         print(f"⚠️ Aucune colonne valide trouvée pour '{table_name}'")
         conn.close()
         return
-    
-    # S'assurer que la table a toutes les colonnes nécessaires
-    ensure_table_columns(table_name, columns, conn)
     
     # Vider la table avant d'insérer
     cursor.execute(f"DELETE FROM {table_name}")
