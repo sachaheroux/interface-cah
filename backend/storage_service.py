@@ -62,6 +62,7 @@ class BackblazeStorageService:
                 "bail": "bail",
                 "transaction": "transaction",
                 "facture": "facture",
+                "commande": "commande",
                 "document": "document"
             }.get(context, "document")
             

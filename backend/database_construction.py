@@ -98,6 +98,22 @@ def init_construction_database():
                         except Exception as e:
                             print(f"⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
                 
+                # Vérifier et ajouter colonnes pour commandes
+                result = db.execute(text("PRAGMA table_info(commandes)"))
+                existing_columns_commandes = [col[1] for col in result.fetchall()]
+                
+                columns_to_add_commandes = [
+                    ("pdf_commande", "VARCHAR(500)")
+                ]
+                
+                for col_name, col_type in columns_to_add_commandes:
+                    if col_name not in existing_columns_commandes:
+                        try:
+                            db.execute(text(f"ALTER TABLE commandes ADD COLUMN {col_name} {col_type}"))
+                            print(f"✅ Colonne '{col_name}' ajoutée à la table commandes")
+                        except Exception as e:
+                            print(f"⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
+                
                 db.commit()
             except Exception as e:
                 print(f"⚠️ Erreur lors de la vérification/ajout des colonnes: {e}")

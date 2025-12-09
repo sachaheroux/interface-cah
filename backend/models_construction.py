@@ -124,6 +124,7 @@ class Commande(ConstructionBase):
     statut = Column(String(50), default="en_attente")  # en_attente, confirmee, livree, facturee
     type_de_paiement = Column(String(50))  # comptant, credit, cheque
     notes = Column(Text)
+    pdf_commande = Column(String(500))  # Nom du fichier PDF sur Backblaze
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -141,6 +142,7 @@ class Commande(ConstructionBase):
             "statut": self.statut,
             "type_de_paiement": self.type_de_paiement,
             "notes": self.notes,
+            "pdf_commande": self.pdf_commande,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None,
             "projet": self.projet.to_dict() if self.projet else None,

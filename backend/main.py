@@ -874,6 +874,7 @@ async def upload_document(file: UploadFile = File(...), context: str = "document
             "bail": "bails",
             "transaction": "transactions",
             "facture": "factures",
+            "commande": "commandes",
             "document": "documents"
         }
         folder = folder_map.get(context, "documents")
@@ -936,7 +937,7 @@ async def get_document(filename: str):
             file_content = storage_service.download_pdf(s3_key)
         else:
             # Chercher dans tous les dossiers possibles
-            folders = ['documents', 'bails', 'transactions', 'factures']
+            folders = ['documents', 'bails', 'transactions', 'factures', 'commandes']
             file_content = None
             s3_key = None
             
@@ -2827,6 +2828,7 @@ if CONSTRUCTION_ENABLED:
         statut: Optional[str] = "en_attente"
         type_de_paiement: Optional[str] = None
         notes: Optional[str] = None
+        pdf_commande: Optional[str] = None
         lignes_commande: List[Dict[str, Any]]  # Liste des lignes de commande
     
     class CommandeUpdate(BaseModel):
@@ -2836,6 +2838,7 @@ if CONSTRUCTION_ENABLED:
         statut: Optional[str] = None
         type_de_paiement: Optional[str] = None
         notes: Optional[str] = None
+        pdf_commande: Optional[str] = None
     
     class LigneCommandeCreate(BaseModel):
         id_commande: int
@@ -3871,7 +3874,8 @@ if CONSTRUCTION_ENABLED:
                 montant=montant_total,
                 statut=commande_data.statut or "en_attente",
                 type_de_paiement=commande_data.type_de_paiement,
-                notes=commande_data.notes
+                notes=commande_data.notes,
+                pdf_commande=commande_data.pdf_commande
             )
             db.add(nouvelle_commande)
             db.flush()  # Pour obtenir l'ID de la commande
@@ -3919,6 +3923,8 @@ if CONSTRUCTION_ENABLED:
                 commande.type_de_paiement = commande_data.type_de_paiement if commande_data.type_de_paiement else None
             if commande_data.notes is not None:
                 commande.notes = commande_data.notes if commande_data.notes else None
+            if commande_data.pdf_commande is not None:
+                commande.pdf_commande = commande_data.pdf_commande if commande_data.pdf_commande else None
             
             commande.date_modification = datetime.utcnow()
             db.commit()
@@ -3940,6 +3946,17 @@ if CONSTRUCTION_ENABLED:
             commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
             if not commande:
                 raise HTTPException(status_code=404, detail="Commande non trouvée")
+            
+            # Supprimer le PDF de Backblaze si présent
+            if commande.pdf_commande:
+                try:
+                    from storage_service import get_storage_service
+                    storage_service = get_storage_service()
+                    # Le pdf_commande contient le nom du fichier, on doit construire le s3_key
+                    s3_key = f"commandes/{commande.pdf_commande}"
+                    storage_service.delete_pdf(s3_key)
+                except Exception as e:
+                    print(f"⚠️ Erreur lors de la suppression du PDF: {e}")
             
             db.delete(commande)
             db.commit()
