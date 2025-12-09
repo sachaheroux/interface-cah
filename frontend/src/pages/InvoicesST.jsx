@@ -99,9 +99,35 @@ export default function InvoicesST() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié'
-    const [year, month, day] = dateString.split('T')[0].split('-')
-    const localDate = new Date(year, month - 1, day)
-    return localDate.toLocaleDateString('fr-CA')
+    try {
+      // Gérer différents formats de date
+      let dateStr = dateString
+      if (dateStr.includes('T')) {
+        dateStr = dateStr.split('T')[0]
+      } else if (dateStr.includes(' ')) {
+        dateStr = dateStr.split(' ')[0]
+      }
+      
+      // Vérifier que c'est bien une date valide (format YYYY-MM-DD)
+      const parts = dateStr.split('-')
+      if (parts.length === 3) {
+        const year = parseInt(parts[0])
+        const month = parseInt(parts[1]) - 1
+        const day = parseInt(parts[2])
+        const localDate = new Date(year, month, day)
+        
+        // Vérifier que la date est valide
+        if (isNaN(localDate.getTime())) {
+          return 'Date invalide'
+        }
+        
+        return localDate.toLocaleDateString('fr-CA')
+      }
+      return 'Date invalide'
+    } catch (error) {
+      console.error('Erreur formatage date:', error, dateString)
+      return 'Date invalide'
+    }
   }
 
   const formatAmount = (amount) => {
