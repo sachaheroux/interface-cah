@@ -990,4 +990,20 @@ export const contractorsService = {
   deleteContractor: (id) => api.delete(`/api/construction/sous-traitants/${id}`),
 }
 
+export const invoicesSTService = {
+  getInvoices: async () => {
+    try {
+      const response = await api.get('/api/construction/factures-st')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API invoices ST failed')
+      return { data: [] }
+    }
+  },
+  getInvoice: (id) => api.get(`/api/construction/factures-st/${id}`),
+  createInvoice: (data) => api.post('/api/construction/factures-st', data),
+  updateInvoice: (id, data) => api.put(`/api/construction/factures-st/${id}`, data),
+  deleteInvoice: (id) => api.delete(`/api/construction/factures-st/${id}`),
+}
+
 export default api 

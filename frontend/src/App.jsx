@@ -17,6 +17,7 @@ import Maintenance from './pages/Maintenance'
 import Employees from './pages/Employees'
 import Contractors from './pages/Contractors'
 import Projects from './pages/Projects'
+import InvoicesST from './pages/InvoicesST'
 import Documents from './pages/Documents'
 import Settings from './pages/Settings'
 import Reports from './pages/Reports'
@@ -240,6 +241,7 @@ function AppContent() {
             <Route path="/punch-management" element={<ProtectedRoute><AdminProtectedRoute><PunchManagement /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/contractors" element={<ProtectedRoute><AdminProtectedRoute><Contractors /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><AdminProtectedRoute><Projects /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/invoices-st" element={<ProtectedRoute><AdminProtectedRoute><InvoicesST /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><AdminProtectedRoute><Documents /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><AdminProtectedRoute><Settings /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><AdminProtectedRoute><Reports /></AdminProtectedRoute></ProtectedRoute>} />
