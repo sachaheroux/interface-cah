@@ -1022,4 +1022,20 @@ export const suppliersService = {
   deleteSupplier: (id) => api.delete(`/api/construction/fournisseurs/${id}`),
 }
 
+export const materialsService = {
+  getMaterials: async () => {
+    try {
+      const response = await api.get('/api/construction/matieres-premieres')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API materials failed')
+      return { data: [] }
+    }
+  },
+  getMaterial: (id) => api.get(`/api/construction/matieres-premieres/${id}`),
+  createMaterial: (data) => api.post('/api/construction/matieres-premieres', data),
+  updateMaterial: (id, data) => api.put(`/api/construction/matieres-premieres/${id}`, data),
+  deleteMaterial: (id) => api.delete(`/api/construction/matieres-premieres/${id}`),
+}
+
 export default api 

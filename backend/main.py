@@ -2763,6 +2763,10 @@ if CONSTRUCTION_ENABLED:
         nom: str
         notes: Optional[str] = None
     
+    class MatierePremiereUpdate(BaseModel):
+        nom: Optional[str] = None
+        notes: Optional[str] = None
+    
     class EmployeCreate(BaseModel):
         prenom: str
         nom: str
@@ -3261,6 +3265,19 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des matières premières: {e}")
     
+    @app.get("/api/construction/matieres-premieres/{matiere_id}")
+    async def get_matiere_premiere(matiere_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer une matière première par ID"""
+        try:
+            matiere = db.query(MatierePremiere).filter(MatierePremiere.id_matiere_premiere == matiere_id).first()
+            if not matiere:
+                raise HTTPException(status_code=404, detail="Matière première non trouvée")
+            return {"success": True, "data": matiere.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la matière première: {e}")
+    
     @app.post("/api/construction/matieres-premieres")
     async def create_matiere_premiere(matiere_data: MatierePremiereCreate, db: Session = Depends(get_construction_db)):
         """Créer une nouvelle matière première"""
@@ -3273,6 +3290,56 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la matière première: {e}")
+    
+    @app.put("/api/construction/matieres-premieres/{matiere_id}")
+    async def update_matiere_premiere(matiere_id: int, matiere_data: MatierePremiereUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour une matière première"""
+        try:
+            matiere = db.query(MatierePremiere).filter(MatierePremiere.id_matiere_premiere == matiere_id).first()
+            if not matiere:
+                raise HTTPException(status_code=404, detail="Matière première non trouvée")
+            
+            # Mettre à jour les champs fournis
+            if matiere_data.nom is not None:
+                matiere.nom = matiere_data.nom
+            if matiere_data.notes is not None:
+                matiere.notes = matiere_data.notes if matiere_data.notes else None
+            
+            matiere.date_modification = datetime.utcnow()
+            db.commit()
+            db.refresh(matiere)
+            return {"success": True, "data": matiere.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la matière première: {e}")
+    
+    @app.delete("/api/construction/matieres-premieres/{matiere_id}")
+    async def delete_matiere_premiere(matiere_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer une matière première (avec vérification des dépendances)"""
+        try:
+            matiere = db.query(MatierePremiere).filter(MatierePremiere.id_matiere_premiere == matiere_id).first()
+            if not matiere:
+                raise HTTPException(status_code=404, detail="Matière première non trouvée")
+            
+            # Vérifier s'il y a des lignes de commande associées
+            lignes_count = db.query(LigneCommande).filter(LigneCommande.id_matiere_premiere == matiere_id).count()
+            
+            if lignes_count > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Impossible de supprimer cette matière première car {lignes_count} ligne(s) de commande y sont associée(s). Supprimez d'abord les lignes de commande."
+                )
+            
+            db.delete(matiere)
+            db.commit()
+            return {"success": True, "message": "Matière première supprimée avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la matière première: {e}")
     
     # ==========================================
     # ENDPOINTS EMPLOYÉS
