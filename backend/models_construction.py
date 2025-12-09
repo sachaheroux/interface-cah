@@ -283,6 +283,9 @@ class FactureST(ConstructionBase):
     montant = Column(Float, nullable=False)
     section = Column(String(100))  # Section du projet
     notes = Column(Text)
+    reference = Column(String(100))  # Référence de la facture
+    date_de_paiement = Column(DateTime)  # Date de paiement
+    pdf_facture = Column(String(500))  # Nom du fichier PDF sur Backblaze
     date_creation = Column(DateTime, default=datetime.utcnow)
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -298,6 +301,9 @@ class FactureST(ConstructionBase):
             "montant": self.montant,
             "section": self.section,
             "notes": self.notes,
+            "reference": self.reference,
+            "date_de_paiement": self.date_de_paiement.isoformat() if self.date_de_paiement else None,
+            "pdf_facture": self.pdf_facture,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "date_modification": self.date_modification.isoformat() if self.date_modification else None,
             "projet": self.projet.to_dict() if self.projet else None,

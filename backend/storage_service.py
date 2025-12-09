@@ -60,7 +60,8 @@ class BackblazeStorageService:
             # Ajouter un préfixe contextuel
             context_prefix = {
                 "bail": "bail",
-                "transaction": "transaction", 
+                "transaction": "transaction",
+                "facture": "facture",
                 "document": "document"
             }.get(context, "document")
             

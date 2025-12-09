@@ -57,15 +57,14 @@ def init_construction_database():
         # Créer toutes les tables dans le même fichier SQLite
         ConstructionBase.metadata.create_all(bind=construction_engine)
         
-        # Ajouter les colonnes manquantes à la table projets si elle existe déjà
+        # Ajouter les colonnes manquantes aux tables si elles existent déjà
         with get_construction_db_context() as db:
             try:
-                # Vérifier quelles colonnes existent déjà
+                # Vérifier et ajouter colonnes pour projets
                 result = db.execute(text("PRAGMA table_info(projets)"))
                 existing_columns = [col[1] for col in result.fetchall()]
                 
-                # Colonnes à ajouter (celles qui n'existent pas encore)
-                columns_to_add = [
+                columns_to_add_projets = [
                     ("adresse", "VARCHAR(255)"),
                     ("ville", "VARCHAR(100)"),
                     ("province", "VARCHAR(50)"),
@@ -73,11 +72,29 @@ def init_construction_database():
                     ("budget_total", "FLOAT DEFAULT 0")
                 ]
                 
-                for col_name, col_type in columns_to_add:
+                for col_name, col_type in columns_to_add_projets:
                     if col_name not in existing_columns:
                         try:
                             db.execute(text(f"ALTER TABLE projets ADD COLUMN {col_name} {col_type}"))
                             print(f"✅ Colonne '{col_name}' ajoutée à la table projets")
+                        except Exception as e:
+                            print(f"⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
+                
+                # Vérifier et ajouter colonnes pour factures_st
+                result = db.execute(text("PRAGMA table_info(factures_st)"))
+                existing_columns_factures = [col[1] for col in result.fetchall()]
+                
+                columns_to_add_factures = [
+                    ("reference", "VARCHAR(100)"),
+                    ("date_de_paiement", "DATETIME"),
+                    ("pdf_facture", "VARCHAR(500)")
+                ]
+                
+                for col_name, col_type in columns_to_add_factures:
+                    if col_name not in existing_columns_factures:
+                        try:
+                            db.execute(text(f"ALTER TABLE factures_st ADD COLUMN {col_name} {col_type}"))
+                            print(f"✅ Colonne '{col_name}' ajoutée à la table factures_st")
                         except Exception as e:
                             print(f"⚠️ Erreur lors de l'ajout de '{col_name}': {e}")
                 

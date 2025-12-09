@@ -872,7 +872,8 @@ async def upload_document(file: UploadFile = File(...), context: str = "document
         # Déterminer le dossier selon le contexte
         folder_map = {
             "bail": "bails",
-            "transaction": "transactions", 
+            "transaction": "transactions",
+            "facture": "factures",
             "document": "documents"
         }
         folder = folder_map.get(context, "documents")
@@ -935,7 +936,7 @@ async def get_document(filename: str):
             file_content = storage_service.download_pdf(s3_key)
         else:
             # Chercher dans tous les dossiers possibles
-            folders = ['documents', 'bails', 'transactions']
+            folders = ['documents', 'bails', 'transactions', 'factures']
             file_content = None
             s3_key = None
             
@@ -2787,6 +2788,26 @@ if CONSTRUCTION_ENABLED:
         numero: Optional[str] = None
         adresse_courriel: Optional[str] = None
     
+    class FactureSTCreate(BaseModel):
+        id_projet: int
+        id_st: int
+        montant: float
+        section: Optional[str] = None
+        notes: Optional[str] = None
+        reference: Optional[str] = None
+        date_de_paiement: Optional[str] = None  # Format YYYY-MM-DD
+        pdf_facture: Optional[str] = None
+    
+    class FactureSTUpdate(BaseModel):
+        id_projet: Optional[int] = None
+        id_st: Optional[int] = None
+        montant: Optional[float] = None
+        section: Optional[str] = None
+        notes: Optional[str] = None
+        reference: Optional[str] = None
+        date_de_paiement: Optional[str] = None  # Format YYYY-MM-DD
+        pdf_facture: Optional[str] = None
+    
     class PunchEmployeCreate(BaseModel):
         id_employe: int
         id_projet: int
@@ -3444,6 +3465,183 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du sous-traitant: {e}")
+    
+    # ==========================================
+    # ENDPOINTS FACTURES SOUS-TRAITANTS
+    # ==========================================
+    
+    @app.get("/api/construction/factures-st")
+    async def get_factures_st(db: Session = Depends(get_construction_db)):
+        """Récupérer toutes les factures de sous-traitants"""
+        try:
+            from sqlalchemy import text, desc
+            
+            # Vérifier quelles colonnes existent dans la table
+            result = db.execute(text("PRAGMA table_info(factures_st)"))
+            existing_columns = [col[1] for col in result.fetchall()]
+            
+            # Colonnes de base qui doivent exister
+            base_columns = ['id_facture', 'id_projet', 'id_st', 'montant', 'section', 'notes', 'date_creation', 'date_modification']
+            # Colonnes optionnelles à ajouter
+            optional_columns = ['reference', 'date_de_paiement', 'pdf_facture']
+            
+            # Construire la liste des colonnes à sélectionner
+            columns_to_select = [col for col in base_columns if col in existing_columns]
+            columns_to_select.extend([col for col in optional_columns if col in existing_columns])
+            
+            # Construire la requête SQL
+            columns_str = ', '.join(columns_to_select)
+            query = f"SELECT {columns_str} FROM factures_st ORDER BY date_creation DESC"
+            
+            result = db.execute(text(query))
+            rows = result.fetchall()
+            
+            # Convertir les résultats en dictionnaires
+            factures_data = []
+            for row in rows:
+                facture_dict = {}
+                for idx, col_name in enumerate(columns_to_select):
+                    value = row[idx]
+                    # Formater les dates
+                    if 'date' in col_name.lower() and value:
+                        if isinstance(value, str):
+                            facture_dict[col_name] = value
+                        else:
+                            facture_dict[col_name] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
+                    else:
+                        facture_dict[col_name] = value
+                
+                # Ajouter les relations si possible
+                try:
+                    facture_obj = db.query(FactureST).filter(FactureST.id_facture == facture_dict['id_facture']).first()
+                    if facture_obj:
+                        facture_dict['projet'] = facture_obj.projet.to_dict() if facture_obj.projet else None
+                        facture_dict['sous_traitant'] = facture_obj.sous_traitant.to_dict() if facture_obj.sous_traitant else None
+                except:
+                    pass
+                
+                factures_data.append(facture_dict)
+            
+            return {"success": True, "data": factures_data}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des factures: {e}")
+    
+    @app.get("/api/construction/factures-st/{facture_id}")
+    async def get_facture_st(facture_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer une facture par ID"""
+        try:
+            facture = db.query(FactureST).filter(FactureST.id_facture == facture_id).first()
+            if not facture:
+                raise HTTPException(status_code=404, detail="Facture non trouvée")
+            return {"success": True, "data": facture.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la facture: {e}")
+    
+    @app.post("/api/construction/factures-st")
+    async def create_facture_st(facture_data: FactureSTCreate, db: Session = Depends(get_construction_db)):
+        """Créer une nouvelle facture de sous-traitant"""
+        try:
+            # Convertir la date de paiement si fournie
+            date_de_paiement = None
+            if facture_data.date_de_paiement:
+                date_str = facture_data.date_de_paiement.strip()
+                if ' ' in date_str:
+                    date_str = date_str.split(' ')[0]
+                elif 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                date_de_paiement = datetime.strptime(date_str, '%Y-%m-%d')
+            
+            nouvelle_facture = FactureST(
+                id_projet=facture_data.id_projet,
+                id_st=facture_data.id_st,
+                montant=facture_data.montant,
+                section=facture_data.section,
+                notes=facture_data.notes,
+                reference=facture_data.reference,
+                date_de_paiement=date_de_paiement,
+                pdf_facture=facture_data.pdf_facture
+            )
+            db.add(nouvelle_facture)
+            db.commit()
+            db.refresh(nouvelle_facture)
+            return {"success": True, "data": nouvelle_facture.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la facture: {e}")
+    
+    @app.put("/api/construction/factures-st/{facture_id}")
+    async def update_facture_st(facture_id: int, facture_data: FactureSTUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour une facture de sous-traitant"""
+        try:
+            facture = db.query(FactureST).filter(FactureST.id_facture == facture_id).first()
+            if not facture:
+                raise HTTPException(status_code=404, detail="Facture non trouvée")
+            
+            # Mettre à jour les champs fournis
+            if facture_data.id_projet is not None:
+                facture.id_projet = facture_data.id_projet
+            if facture_data.id_st is not None:
+                facture.id_st = facture_data.id_st
+            if facture_data.montant is not None:
+                facture.montant = facture_data.montant
+            if facture_data.section is not None:
+                facture.section = facture_data.section if facture_data.section else None
+            if facture_data.notes is not None:
+                facture.notes = facture_data.notes if facture_data.notes else None
+            if facture_data.reference is not None:
+                facture.reference = facture_data.reference if facture_data.reference else None
+            if facture_data.date_de_paiement is not None:
+                if facture_data.date_de_paiement and facture_data.date_de_paiement.strip():
+                    date_str = facture_data.date_de_paiement.strip()
+                    if ' ' in date_str:
+                        date_str = date_str.split(' ')[0]
+                    elif 'T' in date_str:
+                        date_str = date_str.split('T')[0]
+                    facture.date_de_paiement = datetime.strptime(date_str, '%Y-%m-%d')
+                else:
+                    facture.date_de_paiement = None
+            if facture_data.pdf_facture is not None:
+                facture.pdf_facture = facture_data.pdf_facture if facture_data.pdf_facture else None
+            
+            facture.date_modification = datetime.utcnow()
+            db.commit()
+            db.refresh(facture)
+            return {"success": True, "data": facture.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la facture: {e}")
+    
+    @app.delete("/api/construction/factures-st/{facture_id}")
+    async def delete_facture_st(facture_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer une facture de sous-traitant"""
+        try:
+            facture = db.query(FactureST).filter(FactureST.id_facture == facture_id).first()
+            if not facture:
+                raise HTTPException(status_code=404, detail="Facture non trouvée")
+            
+            # Supprimer le PDF de Backblaze si présent
+            if facture.pdf_facture:
+                try:
+                    from storage_service import get_storage_service
+                    storage_service = get_storage_service()
+                    # Le pdf_facture contient le nom du fichier, on doit construire le s3_key
+                    s3_key = f"factures/{facture.pdf_facture}"
+                    storage_service.delete_pdf(s3_key)
+                except Exception as e:
+                    print(f"⚠️ Erreur lors de la suppression du PDF: {e}")
+            
+            db.delete(facture)
+            db.commit()
+            return {"success": True, "message": "Facture supprimée avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la facture: {e}")
     
     # ==========================================
     # ENDPOINT DE TEST CONSTRUCTION
