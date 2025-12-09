@@ -115,8 +115,10 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       ]
     
     case '/projects':
+    case '/orders':
       return [
-        { name: 'Tous les projets', icon: Hammer, active: true },
+        { name: 'Tous les projets', icon: Hammer, active: pathname === '/projects', href: '/projects' },
+        { name: 'Commandes', icon: FileText, active: pathname === '/orders', href: '/orders' },
         { name: 'En planification', icon: Calendar },
         { name: 'En cours', icon: SettingsIcon },
         { name: 'Terminés', icon: List },

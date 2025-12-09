@@ -2821,6 +2821,37 @@ if CONSTRUCTION_ENABLED:
         date_de_paiement: Optional[str] = None  # Format YYYY-MM-DD
         pdf_facture: Optional[str] = None
     
+    class CommandeCreate(BaseModel):
+        id_projet: int
+        id_fournisseur: int
+        statut: Optional[str] = "en_attente"
+        type_de_paiement: Optional[str] = None
+        notes: Optional[str] = None
+        lignes_commande: List[Dict[str, Any]]  # Liste des lignes de commande
+    
+    class CommandeUpdate(BaseModel):
+        id_projet: Optional[int] = None
+        id_fournisseur: Optional[int] = None
+        montant: Optional[float] = None
+        statut: Optional[str] = None
+        type_de_paiement: Optional[str] = None
+        notes: Optional[str] = None
+    
+    class LigneCommandeCreate(BaseModel):
+        id_commande: int
+        id_matiere_premiere: int
+        quantite: float
+        unite: str
+        montant: float
+        section: Optional[str] = None
+    
+    class LigneCommandeUpdate(BaseModel):
+        id_matiere_premiere: Optional[int] = None
+        quantite: Optional[float] = None
+        unite: Optional[str] = None
+        montant: Optional[float] = None
+        section: Optional[str] = None
+    
     class PunchEmployeCreate(BaseModel):
         id_employe: int
         id_projet: int
@@ -3791,6 +3822,249 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la facture: {e}")
+    
+    # ==========================================
+    # ENDPOINTS COMMANDES
+    # ==========================================
+    
+    @app.get("/api/construction/commandes")
+    async def get_commandes(db: Session = Depends(get_construction_db)):
+        """Récupérer toutes les commandes"""
+        try:
+            commandes = db.query(Commande).order_by(Commande.date_creation.desc()).all()
+            result = []
+            for commande in commandes:
+                cmd_dict = commande.to_dict()
+                # Ajouter les lignes de commande
+                cmd_dict['lignes_commande'] = [ligne.to_dict() for ligne in commande.lignes_commande]
+                result.append(cmd_dict)
+            return {"success": True, "data": result}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des commandes: {e}")
+    
+    @app.get("/api/construction/commandes/{commande_id}")
+    async def get_commande(commande_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer une commande par ID avec ses lignes"""
+        try:
+            commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
+            if not commande:
+                raise HTTPException(status_code=404, detail="Commande non trouvée")
+            result = commande.to_dict()
+            result['lignes_commande'] = [ligne.to_dict() for ligne in commande.lignes_commande]
+            return {"success": True, "data": result}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la commande: {e}")
+    
+    @app.post("/api/construction/commandes")
+    async def create_commande(commande_data: CommandeCreate, db: Session = Depends(get_construction_db)):
+        """Créer une nouvelle commande avec ses lignes"""
+        try:
+            # Calculer le montant total depuis les lignes
+            montant_total = sum(ligne.get('montant', 0) for ligne in commande_data.lignes_commande)
+            
+            # Créer la commande
+            nouvelle_commande = Commande(
+                id_projet=commande_data.id_projet,
+                id_fournisseur=commande_data.id_fournisseur,
+                montant=montant_total,
+                statut=commande_data.statut or "en_attente",
+                type_de_paiement=commande_data.type_de_paiement,
+                notes=commande_data.notes
+            )
+            db.add(nouvelle_commande)
+            db.flush()  # Pour obtenir l'ID de la commande
+            
+            # Créer les lignes de commande
+            for ligne_data in commande_data.lignes_commande:
+                nouvelle_ligne = LigneCommande(
+                    id_commande=nouvelle_commande.id_commande,
+                    id_matiere_premiere=ligne_data['id_matiere_premiere'],
+                    quantite=ligne_data['quantite'],
+                    unite=ligne_data['unite'],
+                    montant=ligne_data['montant'],
+                    section=ligne_data.get('section')
+                )
+                db.add(nouvelle_ligne)
+            
+            db.commit()
+            db.refresh(nouvelle_commande)
+            
+            # Retourner la commande avec ses lignes
+            result = nouvelle_commande.to_dict()
+            result['lignes_commande'] = [ligne.to_dict() for ligne in nouvelle_commande.lignes_commande]
+            return {"success": True, "data": result}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la commande: {e}")
+    
+    @app.put("/api/construction/commandes/{commande_id}")
+    async def update_commande(commande_id: int, commande_data: CommandeUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour une commande"""
+        try:
+            commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
+            if not commande:
+                raise HTTPException(status_code=404, detail="Commande non trouvée")
+            
+            if commande_data.id_projet is not None:
+                commande.id_projet = commande_data.id_projet
+            if commande_data.id_fournisseur is not None:
+                commande.id_fournisseur = commande_data.id_fournisseur
+            if commande_data.montant is not None:
+                commande.montant = commande_data.montant
+            if commande_data.statut is not None:
+                commande.statut = commande_data.statut
+            if commande_data.type_de_paiement is not None:
+                commande.type_de_paiement = commande_data.type_de_paiement if commande_data.type_de_paiement else None
+            if commande_data.notes is not None:
+                commande.notes = commande_data.notes if commande_data.notes else None
+            
+            commande.date_modification = datetime.utcnow()
+            db.commit()
+            db.refresh(commande)
+            
+            result = commande.to_dict()
+            result['lignes_commande'] = [ligne.to_dict() for ligne in commande.lignes_commande]
+            return {"success": True, "data": result}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la commande: {e}")
+    
+    @app.delete("/api/construction/commandes/{commande_id}")
+    async def delete_commande(commande_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer une commande (les lignes seront supprimées automatiquement par CASCADE)"""
+        try:
+            commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
+            if not commande:
+                raise HTTPException(status_code=404, detail="Commande non trouvée")
+            
+            db.delete(commande)
+            db.commit()
+            return {"success": True, "message": "Commande supprimée avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la commande: {e}")
+    
+    # ==========================================
+    # ENDPOINTS LIGNES DE COMMANDE
+    # ==========================================
+    
+    @app.get("/api/construction/lignes-commande")
+    async def get_lignes_commande(db: Session = Depends(get_construction_db)):
+        """Récupérer toutes les lignes de commande"""
+        try:
+            lignes = db.query(LigneCommande).order_by(LigneCommande.id_commande, LigneCommande.id_ligne).all()
+            return {"success": True, "data": [ligne.to_dict() for ligne in lignes]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des lignes de commande: {e}")
+    
+    @app.get("/api/construction/lignes-commande/commande/{commande_id}")
+    async def get_lignes_by_commande(commande_id: int, db: Session = Depends(get_construction_db)):
+        """Récupérer toutes les lignes d'une commande"""
+        try:
+            lignes = db.query(LigneCommande).filter(LigneCommande.id_commande == commande_id).all()
+            return {"success": True, "data": [ligne.to_dict() for ligne in lignes]}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des lignes de commande: {e}")
+    
+    @app.post("/api/construction/lignes-commande")
+    async def create_ligne_commande(ligne_data: LigneCommandeCreate, db: Session = Depends(get_construction_db)):
+        """Créer une nouvelle ligne de commande"""
+        try:
+            nouvelle_ligne = LigneCommande(**ligne_data.dict())
+            db.add(nouvelle_ligne)
+            
+            # Mettre à jour le montant total de la commande
+            from sqlalchemy import func
+            commande = db.query(Commande).filter(Commande.id_commande == ligne_data.id_commande).first()
+            if commande:
+                # Recalculer le montant total
+                total = db.query(func.sum(LigneCommande.montant)).filter(
+                    LigneCommande.id_commande == ligne_data.id_commande
+                ).scalar() or 0
+                commande.montant = total
+                commande.date_modification = datetime.utcnow()
+            
+            db.commit()
+            db.refresh(nouvelle_ligne)
+            return {"success": True, "data": nouvelle_ligne.to_dict()}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la ligne de commande: {e}")
+    
+    @app.put("/api/construction/lignes-commande/{ligne_id}")
+    async def update_ligne_commande(ligne_id: int, ligne_data: LigneCommandeUpdate, db: Session = Depends(get_construction_db)):
+        """Mettre à jour une ligne de commande"""
+        try:
+            ligne = db.query(LigneCommande).filter(LigneCommande.id_ligne == ligne_id).first()
+            if not ligne:
+                raise HTTPException(status_code=404, detail="Ligne de commande non trouvée")
+            
+            if ligne_data.id_matiere_premiere is not None:
+                ligne.id_matiere_premiere = ligne_data.id_matiere_premiere
+            if ligne_data.quantite is not None:
+                ligne.quantite = ligne_data.quantite
+            if ligne_data.unite is not None:
+                ligne.unite = ligne_data.unite
+            if ligne_data.montant is not None:
+                ligne.montant = ligne_data.montant
+            if ligne_data.section is not None:
+                ligne.section = ligne_data.section if ligne_data.section else None
+            
+            ligne.date_modification = datetime.utcnow()
+            
+            # Mettre à jour le montant total de la commande
+            from sqlalchemy import func
+            commande = db.query(Commande).filter(Commande.id_commande == ligne.id_commande).first()
+            if commande:
+                total = db.query(func.sum(LigneCommande.montant)).filter(
+                    LigneCommande.id_commande == ligne.id_commande
+                ).scalar() or 0
+                commande.montant = total
+                commande.date_modification = datetime.utcnow()
+            
+            db.commit()
+            db.refresh(ligne)
+            return {"success": True, "data": ligne.to_dict()}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de la ligne de commande: {e}")
+    
+    @app.delete("/api/construction/lignes-commande/{ligne_id}")
+    async def delete_ligne_commande(ligne_id: int, db: Session = Depends(get_construction_db)):
+        """Supprimer une ligne de commande"""
+        try:
+            ligne = db.query(LigneCommande).filter(LigneCommande.id_ligne == ligne_id).first()
+            if not ligne:
+                raise HTTPException(status_code=404, detail="Ligne de commande non trouvée")
+            
+            commande_id = ligne.id_commande
+            db.delete(ligne)
+            
+            # Mettre à jour le montant total de la commande
+            from sqlalchemy import func
+            commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
+            if commande:
+                total = db.query(func.sum(LigneCommande.montant)).filter(
+                    LigneCommande.id_commande == commande_id
+                ).scalar() or 0
+                commande.montant = total
+                commande.date_modification = datetime.utcnow()
+            
+            db.commit()
+            return {"success": True, "message": "Ligne de commande supprimée avec succès"}
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression de la ligne de commande: {e}")
     
     # ==========================================
     # ENDPOINT DE TEST CONSTRUCTION

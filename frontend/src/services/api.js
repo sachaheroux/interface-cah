@@ -1038,4 +1038,24 @@ export const materialsService = {
   deleteMaterial: (id) => api.delete(`/api/construction/matieres-premieres/${id}`),
 }
 
+export const ordersService = {
+  getOrders: async () => {
+    try {
+      const response = await api.get('/api/construction/commandes')
+      return { data: response.data.data || [] }
+    } catch (error) {
+      console.warn('API orders failed')
+      return { data: [] }
+    }
+  },
+  getOrder: (id) => api.get(`/api/construction/commandes/${id}`),
+  createOrder: (data) => api.post('/api/construction/commandes', data),
+  updateOrder: (id, data) => api.put(`/api/construction/commandes/${id}`, data),
+  deleteOrder: (id) => api.delete(`/api/construction/commandes/${id}`),
+  getOrderLines: (orderId) => api.get(`/api/construction/lignes-commande/commande/${orderId}`),
+  createOrderLine: (data) => api.post('/api/construction/lignes-commande', data),
+  updateOrderLine: (id, data) => api.put(`/api/construction/lignes-commande/${id}`, data),
+  deleteOrderLine: (id) => api.delete(`/api/construction/lignes-commande/${id}`),
+}
+
 export default api 
