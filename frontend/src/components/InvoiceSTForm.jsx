@@ -255,12 +255,28 @@ export default function InvoiceSTForm({ isOpen, onClose, invoice, onSuccess }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Section
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.section}
                 onChange={(e) => handleChange('section', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              >
+                <option value="">Sélectionner une section</option>
+                <option value="Admin">Admin</option>
+                <option value="Excavation et fondation">Excavation et fondation</option>
+                <option value="Structure du batiment">Structure du bâtiment</option>
+                <option value="Toiture">Toiture</option>
+                <option value="Préparation intérieur">Préparation intérieur</option>
+                <option value="Fenêtres">Fenêtres</option>
+                <option value="Gypse">Gypse</option>
+                <option value="Joint">Joint</option>
+                <option value="Portes">Portes</option>
+                <option value="Peinture">Peinture</option>
+                <option value="Plancher">Plancher</option>
+                <option value="Armoire">Armoire</option>
+                <option value="Revêtement souple">Revêtement souple</option>
+                <option value="Patio arrière">Patio arrière</option>
+                <option value="Autres">Autres</option>
+              </select>
             </div>
 
             <div>
