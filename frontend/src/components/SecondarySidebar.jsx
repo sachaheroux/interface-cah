@@ -119,11 +119,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
     case '/settings':
       return [
         { name: 'Général', icon: SettingsIcon, active: true },
-        { name: 'Utilisateurs', icon: Users },
-        { name: 'Sécurité', icon: List },
-        { name: 'Notifications', icon: Calendar },
-        { name: 'Sauvegarde', icon: Download },
-        { name: 'Support', icon: FileText },
       ]
     
     case '/reports':
@@ -177,9 +172,9 @@ const getSidebarTitle = (pathname) => {
     return 'Documents'
   }
   
-  // Section Paramètres
+  // Section Mon profil
   if (pathname === '/settings') {
-    return 'Paramètres'
+    return 'Mon profil'
   }
   
   // Section Rapports
