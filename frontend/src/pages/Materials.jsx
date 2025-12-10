@@ -74,8 +74,8 @@ export default function Materials() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Matières premières</h1>
-          <p className="text-gray-600 mt-1">Gestion des matières premières</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Matières premières</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestion des matières premières</p>
         </div>
         <button
           onClick={handleCreateMaterial}
@@ -90,29 +90,29 @@ export default function Materials() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {materials.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune matière première</h3>
-            <p className="text-gray-500">Commencez par ajouter une nouvelle matière première.</p>
+            <Package className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune matière première</h3>
+            <p className="text-gray-500 dark:text-gray-400">Commencez par ajouter une nouvelle matière première.</p>
           </div>
         ) : (
           materials.map((material) => (
-            <div key={material.id_matiere_premiere} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div key={material.id_matiere_premiere} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900">{material.nom}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{material.nom}</h3>
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEditMaterial(material)}
-                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     title="Modifier"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(material)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -122,12 +122,12 @@ export default function Materials() {
 
               {/* Notes */}
               {material.notes && (
-                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <div className="flex items-start">
-                    <FileText className="h-4 w-4 text-gray-600 mr-2 mt-0.5" />
+                    <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400 mr-2 mt-0.5" />
                     <div>
-                      <p className="text-gray-800 text-xs font-medium mb-1">Notes:</p>
-                      <p className="text-gray-700 text-xs line-clamp-3">
+                      <p className="text-gray-800 dark:text-gray-200 text-xs font-medium mb-1">Notes:</p>
+                      <p className="text-gray-700 dark:text-gray-300 text-xs line-clamp-3">
                         {material.notes}
                       </p>
                     </div>

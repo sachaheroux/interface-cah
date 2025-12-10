@@ -74,8 +74,8 @@ export default function Contractors() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Fournisseurs & Sous-traitants</h1>
-          <p className="text-gray-600 mt-1">Gestion des fournisseurs et sous-traitants</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Fournisseurs & Sous-traitants</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestion des fournisseurs et sous-traitants</p>
         </div>
         <button
           onClick={handleCreateContractor}
@@ -90,29 +90,29 @@ export default function Contractors() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {contractors.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun sous-traitant</h3>
-            <p className="text-gray-500">Commencez par ajouter un nouveau sous-traitant.</p>
+            <Truck className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun sous-traitant</h3>
+            <p className="text-gray-500 dark:text-gray-400">Commencez par ajouter un nouveau sous-traitant.</p>
           </div>
         ) : (
           contractors.map((contractor) => (
-            <div key={contractor.id_st} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div key={contractor.id_st} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900">{contractor.nom}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{contractor.nom}</h3>
                 </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEditContractor(contractor)}
-                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     title="Modifier"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(contractor)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -122,8 +122,8 @@ export default function Contractors() {
 
               {/* Adresse */}
               {(contractor.rue || contractor.ville) && (
-                <div className="flex items-start text-gray-600 text-sm mb-2">
-                  <MapPin className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
+                <div className="flex items-start text-gray-600 dark:text-gray-400 text-sm mb-2">
+                  <MapPin className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5" />
                   <div>
                     {contractor.rue && <div>{contractor.rue}</div>}
                     {(contractor.ville || contractor.province || contractor.code_postal) && (
@@ -141,14 +141,14 @@ export default function Contractors() {
               {/* Contact */}
               <div className="space-y-1">
                 {contractor.numero && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                    <Phone className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                     <span>{contractor.numero}</span>
                   </div>
                 )}
                 {contractor.adresse_courriel && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                    <Mail className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                     <span>{contractor.adresse_courriel}</span>
                   </div>
                 )}

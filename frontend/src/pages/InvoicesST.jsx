@@ -160,7 +160,7 @@ export default function InvoicesST() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Factures Sous-traitants</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Factures Sous-traitants</h1>
         <button
           onClick={handleCreateInvoice}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
@@ -172,32 +172,32 @@ export default function InvoicesST() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <DollarSign className="h-8 w-8 text-blue-600" />
+            <DollarSign className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Total Factures</p>
-              <p className="text-2xl font-bold text-blue-600">{formatAmount(totalAmount)}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Factures</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatAmount(totalAmount)}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <FileText className="h-8 w-8 text-green-600" />
+            <FileText className="h-8 w-8 text-green-600 dark:text-green-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Total Factures</p>
-              <p className="text-2xl font-bold text-green-600">{invoices.length}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Factures</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{invoices.length}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <Filter className="h-8 w-8 text-orange-600" />
+            <Filter className="h-8 w-8 text-orange-600 dark:text-orange-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Filtrées</p>
-              <p className="text-2xl font-bold text-orange-600">{filteredInvoices.length}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Filtrées</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{filteredInvoices.length}</p>
             </div>
           </div>
         </div>
