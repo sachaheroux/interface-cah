@@ -128,28 +128,28 @@ export default function ProjectAnalysis() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Analyse de projet</h1>
-            <p className="text-gray-600 mt-1">Sélectionnez un projet pour voir son analyse</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analyse de projet</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Sélectionnez un projet pour voir son analyse</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun projet</h3>
-              <p className="text-gray-500">Créez un projet pour commencer l'analyse.</p>
+              <BarChart3 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun projet</h3>
+              <p className="text-gray-500 dark:text-gray-400">Créez un projet pour commencer l'analyse.</p>
             </div>
           ) : (
             projects.map((proj) => (
               <div
                 key={proj.id_projet}
                 onClick={() => handleProjectSelect(proj.id_projet)}
-                className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{proj.nom}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{proj.nom}</h3>
                 {proj.budget_total && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Budget: {formatCurrency(proj.budget_total)}
                   </p>
                 )}

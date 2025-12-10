@@ -121,8 +121,8 @@ export default function Projects() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Projets de Construction</h1>
-          <p className="text-gray-600 mt-1">Gestion des projets de construction</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Projets de Construction</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gestion des projets de construction</p>
         </div>
         <button
           onClick={handleCreateProject}
@@ -137,17 +137,17 @@ export default function Projects() {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {projects.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Hammer className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun projet</h3>
-            <p className="text-gray-500">Commencez par ajouter un nouveau projet.</p>
+            <Hammer className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucun projet</h3>
+            <p className="text-gray-500 dark:text-gray-400">Commencez par ajouter un nouveau projet.</p>
           </div>
         ) : (
           projects.map((project) => (
-            <div key={project.id_projet} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div key={project.id_projet} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
               {/* Header du projet */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{project.nom}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{project.nom}</h3>
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -155,21 +155,21 @@ export default function Projects() {
                       setSelectedProjectId(project.id_projet)
                       setShowExpenseAnalysis(true)
                     }}
-                    className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition-colors"
                     title="Analyse des dépenses"
                   >
                     <BarChart3 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleEditProject(project)}
-                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     title="Modifier le projet"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(project)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Supprimer le projet"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -179,8 +179,8 @@ export default function Projects() {
 
               {/* Adresse */}
               {(project.adresse || project.ville) && (
-                <div className="flex items-center text-gray-600 text-sm mb-2">
-                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm mb-2">
+                  <MapPin className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                   <span>
                     {project.adresse && `${project.adresse}`}
                     {project.adresse && project.ville && ', '}
@@ -194,14 +194,14 @@ export default function Projects() {
               {/* Dates */}
               <div className="space-y-1 mb-4">
                 {project.date_debut && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                     <span>Début: {formatDate(project.date_debut)}</span>
                   </div>
                 )}
                 {project.date_fin_prevue && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Clock className="h-4 w-4 mr-2 text-gray-500" />
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                    <Clock className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                     <span>Fin prévue: {formatDate(project.date_fin_prevue)}</span>
                   </div>
                 )}
@@ -209,20 +209,20 @@ export default function Projects() {
 
               {/* Budget */}
               {project.budget_total > 0 && (
-                <div className="flex items-center text-gray-700 text-sm mb-4">
-                  <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
+                <div className="flex items-center text-gray-700 dark:text-gray-300 text-sm mb-4">
+                  <DollarSign className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                   <span>Budget: {formatCurrency(project.budget_total)}</span>
                 </div>
               )}
 
               {/* Notes */}
               {project.notes && (
-                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <div className="flex items-start">
-                    <FileText className="h-4 w-4 text-gray-600 mr-2 mt-0.5" />
+                    <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400 mr-2 mt-0.5" />
                     <div>
-                      <p className="text-gray-800 text-xs font-medium mb-1">Notes:</p>
-                      <p className="text-gray-700 text-xs line-clamp-3">
+                      <p className="text-gray-800 dark:text-gray-200 text-xs font-medium mb-1">Notes:</p>
+                      <p className="text-gray-700 dark:text-gray-300 text-xs line-clamp-3">
                         {project.notes}
                       </p>
                     </div>
