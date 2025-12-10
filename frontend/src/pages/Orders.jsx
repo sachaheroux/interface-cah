@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Filter, DollarSign, Calendar, FileText, Edit, Trash2, Building, Package, Tag } from 'lucide-react'
+import { Plus, Search, Filter, DollarSign, Calendar, FileText, Edit, Trash2, Building, Package, Tag, Download } from 'lucide-react'
 import OrderForm from '../components/OrderForm'
 import { ordersService, projectsService, suppliersService } from '../services/api'
 
@@ -312,9 +312,14 @@ export default function Orders() {
                       <span className="ml-1">{getSupplierName(order.id_fournisseur)}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Montant:</span>
+                      <span className="font-medium">Montant total:</span>
                       <span className="ml-1 font-semibold text-green-600">
-                        {formatAmount(order.montant || 0)}
+                        {formatAmount(
+                          order.montant || 
+                          (order.lignes_commande && order.lignes_commande.length > 0
+                            ? order.lignes_commande.reduce((sum, ligne) => sum + (parseFloat(ligne.montant) || 0), 0)
+                            : 0)
+                        )}
                       </span>
                     </div>
                     <div>
@@ -345,6 +350,20 @@ export default function Orders() {
                     <div className="mt-2 text-sm text-gray-500">
                       <span className="font-medium">Notes:</span>
                       <span className="ml-1">{order.notes}</span>
+                    </div>
+                  )}
+                  
+                  {order.pdf_commande && (
+                    <div className="mt-2">
+                      <a
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${order.pdf_commande}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Télécharger le PDF
+                      </a>
                     </div>
                   )}
                 </div>

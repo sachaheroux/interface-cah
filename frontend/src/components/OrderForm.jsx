@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, Building, Package, DollarSign, FileText, Plus, Trash2, Tag } from 'lucide-react'
+import { X, Save, Building, Package, DollarSign, FileText, Plus, Trash2, Tag, Upload } from 'lucide-react'
 import { ordersService, projectsService, suppliersService, materialsService } from '../services/api'
 
 export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
@@ -8,7 +8,8 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
     id_fournisseur: '',
     statut: 'en_attente',
     type_de_paiement: '',
-    notes: ''
+    notes: '',
+    pdf_commande: ''
   })
   
   const [lignes, setLignes] = useState([
@@ -26,6 +27,7 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
   const [materials, setMaterials] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [uploadingPdf, setUploadingPdf] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -39,7 +41,8 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
           id_fournisseur: order.id_fournisseur || '',
           statut: order.statut || 'en_attente',
           type_de_paiement: order.type_de_paiement || '',
-          notes: order.notes || ''
+          notes: order.notes || '',
+          pdf_commande: order.pdf_commande || ''
         })
         
         if (order.lignes_commande && order.lignes_commande.length > 0) {
@@ -66,7 +69,8 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
           id_fournisseur: '',
           statut: 'en_attente',
           type_de_paiement: '',
-          notes: ''
+          notes: '',
+          pdf_commande: ''
         })
         setLignes([{
           id_matiere_premiere: '',
@@ -111,6 +115,42 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handlePdfUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Seuls les fichiers PDF sont acceptés')
+      return
+    }
+
+    setUploadingPdf(true)
+    try {
+      const formDataUpload = new FormData()
+      formDataUpload.append('file', file)
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/upload?context=commande`, {
+        method: 'POST',
+        body: formDataUpload
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        handleChange('pdf_commande', result.filename)
+        console.log('✅ PDF uploadé:', result.filename)
+      } else {
+        const errorData = await response.json()
+        console.error('❌ Erreur upload PDF:', errorData)
+        alert(`Erreur lors de l'upload: ${errorData.detail || 'Erreur inconnue'}`)
+      }
+    } catch (error) {
+      console.error('❌ Erreur upload PDF:', error)
+      alert('Erreur de connexion lors de l\'upload')
+    } finally {
+      setUploadingPdf(false)
+    }
   }
 
   const handleLigneChange = (index, field, value) => {
@@ -196,6 +236,7 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
         statut: formData.statut,
         type_de_paiement: formData.type_de_paiement || null,
         notes: formData.notes || null,
+        pdf_commande: formData.pdf_commande || null,
         lignes_commande: lignes.map(ligne => ({
           id_matiere_premiere: parseInt(ligne.id_matiere_premiere),
           quantite: parseFloat(ligne.quantite),
@@ -382,6 +423,35 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Notes sur la commande..."
               />
+            </div>
+
+            {/* Upload PDF */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Upload className="h-4 w-4 inline mr-1" />
+                PDF de la commande
+              </label>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfUpload}
+                  disabled={uploadingPdf}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                />
+                {uploadingPdf && (
+                  <div className="flex items-center text-blue-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    <span className="text-sm">Upload en cours...</span>
+                  </div>
+                )}
+              </div>
+              {formData.pdf_commande && (
+                <div className="mt-2 text-sm text-green-600 flex items-center">
+                  <FileText className="h-4 w-4 mr-1" />
+                  PDF uploadé: {formData.pdf_commande}
+                </div>
+              )}
             </div>
           </div>
 
