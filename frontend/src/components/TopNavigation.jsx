@@ -17,12 +17,12 @@ import {
 import clsx from 'clsx'
 
 const navigation = [
-  { name: 'Immeubles', href: '/buildings', icon: Building2, role: 'admin' },
-  { name: 'Locataires', href: '/tenants', icon: Users, role: 'admin' },
+  { name: 'Immeubles', href: '/buildings', icon: Building2, role: 'admin', matchPaths: ['/buildings'] },
+  { name: 'Locataires', href: '/tenants', icon: Users, role: 'admin', matchPaths: ['/tenants', '/leases', '/rent-payments'] },
   { name: 'Transactions', href: '/transactions', icon: Receipt, role: 'admin' },
-  { name: 'Employés', href: '/employees', icon: UserCheck, role: 'admin' },
-  { name: 'Fournisseurs & ST', href: '/contractors', icon: Truck, role: 'admin' },
-  { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
+  { name: 'Employés', href: '/employees', icon: UserCheck, role: 'admin', matchPaths: ['/employees', '/punch-management'] },
+  { name: 'Fournisseurs & ST', href: '/contractors', icon: Truck, role: 'admin', matchPaths: ['/contractors', '/suppliers', '/materials', '/invoices-st'] },
+  { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin', matchPaths: ['/projects', '/orders', '/project-analysis'] },
   { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
   // Pointages uniquement pour les employés
   { name: 'Pointages', href: '/employee-punch', icon: Clock, role: 'employe' },
@@ -84,7 +84,13 @@ export default function TopNavigation() {
               })
               .map((item) => {
               const Icon = item.icon
-              const isActive = location.pathname === item.href
+              
+              // Déterminer si l'item est actif
+              // Si matchPaths est défini, vérifier si le pathname correspond à l'un de ces chemins
+              // Sinon, utiliser la correspondance exacte avec href
+              const isActive = item.matchPaths
+                ? item.matchPaths.some(path => location.pathname === path || location.pathname.startsWith(path + '/'))
+                : location.pathname === item.href || location.pathname.startsWith(item.href + '/')
               
               // Pour les employés, rediriger vers la page mobile de pointage
               const href = (user?.role === 'employe' && item.name === 'Pointages') 
