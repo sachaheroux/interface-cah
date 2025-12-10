@@ -353,16 +353,19 @@ export default function Orders() {
                   )}
                   
                   {order.pdf_commande && (
-                    <div className="mt-2">
-                      <a
-                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${order.pdf_commande}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Télécharger le PDF
-                      </a>
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">Document PDF:</span>
+                        <a
+                          href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${order.pdf_commande}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm underline"
+                        >
+                          {order.pdf_commande}
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>
