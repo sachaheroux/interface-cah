@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, User, Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check } from 'lucide-react'
+import { Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check, X } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import api from '../services/api'
 
@@ -9,9 +9,10 @@ export default function Settings() {
   const [company, setCompany] = useState(null)
   const [loading, setLoading] = useState(true)
   
+  // États pour les modals
+  const [openModal, setOpenModal] = useState(null) // 'security', 'company', 'notifications', 'backup'
+  
   // États pour changer email/mot de passe
-  const [showEmailForm, setShowEmailForm] = useState(false)
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -81,8 +82,8 @@ export default function Settings() {
         // Mettre à jour les infos utilisateur dans localStorage
         localStorage.setItem('user', JSON.stringify(response.data.user))
         setUser(response.data.user)
-        setShowEmailForm(false)
         setNewEmail('')
+        setOpenModal(null)
       }
     } catch (error) {
       alert(error.response?.data?.detail || 'Erreur lors du changement d\'email')
@@ -112,10 +113,10 @@ export default function Settings() {
       
       if (response.data.success) {
         alert('Mot de passe mis à jour avec succès!')
-        setShowPasswordForm(false)
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
+        setOpenModal(null)
       }
     } catch (error) {
       alert(error.response?.data?.detail || 'Erreur lors du changement de mot de passe')
@@ -137,6 +138,41 @@ export default function Settings() {
       </div>
     )
   }
+
+  const settingsCards = [
+    {
+      id: 'security',
+      title: 'Sécurité du compte',
+      description: 'Modifiez votre adresse courriel ou votre mot de passe',
+      icon: Shield,
+      color: 'text-green-500',
+      bgColor: 'bg-green-50 dark:bg-green-900/20'
+    },
+    {
+      id: 'company',
+      title: 'Informations de l\'entreprise',
+      description: 'Consultez les informations et le code d\'accès de votre entreprise',
+      icon: Building2,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20'
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      description: 'Consultez l\'historique de toutes vos notifications',
+      icon: Bell,
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20'
+    },
+    {
+      id: 'backup',
+      title: 'Sauvegarde',
+      description: 'Gérez les sauvegardes et la restauration des données',
+      icon: Database,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
+    }
+  ]
 
   return (
     <div className="space-y-6">
@@ -190,259 +226,331 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Section Changer email/mot de passe */}
-      <div className="card dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center mb-4">
-          <Shield className="h-6 w-6 text-green-500 mr-3" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sécurité du compte</h3>
-        </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Modifiez votre adresse courriel ou votre mot de passe pour sécuriser votre compte.
-        </p>
-
-        <div className="space-y-4">
-          {/* Changer email */}
-          <div>
+      {/* Grille de 4 cartes (2x2) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {settingsCards.map((card) => {
+          const Icon = card.icon
+          return (
             <button
-              onClick={() => setShowEmailForm(!showEmailForm)}
-              className="btn-secondary w-full sm:w-auto"
+              key={card.id}
+              onClick={() => setOpenModal(card.id)}
+              className="card dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition-shadow text-left p-6"
             >
-              <Mail className="h-4 w-4 mr-2" />
-              {showEmailForm ? 'Annuler' : 'Changer l\'adresse courriel'}
+              <div className={`w-12 h-12 ${card.bgColor} rounded-lg flex items-center justify-center mb-4`}>
+                <Icon className={`h-6 w-6 ${card.color}`} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {card.title}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {card.description}
+              </p>
             </button>
-            
-            {showEmailForm && (
-              <form onSubmit={handleChangeEmail} className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nouvelle adresse courriel
-                  </label>
-                  <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder={user?.email || 'votre@email.com'}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <button type="submit" className="btn-primary">
-                    Enregistrer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEmailForm(false)
-                      setNewEmail('')
-                    }}
-                    className="btn-secondary"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* Changer mot de passe */}
-          <div>
-            <button
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
-              className="btn-secondary w-full sm:w-auto"
-            >
-              <Lock className="h-4 w-4 mr-2" />
-              {showPasswordForm ? 'Annuler' : 'Changer le mot de passe'}
-            </button>
-            
-            {showPasswordForm && (
-              <form onSubmit={handleChangePassword} className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mot de passe actuel
-                  </label>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nouveau mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Confirmer le nouveau mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    required
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <button type="submit" className="btn-primary">
-                    Enregistrer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPasswordForm(false)
-                      setCurrentPassword('')
-                      setNewPassword('')
-                      setConfirmPassword('')
-                    }}
-                    className="btn-secondary"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
+          )
+        })}
       </div>
 
-      {/* Section Informations de l'entreprise */}
-      <div className="card dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center mb-4">
-          <Building2 className="h-6 w-6 text-blue-500 mr-3" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Informations de l'entreprise</h3>
-        </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Consultez les informations de votre entreprise et partagez le code d'accès pour inviter de nouveaux membres.
-        </p>
-
-        {company ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nom de l'entreprise
-                </label>
-                <p className="text-gray-900 dark:text-white">{company.nom_compagnie}</p>
+      {/* Modal Sécurité du compte */}
+      {openModal === 'security' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
+                  <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sécurité du compte</h3>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email de l'entreprise
-                </label>
-                <p className="text-gray-900 dark:text-white">{company.email_compagnie}</p>
-              </div>
-              {company.telephone_compagnie && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Téléphone
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{company.telephone_compagnie}</p>
-                </div>
-              )}
-              {company.numero_entreprise && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Numéro d'entreprise
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{company.numero_entreprise}</p>
-                </div>
-              )}
-              {company.adresse_compagnie && (
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Adresse
-                  </label>
-                  <p className="text-gray-900 dark:text-white">{company.adresse_compagnie}</p>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  setOpenModal(null)
+                  setNewEmail('')
+                  setCurrentPassword('')
+                  setNewPassword('')
+                  setConfirmPassword('')
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-
-            {/* Code d'accès */}
-            <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900 rounded-lg border border-primary-200 dark:border-primary-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
-                    Code d'accès à partager
-                  </label>
-                  <p className="text-xs text-primary-700 dark:text-primary-400 mb-2">
-                    Partagez ce code avec les personnes que vous souhaitez inviter à rejoindre votre entreprise.
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <code className="px-4 py-2 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-700 rounded-lg text-lg font-mono font-bold text-primary-900 dark:text-primary-300">
-                      {company.code_acces}
-                    </code>
+            
+            <div className="p-6 space-y-6">
+              {/* Changer email */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Mail className="h-5 w-5 mr-2 text-gray-500 dark:text-gray-400" />
+                  Changer l'adresse courriel
+                </h4>
+                <form onSubmit={handleChangeEmail} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nouvelle adresse courriel
+                    </label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder={user?.email || 'votre@email.com'}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <button type="submit" className="btn-primary">
+                      Enregistrer
+                    </button>
                     <button
-                      onClick={copyCodeToClipboard}
-                      className="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-                      title="Copier le code"
+                      type="button"
+                      onClick={() => setNewEmail('')}
+                      className="btn-secondary"
                     >
-                      {codeCopied ? (
-                        <Check className="h-5 w-5" />
-                      ) : (
-                        <Copy className="h-5 w-5" />
-                      )}
+                      Annuler
                     </button>
                   </div>
-                </div>
+                </form>
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                {/* Changer mot de passe */}
+                <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Lock className="h-5 w-5 mr-2 text-gray-500 dark:text-gray-400" />
+                  Changer le mot de passe
+                </h4>
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Mot de passe actuel
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nouveau mot de passe
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Confirmer le nouveau mot de passe
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      required
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <button type="submit" className="btn-primary">
+                      Enregistrer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentPassword('')
+                        setNewPassword('')
+                        setConfirmPassword('')
+                      }}
+                      className="btn-secondary"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
-        ) : (
-          <div className="text-center py-8">
-            <Building2 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
-              Aucune information d'entreprise disponible.
-            </p>
+        </div>
+      )}
+
+      {/* Modal Informations de l'entreprise */}
+      {openModal === 'company' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                  <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Informations de l'entreprise</h3>
+              </div>
+              <button
+                onClick={() => setOpenModal(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {company ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nom de l'entreprise
+                      </label>
+                      <p className="text-gray-900 dark:text-white">{company.nom_compagnie}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Email de l'entreprise
+                      </label>
+                      <p className="text-gray-900 dark:text-white">{company.email_compagnie}</p>
+                    </div>
+                    {company.telephone_compagnie && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Téléphone
+                        </label>
+                        <p className="text-gray-900 dark:text-white">{company.telephone_compagnie}</p>
+                      </div>
+                    )}
+                    {company.numero_entreprise && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Numéro d'entreprise
+                        </label>
+                        <p className="text-gray-900 dark:text-white">{company.numero_entreprise}</p>
+                      </div>
+                    )}
+                    {company.adresse_compagnie && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Adresse
+                        </label>
+                        <p className="text-gray-900 dark:text-white">{company.adresse_compagnie}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Code d'accès */}
+                  <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
+                          Code d'accès à partager
+                        </label>
+                        <p className="text-xs text-primary-700 dark:text-primary-400 mb-2">
+                          Partagez ce code avec les personnes que vous souhaitez inviter à rejoindre votre entreprise.
+                        </p>
+                        <div className="flex items-center space-x-2">
+                          <code className="px-4 py-2 bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-700 rounded-lg text-lg font-mono font-bold text-primary-900 dark:text-primary-300">
+                            {company.code_acces}
+                          </code>
+                          <button
+                            onClick={copyCodeToClipboard}
+                            className="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                            title="Copier le code"
+                          >
+                            {codeCopied ? (
+                              <Check className="h-5 w-5" />
+                            ) : (
+                              <Copy className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Building2 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Aucune information d'entreprise disponible.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Section Notifications */}
-      <div className="card dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center mb-4">
-          <Bell className="h-6 w-6 text-yellow-500 mr-3" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+      {/* Modal Notifications */}
+      {openModal === 'notifications' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
+                  <Bell className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+              </div>
+              <button
+                onClick={() => setOpenModal(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="text-center py-12">
+                <Bell className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Historique des notifications
+                </h4>
+                <p className="text-gray-500 dark:text-gray-400">
+                  L'historique des notifications sera disponible prochainement.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Consultez l'historique de toutes vos notifications.
-        </p>
-        <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <Bell className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">
-            L'historique des notifications sera disponible prochainement.
-          </p>
-        </div>
-      </div>
+      )}
 
-      {/* Section Sauvegarde */}
-      <div className="card dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex items-center mb-4">
-          <Database className="h-6 w-6 text-purple-500 mr-3" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sauvegarde</h3>
+      {/* Modal Sauvegarde */}
+      {openModal === 'backup' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                  <Database className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sauvegarde</h3>
+              </div>
+              <button
+                onClick={() => setOpenModal(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Gérez les sauvegardes et la restauration des données de votre application.
+              </p>
+              <div className="space-y-4">
+                <button className="btn-primary w-full">
+                  <Database className="h-4 w-4 mr-2" />
+                  Créer une sauvegarde
+                </button>
+                <button className="btn-secondary w-full">
+                  Restaurer depuis une sauvegarde
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Gérez les sauvegardes et la restauration des données.
-        </p>
-        <div className="space-y-4">
-          <button className="btn-primary">
-            <Database className="h-4 w-4 mr-2" />
-            Créer une sauvegarde
-          </button>
-          <button className="btn-secondary">
-            Restaurer depuis une sauvegarde
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
