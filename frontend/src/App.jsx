@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 // Test deploiement - ligne propre
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import TopNavigation from './components/TopNavigation'
@@ -206,8 +206,19 @@ function AppContent() {
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company' || location.pathname === '/pending-approval'
 
+  // Initialiser le thème au chargement
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light'
+    const root = document.documentElement
+    if (savedTheme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation horizontale fixe en haut (sauf pages auth) */}
       {!isAuthPage && <TopNavigation />}
       
@@ -218,7 +229,7 @@ function AppContent() {
         {!isAuthPage && <SecondarySidebar />}
         
         {/* Zone de contenu principal */}
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 ${
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 ${
           isAuthPage ? '' : 'p-3 lg:p-6'
         } ${
           showSecondarySidebar ? 'md:ml-48 lg:ml-64' : ''
