@@ -8,6 +8,7 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 import uuid
+import base64
 from typing import Optional, Dict, Any
 
 class BackblazeStorageService:
@@ -71,6 +72,9 @@ class BackblazeStorageService:
             # Chemin complet dans le bucket
             s3_key = f"{folder}/{new_filename}"
             
+            # Encoder le nom de fichier original en base64 pour éviter les caractères non-ASCII dans les métadonnées S3
+            original_filename_encoded = base64.b64encode(original_filename.encode('utf-8')).decode('ascii')
+            
             # Upload vers Backblaze B2
             self.s3_client.put_object(
                 Bucket=self.b2_bucket_name,
@@ -78,7 +82,7 @@ class BackblazeStorageService:
                 Body=file_content,
                 ContentType='application/pdf',
                 Metadata={
-                    'original_filename': original_filename,
+                    'original_filename': original_filename_encoded,  # Encodé en base64 pour éviter les caractères non-ASCII
                     'upload_date': datetime.now().isoformat(),
                     'folder': folder
                 }
