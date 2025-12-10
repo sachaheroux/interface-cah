@@ -2,21 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { 
   Building2, 
   Users, 
-  Wrench, 
   DollarSign, 
   AlertTriangle, 
-  TrendingUp,
-  Calendar,
-  CheckCircle
+  TrendingUp
 } from 'lucide-react'
-import { dashboardService } from '../services/api'
+import { dashboardService, unitsService } from '../services/api'
 
-// Dashboard avec données dynamiques - Version déployée 2025-06-22 23:30
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [occupancyRate, setOccupancyRate] = useState(0)
 
   useEffect(() => {
     fetchDashboardData()
@@ -43,14 +40,10 @@ export default function Dashboard() {
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('buildingsUpdated', handleBuildingsUpdate)
     
-    // Rafraîchir périodiquement pour capturer les changements
-    const interval = setInterval(fetchDashboardData, 30000) // Toutes les 30 secondes
-    
     return () => {
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('buildingsUpdated', handleBuildingsUpdate)
-      clearInterval(interval)
     }
   }, [])
 
@@ -62,7 +55,7 @@ export default function Dashboard() {
       
       // Force un nouveau fetch avec timestamp pour éviter le cache
       const response = await dashboardService.getDashboardData()
-      console.log('Dashboard data received:', response.data) // Debug
+      console.log('Dashboard data received:', response.data)
       setDashboardData(response.data)
       
       // Vérifier si on utilise des données de fallback de manière plus robuste
@@ -71,12 +64,33 @@ export default function Dashboard() {
                         response.data?.mode === 'offline';
       setIsUsingFallback(isFallback)
       
+      // Calculer le taux d'occupation comme dans Buildings.jsx
+      await calculateOccupancyRate()
+      
     } catch (err) {
       setError('Erreur lors du chargement des données')
       console.error('Dashboard error:', err)
       setIsUsingFallback(true)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const calculateOccupancyRate = async () => {
+    try {
+      const response = await unitsService.getUnits()
+      const units = response.data || []
+      const totalUnits = units.length
+      
+      // Compter les unités occupées (qui ont au moins un locataire)
+      const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
+      
+      // Calculer le taux d'occupation
+      const rate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
+      setOccupancyRate(rate)
+    } catch (error) {
+      console.error('Erreur lors du calcul du taux d\'occupation:', error)
+      setOccupancyRate(0)
     }
   }
 
@@ -129,11 +143,11 @@ export default function Dashboard() {
     },
     {
       name: 'Taux d\'Occupation',
-      value: dashboardData?.occupancyRate ? `${dashboardData.occupancyRate}%` : '0%',
+      value: `${occupancyRate}%`,
       icon: Users,
       color: 'bg-primary-500',
-      change: dashboardData?.occupancyRate >= 90 ? 'Excellent taux' : dashboardData?.occupancyRate >= 80 ? 'Bon taux' : 'À améliorer',
-      changeType: dashboardData?.occupancyRate >= 90 ? 'positive' : dashboardData?.occupancyRate >= 80 ? 'neutral' : 'negative'
+      change: occupancyRate >= 90 ? 'Excellent taux' : occupancyRate >= 80 ? 'Bon taux' : 'À améliorer',
+      changeType: occupancyRate >= 90 ? 'positive' : occupancyRate >= 80 ? 'neutral' : 'negative'
     }
   ]
 
@@ -142,10 +156,10 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-gray-600 mt-1">Vue d'ensemble de vos opérations de construction</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Vue d'ensemble de vos opérations de construction</p>
           {isUsingFallback && (
-            <div className="flex items-center mt-2 text-sm text-amber-600">
+            <div className="flex items-center mt-2 text-sm text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-4 w-4 mr-1" />
               <span>Données calculées localement (API indisponible)</span>
             </div>
@@ -160,9 +174,6 @@ export default function Dashboard() {
             <TrendingUp className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Actualiser</span>
           </button>
-          <div className="text-sm text-gray-500">
-            Dernière mise à jour: {new Date().toLocaleString('fr-CA')}
-          </div>
         </div>
       </div>
 
@@ -171,17 +182,17 @@ export default function Dashboard() {
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.name} className="card">
+            <div key={stat.name} className="card dark:bg-gray-800 dark:border-gray-700">
               <div className="flex items-center">
                 <div className={`p-3 rounded-lg ${stat.color}`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-4 flex-1">
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.name}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                   <p className={`text-xs ${
-                    stat.changeType === 'positive' ? 'text-green-600' : 
-                    stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+                    stat.changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 
+                    stat.changeType === 'negative' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
                   }`}>
                     {stat.change}
                   </p>
@@ -194,29 +205,29 @@ export default function Dashboard() {
 
       {/* Recent Activity Section */}
       {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 && (
-        <div className="card">
+        <div className="card dark:bg-gray-800 dark:border-gray-700">
           <div className="flex items-center mb-4">
-            <TrendingUp className="h-5 w-5 text-blue-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Activité Récente</h2>
+            <TrendingUp className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Activité Récente</h2>
           </div>
           <div className="space-y-3">
             {dashboardData.recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div key={index} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div className={`p-2 rounded-full ${
-                  activity.type === 'success' ? 'bg-green-100' : 
-                  activity.type === 'info' ? 'bg-blue-100' : 'bg-gray-100'
+                  activity.type === 'success' ? 'bg-green-100 dark:bg-green-900/20' : 
+                  activity.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/20' : 'bg-gray-100 dark:bg-gray-700'
                 }`}>
                   {activity.type === 'success' ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                   ) : activity.type === 'info' ? (
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   ) : (
-                    <Building2 className="h-4 w-4 text-gray-600" />
+                    <Building2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
                 <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.message}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(activity.timestamp).toLocaleString('fr-CA')}
                   </p>
                 </div>
@@ -225,60 +236,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* Quick Actions & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Actions */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="btn-primary text-center py-3">
-              <Building2 className="h-5 w-5 mx-auto mb-1" />
-              <span className="text-sm">Nouvel Immeuble</span>
-            </button>
-            <button className="btn-secondary text-center py-3">
-              <Users className="h-5 w-5 mx-auto mb-1" />
-              <span className="text-sm">Nouveau Locataire</span>
-            </button>
-            <button className="btn-secondary text-center py-3">
-              <Wrench className="h-5 w-5 mx-auto mb-1" />
-              <span className="text-sm">Demande Entretien</span>
-            </button>
-            <button className="btn-secondary text-center py-3">
-              <Calendar className="h-5 w-5 mx-auto mb-1" />
-              <span className="text-sm">Planifier Tâche</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Activité Récente</h2>
-          <div className="space-y-3">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Nouveau locataire ajouté - Immeuble A</p>
-                <p className="text-xs text-gray-500">Il y a 1 heure</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Entretien complété - Plomberie Immeuble B</p>
-                <p className="text-xs text-gray-500">Il y a 3 heures</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Facture en attente - Électricité</p>
-                <p className="text-xs text-gray-500">Il y a 5 heures</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
-} 
+}
