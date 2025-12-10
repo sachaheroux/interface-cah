@@ -2044,6 +2044,24 @@ async def delete_paiement_loyer(paiement_id: int):
         print(f"Erreur lors de la suppression du paiement de loyer: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression du paiement de loyer: {str(e)}")
 
+@app.get("/api/paiements-loyers")
+async def get_all_paiements():
+    """Récupérer tous les paiements de loyers (optimisé)"""
+    try:
+        from models_francais import PaiementLoyer
+        from sqlalchemy.orm import Session
+        from database import SessionLocal
+        
+        db = SessionLocal()
+        try:
+            paiements = db.query(PaiementLoyer).order_by(PaiementLoyer.annee, PaiementLoyer.mois).all()
+            return {"data": [p.to_dict() for p in paiements]}
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Erreur lors de la récupération de tous les paiements: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des paiements: {str(e)}")
+
 @app.get("/api/paiements-loyers/bail/{bail_id}")
 async def get_paiements_by_bail(bail_id: int):
     """Récupérer tous les paiements pour un bail"""
