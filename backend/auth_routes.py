@@ -416,27 +416,32 @@ async def change_email(
     """
     Changer l'adresse email de l'utilisateur
     """
+    # Récupérer l'utilisateur depuis la session db pour s'assurer qu'il est attaché à la bonne session
+    user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == current_user.id_utilisateur).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
     # Vérifier le mot de passe actuel
-    if not auth_service.verify_password(data.mot_de_passe, current_user.mot_de_passe_hash):
+    if not auth_service.verify_password(data.mot_de_passe, user.mot_de_passe_hash):
         raise HTTPException(status_code=401, detail="Mot de passe incorrect")
     
     # Vérifier si le nouvel email est déjà utilisé
     existing_user = db.query(Utilisateur).filter(Utilisateur.email == data.nouveau_email).first()
-    if existing_user and existing_user.id_utilisateur != current_user.id_utilisateur:
+    if existing_user and existing_user.id_utilisateur != user.id_utilisateur:
         raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
     
     # Mettre à jour l'email
-    current_user.email = data.nouveau_email
-    current_user.email_verifie = False  # Nécessite une nouvelle vérification
-    current_user.date_modification = datetime.utcnow()
+    user.email = data.nouveau_email
+    user.email_verifie = False  # Nécessite une nouvelle vérification
+    user.date_modification = datetime.utcnow()
     
     # Générer un nouveau code de vérification
     code = auth_service.generate_verification_code()
-    current_user.code_verification_email = code
-    current_user.code_verification_email_expiration = datetime.utcnow() + timedelta(hours=24)
+    user.code_verification_email = code
+    user.code_verification_email_expiration = datetime.utcnow() + timedelta(hours=24)
     
     db.commit()
-    db.refresh(current_user)
+    db.refresh(user)
     
     # Envoyer le code de vérification par email
     try:
@@ -448,7 +453,7 @@ async def change_email(
     return {
         "success": True,
         "message": "Email mis à jour. Un code de vérification a été envoyé à votre nouvelle adresse.",
-        "user": current_user.to_dict()
+        "user": user.to_dict()
     }
 
 @router.put("/password")
@@ -460,8 +465,13 @@ async def change_password(
     """
     Changer le mot de passe de l'utilisateur
     """
+    # Récupérer l'utilisateur depuis la session db pour s'assurer qu'il est attaché à la bonne session
+    user = db.query(Utilisateur).filter(Utilisateur.id_utilisateur == current_user.id_utilisateur).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
     # Vérifier le mot de passe actuel
-    if not auth_service.verify_password(data.mot_de_passe_actuel, current_user.mot_de_passe_hash):
+    if not auth_service.verify_password(data.mot_de_passe_actuel, user.mot_de_passe_hash):
         raise HTTPException(status_code=401, detail="Mot de passe actuel incorrect")
     
     # Valider le nouveau mot de passe
@@ -470,8 +480,8 @@ async def change_password(
         raise HTTPException(status_code=400, detail=error_msg)
     
     # Mettre à jour le mot de passe
-    current_user.mot_de_passe_hash = auth_service.hash_password(data.nouveau_mot_de_passe)
-    current_user.date_modification = datetime.utcnow()
+    user.mot_de_passe_hash = auth_service.hash_password(data.nouveau_mot_de_passe)
+    user.date_modification = datetime.utcnow()
     
     db.commit()
     
