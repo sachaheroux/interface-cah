@@ -69,9 +69,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       return [
         { name: 'Tous les employés', icon: Users, active: true, href: '/employees' },
         { name: 'Feuilles de temps', icon: Clock, href: '/punch-management' },
-        { name: 'Horaires', icon: Calendar },
-        { name: 'Ajouter employé', icon: Plus },
-        { name: 'Rapports RH', icon: FileText },
         { name: 'Paie', icon: DollarSign },
       ]
     
@@ -79,9 +76,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
       return [
         { name: 'Tous les employés', icon: Users, href: '/employees' },
         { name: 'Feuilles de temps', icon: Clock, active: true, href: '/punch-management' },
-        { name: 'Horaires', icon: Calendar },
-        { name: 'Ajouter employé', icon: Plus },
-        { name: 'Rapports RH', icon: FileText },
         { name: 'Paie', icon: DollarSign },
       ]
     
