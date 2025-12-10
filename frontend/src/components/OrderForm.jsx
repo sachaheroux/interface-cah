@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, Building, Package, DollarSign, FileText, Plus, Trash2, Tag, Upload } from 'lucide-react'
+import { X, Save, Building, Package, DollarSign, FileText, Plus, Trash2, Tag, Upload, Download } from 'lucide-react'
 import { ordersService, projectsService, suppliersService, materialsService } from '../services/api'
 
 export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
@@ -264,6 +264,7 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
           statut: submitData.statut,
           type_de_paiement: submitData.type_de_paiement,
           notes: submitData.notes,
+          pdf_commande: submitData.pdf_commande,
           montant: calculateTotal()
         })
         
@@ -447,9 +448,32 @@ export default function OrderForm({ isOpen, onClose, order, onSuccess }) {
                 )}
               </div>
               {formData.pdf_commande && (
-                <div className="mt-2 text-sm text-green-600 flex items-center">
-                  <FileText className="h-4 w-4 mr-1" />
-                  PDF uploadé: {formData.pdf_commande}
+                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-green-700">
+                      <FileText className="h-4 w-4 mr-2" />
+                      <span>PDF uploadé: {formData.pdf_commande}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <a
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${formData.pdf_commande}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Voir
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleChange('pdf_commande', '')}
+                        className="text-sm text-red-600 hover:text-red-800"
+                        title="Supprimer le PDF"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
