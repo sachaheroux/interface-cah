@@ -20,8 +20,10 @@ export default function Dashboard() {
   const [occupancyRate, setOccupancyRate] = useState(0)
   const [unpaidRents, setUnpaidRents] = useState([])
   const [pendingInvoices, setPendingInvoices] = useState([])
+  const [loadingDetails, setLoadingDetails] = useState(false)
 
   useEffect(() => {
+    // Charger les données de base d'abord (rapide)
     fetchDashboardData()
     
     // Rafraîchir les données quand on revient sur la page
@@ -59,56 +61,68 @@ export default function Dashboard() {
       setError(null)
       setIsUsingFallback(false)
       
-      // Force un nouveau fetch avec timestamp pour éviter le cache
-      const response = await dashboardService.getDashboardData()
-      console.log('Dashboard data received:', response.data)
-      setDashboardData(response.data)
+      // Charger les données de base en parallèle
+      const [dashboardResponse, unitsResponse] = await Promise.all([
+        dashboardService.getDashboardData(),
+        unitsService.getUnits()
+      ])
       
-      // Vérifier si on utilise des données de fallback de manière plus robuste
-      const isFallback = response.data?.isFallback === true || 
-                        response.data?.source === 'localStorage' ||
-                        response.data?.mode === 'offline';
+      console.log('Dashboard data received:', dashboardResponse.data)
+      setDashboardData(dashboardResponse.data)
+      
+      // Vérifier si on utilise des données de fallback
+      const isFallback = dashboardResponse.data?.isFallback === true || 
+                        dashboardResponse.data?.source === 'localStorage' ||
+                        dashboardResponse.data?.mode === 'offline';
       setIsUsingFallback(isFallback)
       
-      // Calculer le taux d'occupation comme dans Buildings.jsx
-      await calculateOccupancyRate()
+      // Calculer le taux d'occupation rapidement
+      const units = unitsResponse.data || []
+      const totalUnits = units.length
+      const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
+      const rate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
+      setOccupancyRate(rate)
       
-      // Charger les loyers non payés et les factures à payer
-      await loadUnpaidRents()
-      await loadPendingInvoices()
+      // Marquer le chargement principal comme terminé
+      setLoading(false)
+      
+      // Charger les détails (loyers et factures) de manière asynchrone après l'affichage
+      setLoadingDetails(true)
+      Promise.all([
+        loadUnpaidRents(),
+        loadPendingInvoices()
+      ]).finally(() => {
+        setLoadingDetails(false)
+      })
       
     } catch (err) {
       setError('Erreur lors du chargement des données')
       console.error('Dashboard error:', err)
       setIsUsingFallback(true)
-    } finally {
       setLoading(false)
-    }
-  }
-
-  const calculateOccupancyRate = async () => {
-    try {
-      const response = await unitsService.getUnits()
-      const units = response.data || []
-      const totalUnits = units.length
-      
-      // Compter les unités occupées (qui ont au moins un locataire)
-      const occupied = units.filter(unit => unit.locataires && unit.locataires.length > 0).length
-      
-      // Calculer le taux d'occupation
-      const rate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
-      setOccupancyRate(rate)
-    } catch (error) {
-      console.error('Erreur lors du calcul du taux d\'occupation:', error)
-      setOccupancyRate(0)
     }
   }
 
   const loadUnpaidRents = async () => {
     try {
-      // Récupérer tous les baux actifs
-      const leasesResponse = await api.get('/api/leases')
+      // Récupérer tous les baux et tous les paiements en parallèle
+      const [leasesResponse, allPaymentsResponse] = await Promise.all([
+        api.get('/api/leases'),
+        api.get('/api/paiements-loyers')
+      ])
+      
       const leases = Array.isArray(leasesResponse.data) ? leasesResponse.data : (leasesResponse.data.data || [])
+      const allPayments = Array.isArray(allPaymentsResponse.data) ? allPaymentsResponse.data : (allPaymentsResponse.data.data || [])
+      
+      // Créer un map des paiements par bail pour recherche rapide
+      const paymentsByBail = {}
+      allPayments.forEach(payment => {
+        const bailId = payment.id_bail
+        if (!paymentsByBail[bailId]) {
+          paymentsByBail[bailId] = []
+        }
+        paymentsByBail[bailId].push(payment)
+      })
       
       // Obtenir le mois dernier
       const today = new Date()
@@ -120,7 +134,6 @@ export default function Dashboard() {
       
       // Pour chaque bail actif, vérifier s'il y a un paiement pour le mois dernier
       for (const lease of leases) {
-        // Vérifier si le bail était actif le mois dernier
         if (!lease.date_debut || !lease.date_fin) continue
         
         const leaseStart = new Date(lease.date_debut)
@@ -129,25 +142,18 @@ export default function Dashboard() {
         
         // Si le bail était actif le mois dernier
         if (checkDate >= leaseStart && checkDate <= leaseEnd) {
-          try {
-            // Vérifier s'il y a un paiement pour ce bail et ce mois
-            const paymentsResponse = await api.get(`/api/paiements-loyers/bail/${lease.id_bail}`)
-            const payments = paymentsResponse.data.data || []
-            
-            const hasPayment = payments.some(p => p.annee === lastMonthYear && p.mois === lastMonthMonth)
-            
-            if (!hasPayment) {
-              unpaid.push({
-                lease,
-                year: lastMonthYear,
-                month: lastMonthMonth,
-                amount: lease.prix_loyer || 0,
-                tenant: lease.locataire,
-                unit: lease.locataire?.unite
-              })
-            }
-          } catch (error) {
-            console.error(`Erreur lors de la vérification des paiements pour le bail ${lease.id_bail}:`, error)
+          const bailPayments = paymentsByBail[lease.id_bail] || []
+          const hasPayment = bailPayments.some(p => p.annee === lastMonthYear && p.mois === lastMonthMonth)
+          
+          if (!hasPayment) {
+            unpaid.push({
+              lease,
+              year: lastMonthYear,
+              month: lastMonthMonth,
+              amount: lease.prix_loyer || 0,
+              tenant: lease.locataire,
+              unit: lease.locataire?.unite
+            })
           }
         }
       }
@@ -305,12 +311,21 @@ export default function Dashboard() {
               <DollarSign className="h-5 w-5 text-red-500 dark:text-red-400 mr-2" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Loyers non payés</h2>
             </div>
-            <span className="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-full text-xs font-medium">
-              {unpaidRents.length}
-            </span>
+            {loadingDetails ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+            ) : (
+              <span className="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-full text-xs font-medium">
+                {unpaidRents.length}
+              </span>
+            )}
           </div>
           
-          {unpaidRents.length === 0 ? (
+          {loadingDetails ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Chargement...</p>
+            </div>
+          ) : unpaidRents.length === 0 ? (
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
               <p className="text-gray-500 dark:text-gray-400">Tous les loyers du mois dernier sont payés</p>
@@ -356,12 +371,21 @@ export default function Dashboard() {
               <FileText className="h-5 w-5 text-yellow-500 dark:text-yellow-400 mr-2" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Factures à payer</h2>
             </div>
-            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">
-              {pendingInvoices.length}
-            </span>
+            {loadingDetails ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+            ) : (
+              <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">
+                {pendingInvoices.length}
+              </span>
+            )}
           </div>
           
-          {pendingInvoices.length === 0 ? (
+          {loadingDetails ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Chargement...</p>
+            </div>
+          ) : pendingInvoices.length === 0 ? (
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
               <p className="text-gray-500 dark:text-gray-400">Aucune facture en attente</p>
