@@ -319,15 +319,15 @@ export default function InvoicesST() {
                   )}
                   
                   {invoice.pdf_facture && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                       <div className="flex items-center space-x-2">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">Document PDF:</span>
+                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Document PDF:</span>
                         <a
                           href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${invoice.pdf_facture}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline"
                         >
                           {invoice.pdf_facture}
                         </a>
