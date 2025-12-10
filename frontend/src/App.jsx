@@ -20,6 +20,7 @@ import Suppliers from './pages/Suppliers'
 import Materials from './pages/Materials'
 import Projects from './pages/Projects'
 import Orders from './pages/Orders'
+import ProjectAnalysis from './pages/ProjectAnalysis'
 import InvoicesST from './pages/InvoicesST'
 import Documents from './pages/Documents'
 import Settings from './pages/Settings'
@@ -246,6 +247,7 @@ function AppContent() {
             <Route path="/suppliers" element={<ProtectedRoute><AdminProtectedRoute><Suppliers /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/materials" element={<ProtectedRoute><AdminProtectedRoute><Materials /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><AdminProtectedRoute><Projects /></AdminProtectedRoute></ProtectedRoute>} />
+            <Route path="/project-analysis/:projectId?" element={<ProtectedRoute><AdminProtectedRoute><ProjectAnalysis /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><AdminProtectedRoute><Orders /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/invoices-st" element={<ProtectedRoute><AdminProtectedRoute><InvoicesST /></AdminProtectedRoute></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><AdminProtectedRoute><Documents /></AdminProtectedRoute></ProtectedRoute>} />

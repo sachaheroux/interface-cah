@@ -3104,6 +3104,7 @@ if CONSTRUCTION_ENABLED:
                 "sous_traitants": 0.0,
                 "commandes": 0.0,
                 "employes": 0.0,
+                "heures_travaillees": 0.0,  # Nombre d'heures travaillées
                 "total": 0.0
             })
             
@@ -3126,9 +3127,11 @@ if CONSTRUCTION_ENABLED:
             punchs = db.query(PunchEmploye).filter(PunchEmploye.id_projet == projet_id).all()
             for punch in punchs:
                 section = punch.section or "Non spécifié"
+                heures = punch.heure_travaillee or 0.0
+                depenses_par_section[section]["heures_travaillees"] += heures
                 # Calculer le coût : heures travaillées * taux horaire de l'employé
                 if punch.employe and punch.employe.taux_horaire:
-                    cout = (punch.heure_travaillee or 0.0) * (punch.employe.taux_horaire or 0.0)
+                    cout = heures * (punch.employe.taux_horaire or 0.0)
                     depenses_par_section[section]["employes"] += cout
                     depenses_par_section[section]["total"] += cout
             
@@ -3140,6 +3143,7 @@ if CONSTRUCTION_ENABLED:
                     "sous_traitants": round(depenses["sous_traitants"], 2),
                     "commandes": round(depenses["commandes"], 2),
                     "employes": round(depenses["employes"], 2),
+                    "heures_travaillees": round(depenses["heures_travaillees"], 2),
                     "total": round(depenses["total"], 2)
                 })
             
