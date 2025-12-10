@@ -175,60 +175,60 @@ export default function Orders() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <DollarSign className="h-8 w-8 text-blue-600" />
+            <DollarSign className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Total Commandes</p>
-              <p className="text-2xl font-bold text-blue-600">{formatAmount(totalAmount)}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Commandes</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatAmount(totalAmount)}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <FileText className="h-8 w-8 text-green-600" />
+            <FileText className="h-8 w-8 text-green-600 dark:text-green-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Total Commandes</p>
-              <p className="text-2xl font-bold text-green-600">{orders.length}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Commandes</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{orders.length}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <Filter className="h-8 w-8 text-orange-600" />
+            <Filter className="h-8 w-8 text-orange-600 dark:text-orange-400" />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Filtrées</p>
-              <p className="text-2xl font-bold text-orange-600">{filteredOrders.length}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Filtrées</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{filteredOrders.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filtres */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6 border border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recherche</label>
             <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+              <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Projet, fournisseur, notes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Projet</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Projet</label>
             <select
               value={filterProject}
               onChange={(e) => setFilterProject(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tous les projets</option>
               {projects.map(project => (
@@ -238,11 +238,11 @@ export default function Orders() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tous les statuts</option>
               <option value="en_attente">En attente</option>
@@ -259,7 +259,7 @@ export default function Orders() {
                 setFilterProject('')
                 setFilterStatus('')
               }}
-              className="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Effacer les filtres
             </button>
@@ -271,7 +271,7 @@ export default function Orders() {
       {filteredOrders.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune commande</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aucune commande</h3>
           <p className="text-gray-500 mb-4">
             {orders.length === 0 
               ? "Commencez par créer votre première commande"
@@ -290,11 +290,11 @@ export default function Orders() {
       ) : (
         <div className="grid gap-4">
           {filteredOrders.map((order) => (
-            <div key={order.id_commande} className="bg-white rounded-lg shadow p-6">
+            <div key={order.id_commande} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       Commande #{order.id_commande}
                     </h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.statut)}`}>
@@ -302,7 +302,7 @@ export default function Orders() {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
                     <div>
                       <span className="font-medium">Projet:</span>
                       <span className="ml-1">{getProjectName(order.id_projet)}</span>
@@ -328,13 +328,13 @@ export default function Orders() {
                   </div>
                   
                   {order.lignes_commande && order.lignes_commande.length > 0 && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
+                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Lignes de commande ({order.lignes_commande.length}):
                       </p>
                       <div className="space-y-1">
                         {order.lignes_commande.map((ligne, idx) => (
-                          <div key={idx} className="text-xs text-gray-600">
+                          <div key={idx} className="text-xs text-gray-600 dark:text-gray-400">
                             • {ligne.matiere_premiere?.nom || `Matière ${ligne.id_matiere_premiere}`} - 
                             {ligne.quantite} {ligne.unite} - 
                             {formatAmount(ligne.montant)}
@@ -346,22 +346,22 @@ export default function Orders() {
                   )}
                   
                   {order.notes && (
-                    <div className="mt-2 text-sm text-gray-500">
+                    <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                       <span className="font-medium">Notes:</span>
                       <span className="ml-1">{order.notes}</span>
                     </div>
                   )}
                   
                   {order.pdf_commande && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                       <div className="flex items-center space-x-2">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">Document PDF:</span>
+                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Document PDF:</span>
                         <a
                           href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${order.pdf_commande}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline"
                         >
                           {order.pdf_commande}
                         </a>

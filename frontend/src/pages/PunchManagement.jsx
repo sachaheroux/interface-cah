@@ -136,7 +136,7 @@ export default function PunchManagement() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -144,7 +144,7 @@ export default function PunchManagement() {
                 <Clock className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Gestion des Pointages</h1>
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Gestion des Pointages</h1>
                 <p className="text-sm text-gray-600">Suivi des heures travaillées par les employés</p>
               </div>
             </div>
@@ -161,20 +161,20 @@ export default function PunchManagement() {
 
       <div className="px-6 py-6">
         {/* Filtres */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center mb-4">
-            <Filter className="h-5 w-5 text-gray-400 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
+            <Filter className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filtres</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Employé */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Employé</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Employé</label>
               <select
                 value={filters.employee}
                 onChange={(e) => setFilters(prev => ({ ...prev, employee: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Tous les employés</option>
                 {employees.map((employee) => (
@@ -187,11 +187,11 @@ export default function PunchManagement() {
 
             {/* Projet */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Projet</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Projet</label>
               <select
                 value={filters.project}
                 onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Tous les projets</option>
                 {projects.map((project) => (
@@ -204,49 +204,49 @@ export default function PunchManagement() {
 
             {/* Date de début */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de début</label>
               <input
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
 
             {/* Date de fin */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date de fin</label>
               <input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
           </div>
         </div>
 
         {/* Résumé */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Résumé</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">
                 {formatHours(calculateTotalHours())}
               </div>
-              <div className="text-sm text-gray-600">Total heures</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Total heures</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 ${calculateTotalCost().toFixed(2)}
               </div>
-              <div className="text-sm text-gray-600">Coût total</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Coût total</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                 {filteredPunchs.length}
               </div>
-              <div className="text-sm text-gray-600">Pointages</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Pointages</div>
             </div>
           </div>
         </div>

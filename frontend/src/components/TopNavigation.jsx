@@ -53,13 +53,13 @@ export default function TopNavigation() {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
+    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 fixed top-0 left-0 right-0 z-50">
       <div className="flex items-center justify-between h-20 sm:h-16 px-3 lg:px-6">
         {/* Logo */}
         <div className="flex items-center flex-shrink-0">
           <Building2 className="h-6 w-6 lg:h-8 lg:w-8 text-primary-600 mr-2 lg:mr-3" />
-          <h1 className="text-lg lg:text-xl font-bold text-gray-900 hidden sm:block">Interface CAH</h1>
-          <h1 className="text-lg font-bold text-gray-900 sm:hidden">CAH</h1>
+          <h1 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Interface CAH</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white sm:hidden">CAH</h1>
         </div>
         
         {/* Navigation horizontale - s'adapte automatiquement à la largeur */}
@@ -99,8 +99,8 @@ export default function TopNavigation() {
                     'flex flex-col sm:flex-row items-center justify-center rounded-lg transition-colors duration-200 whitespace-nowrap font-medium',
                     'py-1 sm:py-2',
                     isActive 
-                      ? 'bg-primary-100 text-primary-700' 
-                      : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
+                      ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   )}
                   style={{
                     paddingLeft: 'clamp(0.25rem, 0.8vw, 1rem)',
@@ -125,7 +125,7 @@ export default function TopNavigation() {
         {/* Right side */}
         <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
           {/* Notifications */}
-          <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 relative">
+          <button className="p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 relative">
             <Bell className="h-5 w-5 lg:h-6 lg:w-6" />
             <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
           </button>
@@ -135,15 +135,15 @@ export default function TopNavigation() {
             <div className="flex items-center space-x-2 lg:space-x-3">
               {user && (
                 <div className="text-right hidden lg:block">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {user.prenom} {user.nom}
                   </div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
                 </div>
               )}
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                className="flex items-center p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <User className="h-6 w-6 lg:h-8 lg:w-8" />
               </button>
@@ -151,18 +151,18 @@ export default function TopNavigation() {
 
             {/* Dropdown menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <div className="px-4 py-2 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {user?.prenom} {user?.nom}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                 </div>
                 
                 <Link
                   to="/settings"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <UserCircle className="h-4 w-4 mr-2" />
                   Mon profil
@@ -170,7 +170,7 @@ export default function TopNavigation() {
                 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Déconnexion

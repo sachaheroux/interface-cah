@@ -173,9 +173,9 @@ export default function SecondarySidebar() {
   }
 
   return (
-    <div className="w-48 lg:w-64 bg-white border-r border-gray-200 fixed left-0 top-20 sm:top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
+    <div className="w-48 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 fixed left-0 top-20 sm:top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
       <div className="p-3 lg:p-4">
-        <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
+        <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 lg:mb-4">
           {(location.pathname === '/buildings' || location.pathname === '/buildings/analysis' || location.pathname === '/buildings/mortgage' || location.pathname === '/buildings/property-analysis') && 'Gestion Immeubles'}
           {(location.pathname === '/tenants' || location.pathname === '/leases' || location.pathname === '/rent-payments') && 'Gestion Locataires'}
           {location.pathname === '/transactions' && 'Gestion Transactions'}
@@ -263,8 +263,8 @@ export default function SecondarySidebar() {
                 onClick={handleClick}
                 className={`w-full flex items-center px-2 lg:px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors duration-200 ${
                   item.active 
-                    ? 'bg-primary-100 text-primary-700' 
-                    : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
+                    ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' 
+                    : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <Icon className="h-3 w-3 lg:h-4 lg:w-4 mr-2 lg:mr-3" />
