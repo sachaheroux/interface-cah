@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Hammer, Plus, Edit, Trash2, MapPin, Calendar, DollarSign, User, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { Hammer, Plus, Edit, Trash2, MapPin, Calendar, DollarSign, User, FileText, AlertTriangle, CheckCircle, Clock, BarChart3 } from 'lucide-react'
 import { projectsService } from '../services/api'
 import ProjectForm from '../components/ProjectForm'
+import ProjectExpenseAnalysis from '../components/ProjectExpenseAnalysis'
 
 export default function Projects() {
   const [projects, setProjects] = useState([])
@@ -9,6 +10,8 @@ export default function Projects() {
   const [showForm, setShowForm] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [showExpenseAnalysis, setShowExpenseAnalysis] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState(null)
 
   useEffect(() => {
     fetchProjects()
@@ -148,6 +151,16 @@ export default function Projects() {
                 </div>
                 <div className="flex space-x-2">
                   <button
+                    onClick={() => {
+                      setSelectedProjectId(project.id_projet)
+                      setShowExpenseAnalysis(true)
+                    }}
+                    className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                    title="Analyse des dépenses"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleEditProject(project)}
                     className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                     title="Modifier le projet"
@@ -264,6 +277,16 @@ export default function Projects() {
           </div>
         </div>
       )}
+
+      {/* Analyse des dépenses modal */}
+      <ProjectExpenseAnalysis
+        isOpen={showExpenseAnalysis}
+        onClose={() => {
+          setShowExpenseAnalysis(false)
+          setSelectedProjectId(null)
+        }}
+        projectId={selectedProjectId}
+      />
     </div>
   )
 }

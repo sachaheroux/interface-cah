@@ -390,6 +390,15 @@ export const projectsService = {
     }
   },
   getProject: (id) => api.get(`/api/construction/projets/${id}`),
+  getProjectExpenseAnalysis: async (id) => {
+    try {
+      const response = await api.get(`/api/construction/projets/${id}/analyse-depenses`)
+      return { data: response.data.data || null }
+    } catch (error) {
+      console.warn('API project expense analysis failed')
+      return { data: null }
+    }
+  },
   createProject: (data) => api.post('/api/construction/projets', data),
   updateProject: (id, data) => api.put(`/api/construction/projets/${id}`, data),
   deleteProject: (id) => api.delete(`/api/construction/projets/${id}`),

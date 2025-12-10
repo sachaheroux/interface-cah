@@ -3087,6 +3087,86 @@ if CONSTRUCTION_ENABLED:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération du projet: {e}")
     
+    @app.get("/api/construction/projets/{projet_id}/analyse-depenses")
+    async def get_analyse_depenses(projet_id: int, db: Session = Depends(get_construction_db)):
+        """Analyser les dépenses d'un projet par section/catégorie"""
+        try:
+            # Vérifier que le projet existe
+            projet = db.query(Projet).filter(Projet.id_projet == projet_id).first()
+            if not projet:
+                raise HTTPException(status_code=404, detail="Projet non trouvé")
+            
+            from collections import defaultdict
+            from sqlalchemy import func
+            
+            # Dictionnaire pour regrouper les dépenses par section
+            depenses_par_section = defaultdict(lambda: {
+                "sous_traitants": 0.0,
+                "commandes": 0.0,
+                "employes": 0.0,
+                "total": 0.0
+            })
+            
+            # 1. Dépenses des factures ST (sous-traitants) par section
+            factures_st = db.query(FactureST).filter(FactureST.id_projet == projet_id).all()
+            for facture in factures_st:
+                section = facture.section or "Non spécifié"
+                depenses_par_section[section]["sous_traitants"] += facture.montant or 0.0
+                depenses_par_section[section]["total"] += facture.montant or 0.0
+            
+            # 2. Dépenses des lignes de commande par section
+            commandes = db.query(Commande).filter(Commande.id_projet == projet_id).all()
+            for commande in commandes:
+                for ligne in commande.lignes_commande:
+                    section = ligne.section or "Non spécifié"
+                    depenses_par_section[section]["commandes"] += ligne.montant or 0.0
+                    depenses_par_section[section]["total"] += ligne.montant or 0.0
+            
+            # 3. Dépenses des punchs employés (heures * taux horaire) par section
+            punchs = db.query(PunchEmploye).filter(PunchEmploye.id_projet == projet_id).all()
+            for punch in punchs:
+                section = punch.section or "Non spécifié"
+                # Calculer le coût : heures travaillées * taux horaire de l'employé
+                if punch.employe and punch.employe.taux_horaire:
+                    cout = (punch.heure_travaillee or 0.0) * (punch.employe.taux_horaire or 0.0)
+                    depenses_par_section[section]["employes"] += cout
+                    depenses_par_section[section]["total"] += cout
+            
+            # Convertir en liste triée par total décroissant
+            analyse = []
+            for section, depenses in sorted(depenses_par_section.items(), key=lambda x: x[1]["total"], reverse=True):
+                analyse.append({
+                    "section": section,
+                    "sous_traitants": round(depenses["sous_traitants"], 2),
+                    "commandes": round(depenses["commandes"], 2),
+                    "employes": round(depenses["employes"], 2),
+                    "total": round(depenses["total"], 2)
+                })
+            
+            # Calculer les totaux généraux
+            total_sous_traitants = sum(d["sous_traitants"] for d in depenses_par_section.values())
+            total_commandes = sum(d["commandes"] for d in depenses_par_section.values())
+            total_employes = sum(d["employes"] for d in depenses_par_section.values())
+            total_general = sum(d["total"] for d in depenses_par_section.values())
+            
+            return {
+                "success": True,
+                "data": {
+                    "projet": projet.to_dict(),
+                    "depenses_par_section": analyse,
+                    "totaux": {
+                        "sous_traitants": round(total_sous_traitants, 2),
+                        "commandes": round(total_commandes, 2),
+                        "employes": round(total_employes, 2),
+                        "total": round(total_general, 2)
+                    }
+                }
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse des dépenses: {e}")
+    
     @app.put("/api/construction/projets/{projet_id}")
     async def update_projet(projet_id: int, projet_data: ProjetUpdate, db: Session = Depends(get_construction_db)):
         """Mettre à jour un projet"""
