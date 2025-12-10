@@ -207,22 +207,22 @@ const RentPayments = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="w-full">
         {/* En-tête */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <DollarSign className="h-8 w-8 text-green-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Suivi des Paiements de Loyers</h1>
+            <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Suivi des Paiements de Loyers</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Gérez et suivez les paiements de loyers par immeuble et par mois
           </p>
         </div>
 
         {/* Sélection de l'immeuble */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Building className="h-5 w-5" />
             Sélection de l'Immeuble
           </h2>
@@ -235,7 +235,7 @@ const RentPayments = () => {
                 className={`px-4 py-2 rounded-lg border transition-colors ${
                   selectedBuilding?.id_immeuble === building.id_immeuble
                     ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                 }`}
               >
                 {building.nom_immeuble}
@@ -246,19 +246,19 @@ const RentPayments = () => {
 
         {/* Navigation temporelle */}
         {selectedBuilding && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
               <Calendar className="h-5 w-5" />
               Navigation temporelle
             </h3>
             
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Année:</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Année:</label>
                 <select
                   value={displayYear}
                   onChange={(e) => setDisplayYear(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   {Array.from({ length: 10 }, (_, i) => {
                     const year = new Date().getFullYear() - 5 + i
@@ -272,11 +272,11 @@ const RentPayments = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Mois de début:</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mois de début:</label>
                 <select
                   value={displayMonth}
                   onChange={(e) => setDisplayMonth(parseInt(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   {Array.from({ length: 12 }, (_, i) => {
                     const month = i + 1
@@ -303,7 +303,7 @@ const RentPayments = () => {
               </button>
             </div>
             
-            <p className="text-sm text-gray-600 mt-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
               Affichage de 12 mois à partir de {new Date(displayYear, displayMonth - 1, 1).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -311,42 +311,42 @@ const RentPayments = () => {
 
         {/* Tableau des paiements */}
         {selectedBuilding && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Paiements - {selectedBuilding.nom_immeuble}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {leases.length} unité(s) avec bail actif
               </p>
             </div>
 
             {leases.length === 0 ? (
               <div className="p-12 text-center">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Aucune unité avec bail actif dans cet immeuble</p>
+                <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">Aucune unité avec bail actif dans cet immeuble</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Unité
                       </th>
                       {months.map(({ year, month, label }) => (
-                        <th key={`${year}-${month}`} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+                        <th key={`${year}-${month}`} className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[80px]">
                           {label}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {leases.map(lease => (
                       <tr key={lease.id_bail}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {lease.locataire?.unite?.adresse_unite || 'N/A'}
                           </div>
                         </td>
@@ -394,14 +394,14 @@ const RentPayments = () => {
         {/* Modal des détails */}
         {showDetails && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Détails du Paiement
               </h3>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Date de paiement réelle
                   </label>
                   <input
@@ -414,12 +414,12 @@ const RentPayments = () => {
                         date_paiement_reelle: e.target.value
                       }
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Montant payé
                   </label>
                   <input
@@ -433,12 +433,12 @@ const RentPayments = () => {
                         montant_paye: parseFloat(e.target.value) || null
                       }
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Notes
                   </label>
                   <textarea
@@ -451,7 +451,7 @@ const RentPayments = () => {
                       }
                     })}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -459,7 +459,7 @@ const RentPayments = () => {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowDetails(null)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Annuler
                 </button>

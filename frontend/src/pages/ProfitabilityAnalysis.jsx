@@ -183,8 +183,8 @@ export default function ProfitabilityAnalysis() {
       </div>
 
       {/* Configuration */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration de l'analyse</h2>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration de l'analyse</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Sélection des immeubles */}
@@ -368,39 +368,39 @@ export default function ProfitabilityAnalysis() {
         <div className="space-y-6">
           {/* Métriques clés */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Revenus totaux</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Revenus totaux</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     ${analysisData?.summary?.totalRevenue?.toLocaleString() || '0'}
                   </p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
+                <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Dépenses totales</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Dépenses totales</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                     ${analysisData.summary.totalExpenses.toLocaleString()}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-red-600" />
+                <TrendingUp className="h-8 w-8 text-red-600 dark:text-red-400" />
               </div>
             </div>
             
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Cashflow net</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Cashflow net</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     ${analysisData.summary.netCashflow.toLocaleString()}
                   </p>
                 </div>
-                <BarChart3 className="h-8 w-8 text-blue-600" />
+                <BarChart3 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             
@@ -411,7 +411,7 @@ export default function ProfitabilityAnalysis() {
           <div className="space-y-8">
             {/* 1. Bar chart - Cashflow net par immeuble */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Cashflow net par immeuble</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Cashflow net par immeuble</h3>
               <div className="flex">
                 {/* Axe Y avec montants */}
                 <div className="flex flex-col justify-between h-80 pr-4 w-20">
@@ -568,7 +568,7 @@ export default function ProfitabilityAnalysis() {
 
             {/* 3. Bar chart - Dépenses par immeuble */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Dépenses par immeuble</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Dépenses par immeuble</h3>
               
               <div className="flex">
                 {/* Axe Y avec montants */}
@@ -645,8 +645,8 @@ export default function ProfitabilityAnalysis() {
           </div>
 
           {/* Pie chart - Répartition des dépenses globales */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Répartition des dépenses globales</h3>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Répartition des dépenses globales</h3>
             
             {/* Pie Chart SVG */}
             <div className="flex justify-center mb-6">
@@ -703,26 +703,26 @@ export default function ProfitabilityAnalysis() {
                 const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
                 
                 return (
-                  <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div key={category} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                     <div className="flex items-center space-x-3">
                       <div 
                         className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: colors[index % colors.length] }}
                       ></div>
                       <div>
-                        <span className="text-sm font-medium text-gray-900 capitalize">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
                           {category.replace('_', ' ')}
                         </span>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {percentage}% du total
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-bold text-gray-900 dark:text-white">
                         ${amount.toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {percentage}%
                       </div>
                     </div>
@@ -732,10 +732,10 @@ export default function ProfitabilityAnalysis() {
             </div>
             
             {/* Résumé total */}
-            <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
+            <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900 rounded-lg border border-primary-200 dark:border-primary-800">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-primary-900">Total des dépenses</span>
-                <span className="text-lg font-bold text-primary-900">
+                <span className="text-sm font-medium text-primary-900 dark:text-primary-300">Total des dépenses</span>
+                <span className="text-lg font-bold text-primary-900 dark:text-primary-300">
                   ${Object.values(analysisData.categories || {}).reduce((sum, val) => sum + val, 0).toLocaleString()}
                 </span>
               </div>
@@ -743,8 +743,8 @@ export default function ProfitabilityAnalysis() {
           </div>
 
           {/* Graphique de cashflow mensuel */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cashflow mensuel</h3>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cashflow mensuel</h3>
             <div className="space-y-6">
               {analysisData.monthlyTotals.map((month, index) => {
                 const total = month.revenue + month.expenses
@@ -754,20 +754,20 @@ export default function ProfitabilityAnalysis() {
                 return (
                   <div key={month.month} className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="w-24 text-sm font-medium text-gray-700">
+                      <div className="w-24 text-sm font-medium text-gray-700 dark:text-gray-300">
                         {month.month}
                       </div>
                       <div className="flex items-center space-x-6 text-sm">
-                        <div className="text-green-600 font-medium">+${month.revenue.toLocaleString()}</div>
-                        <div className="text-red-600 font-medium">-${month.expenses.toLocaleString()}</div>
-                        <div className={`font-bold ${month.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className="text-green-600 dark:text-green-400 font-medium">+${month.revenue.toLocaleString()}</div>
+                        <div className="text-red-600 dark:text-red-400 font-medium">-${month.expenses.toLocaleString()}</div>
+                        <div className={`font-bold ${month.netCashflow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           ${month.netCashflow.toLocaleString()}
                         </div>
                       </div>
                     </div>
                     
                     {/* Barre unique avec revenus à gauche et dépenses à droite */}
-                    <div className="w-full bg-gray-200 rounded-full h-6 flex overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6 flex overflow-hidden">
                       {/* Revenus à gauche (vert) */}
                       <div 
                         className="bg-green-500 h-full transition-all duration-700 flex items-center justify-end pr-2"
@@ -793,7 +793,7 @@ export default function ProfitabilityAnalysis() {
               })}
               
               {/* Ligne de total pour toute la période */}
-              <div className="pt-4 mt-6 border-t-2 border-gray-300">
+              <div className="pt-4 mt-6 border-t-2 border-gray-300 dark:border-gray-600">
                 {(() => {
                   const totalRevenue = analysisData.monthlyTotals.reduce((sum, month) => sum + month.revenue, 0)
                   const totalExpenses = analysisData.monthlyTotals.reduce((sum, month) => sum + month.expenses, 0)
@@ -805,20 +805,20 @@ export default function ProfitabilityAnalysis() {
                   return (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="text-lg font-bold text-gray-800">
+                        <div className="text-lg font-bold text-gray-800 dark:text-gray-200">
                           TOTAL PÉRIODE
                         </div>
                         <div className="flex items-center space-x-6 text-lg">
-                          <div className="text-green-600 font-bold">+${totalRevenue.toLocaleString()}</div>
-                          <div className="text-red-600 font-bold">-${totalExpenses.toLocaleString()}</div>
-                          <div className={`text-xl font-bold ${totalNetCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className="text-green-600 dark:text-green-400 font-bold">+${totalRevenue.toLocaleString()}</div>
+                          <div className="text-red-600 dark:text-red-400 font-bold">-${totalExpenses.toLocaleString()}</div>
+                          <div className={`text-xl font-bold ${totalNetCashflow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             ${totalNetCashflow.toLocaleString()}
                           </div>
                         </div>
                       </div>
                       
                       {/* Barre de total - plus épaisse */}
-                      <div className="w-full bg-gray-300 rounded-full h-8 flex overflow-hidden">
+                      <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-8 flex overflow-hidden">
                         {/* Revenus totaux à gauche (vert) */}
                         <div 
                           className="bg-green-600 h-full transition-all duration-700 flex items-center justify-end pr-3"
@@ -847,17 +847,17 @@ export default function ProfitabilityAnalysis() {
           </div>
 
           {/* Tableau détaillé */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Détail par immeuble</h3>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Détail par immeuble</h3>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Immeuble</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dépenses</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashflow net</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proportion</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Immeuble</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenus</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Dépenses</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cashflow net</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Proportion</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -865,22 +865,22 @@ export default function ProfitabilityAnalysis() {
                     <tr key={building.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{building.name}</div>
-                          <div className="text-sm text-gray-500">{building.address}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{building.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{building.address}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">
                         ${building.summary.totalRevenue.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-medium">
                         ${building.summary.totalExpenses.toLocaleString()}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        building.summary.netCashflow >= 0 ? 'text-green-600' : 'text-red-600'
+                        building.summary.netCashflow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         ${building.summary.netCashflow.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {(() => {
                           const revenue = building.summary.totalRevenue || 0;
                           const expenses = building.summary.totalExpenses || 0;

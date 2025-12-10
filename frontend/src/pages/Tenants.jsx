@@ -207,8 +207,8 @@ export default function Tenants() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Locataires</h1>
-          <p className="text-gray-600 mt-1">Gérez vos locataires et leurs informations</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestion des Locataires</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Gérez vos locataires et leurs informations</p>
         </div>
         <button onClick={handleAddTenant} className="btn-primary flex items-center">
           <Plus className="h-5 w-5 mr-2" />
@@ -217,21 +217,21 @@ export default function Tenants() {
       </div>
 
       {/* Filtres et recherche */}
-      <div className="card">
+      <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Filtres et Recherche</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtres et Recherche</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Recherche */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
             <input
               type="text"
               placeholder="Rechercher nom, email, téléphone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
@@ -239,7 +239,7 @@ export default function Tenants() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Tous les statuts</option>
             <option value="actif">Actif</option>
@@ -261,24 +261,24 @@ export default function Tenants() {
       </div>
 
       {/* Liste des locataires */}
-      <div className="card">
+      <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Liste des Locataires ({Array.isArray(filteredTenants) ? filteredTenants.length : 0})
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.isArray(filteredTenants) && filteredTenants.map((tenant) => (
-            <div key={tenant.id_locataire} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={tenant.id_locataire} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
               {/* En-tête du locataire */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Users className="h-6 w-6 text-green-600" />
+                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                    <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="text-lg font-semibold text-gray-900">{tenant.nom} {tenant.prenom}</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{tenant.nom} {tenant.prenom}</h4>
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTenantStatusColor(tenant.statut)}`}>
                       {getTenantStatusLabel(tenant.statut)}
                     </span>
@@ -289,21 +289,21 @@ export default function Tenants() {
               {/* Informations de contact */}
               <div className="space-y-2 mb-4">
                 {tenant.email && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
                     <Mail className="h-4 w-4 mr-2" />
                     <span className="text-sm">{tenant.email}</span>
                   </div>
                 )}
                 
                 {tenant.telephone && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
                     <Phone className="h-4 w-4 mr-2" />
                     <span className="text-sm">{tenant.telephone}</span>
                   </div>
                 )}
 
                 {(tenant.building || tenant.unit) && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
                     <Home className="h-4 w-4 mr-2" />
                     <span className="text-sm">{tenant.building} - {tenant.unit}</span>
                   </div>
@@ -328,7 +328,7 @@ export default function Tenants() {
                 </button>
                 <button 
                   onClick={() => handleDeleteTenant(tenant)}
-                  className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors text-sm"
+                  className="px-3 py-2 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-700 dark:text-red-300 rounded-lg transition-colors text-sm"
                   title="Supprimer le locataire"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -341,11 +341,11 @@ export default function Tenants() {
         {/* Empty State */}
         {(!Array.isArray(filteredTenants) || filteredTenants.length === 0) && (
           <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {(!Array.isArray(tenants) || tenants.length === 0) ? 'Aucun locataire' : 'Aucun locataire correspondant aux filtres'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               {(!Array.isArray(tenants) || tenants.length === 0)
                 ? 'Commencez par ajouter votre premier locataire.'
                 : 'Essayez de modifier vos critères de recherche.'

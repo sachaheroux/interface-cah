@@ -122,8 +122,8 @@ export default function Leases() {
         <div className="flex items-center space-x-3">
           <FileText className="h-8 w-8 text-primary-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestion des Baux</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Baux</h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Gérez tous les baux de vos locataires
             </p>
           </div>
@@ -138,17 +138,17 @@ export default function Leases() {
       </div>
 
       {/* Filtres */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Rechercher par locataire ou unité..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </div>
@@ -156,14 +156,14 @@ export default function Leases() {
       </div>
 
       {/* Liste des baux */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         {filteredLeases.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <FileText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {leases.length === 0 ? 'Aucun bail' : 'Aucun bail correspondant aux filtres'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               {leases.length === 0
                 ? 'Commencez par créer votre premier bail.'
                 : 'Essayez de modifier vos critères de recherche.'
@@ -178,27 +178,27 @@ export default function Leases() {
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredLeases.map((lease) => (
-              <div key={lease.id_bail} className="p-6 hover:bg-gray-50">
+              <div key={lease.id_bail} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-4 mb-2">
                       <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-900">
+                        <User className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <span className="font-medium text-gray-900 dark:text-white">
                           {lease.locataire?.nom} {lease.locataire?.prenom}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Home className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">
+                        <Home className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-gray-600 dark:text-gray-400">
                           {lease.unite?.adresse_unite}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
                         <span>
@@ -228,15 +228,15 @@ export default function Leases() {
                     
                     {/* Section PDF du bail - comme pour les transactions */}
                     {lease.pdf_bail && (
-                      <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center space-x-2">
-                          <FileText className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium text-gray-700">Document PDF du bail:</span>
+                          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Document PDF du bail:</span>
                           <a
                             href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${lease.pdf_bail}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline"
                           >
                             {lease.pdf_bail}
                           </a>
@@ -248,21 +248,21 @@ export default function Leases() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleViewLease(lease)}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       title="Voir les détails"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleEditLease(lease)}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       title="Modifier"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteLease(lease)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
