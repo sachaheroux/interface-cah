@@ -4,9 +4,13 @@ import {
   Users, 
   DollarSign, 
   AlertTriangle, 
-  TrendingUp
+  TrendingUp,
+  Calendar,
+  FileText,
+  CheckCircle
 } from 'lucide-react'
-import { dashboardService, unitsService } from '../services/api'
+import { dashboardService, unitsService, invoicesSTService } from '../services/api'
+import api from '../services/api'
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null)
@@ -14,6 +18,8 @@ export default function Dashboard() {
   const [error, setError] = useState(null)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const [occupancyRate, setOccupancyRate] = useState(0)
+  const [unpaidRents, setUnpaidRents] = useState([])
+  const [pendingInvoices, setPendingInvoices] = useState([])
 
   useEffect(() => {
     fetchDashboardData()
@@ -67,6 +73,10 @@ export default function Dashboard() {
       // Calculer le taux d'occupation comme dans Buildings.jsx
       await calculateOccupancyRate()
       
+      // Charger les loyers non payés et les factures à payer
+      await loadUnpaidRents()
+      await loadPendingInvoices()
+      
     } catch (err) {
       setError('Erreur lors du chargement des données')
       console.error('Dashboard error:', err)
@@ -92,6 +102,89 @@ export default function Dashboard() {
       console.error('Erreur lors du calcul du taux d\'occupation:', error)
       setOccupancyRate(0)
     }
+  }
+
+  const loadUnpaidRents = async () => {
+    try {
+      // Récupérer tous les baux actifs
+      const leasesResponse = await api.get('/api/leases')
+      const leases = Array.isArray(leasesResponse.data) ? leasesResponse.data : (leasesResponse.data.data || [])
+      
+      // Obtenir le mois dernier
+      const today = new Date()
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      const lastMonthYear = lastMonth.getFullYear()
+      const lastMonthMonth = lastMonth.getMonth() + 1
+      
+      const unpaid = []
+      
+      // Pour chaque bail actif, vérifier s'il y a un paiement pour le mois dernier
+      for (const lease of leases) {
+        // Vérifier si le bail était actif le mois dernier
+        if (!lease.date_debut || !lease.date_fin) continue
+        
+        const leaseStart = new Date(lease.date_debut)
+        const leaseEnd = new Date(lease.date_fin)
+        const checkDate = new Date(lastMonthYear, lastMonthMonth - 1, 1)
+        
+        // Si le bail était actif le mois dernier
+        if (checkDate >= leaseStart && checkDate <= leaseEnd) {
+          try {
+            // Vérifier s'il y a un paiement pour ce bail et ce mois
+            const paymentsResponse = await api.get(`/api/paiements-loyers/bail/${lease.id_bail}`)
+            const payments = paymentsResponse.data.data || []
+            
+            const hasPayment = payments.some(p => p.annee === lastMonthYear && p.mois === lastMonthMonth)
+            
+            if (!hasPayment) {
+              unpaid.push({
+                lease,
+                year: lastMonthYear,
+                month: lastMonthMonth,
+                amount: lease.prix_loyer || 0,
+                tenant: lease.locataire,
+                unit: lease.locataire?.unite
+              })
+            }
+          } catch (error) {
+            console.error(`Erreur lors de la vérification des paiements pour le bail ${lease.id_bail}:`, error)
+          }
+        }
+      }
+      
+      setUnpaidRents(unpaid)
+    } catch (error) {
+      console.error('Erreur lors du chargement des loyers non payés:', error)
+      setUnpaidRents([])
+    }
+  }
+
+  const loadPendingInvoices = async () => {
+    try {
+      const response = await invoicesSTService.getInvoices()
+      const invoices = response.data || []
+      
+      // Filtrer les factures sans date_de_paiement (à payer)
+      const pending = invoices.filter(invoice => !invoice.date_de_paiement)
+      
+      setPendingInvoices(pending)
+    } catch (error) {
+      console.error('Erreur lors du chargement des factures à payer:', error)
+      setPendingInvoices([])
+    }
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('fr-CA', {
+      style: 'currency',
+      currency: 'CAD',
+      minimumFractionDigits: 2
+    }).format(amount || 0)
+  }
+
+  const formatMonthYear = (year, month) => {
+    const date = new Date(year, month - 1, 1)
+    return date.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })
   }
 
   if (loading) {
@@ -157,7 +250,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Vue d'ensemble de vos opérations de construction</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Vue d'ensemble de vos opérations</p>
           {isUsingFallback && (
             <div className="flex items-center mt-2 text-sm text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-4 w-4 mr-1" />
@@ -203,39 +296,109 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Recent Activity Section */}
-      {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 && (
+      {/* Deux colonnes : Loyers non payés et Factures à payer */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Loyers non payés - Colonne gauche */}
         <div className="card dark:bg-gray-800 dark:border-gray-700">
-          <div className="flex items-center mb-4">
-            <TrendingUp className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Activité Récente</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <DollarSign className="h-5 w-5 text-red-500 dark:text-red-400 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Loyers non payés</h2>
+            </div>
+            <span className="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-full text-xs font-medium">
+              {unpaidRents.length}
+            </span>
           </div>
-          <div className="space-y-3">
-            {dashboardData.recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <div className={`p-2 rounded-full ${
-                  activity.type === 'success' ? 'bg-green-100 dark:bg-green-900/20' : 
-                  activity.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/20' : 'bg-gray-100 dark:bg-gray-700'
-                }`}>
-                  {activity.type === 'success' ? (
-                    <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  ) : activity.type === 'info' ? (
-                    <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  ) : (
-                    <Building2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                  )}
+          
+          {unpaidRents.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400">Tous les loyers du mois dernier sont payés</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {unpaidRents.map((item, index) => (
+                <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item.tenant?.nom} {item.tenant?.prenom}
+                        </p>
+                      </div>
+                      {item.unit && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                          {item.unit.adresse_unite}
+                        </p>
+                      )}
+                      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatMonthYear(item.year, item.month)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                        {formatCurrency(item.amount)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.message}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(activity.timestamp).toLocaleString('fr-CA')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Factures à payer - Colonne droite */}
+        <div className="card dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 text-yellow-500 dark:text-yellow-400 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Factures à payer</h2>
+            </div>
+            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-medium">
+              {pendingInvoices.length}
+            </span>
+          </div>
+          
+          {pendingInvoices.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400">Aucune facture en attente</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {pendingInvoices.map((invoice) => (
+                <div key={invoice.id_facture} className="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                        {invoice.reference || `Facture #${invoice.id_facture}`}
+                      </p>
+                      {invoice.section && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                          Section: {invoice.section}
+                        </p>
+                      )}
+                      {invoice.date_creation && (
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="h-3 w-3" />
+                          <span>Créée le {new Date(invoice.date_creation).toLocaleDateString('fr-CA')}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
+                        {formatCurrency(invoice.montant)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
