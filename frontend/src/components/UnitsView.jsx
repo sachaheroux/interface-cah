@@ -354,9 +354,9 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   return (
     <div className="space-y-6">
       {/* Filtres et recherche */}
-      <div className="card">
+      <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Filtres et Recherche</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtres et Recherche</h3>
           <button onClick={handleAddUnit} className="btn-primary flex items-center">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter une Unité
@@ -366,13 +366,13 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Recherche */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
             <input
               type="text"
               placeholder="Rechercher unité, adresse, locataire..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
@@ -380,7 +380,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Tous les statuts</option>
             <option value="occupied">Occupée</option>
@@ -393,7 +393,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
           <select
             value={buildingFilter}
             onChange={(e) => setBuildingFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Tous les immeubles</option>
             {buildings.map(building => (
@@ -418,16 +418,16 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
       </div>
 
       {/* Liste des unités */}
-      <div className="card">
+      <div className="card dark:bg-gray-800 dark:border-gray-700">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Liste des Unités ({filteredUnits.length})
           </h3>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredUnits.map((unit) => (
-            <div key={unit.id_unite} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={unit.id_unite} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
               {/* En-tête de l'unité */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
@@ -435,17 +435,17 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
                     <Home className="h-5 w-5 text-primary-600" />
                   </div>
                   <div className="ml-3">
-                    <h4 className="font-semibold text-gray-900">{unit.adresse_unite}</h4>
-                    <p className="text-sm text-gray-600">{unit.type}</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{unit.adresse_unite}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{unit.type}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.locataires?.length > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.locataires?.length > 0 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'}`}>
                   {unit.locataires?.length > 0 ? 'Occupée' : 'Libre'}
                 </span>
               </div>
 
               {/* Informations de base */}
-              <div className="flex items-center text-gray-600 mb-3">
+              <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3">
                 <Bed className="h-4 w-4 mr-2" />
                 <span className="text-sm">{unit.nbr_chambre} chambre{unit.nbr_chambre > 1 ? 's' : ''}</span>
                 <Bath className="h-4 w-4 mr-1 ml-4" />
@@ -454,7 +454,7 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
               {/* Loyer */}
               {unit.rental?.monthlyRent > 0 && (
-                <div className="flex items-center text-gray-600 mb-3">
+                <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3">
                   <DollarSign className="h-4 w-4 mr-2" />
                   <span className="text-sm font-medium">{formatCurrency(unit.rental.monthlyRent)}/mois</span>
                 </div>
@@ -462,42 +462,42 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
 
               {/* Locataires */}
               {unit.locataires?.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-gray-600" />
-                      <span className="text-sm font-medium text-gray-900">Locataires</span>
+                      <Users className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Locataires</span>
                     </div>
-                    <span className="text-xs text-gray-500">{unit.locataires.length} locataire{unit.locataires.length > 1 ? 's' : ''}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{unit.locataires.length} locataire{unit.locataires.length > 1 ? 's' : ''}</span>
                   </div>
                   
                   {/* Liste des locataires */}
                   <div className="space-y-2">
                     {unit.locataires.map((tenant, tenantIndex) => (
-                      <div key={tenant.id_locataire} className="bg-white rounded-md p-2 border border-gray-200">
+                      <div key={tenant.id_locataire} className="bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="font-medium text-sm text-gray-900">{tenant.nom} {tenant.prenom}</div>
+                            <div className="font-medium text-sm text-gray-900 dark:text-white">{tenant.nom} {tenant.prenom}</div>
                             <div className="flex items-center mt-1">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                tenant.statut === 'actif' ? 'bg-green-100 text-green-800' :
-                                tenant.statut === 'en_attente' ? 'bg-yellow-100 text-yellow-800' :
-                                tenant.statut === 'inactif' ? 'bg-gray-100 text-gray-800' :
-                                'bg-red-100 text-red-800'
+                                tenant.statut === 'actif' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' :
+                                tenant.statut === 'en_attente' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300' :
+                                tenant.statut === 'inactif' ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' :
+                                'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
                               }`}>
                                 {tenant.statut}
                               </span>
                             </div>
                             {tenant.email && (
                               <div className="flex items-center mt-1">
-                                <Mail className="h-3 w-3 mr-2 text-gray-400" />
-                                <span className="text-xs text-gray-600">{tenant.email}</span>
+                                <Mail className="h-3 w-3 mr-2 text-gray-400 dark:text-gray-500" />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">{tenant.email}</span>
                               </div>
                             )}
                             {tenant.telephone && (
                               <div className="flex items-center mt-1">
-                                <Phone className="h-3 w-3 mr-2 text-gray-400" />
-                                <span className="text-xs text-gray-600">{tenant.telephone}</span>
+                                <Phone className="h-3 w-3 mr-2 text-gray-400 dark:text-gray-500" />
+                                <span className="text-xs text-gray-600 dark:text-gray-400">{tenant.telephone}</span>
                               </div>
                             )}
                           </div>

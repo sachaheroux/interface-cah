@@ -42,16 +42,16 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
   const hasActiveFilters = Object.values(filters).some(value => value !== '')
 
   return (
-    <div className="card mb-6">
+    <div className="card mb-6 dark:bg-gray-800 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <Filter className="h-5 w-5 text-gray-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
+          <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtres</h3>
         </div>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-gray-600 hover:text-gray-800 flex items-center"
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 flex items-center"
           >
             <X className="h-4 w-4 mr-1" />
             Effacer tout
@@ -62,13 +62,13 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Filtre par ville */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Ville
           </label>
           <select
             value={filters.city}
             onChange={(e) => handleFilterChange('city', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Toutes les villes</option>
             {cities.map(city => (
@@ -79,13 +79,13 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
         {/* Filtre par année de construction */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Date de construction
           </label>
           <select
             value={filters.yearBuilt}
             onChange={(e) => handleFilterChange('yearBuilt', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Toutes les années</option>
             <option value="2020+">2020 ou plus récent</option>
@@ -101,13 +101,13 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
         {/* Filtre par propriétaire */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Propriétaire
           </label>
           <select
             value={filters.owner}
             onChange={(e) => handleFilterChange('owner', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Tous les propriétaires</option>
             {owners.map(owner => (
@@ -118,13 +118,13 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
         {/* Filtre par valeur actuelle */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Valeur actuelle
           </label>
           <select
             value={filters.currentValue}
             onChange={(e) => handleFilterChange('currentValue', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Toutes les valeurs</option>
             <option value="0-500000">Moins de 500k$</option>
@@ -136,13 +136,13 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
         {/* Filtre par banque */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Banque
           </label>
           <select
             value={filters.bank}
             onChange={(e) => handleFilterChange('bank', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Toutes les banques</option>
             {banks.map(bank => (
@@ -154,7 +154,7 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
 
       {/* Indicateur de filtres actifs */}
       {hasActiveFilters && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-wrap gap-2">
             {Object.entries(filters).map(([key, value]) => {
               if (!value) return null
@@ -170,12 +170,12 @@ export default function BuildingFilters({ buildings, onFilterChange }) {
               return (
                 <span
                   key={key}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-300"
                 >
                   {labels[key]}: {value}
                   <button
                     onClick={() => handleFilterChange(key, '')}
-                    className="ml-2 text-primary-600 hover:text-primary-800"
+                    className="ml-2 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-200"
                   >
                     <X className="h-3 w-3" />
                   </button>

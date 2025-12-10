@@ -268,11 +268,11 @@ export default function ProfitabilityAnalysis() {
             </label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Mois de début</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Mois de début</label>
                 <select
                   value={startMonth}
                   onChange={(e) => setStartMonth(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="01">Janvier</option>
                   <option value="02">Février</option>
@@ -289,11 +289,11 @@ export default function ProfitabilityAnalysis() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Année de début</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Année de début</label>
                 <select
                   value={startYear}
                   onChange={(e) => setStartYear(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="2023">2023</option>
                   <option value="2024">2024</option>
@@ -303,11 +303,11 @@ export default function ProfitabilityAnalysis() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Mois de fin</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Mois de fin</label>
                 <select
                   value={endMonth}
                   onChange={(e) => setEndMonth(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="01">Janvier</option>
                   <option value="02">Février</option>
@@ -324,11 +324,11 @@ export default function ProfitabilityAnalysis() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Année de fin</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Année de fin</label>
                 <select
                   value={endYear}
                   onChange={(e) => setEndYear(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="2023">2023</option>
                   <option value="2024">2024</option>
