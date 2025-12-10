@@ -7,7 +7,7 @@ Inscription, connexion, validation, récupération mot de passe
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy.orm import Session
 
 # Services
@@ -377,6 +377,107 @@ async def logout():
     return {
         "success": True,
         "message": "Déconnexion réussie"
+    }
+
+@router.get("/company")
+async def get_company_info(
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db)
+):
+    """
+    Obtenir les informations de l'entreprise de l'utilisateur connecté
+    """
+    if not current_user.id_compagnie:
+        raise HTTPException(status_code=404, detail="Aucune entreprise associée à votre compte")
+    
+    company = db.query(Compagnie).filter(Compagnie.id_compagnie == current_user.id_compagnie).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée")
+    
+    return {
+        "success": True,
+        "data": company.to_dict()
+    }
+
+class ChangeEmailRequest(BaseModel):
+    nouveau_email: EmailStr
+    mot_de_passe: str
+
+class ChangePasswordRequest(BaseModel):
+    mot_de_passe_actuel: str
+    nouveau_mot_de_passe: str
+
+@router.put("/email")
+async def change_email(
+    data: ChangeEmailRequest,
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db)
+):
+    """
+    Changer l'adresse email de l'utilisateur
+    """
+    # Vérifier le mot de passe actuel
+    if not auth_service.verify_password(data.mot_de_passe, current_user.mot_de_passe_hash):
+        raise HTTPException(status_code=401, detail="Mot de passe incorrect")
+    
+    # Vérifier si le nouvel email est déjà utilisé
+    existing_user = db.query(Utilisateur).filter(Utilisateur.email == data.nouveau_email).first()
+    if existing_user and existing_user.id_utilisateur != current_user.id_utilisateur:
+        raise HTTPException(status_code=400, detail="Cet email est déjà utilisé")
+    
+    # Mettre à jour l'email
+    current_user.email = data.nouveau_email
+    current_user.email_verifie = False  # Nécessite une nouvelle vérification
+    current_user.date_modification = datetime.utcnow()
+    
+    # Générer un nouveau code de vérification
+    code = auth_service.generate_verification_code()
+    current_user.code_verification_email = code
+    current_user.code_verification_email_expiration = datetime.utcnow() + timedelta(hours=24)
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    # Envoyer le code de vérification par email
+    try:
+        email_service.send_verification_email(data.nouveau_email, code)
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'email de vérification: {e}")
+        # Ne pas bloquer la mise à jour si l'email échoue
+    
+    return {
+        "success": True,
+        "message": "Email mis à jour. Un code de vérification a été envoyé à votre nouvelle adresse.",
+        "user": current_user.to_dict()
+    }
+
+@router.put("/password")
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db)
+):
+    """
+    Changer le mot de passe de l'utilisateur
+    """
+    # Vérifier le mot de passe actuel
+    if not auth_service.verify_password(data.mot_de_passe_actuel, current_user.mot_de_passe_hash):
+        raise HTTPException(status_code=401, detail="Mot de passe actuel incorrect")
+    
+    # Valider le nouveau mot de passe
+    is_valid, error_msg = auth_service.is_strong_password(data.nouveau_mot_de_passe)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Mettre à jour le mot de passe
+    current_user.mot_de_passe_hash = auth_service.hash_password(data.nouveau_mot_de_passe)
+    current_user.date_modification = datetime.utcnow()
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "Mot de passe mis à jour avec succès"
     }
 
 # ==========================================
