@@ -12,7 +12,6 @@ import {
   Calendar,
   MapPin,
   Users,
-  Wrench,
   DollarSign,
   Clock,
   Truck,
@@ -35,8 +34,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis' },
         { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage' },
         { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis' },
-        { name: 'Rapports', icon: FileText },
-        { name: 'Maintenance', icon: Wrench },
       ]
     
     case '/buildings/analysis':
@@ -49,8 +46,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Analyse de rentabilité', icon: BarChart3, href: '/buildings/analysis', active: pathname === '/buildings/analysis' },
         { name: 'Analyse de dette', icon: Calculator, href: '/buildings/mortgage', active: pathname === '/buildings/mortgage' },
         { name: 'Analyse d\'achat', icon: TrendingUp, href: '/buildings/property-analysis', active: pathname === '/buildings/property-analysis' },
-        { name: 'Rapports', icon: FileText },
-        { name: 'Maintenance', icon: Wrench },
       ]
     
     case '/tenants':
@@ -226,10 +221,6 @@ export default function SecondarySidebar() {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'list' }))
                 } else if (item.name === 'Toutes les unités') {
                   window.dispatchEvent(new CustomEvent('buildingsViewChange', { detail: 'units' }))
-                } else if (item.name === 'Rapports') {
-                  navigate('/reports')
-                } else if (item.name === 'Maintenance') {
-                  navigate('/maintenance')
                 }
               }
               
