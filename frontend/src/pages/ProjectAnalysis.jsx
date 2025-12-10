@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { BarChart3, DollarSign, TrendingUp, Users, Package, Truck, Clock, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
+import { BarChart3, DollarSign, TrendingUp, Users, Package, Truck, Clock, ArrowLeft, AlertCircle, CheckCircle, Download } from 'lucide-react'
 import { projectsService } from '../services/api'
+import projectReportExport from '../services/projectReportExport'
 
 export default function ProjectAnalysis() {
   const { projectId } = useParams()
@@ -10,6 +11,7 @@ export default function ProjectAnalysis() {
   const [project, setProject] = useState(null)
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
   const [error, setError] = useState('')
   const [selectedProjectId, setSelectedProjectId] = useState(projectId || null)
 
@@ -103,6 +105,24 @@ export default function ProjectAnalysis() {
     return Math.max(...analysis.depenses_par_section.map(d => d.total))
   }
 
+  const handleExportReport = async () => {
+    if (!analysis || !project) {
+      alert('Veuillez d\'abord charger l\'analyse du projet')
+      return
+    }
+
+    try {
+      setExporting(true)
+      await projectReportExport.exportReport(analysis, project)
+      alert('Rapport exporté avec succès !')
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error)
+      alert('Erreur lors de l\'export du rapport. Veuillez réessayer.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (!selectedProjectId) {
     return (
       <div className="p-6 space-y-6">
@@ -181,6 +201,14 @@ export default function ProjectAnalysis() {
             )}
           </div>
         </div>
+        <button
+          onClick={handleExportReport}
+          disabled={exporting || !analysis || !project}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          <Download className="h-5 w-5" />
+          <span>{exporting ? 'Export en cours...' : 'Exporter le rapport'}</span>
+        </button>
       </div>
 
       {/* Comparaison avec le budget */}
