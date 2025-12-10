@@ -271,8 +271,8 @@ const PropertyAnalysis = () => {
       </div>
 
       {/* Configuration */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration de l'analyse</h2>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration de l'analyse</h2>
         
         {/* Indicateur de progression */}
         <div className="mb-8">
@@ -287,7 +287,7 @@ const PropertyAnalysis = () => {
                   <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                     isActive ? 'bg-blue-600 border-blue-600 text-white' :
                     isCompleted ? 'bg-green-500 border-green-500 text-white' :
-                    'bg-white border-gray-300 text-gray-400'
+                    'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500'
                   }`}>
                     <Icon className="h-5 w-5" />
                   </div>
@@ -311,18 +311,18 @@ const PropertyAnalysis = () => {
 
         {currentStep === 1 && (
           <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations de base</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Informations de base</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Prix d'achat de l'immeuble *
                   </label>
                   <input
                     type="number"
                     value={formData.prixAchat}
                     onChange={(e) => handleInputChange('prixAchat', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.prixAchat ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.prixAchat ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 500000"
                   />
@@ -330,15 +330,15 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Mise de fond *
                   </label>
                   <input
                     type="number"
                     value={formData.miseDeFond}
                     onChange={(e) => handleInputChange('miseDeFond', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.miseDeFond ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.miseDeFond ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 100000"
                   />
@@ -346,15 +346,15 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nombre d'années d'analyse *
                   </label>
                   <input
                     type="number"
                     value={formData.anneesAnalyse}
                     onChange={(e) => handleInputChange('anneesAnalyse', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.anneesAnalyse ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.anneesAnalyse ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 5"
                   />
@@ -366,10 +366,10 @@ const PropertyAnalysis = () => {
 
         {currentStep === 2 && (
           <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Financement</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Financement</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Taux d'intérêt annuel (décimal) *
                   </label>
                   <input
@@ -377,25 +377,25 @@ const PropertyAnalysis = () => {
                     step="0.001"
                     value={formData.tauxInteret}
                     onChange={(e) => handleInputChange('tauxInteret', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.tauxInteret ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.tauxInteret ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 0.05 pour 5%"
                   />
                   {errors.tauxInteret && <p className="text-red-500 text-sm mt-1">{errors.tauxInteret}</p>}
-                  <p className="text-gray-500 text-sm mt-1">Exemple: 0.05 pour 5%</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Exemple: 0.05 pour 5%</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nombre d'années de remboursement *
                   </label>
                   <input
                     type="number"
                     value={formData.anneesRemboursement}
                     onChange={(e) => handleInputChange('anneesRemboursement', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.anneesRemboursement ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.anneesRemboursement ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 25"
                   />
@@ -407,18 +407,18 @@ const PropertyAnalysis = () => {
 
         {currentStep === 3 && (
           <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Revenus locatifs</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Revenus locatifs</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Revenu locatif annuel *
                   </label>
                   <input
                     type="number"
                     value={formData.revenuLocatifAnnuel}
                     onChange={(e) => handleInputChange('revenuLocatifAnnuel', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.revenuLocatifAnnuel ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.revenuLocatifAnnuel ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 36000"
                   />
@@ -430,18 +430,18 @@ const PropertyAnalysis = () => {
 
         {currentStep === 4 && (
           <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Dépenses</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Dépenses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Taxes totales annuelles (scolaire + municipale) *
                   </label>
                   <input
                     type="number"
                     value={formData.taxesTotales}
                     onChange={(e) => handleInputChange('taxesTotales', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.taxesTotales ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.taxesTotales ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 6000"
                   />
@@ -449,15 +449,15 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Assurances totales annuelles *
                   </label>
                   <input
                     type="number"
                     value={formData.assurancesTotales}
                     onChange={(e) => handleInputChange('assurancesTotales', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.assurancesTotales ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.assurancesTotales ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 1200"
                   />
@@ -465,15 +465,15 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Frais d'ouverture de dossier (notaire, taxes de bienvenue) *
                   </label>
                   <input
                     type="number"
                     value={formData.fraisOuverture}
                     onChange={(e) => handleInputChange('fraisOuverture', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.fraisOuverture ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.fraisOuverture ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 15000"
                   />
@@ -481,15 +481,15 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Entretien du terrain mensuel (déneigement, gazon) *
                   </label>
                   <input
                     type="number"
                     value={formData.entretienTerrain}
                     onChange={(e) => handleInputChange('entretienTerrain', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.entretienTerrain ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.entretienTerrain ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 200"
                   />
@@ -497,7 +497,7 @@ const PropertyAnalysis = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Taux de réparations annuel (% de la valeur) *
                   </label>
                   <input
@@ -505,8 +505,8 @@ const PropertyAnalysis = () => {
                     step="0.1"
                     value={formData.tauxReparations}
                     onChange={(e) => handleInputChange('tauxReparations', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.tauxReparations ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                      errors.tauxReparations ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                     placeholder="Ex: 1.5"
                   />

@@ -151,8 +151,8 @@ export default function ProfitabilityAnalysis() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Immeubles</h1>
-          <p className="text-gray-600 mt-1">Analysez la performance financière de vos immeubles</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestion des Immeubles</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Analysez la performance financière de vos immeubles</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
@@ -190,13 +190,13 @@ export default function ProfitabilityAnalysis() {
           {/* Sélection des immeubles */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 <Building className="h-4 w-4 inline mr-2" />
                 Immeubles à analyser ({selectedBuildings.length} sélectionnés)
               </label>
               <button
                 onClick={loadBuildings}
-                className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center space-x-1"
               >
                 <RefreshCw className="h-3 w-3" />
                 <span>Recharger</span>
@@ -247,10 +247,10 @@ export default function ProfitabilityAnalysis() {
                       className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {building.nom_immeuble}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {building.adresse}
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export default function ProfitabilityAnalysis() {
 
           {/* Période */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               <Calendar className="h-4 w-4 inline mr-2" />
               Période d'analyse
             </label>
@@ -410,7 +410,7 @@ export default function ProfitabilityAnalysis() {
           {/* Graphiques d'analyse - 3 bar charts verticaux */}
           <div className="space-y-8">
             {/* 1. Bar chart - Cashflow net par immeuble */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Cashflow net par immeuble</h3>
               <div className="flex">
                 {/* Axe Y avec montants */}
@@ -425,7 +425,7 @@ export default function ProfitabilityAnalysis() {
                     return Array.from({ length: steps + 1 }, (_, i) => {
                       const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
-                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
+                        <div key={i} className="text-xs text-gray-600 dark:text-gray-400 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -467,7 +467,7 @@ export default function ProfitabilityAnalysis() {
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
-                        className="text-xs text-gray-600 text-center font-medium"
+                        className="text-xs text-gray-600 dark:text-gray-400 text-center font-medium"
                         style={{ 
                           width: `${100 / analysisData.buildings.length}%`,
                           height: '60px',
@@ -490,8 +490,8 @@ export default function ProfitabilityAnalysis() {
             </div>
 
             {/* 2. Bar chart - Revenus par immeuble */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenus par immeuble</h3>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Revenus par immeuble</h3>
               
               <div className="flex">
                 {/* Axe Y avec montants */}
@@ -504,7 +504,7 @@ export default function ProfitabilityAnalysis() {
                     return Array.from({ length: steps + 1 }, (_, i) => {
                       const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
-                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
+                        <div key={i} className="text-xs text-gray-600 dark:text-gray-400 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -544,7 +544,7 @@ export default function ProfitabilityAnalysis() {
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
-                        className="text-xs text-gray-600 text-center font-medium"
+                        className="text-xs text-gray-600 dark:text-gray-400 text-center font-medium"
                         style={{ 
                           width: `${100 / analysisData.buildings.length}%`,
                           height: '60px',
@@ -567,7 +567,7 @@ export default function ProfitabilityAnalysis() {
             </div>
 
             {/* 3. Bar chart - Dépenses par immeuble */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Dépenses par immeuble</h3>
               
               <div className="flex">
@@ -581,7 +581,7 @@ export default function ProfitabilityAnalysis() {
                     return Array.from({ length: steps + 1 }, (_, i) => {
                       const value = stepSize * (steps - i) // Inverser l'ordre pour que 0 soit en bas
                       return (
-                        <div key={i} className="text-xs text-gray-600 text-right font-medium">
+                        <div key={i} className="text-xs text-gray-600 dark:text-gray-400 text-right font-medium">
                           ${value.toLocaleString()}
                         </div>
                       )
@@ -621,7 +621,7 @@ export default function ProfitabilityAnalysis() {
                     {analysisData.buildings.map((building, index) => (
                       <div 
                         key={`name-${building.id}`} 
-                        className="text-xs text-gray-600 text-center font-medium"
+                        className="text-xs text-gray-600 dark:text-gray-400 text-center font-medium"
                         style={{ 
                           width: `${100 / analysisData.buildings.length}%`,
                           height: '60px',
@@ -860,7 +860,7 @@ export default function ProfitabilityAnalysis() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proportion</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {analysisData.buildings.map((building) => (
                     <tr key={building.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
