@@ -8,7 +8,6 @@ import {
   Truck, 
   Hammer, 
   FileText, 
-  Settings,
   Bell,
   User,
   LogOut,
@@ -25,7 +24,6 @@ const navigation = [
   { name: 'Fournisseurs & ST', href: '/contractors', icon: Truck, role: 'admin' },
   { name: 'Projets', href: '/projects', icon: Hammer, role: 'admin' },
   { name: 'Documents', href: '/documents', icon: FileText, role: 'admin' },
-  { name: 'Paramètres', href: '/settings', icon: Settings, role: 'admin' },
   // Pointages uniquement pour les employés
   { name: 'Pointages', href: '/employee-punch', icon: Clock, role: 'employe' },
 ]
