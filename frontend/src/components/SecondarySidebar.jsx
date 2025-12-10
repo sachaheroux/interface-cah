@@ -140,6 +140,56 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
   }
 }
 
+// Fonction pour déterminer le titre de la sidebar selon la section principale
+const getSidebarTitle = (pathname) => {
+  // Section Immeubles
+  if (pathname === '/buildings' || pathname.startsWith('/buildings/')) {
+    return 'Gestion Immeubles'
+  }
+  
+  // Section Locataires
+  if (pathname === '/tenants' || pathname === '/leases' || pathname === '/rent-payments') {
+    return 'Gestion Locataires'
+  }
+  
+  // Section Transactions
+  if (pathname === '/transactions') {
+    return 'Gestion Transactions'
+  }
+  
+  // Section Employés & Temps
+  if (pathname === '/employees' || pathname === '/punch-management') {
+    return 'Employés & Temps'
+  }
+  
+  // Section Fournisseurs & ST
+  if (pathname === '/contractors' || pathname === '/suppliers' || pathname === '/materials' || pathname === '/invoices-st') {
+    return 'Fournisseurs & ST'
+  }
+  
+  // Section Projets
+  if (pathname === '/projects' || pathname === '/orders' || pathname.startsWith('/project-analysis')) {
+    return 'Projets Construction'
+  }
+  
+  // Section Documents
+  if (pathname === '/documents') {
+    return 'Documents'
+  }
+  
+  // Section Paramètres
+  if (pathname === '/settings') {
+    return 'Paramètres'
+  }
+  
+  // Section Rapports
+  if (pathname === '/reports') {
+    return 'Rapports'
+  }
+  
+  return ''
+}
+
 export default function SecondarySidebar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -166,6 +216,7 @@ export default function SecondarySidebar() {
   }, [])
   
   const secondaryNav = getSecondaryNavigation(location.pathname, viewMode, reportsMode)
+  const sidebarTitle = getSidebarTitle(location.pathname)
 
   // Ne pas afficher la sidebar sur la page d'accueil
   if (location.pathname === '/') {
@@ -176,15 +227,7 @@ export default function SecondarySidebar() {
     <div className="w-48 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 fixed left-0 top-20 sm:top-16 bottom-0 z-40 overflow-y-auto hidden md:block">
       <div className="p-3 lg:p-4">
         <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-3 lg:mb-4">
-          {(location.pathname === '/buildings' || location.pathname === '/buildings/analysis' || location.pathname === '/buildings/mortgage' || location.pathname === '/buildings/property-analysis') && 'Gestion Immeubles'}
-          {(location.pathname === '/tenants' || location.pathname === '/leases' || location.pathname === '/rent-payments') && 'Gestion Locataires'}
-          {location.pathname === '/transactions' && 'Gestion Transactions'}
-          {location.pathname === '/employees' && 'Employés & Temps'}
-          {location.pathname === '/contractors' && 'Sous-traitants'}
-          {location.pathname === '/projects' && 'Projets Construction'}
-          {location.pathname === '/documents' && 'Documents'}
-          {location.pathname === '/settings' && 'Paramètres'}
-          {location.pathname === '/reports' && 'Rapports'}
+          {sidebarTitle}
         </h2>
         
         <nav className="space-y-1">
