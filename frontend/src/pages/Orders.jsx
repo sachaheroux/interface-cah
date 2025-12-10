@@ -315,10 +315,9 @@ export default function Orders() {
                       <span className="font-medium">Montant total:</span>
                       <span className="ml-1 font-semibold text-green-600">
                         {formatAmount(
-                          order.montant || 
-                          (order.lignes_commande && order.lignes_commande.length > 0
+                          order.lignes_commande && order.lignes_commande.length > 0
                             ? order.lignes_commande.reduce((sum, ligne) => sum + (parseFloat(ligne.montant) || 0), 0)
-                            : 0)
+                            : (order.montant || 0)
                         )}
                       </span>
                     </div>
