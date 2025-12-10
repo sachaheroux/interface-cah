@@ -87,9 +87,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Fournisseurs', icon: Package, active: pathname === '/suppliers', href: '/suppliers' },
         { name: 'Matières premières', icon: Package, active: pathname === '/materials', href: '/materials' },
         { name: 'Factures', icon: DollarSign, href: '/invoices-st', active: pathname === '/invoices-st' },
-        { name: 'Contrats actifs', icon: FileText },
-        { name: 'Évaluations', icon: BarChart3 },
-        { name: 'Contacts', icon: List },
       ]
     
     case '/invoices-st':
@@ -98,9 +95,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
         { name: 'Fournisseurs', icon: Package, href: '/suppliers' },
         { name: 'Matières premières', icon: Package, href: '/materials' },
         { name: 'Factures', icon: DollarSign, active: true, href: '/invoices-st' },
-        { name: 'Contrats actifs', icon: FileText },
-        { name: 'Évaluations', icon: BarChart3 },
-        { name: 'Contacts', icon: List },
       ]
     
     case '/projects':
