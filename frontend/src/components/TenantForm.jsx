@@ -57,10 +57,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }
   }
 
-  // Initialiser le formulaire
+  // Initialiser le formulaire et charger l'unité si nécessaire
   useEffect(() => {
     if (tenant) {
-      setFormData({
+      const initialData = {
         nom: tenant.nom || '',
         prenom: tenant.prenom || '',
         email: tenant.email || '',
@@ -69,7 +69,17 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         id_unite: tenant.id_unite || '',
         unitInfo: tenant.unitInfo || null,
         notes: tenant.notes || ''
-      })
+      }
+      
+      // Si on a un id_unite mais pas d'unitInfo, chercher l'unité dans la liste
+      if (initialData.id_unite && !initialData.unitInfo && availableUnits.length > 0) {
+        const foundUnit = availableUnits.find(unit => unit.id_unite === initialData.id_unite)
+        if (foundUnit) {
+          initialData.unitInfo = foundUnit
+        }
+      }
+      
+      setFormData(initialData)
     } else {
       setFormData({
         nom: '',
@@ -82,7 +92,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         notes: ''
       })
     }
-  }, [tenant, isOpen])
+  }, [tenant, isOpen, availableUnits])
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
