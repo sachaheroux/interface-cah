@@ -99,13 +99,21 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
+  const handleUnitDeselect = () => {
+    setFormData(prev => ({
+      ...prev,
+      id_unite: '',
+      unitInfo: null
+    }))
+  }
+
   const validateForm = () => {
     const errors = {}
     
     if (!formData.nom.trim()) errors.nom = 'Le nom est obligatoire'
     if (!formData.prenom.trim()) errors.prenom = 'Le prénom est obligatoire'
     // Email et téléphone ne sont plus obligatoires
-    if (!formData.id_unite) errors.id_unite = 'L\'unité est obligatoire'
+    // L'unité n'est plus obligatoire (peut être désélectionnée)
     
     return errors
   }
@@ -128,7 +136,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         email: formData.email.trim(),
         telephone: formData.telephone.trim(),
         statut: formData.statut,
-        id_unite: parseInt(formData.id_unite),
+        id_unite: formData.id_unite ? parseInt(formData.id_unite) : null,
         notes: formData.notes.trim()
       }
 
@@ -293,57 +301,84 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
 
           {/* Sélection d'unité */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Home className="h-5 w-5 mr-2" />
-              Unité assignée
-            </h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Rechercher une unité
-              </label>
-              <input
-                type="text"
-                value={unitSearchTerm}
-                onChange={(e) => setUnitSearchTerm(e.target.value)}
-                placeholder="Tapez pour rechercher une unité..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Home className="h-5 w-5 mr-2" />
+                Unité assignée
+              </h3>
+              {formData.id_unite && (
+                <button
+                  type="button"
+                  onClick={handleUnitDeselect}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                >
+                  Retirer l'unité
+                </button>
+              )}
             </div>
-
-            {loadingUnits ? (
-              <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
-                <p className="text-sm text-gray-600 mt-2">Chargement des unités...</p>
+            
+            {formData.id_unite ? (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{formData.unitInfo?.adresse_unite || 'Unité sélectionnée'}</p>
+                    <p className="text-sm text-gray-600">{formData.unitInfo?.immeuble?.nom_immeuble}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnitDeselect}
+                    className="text-red-600 hover:text-red-700"
+                    title="Retirer l'unité"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                {filteredUnits.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500">
-                    Aucune unité trouvée
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rechercher une unité
+                  </label>
+                  <input
+                    type="text"
+                    value={unitSearchTerm}
+                    onChange={(e) => setUnitSearchTerm(e.target.value)}
+                    placeholder="Tapez pour rechercher une unité..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                {loadingUnits ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                    <p className="text-sm text-gray-600 mt-2">Chargement des unités...</p>
                   </div>
                 ) : (
-                  filteredUnits.map((unit) => (
-                    <div
-                      key={unit.id_unite}
-                      onClick={() => handleUnitSelect(unit)}
-                      className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                        formData.id_unite === unit.id_unite ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">{unit.adresse_unite}</p>
-                          <p className="text-sm text-gray-600">{unit.immeuble?.nom_immeuble}</p>
-                        </div>
-                        {formData.id_unite === unit.id_unite && (
-                          <span className="text-blue-600 text-sm font-medium">Sélectionnée</span>
-                        )}
+                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                    {filteredUnits.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        Aucune unité trouvée
                       </div>
-                    </div>
-                  ))
+                    ) : (
+                      filteredUnits.map((unit) => (
+                        <div
+                          key={unit.id_unite}
+                          onClick={() => handleUnitSelect(unit)}
+                          className="p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">{unit.adresse_unite}</p>
+                              <p className="text-sm text-gray-600">{unit.immeuble?.nom_immeuble}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 

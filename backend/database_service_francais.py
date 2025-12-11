@@ -366,7 +366,8 @@ class DatabaseServiceFrancais:
                 if 'notes' in update_data:
                     tenant.notes = update_data['notes']
                 if 'id_unite' in update_data:
-                    tenant.id_unite = update_data['id_unite']
+                    # Permettre de mettre id_unite à None pour désélectionner l'unité
+                    tenant.id_unite = update_data['id_unite'] if update_data['id_unite'] else None
                 
                 tenant.date_modification = datetime.utcnow()
                 session.commit()

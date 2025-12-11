@@ -110,7 +110,7 @@ class Locataire(Base):
     __tablename__ = "locataires"
     
     id_locataire = Column(Integer, primary_key=True, index=True)
-    id_unite = Column(Integer, ForeignKey("unites.id_unite", ondelete="CASCADE"), nullable=False, index=True)
+    id_unite = Column(Integer, ForeignKey("unites.id_unite", ondelete="CASCADE"), nullable=True, index=True)
     nom = Column(String(255), nullable=False, index=True)
     prenom = Column(String(255), nullable=True)
     email = Column(String(255), index=True)
