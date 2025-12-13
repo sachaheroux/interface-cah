@@ -91,6 +91,8 @@ class Utilisateur(Base):
     
     # Relations
     compagnie = relationship("Compagnie", back_populates="utilisateurs", lazy="select")
+    notifications = relationship("Notification", back_populates="utilisateur", lazy="select", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="utilisateur", lazy="select", cascade="all, delete-orphan")
     
     def to_dict(self, include_sensitive=False):
         """Convertir en dictionnaire pour l'API"""
@@ -159,5 +161,49 @@ class DemandeAcces(Base):
             "utilisateur": self.utilisateur.to_dict() if self.utilisateur else None,
             "compagnie": self.compagnie.to_dict() if self.compagnie else None,
             "admin_traiteur": self.admin_traiteur.to_dict() if self.admin_traiteur else None
+        }
+
+class Notification(Base):
+    """Modèle pour les notifications utilisateur"""
+    __tablename__ = "notifications"
+    
+    id_notification = Column(Integer, primary_key=True, index=True)
+    id_utilisateur = Column(Integer, ForeignKey("utilisateurs.id_utilisateur", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Type et contenu
+    type = Column(String(50), nullable=False, index=True)  # "loyer_non_paye", "facture_a_payer", "demande_acces", "bail_expire"
+    titre = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    priorite = Column(String(20), nullable=False, default="info")  # "urgent", "important", "info"
+    
+    # Statut
+    lue = Column(Boolean, default=False, index=True)
+    
+    # Lien optionnel vers la page concernée
+    lien = Column(String(500))  # Ex: "/tenants", "/invoices-st"
+    
+    # Données additionnelles (JSON pour flexibilité)
+    donnees = Column(Text)  # JSON avec infos supplémentaires (ex: id_locataire, id_facture, etc.)
+    
+    # Dates
+    date_creation = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # Relations
+    utilisateur = relationship("Utilisateur", back_populates="notifications", lazy="select")
+    
+    def to_dict(self):
+        """Convertir en dictionnaire pour l'API"""
+        import json
+        return {
+            "id_notification": self.id_notification,
+            "id_utilisateur": self.id_utilisateur,
+            "type": self.type,
+            "titre": self.titre,
+            "message": self.message,
+            "priorite": self.priorite,
+            "lue": self.lue,
+            "lien": self.lien,
+            "donnees": json.loads(self.donnees) if self.donnees else None,
+            "date_creation": self.date_creation.isoformat() if self.date_creation else None
         }
 

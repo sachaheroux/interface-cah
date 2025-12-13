@@ -7,7 +7,7 @@ Base de données séparée pour l'authentification multi-tenant
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models_auth import Base, Compagnie, Utilisateur, DemandeAcces
+from models_auth import Base, Compagnie, Utilisateur, DemandeAcces, Notification
 
 # Chemin de la base de données d'authentification
 DATA_DIR = os.environ.get("DATA_DIR", "./data")

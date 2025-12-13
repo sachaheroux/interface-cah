@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 # Services
 import auth_service
 import email_service
-from models_auth import Compagnie, Utilisateur, DemandeAcces
+from models_auth import Compagnie, Utilisateur, DemandeAcces, Notification
 from auth_database_service import get_auth_db, get_company_database_path
 
 # Router
@@ -335,6 +335,14 @@ async def login(data: LoginRequest, db: Session = Depends(get_auth_db)):
         # Mettre à jour la dernière connexion
         user.derniere_connexion = datetime.utcnow()
         db.commit()
+        
+        # Générer les notifications pour cet utilisateur
+        try:
+            from notification_service import generate_notifications_for_user
+            generate_notifications_for_user(db, user)
+        except Exception as e:
+            print(f"⚠️ Erreur génération notifications: {e}")
+            # Ne pas bloquer la connexion si les notifications échouent
         
         # Créer le token JWT
         token_data = {
@@ -1374,4 +1382,90 @@ async def create_sacha(db: Session = Depends(get_auth_db)):
     except Exception as e:
         db.rollback()
         return {"error": str(e)}
+
+# ==========================================
+# ENDPOINTS NOTIFICATIONS
+# ==========================================
+
+@router.get("/notifications")
+async def get_notifications(
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db),
+    lue: Optional[bool] = None,
+    limit: int = 50
+):
+    """Récupérer les notifications de l'utilisateur"""
+    try:
+        query = db.query(Notification).filter(Notification.id_utilisateur == current_user.id_utilisateur)
+        
+        if lue is not None:
+            query = query.filter(Notification.lue == lue)
+        
+        notifications = query.order_by(Notification.date_creation.desc()).limit(limit).all()
+        
+        return {
+            "success": True,
+            "data": [notif.to_dict() for notif in notifications],
+            "count": len(notifications),
+            "unread_count": db.query(Notification).filter(
+                Notification.id_utilisateur == current_user.id_utilisateur,
+                Notification.lue == False
+            ).count()
+        }
+    except Exception as e:
+        print(f"❌ Erreur récupération notifications: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des notifications")
+
+@router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: int,
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db)
+):
+    """Marquer une notification comme lue"""
+    try:
+        notification = db.query(Notification).filter(
+            Notification.id_notification == notification_id,
+            Notification.id_utilisateur == current_user.id_utilisateur
+        ).first()
+        
+        if not notification:
+            raise HTTPException(status_code=404, detail="Notification non trouvée")
+        
+        notification.lue = True
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Notification marquée comme lue"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Erreur marquer notification lue: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour")
+
+@router.put("/notifications/read-all")
+async def mark_all_notifications_read(
+    current_user: Utilisateur = Depends(get_current_user),
+    db: Session = Depends(get_auth_db)
+):
+    """Marquer toutes les notifications comme lues"""
+    try:
+        db.query(Notification).filter(
+            Notification.id_utilisateur == current_user.id_utilisateur,
+            Notification.lue == False
+        ).update({"lue": True})
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Toutes les notifications ont été marquées comme lues"
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Erreur marquer toutes notifications lues: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour")
 
