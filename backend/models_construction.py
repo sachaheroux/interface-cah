@@ -131,7 +131,7 @@ class Commande(ConstructionBase):
     # Relations
     projet = relationship("Projet", back_populates="commandes")
     fournisseur = relationship("Fournisseur", back_populates="commandes")
-    lignes_commande = relationship("LigneCommande", back_populates="commande")
+    lignes_commande = relationship("LigneCommande", back_populates="commande", cascade="all, delete-orphan")
     
     def to_dict(self):
         return {
@@ -154,7 +154,7 @@ class LigneCommande(ConstructionBase):
     __tablename__ = "lignes_commande"
     
     id_ligne = Column(Integer, primary_key=True, index=True)
-    id_commande = Column(Integer, ForeignKey("commandes.id_commande"), nullable=False)
+    id_commande = Column(Integer, ForeignKey("commandes.id_commande", ondelete="CASCADE"), nullable=False)
     id_matiere_premiere = Column(Integer, ForeignKey("matieres_premieres.id_matiere_premiere"), nullable=False)
     quantite = Column(Float, nullable=False)
     unite = Column(String(20), nullable=False)  # kg, m², m³, pieces, etc.

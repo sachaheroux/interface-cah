@@ -4043,11 +4043,17 @@ if CONSTRUCTION_ENABLED:
     
     @app.delete("/api/construction/commandes/{commande_id}")
     async def delete_commande(commande_id: int, db: Session = Depends(get_construction_db)):
-        """Supprimer une commande (les lignes seront supprimées automatiquement par CASCADE)"""
+        """Supprimer une commande et ses lignes associées"""
         try:
             commande = db.query(Commande).filter(Commande.id_commande == commande_id).first()
             if not commande:
                 raise HTTPException(status_code=404, detail="Commande non trouvée")
+            
+            # Supprimer manuellement les lignes de commande d'abord (pour éviter les problèmes de cascade)
+            from models_construction import LigneCommande
+            lignes = db.query(LigneCommande).filter(LigneCommande.id_commande == commande_id).all()
+            for ligne in lignes:
+                db.delete(ligne)
             
             # Supprimer le PDF de Backblaze si présent
             if commande.pdf_commande:
@@ -4060,6 +4066,7 @@ if CONSTRUCTION_ENABLED:
                 except Exception as e:
                     print(f"⚠️ Erreur lors de la suppression du PDF: {e}")
             
+            # Supprimer la commande
             db.delete(commande)
             db.commit()
             return {"success": True, "message": "Commande supprimée avec succès"}
