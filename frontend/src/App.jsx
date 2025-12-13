@@ -30,6 +30,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import CompanySetup from './pages/CompanySetup'
 import PendingApproval from './pages/PendingApproval'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import EmployeePunchMobile from './pages/EmployeePunchMobile'
 import PunchManagement from './pages/PunchManagement'
 
@@ -204,7 +206,7 @@ function AdminProtectedRoute({ children }) {
 function AppContent() {
   const location = useLocation()
   const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company' || location.pathname === '/pending-approval'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company' || location.pathname === '/pending-approval' || location.pathname === '/forgot-password' || location.pathname === '/reset-password'
 
   // Initialiser le thème au chargement
   useEffect(() => {
@@ -240,6 +242,8 @@ function AppContent() {
             <Route path="/register" element={<Register />} />
             <Route path="/setup-company" element={<CompanySetup />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Pages protégées */}
             <Route path="/" element={<ProtectedRoute><AdminProtectedRoute><Dashboard /></AdminProtectedRoute></ProtectedRoute>} />
