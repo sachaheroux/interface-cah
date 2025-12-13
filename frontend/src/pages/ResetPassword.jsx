@@ -34,8 +34,8 @@ export default function ResetPassword() {
     setError('')
 
     // Validation
-    if (code.length !== 6) {
-      setError('Le code doit contenir 6 caractères')
+    if (code.length !== 8) {
+      setError('Le code doit contenir 8 caractères')
       return
     }
 
@@ -158,17 +158,18 @@ export default function ResetPassword() {
                 required
                 value={code}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                  // Accepter lettres et chiffres, convertir en majuscules
+                  const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)
                   setCode(value)
                   setError('')
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-center text-2xl tracking-widest font-mono"
-                placeholder="000000"
-                maxLength={6}
+                placeholder="A3B7C9D2"
+                maxLength={8}
                 disabled={loading}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Entrez le code à 6 chiffres reçu par email
+                Entrez le code à 8 caractères reçu par email (lettres et chiffres)
               </p>
             </div>
 
