@@ -81,12 +81,14 @@ export default function Orders() {
   }
 
   const handleDeleteOrder = async (orderId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.')) {
       try {
         await ordersService.deleteOrder(orderId)
-        loadData()
+        // Recharger les données après suppression
+        await loadData()
       } catch (error) {
         console.error('Erreur lors de la suppression:', error)
+        alert(error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de la suppression de la commande')
       }
     }
   }
@@ -150,7 +152,15 @@ export default function Orders() {
     return colors[status] || 'bg-gray-100 text-gray-800'
   }
 
-  const totalAmount = orders.reduce((sum, order) => sum + (order.montant || 0), 0)
+  // Calculer le total en additionnant toutes les lignes de commande
+  const totalAmount = orders.reduce((sum, order) => {
+    if (order.lignes_commande && order.lignes_commande.length > 0) {
+      const orderTotal = order.lignes_commande.reduce((lineSum, ligne) => lineSum + (parseFloat(ligne.montant) || 0), 0)
+      return sum + orderTotal
+    }
+    // Fallback sur order.montant si pas de lignes
+    return sum + (parseFloat(order.montant) || 0)
+  }, 0)
 
   if (loading) {
     return (
