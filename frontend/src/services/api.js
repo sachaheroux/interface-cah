@@ -1067,4 +1067,16 @@ export const ordersService = {
   deleteOrderLine: (id) => api.delete(`/api/construction/lignes-commande/${id}`),
 }
 
+// Service pour les notifications
+export const notificationsService = {
+  getNotifications: (lue = null, limit = 50) => {
+    const params = new URLSearchParams()
+    if (lue !== null) params.append('lue', lue)
+    params.append('limit', limit)
+    return api.get(`/api/auth/notifications?${params.toString()}`)
+  },
+  markAsRead: (notificationId) => api.put(`/api/auth/notifications/${notificationId}/read`),
+  markAllAsRead: () => api.put('/api/auth/notifications/read-all')
+}
+
 export default api 

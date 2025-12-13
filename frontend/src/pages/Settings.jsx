@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check, X } from 'lucide-react'
+import { Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check, X, AlertCircle, DollarSign, FileText, Users, Calendar } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { notificationsService } from '../services/api'
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme()
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [company, setCompany] = useState(null)
   const [loading, setLoading] = useState(true)
   
   // États pour les modals
   const [openModal, setOpenModal] = useState(null) // 'security', 'company', 'notifications', 'backup'
+  
+  // États pour les notifications
+  const [notifications, setNotifications] = useState([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [filter, setFilter] = useState('all') // 'all', 'unread', 'read'
   
   // États pour changer email/mot de passe
   const [newEmail, setNewEmail] = useState('')
@@ -500,17 +508,10 @@ export default function Settings() {
               </button>
             </div>
             
-            <div className="p-6">
-              <div className="text-center py-12">
-                <Bell className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Historique des notifications
-                </h4>
-                <p className="text-gray-500 dark:text-gray-400">
-                  L'historique des notifications sera disponible prochainement.
-                </p>
-              </div>
-            </div>
+            <NotificationsHistory 
+              onClose={() => setOpenModal(null)}
+              navigate={navigate}
+            />
           </div>
         </div>
       )}
@@ -549,6 +550,207 @@ export default function Settings() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Composant pour l'historique des notifications
+function NotificationsHistory({ onClose, navigate }) {
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all') // 'all', 'unread', 'read'
+
+  useEffect(() => {
+    loadNotifications()
+  }, [filter])
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true)
+      const lue = filter === 'all' ? null : filter === 'read'
+      const response = await notificationsService.getNotifications(lue, 100)
+      if (response.data.success) {
+        setNotifications(response.data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur chargement notifications:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await notificationsService.markAsRead(notificationId)
+      setNotifications(prev => prev.map(n => 
+        n.id_notification === notificationId ? { ...n, lue: true } : n
+      ))
+    } catch (error) {
+      console.error('Erreur marquer notification lue:', error)
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationsService.markAllAsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, lue: true })))
+    } catch (error) {
+      console.error('Erreur marquer toutes lues:', error)
+    }
+  }
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'loyer_non_paye':
+        return <DollarSign className="h-5 w-5" />
+      case 'facture_a_payer':
+        return <FileText className="h-5 w-5" />
+      case 'demande_acces':
+        return <Users className="h-5 w-5" />
+      case 'bail_expire':
+        return <Calendar className="h-5 w-5" />
+      default:
+        return <AlertCircle className="h-5 w-5" />
+    }
+  }
+
+  const getPriorityColor = (priorite) => {
+    switch (priorite) {
+      case 'urgent':
+        return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
+      case 'important':
+        return 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800'
+      default:
+        return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.lue).length
+
+  return (
+    <div className="p-6">
+      {/* Filtres et actions */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Toutes ({notifications.length})
+          </button>
+          <button
+            onClick={() => setFilter('unread')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              filter === 'unread'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Non lues ({unreadCount})
+          </button>
+          <button
+            onClick={() => setFilter('read')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              filter === 'read'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Lues ({notifications.length - unreadCount})
+          </button>
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllAsRead}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+          >
+            Tout marquer comme lu
+          </button>
+        )}
+      </div>
+
+      {/* Liste des notifications */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500 dark:text-gray-400">Chargement...</p>
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center py-12">
+          <Bell className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Aucune notification
+          </h4>
+          <p className="text-gray-500 dark:text-gray-400">
+            {filter === 'unread' 
+              ? 'Vous n\'avez aucune notification non lue'
+              : filter === 'read'
+              ? 'Vous n\'avez aucune notification lue'
+              : 'Vous n\'avez pas encore de notifications'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          {notifications.map((notif) => (
+            <div
+              key={notif.id_notification}
+              className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                !notif.lue
+                  ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => {
+                if (!notif.lue) {
+                  handleMarkAsRead(notif.id_notification)
+                }
+                if (notif.lien) {
+                  navigate(notif.lien)
+                  onClose()
+                }
+              }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3 flex-1">
+                  <div className={`p-2 rounded-lg ${
+                    !notif.lue ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-700'
+                  }`}>
+                    {getTypeIcon(notif.type)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getPriorityColor(notif.priorite)}`}>
+                        {notif.priorite === 'urgent' ? 'Urgent' : notif.priorite === 'important' ? 'Important' : 'Info'}
+                      </span>
+                      {!notif.lue && (
+                        <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                      {notif.titre}
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {notif.message}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      {new Date(notif.date_creation).toLocaleDateString('fr-CA', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
