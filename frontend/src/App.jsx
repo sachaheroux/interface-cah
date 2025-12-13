@@ -205,8 +205,8 @@ function AdminProtectedRoute({ children }) {
 
 function AppContent() {
   const location = useLocation()
-  const showSecondarySidebar = location.pathname !== '/' && location.pathname !== '/login'
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/setup-company' || location.pathname === '/pending-approval' || location.pathname === '/forgot-password' || location.pathname === '/reset-password'
+  const showSecondarySidebar = !isAuthPage && location.pathname !== '/'
 
   // Initialiser le thème au chargement
   useEffect(() => {
