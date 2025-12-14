@@ -26,6 +26,15 @@ import {
 } from 'lucide-react'
 
 const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buildings') => {
+  // Gérer les routes avec paramètres pour l'analyse de projet AVANT le switch
+  if (pathname.startsWith('/project-analysis')) {
+    return [
+      { name: 'Tous les projets', icon: Hammer, href: '/projects' },
+      { name: 'Commandes', icon: FileText, href: '/orders' },
+      { name: 'Analyse de projet', icon: BarChart3, active: true, href: '/project-analysis' },
+    ]
+  }
+  
   switch (pathname) {    
     case '/buildings':
       return [
@@ -99,7 +108,6 @@ const getSecondaryNavigation = (pathname, viewMode = 'list', reportsMode = 'buil
     
     case '/projects':
     case '/orders':
-    case '/project-analysis':
       return [
         { name: 'Tous les projets', icon: Hammer, active: pathname === '/projects', href: '/projects' },
         { name: 'Commandes', icon: FileText, active: pathname === '/orders', href: '/orders' },
