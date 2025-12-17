@@ -11,14 +11,14 @@ const api = axios.create({
   },
 })
 
-// Intercepteur pour les requêtes (pour ajouter des tokens d'auth plus tard)
+// Intercepteur pour les requêtes (pour ajouter des tokens d'auth)
 api.interceptors.request.use(
   (config) => {
-    // Ici on pourra ajouter les tokens d'authentification plus tard
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    // Ajouter le token d'authentification depuis localStorage
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => {
@@ -35,7 +35,14 @@ api.interceptors.response.use(
       // window.location.href = '/login'
     }
     
-    // Log des erreurs pour debug
+    // Ne pas logger les erreurs 401 pour les notifications pour éviter le spam
+    const isNotificationEndpoint = error.config?.url?.includes('/notifications')
+    if (error.response?.status === 401 && isNotificationEndpoint) {
+      // Ignorer silencieusement les erreurs 401 sur les notifications
+      return Promise.reject(error)
+    }
+    
+    // Log des erreurs pour debug (sauf les 401 sur notifications)
     console.error('API Error:', {
       url: error.config?.url,
       method: error.config?.method,

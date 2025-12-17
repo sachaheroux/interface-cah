@@ -55,15 +55,29 @@ export default function TopNavigation() {
 
   // Charger les notifications
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    // Vérifier que l'utilisateur est authentifié et a un token
+    const token = localStorage.getItem('auth_token')
+    if (user && user.role === 'admin' && token) {
       loadNotifications()
       // Recharger toutes les 30 secondes
-      const interval = setInterval(loadNotifications, 30000)
+      const interval = setInterval(() => {
+        // Vérifier à nouveau le token avant chaque requête
+        const currentToken = localStorage.getItem('auth_token')
+        if (currentToken) {
+          loadNotifications()
+        }
+      }, 30000)
       return () => clearInterval(interval)
     }
   }, [user])
 
   const loadNotifications = async () => {
+    // Vérifier que le token existe avant de faire la requête
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      return
+    }
+
     try {
       setLoadingNotifications(true)
       const response = await notificationsService.getNotifications(false, 10) // 10 dernières non lues
@@ -72,7 +86,11 @@ export default function TopNavigation() {
         setUnreadCount(response.data.unread_count || 0)
       }
     } catch (error) {
-      console.error('Erreur chargement notifications:', error)
+      // Ne pas logger les erreurs 401 pour éviter le spam dans la console
+      // Si l'utilisateur n'est plus authentifié, on arrête simplement de charger
+      if (error.response?.status !== 401) {
+        console.error('Erreur chargement notifications:', error)
+      }
     } finally {
       setLoadingNotifications(false)
     }
