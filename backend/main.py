@@ -155,7 +155,7 @@ class UnitUpdate_transactionFrancais(BaseModel):
     notes: Optional[str] = None
 
 class TenantCreateFrancais(BaseModel):
-    id_unite: int
+    # id_unite supprimé - l'unité est assignée via le bail
     nom: str
     prenom: str
     email: str = ""
@@ -634,8 +634,8 @@ async def create_tenant_with_lease(data: dict):
         
         # 1. CRÉER LE LOCATAIRE (informations personnelles uniquement)
         # Mapper les champs anglais vers français pour le service
+        # id_unite supprimé - l'unité est assignée via le bail
         tenant_data_francais = {
-            "id_unite": lease_data.get("unitId"),
             "nom": tenant_data.get("nom", ""),
             "prenom": tenant_data.get("prenom", ""),
             "email": tenant_data.get("email", ""),
@@ -673,10 +673,17 @@ async def create_tenant_with_lease(data: dict):
             raise HTTPException(status_code=400, detail="La date_transaction de fin du bail est obligatoire")
         
         # Créer le bail via le service
+        # Le bail doit maintenant inclure id_unite (nouvelle structure)
+        # Convertir les dates du format reçu vers le format attendu
+        unit_id = lease_data.get("unitId")
+        if not unit_id:
+            raise HTTPException(status_code=400, detail="L'unité (unitId) est obligatoire pour créer le bail")
+        
         lease_data_francais = {
             "id_locataire": tenant_id,
-            "date_transaction_debut": lease_data_cleaned.get("leaseStartDate"),
-            "date_transaction_fin": lease_data_cleaned.get("leaseEndDate"),
+            "id_unite": unit_id,  # L'unité est maintenant sur le bail
+            "date_debut": lease_data_cleaned.get("leaseStartDate"),
+            "date_fin": lease_data_cleaned.get("leaseEndDate"),
             "prix_loyer": lease_data_cleaned.get("rentAmount", 0),
             "methode_paiement": lease_data_cleaned.get("paymentMethod", "Virement bancaire"),
             "pdf_bail": lease_data_cleaned.get("pdfLease", "")
