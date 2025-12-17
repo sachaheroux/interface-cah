@@ -369,27 +369,30 @@ export default function TenantDetails({ tenant, isOpen, onClose, onEdit, onDelet
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            Fermer
-          </button>
-          <button
-            onClick={() => onEdit(tenant)}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Modifier
-          </button>
+        <div className="flex justify-between items-center p-6 border-t bg-gray-50">
           <button
             onClick={() => onDelete(tenant)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center"
+            className="px-4 py-2 text-red-600 bg-white border border-red-300 hover:bg-red-50 rounded-lg transition-colors flex items-center text-sm"
+            title="Supprimer ce locataire (action irréversible)"
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
+            Supprimer le locataire
           </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              Fermer
+            </button>
+            <button
+              onClick={() => onEdit(tenant)}
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Modifier
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { tenantsService, assignmentsService } from '../services/api'
 import { getTenantStatusLabel, getTenantStatusColor } from '../types/tenant'
 import TenantForm from '../components/TenantForm'
 import TenantDetails from '../components/TenantDetails'
+import DeleteTenantModal from '../components/DeleteTenantModal'
 
 export default function Tenants() {
   const [tenants, setTenants] = useState([])
@@ -16,6 +17,8 @@ export default function Tenants() {
   const [selectedTenant, setSelectedTenant] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [tenantToDelete, setTenantToDelete] = useState(null)
 
   useEffect(() => {
     fetchTenants()
@@ -146,32 +149,39 @@ export default function Tenants() {
     console.log('⚠️ handleSaveTenant appelée mais ignorée (TenantForm gère directement les API)')
   }
 
-  const handleDeleteTenant = async (tenant) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le locataire "${tenant.nom} ${tenant.prenom}" ?\n\n⚠️ Cette action supprimera également tous les baux associés à ce locataire.`)) {
-      try {
-        console.log(`🗑️ Suppression du locataire: ${tenant.nom} ${tenant.prenom} (ID: ${tenant.id_locataire})`)
-        
-        // Supprimer le locataire (les baux seront supprimés automatiquement via CASCADE)
-        await tenantsService.deleteTenant(tenant.id_locataire)
-        
-        // Mettre à jour l'interface
-        setTenants(prev => prev.filter(t => t.id_locataire !== tenant.id_locataire))
-        setShowDetails(false)
-        
-        console.log(`✅ Locataire ${tenant.nom} ${tenant.prenom} supprimé avec succès`)
-        
-        // Recharger la liste complète pour s'assurer que tout est à jour
-        fetchTenants()
-        
-        // Déclencher un événement pour actualiser les autres vues
-        window.dispatchEvent(new CustomEvent('tenantDeleted', { 
-          detail: { tenantId: tenant.id_locataire, tenantName: `${tenant.nom} ${tenant.prenom}` } 
-        }))
-        
-      } catch (error) {
-        console.error('❌ Erreur lors de la suppression:', error)
-        alert(`Erreur lors de la suppression du locataire "${tenant.nom} ${tenant.prenom}".\n\n${error.message || 'Vérifiez la console pour plus de détails.'}`)
-      }
+  const handleDeleteClick = (tenant) => {
+    setTenantToDelete(tenant)
+    setShowDeleteModal(true)
+    setShowDetails(false) // Fermer la modale de détails si elle est ouverte
+  }
+
+  const handleConfirmDelete = async (tenant) => {
+    try {
+      console.log(`🗑️ Suppression du locataire: ${tenant.nom} ${tenant.prenom} (ID: ${tenant.id_locataire})`)
+      
+      // Supprimer le locataire (les baux seront supprimés automatiquement via CASCADE)
+      await tenantsService.deleteTenant(tenant.id_locataire)
+      
+      // Mettre à jour l'interface
+      setTenants(prev => prev.filter(t => t.id_locataire !== tenant.id_locataire))
+      
+      console.log(`✅ Locataire ${tenant.nom} ${tenant.prenom} supprimé avec succès`)
+      
+      // Recharger la liste complète pour s'assurer que tout est à jour
+      fetchTenants()
+      
+      // Déclencher un événement pour actualiser les autres vues
+      window.dispatchEvent(new CustomEvent('tenantDeleted', { 
+        detail: { tenantId: tenant.id_locataire, tenantName: `${tenant.nom} ${tenant.prenom}` } 
+      }))
+      
+      // Fermer la modale de suppression
+      setShowDeleteModal(false)
+      setTenantToDelete(null)
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression:', error)
+      alert(`Erreur lors de la suppression du locataire "${tenant.nom} ${tenant.prenom}".\n\n${error.message || 'Vérifiez la console pour plus de détails.'}`)
     }
   }
 
@@ -315,7 +325,7 @@ export default function Tenants() {
                   Modifier
                 </button>
                 <button 
-                  onClick={() => handleDeleteTenant(tenant)}
+                  onClick={() => handleDeleteClick(tenant)}
                   className="px-3 py-2 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-700 dark:text-red-300 rounded-lg transition-colors text-sm"
                   title="Supprimer le locataire"
                 >
@@ -363,7 +373,19 @@ export default function Tenants() {
           isOpen={showDetails}
           onClose={handleCloseDetails}
           onEdit={handleEditTenant}
-          onDelete={handleDeleteTenant}
+          onDelete={handleDeleteClick}
+        />
+      )}
+      
+      {showDeleteModal && (
+        <DeleteTenantModal
+          tenant={tenantToDelete}
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false)
+            setTenantToDelete(null)
+          }}
+          onConfirm={handleConfirmDelete}
         />
       )}
     </div>
