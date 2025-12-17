@@ -4,6 +4,7 @@ import { X, Save, FileText, Calendar, DollarSign, User, Home } from 'lucide-reac
 export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
     id_locataire: '',
+    id_unite: '',
     date_debut: '',
     date_fin: '',
     prix_loyer: 0,
@@ -60,6 +61,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     if (lease) {
       setFormData({
         id_locataire: lease.id_locataire || '',
+        id_unite: lease.id_unite || (lease.locataire?.unite?.id_unite || ''),
         date_debut: lease.date_debut || '',
         date_fin: lease.date_fin || '',
         prix_loyer: lease.prix_loyer || 0,
@@ -78,6 +80,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     } else {
       setFormData({
         id_locataire: '',
+        id_unite: '',
         date_debut: '',
         date_fin: '',
         prix_loyer: 0,
@@ -223,6 +226,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     const errors = {}
     
     if (!formData.id_locataire) errors.id_locataire = 'Le locataire est obligatoire'
+    if (!formData.id_unite) errors.id_unite = 'L\'unité est obligatoire'
     if (!formData.date_debut) errors.date_debut = 'La date de début est obligatoire'
     if (!formData.date_fin) errors.date_fin = 'La date de fin est obligatoire'
     if (!formData.prix_loyer || formData.prix_loyer <= 0) errors.prix_loyer = 'Le prix du loyer doit être supérieur à 0'
@@ -245,6 +249,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     try {
       const leaseData = {
         id_locataire: parseInt(formData.id_locataire),
+        id_unite: parseInt(formData.id_unite),
         date_debut: formData.date_debut,
         date_fin: formData.date_fin,
         prix_loyer: parseFloat(formData.prix_loyer),
@@ -330,6 +335,27 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Sélection de l'unité */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Home className="h-4 w-4 inline mr-2" />
+              Unité *
+            </label>
+            <select
+              value={formData.id_unite}
+              onChange={(e) => handleChange('id_unite', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              required
+            >
+              <option value="">Sélectionner une unité</option>
+              {availableUnits.map((unit) => (
+                <option key={unit.id_unite} value={unit.id_unite}>
+                  {unit.adresse_unite} ({unit.type})
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Sélection du locataire */}
           <div className="relative tenant-search-container">
             <label className="block text-sm font-medium text-gray-700 mb-2">

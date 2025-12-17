@@ -522,15 +522,17 @@ class DatabaseServiceFrancais:
         try:
             with self.get_session() as session:
                 # Utiliser joinedload pour charger toutes les relations
+                # Maintenant l'unité est directement sur le bail, pas sur le locataire
                 leases = session.query(Bail).options(
-                    joinedload(Bail.locataire).joinedload(Locataire.unite).joinedload(Unite.immeuble)
+                    joinedload(Bail.locataire),
+                    joinedload(Bail.unite).joinedload(Unite.immeuble)
                 ).all()
                 
                 result = []
                 for lease in leases:
                     lease_dict = lease.to_dict()
                     
-                    # Ajouter les informations du locataire avec son unité et immeuble
+                    # Ajouter les informations du locataire
                     if lease.locataire:
                         locataire_data = {
                             'id_locataire': lease.locataire.id_locataire,
@@ -540,40 +542,51 @@ class DatabaseServiceFrancais:
                             'telephone': lease.locataire.telephone,
                             'statut': lease.locataire.statut
                         }
-                        
-                        # Ajouter les informations de l'unité directement dans le locataire
-                        if lease.locataire.unite:
-                            locataire_data['unite'] = {
-                                'id_unite': lease.locataire.unite.id_unite,
-                                'adresse_unite': lease.locataire.unite.adresse_unite,
-                                'type': lease.locataire.unite.type,
-                                'nbr_chambre': lease.locataire.unite.nbr_chambre,
-                                'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain,
-                                'id_immeuble': lease.locataire.unite.id_immeuble
-                            }
-                            
-                            # Ajouter les informations de l'immeuble
-                            if lease.locataire.unite.immeuble:
-                                locataire_data['unite']['immeuble'] = {
-                                    'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
-                                    'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
-                                    'adresse': lease.locataire.unite.immeuble.adresse
-                                }
-                        
                         lease_dict['locataire'] = locataire_data
+                    
+                    # Ajouter les informations de l'unité directement depuis le bail
+                    if lease.unite:
+                        unite_data = {
+                            'id_unite': lease.unite.id_unite,
+                            'adresse_unite': lease.unite.adresse_unite,
+                            'type': lease.unite.type,
+                            'nbr_chambre': lease.unite.nbr_chambre,
+                            'nbr_salle_de_bain': lease.unite.nbr_salle_de_bain,
+                            'id_immeuble': lease.unite.id_immeuble
+                        }
+                        
+                        # Ajouter les informations de l'immeuble
+                        if lease.unite.immeuble:
+                            unite_data['immeuble'] = {
+                                'id_immeuble': lease.unite.immeuble.id_immeuble,
+                                'nom_immeuble': lease.unite.immeuble.nom_immeuble,
+                                'adresse': lease.unite.immeuble.adresse
+                            }
+                        
+                        # Ajouter l'unité dans le locataire pour compatibilité avec le frontend
+                        if lease_dict.get('locataire'):
+                            lease_dict['locataire']['unite'] = unite_data
+                        else:
+                            lease_dict['unite'] = unite_data
                     
                     result.append(lease_dict)
                 
                 return result
         except Exception as e:
             print(f"❌ Erreur lors de la récupération des baux: {e}")
+            import traceback
+            traceback.print_exc()
             raise e
     
     def get_lease(self, lease_id: int) -> Optional[Dict[str, Any]]:
         """Récupérer un bail par ID avec les informations des locataires et unités"""
         try:
             with self.get_session() as session:
-                lease = session.query(Bail).join(Locataire, Bail.id_locataire == Locataire.id_locataire).join(Unite, Locataire.id_unite == Unite.id_unite).filter(Bail.id_bail == lease_id).first()
+                # Utiliser joinedload au lieu de join pour éviter les problèmes
+                lease = session.query(Bail).options(
+                    joinedload(Bail.locataire),
+                    joinedload(Bail.unite).joinedload(Unite.immeuble)
+                ).filter(Bail.id_bail == lease_id).first()
                 
                 if not lease:
                     return None
@@ -582,7 +595,7 @@ class DatabaseServiceFrancais:
                 
                 # Ajouter les informations du locataire
                 if lease.locataire:
-                    lease_dict['locataire'] = {
+                    locataire_data = {
                         'id_locataire': lease.locataire.id_locataire,
                         'nom': lease.locataire.nom,
                         'prenom': lease.locataire.prenom,
@@ -590,40 +603,46 @@ class DatabaseServiceFrancais:
                         'telephone': lease.locataire.telephone,
                         'statut': lease.locataire.statut
                     }
+                    lease_dict['locataire'] = locataire_data
                 
-                # Ajouter les informations de l'unité
-                if lease.locataire and lease.locataire.unite:
-                    lease_dict['unite'] = {
-                        'id_unite': lease.locataire.unite.id_unite,
-                        'adresse_unite': lease.locataire.unite.adresse_unite,
-                        'type': lease.locataire.unite.type,
-                        'nbr_chambre': lease.locataire.unite.nbr_chambre,
-                        'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain
+                # Ajouter les informations de l'unité directement depuis le bail
+                if lease.unite:
+                    unite_data = {
+                        'id_unite': lease.unite.id_unite,
+                        'adresse_unite': lease.unite.adresse_unite,
+                        'type': lease.unite.type,
+                        'nbr_chambre': lease.unite.nbr_chambre,
+                        'nbr_salle_de_bain': lease.unite.nbr_salle_de_bain,
+                        'id_immeuble': lease.unite.id_immeuble
                     }
                     
                     # Ajouter les informations de l'immeuble
-                    if lease.locataire.unite.immeuble:
-                        lease_dict['unite']['immeuble'] = {
-                            'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
-                            'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
-                            'adresse': lease.locataire.unite.immeuble.adresse
+                    if lease.unite.immeuble:
+                        unite_data['immeuble'] = {
+                            'id_immeuble': lease.unite.immeuble.id_immeuble,
+                            'nom_immeuble': lease.unite.immeuble.nom_immeuble,
+                            'adresse': lease.unite.immeuble.adresse
                         }
+                    
+                    # Ajouter l'unité dans le locataire pour compatibilité avec le frontend
+                    if lease_dict.get('locataire'):
+                        lease_dict['locataire']['unite'] = unite_data
+                    else:
+                        lease_dict['unite'] = unite_data
                 
                 return lease_dict
         except Exception as e:
             print(f"❌ Erreur lors de la récupération du bail: {e}")
             raise e
 
-    def check_lease_overlap(self, session, id_locataire: int, date_debut, date_fin, exclude_lease_id: int = None) -> bool:
-        """Vérifier s'il y a un chevauchement de baux pour un locataire"""
-        # Récupérer le locataire pour obtenir l'unité
-        locataire = session.query(Locataire).filter(Locataire.id_locataire == id_locataire).first()
-        if not locataire or not locataire.id_unite:
+    def check_lease_overlap(self, session, id_unite: int, date_debut, date_fin, exclude_lease_id: int = None) -> bool:
+        """Vérifier s'il y a un chevauchement de baux pour une unité"""
+        if not id_unite:
             return False  # Pas d'unité, pas de chevauchement possible
         
-        # Chercher tous les baux pour la même unité
-        query = session.query(Bail).join(Locataire).filter(
-            Locataire.id_unite == locataire.id_unite,
+        # Chercher tous les baux pour la même unité (maintenant directement depuis Bail.id_unite)
+        query = session.query(Bail).filter(
+            Bail.id_unite == id_unite,
             Bail.date_debut.isnot(None),
             Bail.date_fin.isnot(None)
         )
@@ -655,14 +674,20 @@ class DatabaseServiceFrancais:
                 date_fin = datetime.strptime(lease_data.get('date_fin'), '%Y-%m-%d').date() if lease_data.get('date_fin') else None
                 id_locataire = lease_data.get('id_locataire')
                 
+                # Récupérer id_unite depuis lease_data (maintenant requis)
+                id_unite = lease_data.get('id_unite')
+                if not id_unite:
+                    raise ValueError("id_unite est requis pour créer un bail")
+                
                 # Vérifier les chevauchements
-                if date_debut and date_fin and id_locataire:
-                    if self.check_lease_overlap(session, id_locataire, date_debut, date_fin):
+                if date_debut and date_fin and id_unite:
+                    if self.check_lease_overlap(session, id_unite, date_debut, date_fin):
                         raise ValueError("Un bail existe déjà pour cette unité durant cette période. Les baux ne peuvent pas se chevaucher.")
                 
                 # Utiliser directement les données françaises du frontend
                 lease = Bail(
                     id_locataire=id_locataire,
+                    id_unite=id_unite,
                     date_debut=date_debut,
                     date_fin=date_fin,
                     prix_loyer=lease_data.get('prix_loyer', 0),
@@ -692,12 +717,17 @@ class DatabaseServiceFrancais:
                 new_date_debut = datetime.strptime(update_data['date_debut'], '%Y-%m-%d').date() if 'date_debut' in update_data else lease.date_debut
                 new_date_fin = datetime.strptime(update_data['date_fin'], '%Y-%m-%d').date() if 'date_fin' in update_data else lease.date_fin
                 
+                # Utiliser id_unite depuis update_data si modifié, sinon depuis le bail existant
+                id_unite_to_check = update_data.get('id_unite', lease.id_unite)
+                
                 # Vérifier les chevauchements si les dates changent
-                if ('date_debut' in update_data or 'date_fin' in update_data) and new_date_debut and new_date_fin:
-                    if self.check_lease_overlap(session, lease.id_locataire, new_date_debut, new_date_fin, exclude_lease_id=lease_id):
+                if ('date_debut' in update_data or 'date_fin' in update_data) and new_date_debut and new_date_fin and id_unite_to_check:
+                    if self.check_lease_overlap(session, id_unite_to_check, new_date_debut, new_date_fin, exclude_lease_id=lease_id):
                         raise ValueError("Un bail existe déjà pour cette unité durant cette période. Les baux ne peuvent pas se chevaucher.")
                 
                 # Mettre à jour les champs
+                if 'id_unite' in update_data:
+                    lease.id_unite = update_data['id_unite']
                 if 'date_debut' in update_data:
                     lease.date_debut = new_date_debut
                 if 'date_fin' in update_data:
@@ -926,17 +956,19 @@ class DatabaseServiceFrancais:
                 print(f"🔍 DEBUG - Période: {start_date} à {end_date}")
                 
                 # Approche SQLAlchemy ORM simple avec eager loading
-                leases = session.query(Bail).join(Locataire).join(Unite).filter(
+                # Maintenant l'unité est directement sur le bail
+                leases = session.query(Bail).join(Unite, Bail.id_unite == Unite.id_unite).filter(
                     Unite.id_immeuble.in_(building_ids),
                     Bail.date_debut <= end_date,
                     or_(Bail.date_fin >= start_date, Bail.date_fin.is_(None))
                 ).options(
-                    joinedload(Bail.locataire).joinedload(Locataire.unite)
+                    joinedload(Bail.locataire),
+                    joinedload(Bail.unite).joinedload(Unite.immeuble)
                 ).all()
                 
                 print(f"🔍 DEBUG - Baux trouvés: {len(leases)}")
                 for lease in leases:
-                    building_id = lease.locataire.unite.id_immeuble if lease.locataire and lease.locataire.unite else None
+                    building_id = lease.unite.id_immeuble if lease.unite else None
                     print(f"🔍 DEBUG - Bail: ID {lease.id_bail}, Immeuble: {building_id}, Loyer: {lease.prix_loyer}")
                 
                 return leases
@@ -1101,7 +1133,8 @@ class DatabaseServiceFrancais:
                 start_date = date(start_year, start_month, 1)
                 end_date = date(end_year, end_month, 28)  # Utiliser 28 pour éviter les problèmes de mois
                 
-                paiements = session.query(PaiementLoyer).join(Bail).join(Locataire).join(Unite).filter(
+                # Maintenant l'unité est directement sur le bail, pas sur le locataire
+                paiements = session.query(PaiementLoyer).join(Bail).join(Unite, Bail.id_unite == Unite.id_unite).filter(
                     Unite.id_immeuble.in_(building_ids),
                     PaiementLoyer.annee >= start_year,
                     PaiementLoyer.annee <= end_year,
@@ -1114,7 +1147,8 @@ class DatabaseServiceFrancais:
                         and_(PaiementLoyer.annee == end_year, PaiementLoyer.mois <= end_month)
                     )
                 ).options(
-                    joinedload(PaiementLoyer.bail).joinedload(Bail.locataire).joinedload(Locataire.unite)
+                    joinedload(PaiementLoyer.bail).joinedload(Bail.locataire),
+                    joinedload(PaiementLoyer.bail).joinedload(Bail.unite).joinedload(Unite.immeuble)
                 ).all()
                 
                 return [paiement.to_dict() for paiement in paiements]
