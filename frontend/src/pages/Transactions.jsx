@@ -10,6 +10,7 @@ export default function Transactions() {
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [filterBuilding, setFilterBuilding] = useState('')
   const [buildings, setBuildings] = useState([])
   const [constants, setConstants] = useState({})
 
@@ -21,7 +22,7 @@ export default function Transactions() {
 
   useEffect(() => {
     filterTransactions()
-  }, [transactions, searchTerm, filterCategory])
+  }, [transactions, searchTerm, filterCategory, filterBuilding])
 
   const loadTransactions = async () => {
     try {
@@ -63,6 +64,10 @@ export default function Transactions() {
 
     if (filterCategory) {
       filtered = filtered.filter(transaction => transaction.categorie === filterCategory)
+    }
+
+    if (filterBuilding) {
+      filtered = filtered.filter(transaction => transaction.id_immeuble === parseInt(filterBuilding))
     }
 
     // Trier par date décroissante (plus récent en premier)
@@ -260,12 +265,29 @@ export default function Transactions() {
               ))}
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Immeuble</label>
+            <select
+              value={filterBuilding}
+              onChange={(e) => setFilterBuilding(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Tous les immeubles</option>
+              {buildings.map(building => (
+                <option key={building.id_immeuble} value={building.id_immeuble.toString()}>
+                  {building.nom_immeuble}
+                </option>
+              ))}
+            </select>
+          </div>
           
           <div className="flex items-end">
             <button
               onClick={() => {
                 setSearchTerm('')
                 setFilterCategory('')
+                setFilterBuilding('')
               }}
               className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
             >

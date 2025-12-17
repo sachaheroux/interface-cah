@@ -7,6 +7,8 @@ export default function Leases() {
   const [filteredLeases, setFilteredLeases] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterUnit, setFilterUnit] = useState('')
+  const [units, setUnits] = useState([])
   // États pour les modales
   const [selectedLease, setSelectedLease] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -14,6 +16,7 @@ export default function Leases() {
 
   useEffect(() => {
     fetchLeases()
+    fetchUnits()
   }, [])
 
   // Filtrer les baux
@@ -28,8 +31,12 @@ export default function Leases() {
       )
     }
 
+    if (filterUnit) {
+      filtered = filtered.filter(lease => lease.id_unite === parseInt(filterUnit))
+    }
+
     setFilteredLeases(filtered)
-  }, [leases, searchTerm])
+  }, [leases, searchTerm, filterUnit])
 
   const fetchLeases = async () => {
     try {
@@ -43,6 +50,18 @@ export default function Leases() {
       console.error('Erreur lors du chargement des baux:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchUnits = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
+      if (response.ok) {
+        const data = await response.json()
+        setUnits(data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des unités:', error)
     }
   }
 
@@ -139,8 +158,9 @@ export default function Leases() {
 
       {/* Filtres */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recherche</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <input
@@ -151,6 +171,34 @@ export default function Leases() {
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unité</label>
+            <select
+              value={filterUnit}
+              onChange={(e) => setFilterUnit(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Toutes les unités</option>
+              {units.map(unit => (
+                <option key={unit.id_unite} value={unit.id_unite.toString()}>
+                  {unit.adresse_unite}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterUnit('')
+              }}
+              className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Effacer les filtres
+            </button>
           </div>
         </div>
       </div>
