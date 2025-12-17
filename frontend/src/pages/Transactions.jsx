@@ -55,11 +55,15 @@ export default function Transactions() {
     let filtered = transactions
 
     if (searchTerm) {
-      filtered = filtered.filter(transaction =>
-        transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.categorie?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      filtered = filtered.filter(transaction => {
+        const buildingName = getBuildingName(transaction.id_immeuble).toLowerCase()
+        return (
+          transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          transaction.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          transaction.categorie?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          buildingName.includes(searchTerm.toLowerCase())
+        )
+      })
     }
 
     if (filterCategory) {

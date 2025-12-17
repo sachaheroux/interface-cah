@@ -24,11 +24,18 @@ export default function Leases() {
     let filtered = leases
 
     if (searchTerm) {
-      filtered = filtered.filter(lease => 
-        lease.locataire?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lease.locataire?.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lease.unite?.adresse_unite?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      filtered = filtered.filter(lease => {
+        const searchLower = searchTerm.toLowerCase()
+        const uniteAdresse = lease.unite?.adresse_unite?.toLowerCase() || ''
+        const immeubleNom = lease.unite?.immeuble?.nom_immeuble?.toLowerCase() || ''
+        
+        return (
+          lease.locataire?.nom?.toLowerCase().includes(searchLower) ||
+          lease.locataire?.prenom?.toLowerCase().includes(searchLower) ||
+          uniteAdresse.includes(searchLower) ||
+          immeubleNom.includes(searchLower)
+        )
+      })
     }
 
     if (filterUnit) {
@@ -165,7 +172,7 @@ export default function Leases() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <input
                 type="text"
-                placeholder="Rechercher par locataire ou unité..."
+                placeholder="Rechercher par locataire, unité ou immeuble..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
