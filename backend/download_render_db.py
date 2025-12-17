@@ -84,6 +84,7 @@ def create_local_db():
         CREATE TABLE IF NOT EXISTS baux (
             id_bail INTEGER PRIMARY KEY AUTOINCREMENT,
             id_locataire INTEGER NOT NULL,
+            id_unite INTEGER NOT NULL,
             date_debut DATE NOT NULL,
             date_fin DATE NOT NULL,
             prix_loyer DECIMAL(10, 2) NOT NULL,
@@ -91,7 +92,8 @@ def create_local_db():
             pdf_bail TEXT DEFAULT '',
             date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
             date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (id_locataire) REFERENCES locataires (id_locataire) ON DELETE CASCADE
+            FOREIGN KEY (id_locataire) REFERENCES locataires (id_locataire) ON DELETE CASCADE,
+            FOREIGN KEY (id_unite) REFERENCES unites (id_unite) ON DELETE CASCADE
         )
     """)
     
@@ -255,12 +257,13 @@ def fetch_and_insert_data():
             cursor.execute("DELETE FROM baux")
             for lease in leases:
                 cursor.execute("""
-                    INSERT INTO baux (id_bail, id_locataire, date_debut, date_fin, prix_loyer, 
+                    INSERT INTO baux (id_bail, id_locataire, id_unite, date_debut, date_fin, prix_loyer, 
                                     methode_paiement, pdf_bail, date_creation, date_modification)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     lease.get('id_bail'),
                     lease.get('id_locataire'),
+                    lease.get('id_unite'),  # Maintenant id_unite est directement sur le bail
                     lease.get('date_debut'),
                     lease.get('date_fin'),
                     lease.get('prix_loyer', 0),

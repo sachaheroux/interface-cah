@@ -521,55 +521,106 @@ class DatabaseServiceFrancais:
         """Récupérer tous les baux avec les informations des locataires et unités"""
         try:
             with self.get_session() as session:
-                # Utiliser joinedload pour charger toutes les relations
-                # Maintenant l'unité est directement sur le bail, pas sur le locataire
+                # Charger tous les baux avec leurs locataires
+                # Utiliser une approche plus robuste qui fonctionne même si id_unite n'est pas encore rempli
                 leases = session.query(Bail).options(
-                    joinedload(Bail.locataire),
-                    joinedload(Bail.unite).joinedload(Unite.immeuble)
+                    joinedload(Bail.locataire).joinedload(Locataire.unite).joinedload(Unite.immeuble)
                 ).all()
                 
                 result = []
                 for lease in leases:
-                    lease_dict = lease.to_dict()
-                    
-                    # Ajouter les informations du locataire
-                    if lease.locataire:
-                        locataire_data = {
-                            'id_locataire': lease.locataire.id_locataire,
-                            'nom': lease.locataire.nom,
-                            'prenom': lease.locataire.prenom,
-                            'email': lease.locataire.email,
-                            'telephone': lease.locataire.telephone,
-                            'statut': lease.locataire.statut
-                        }
-                        lease_dict['locataire'] = locataire_data
-                    
-                    # Ajouter les informations de l'unité directement depuis le bail
-                    if lease.unite:
-                        unite_data = {
-                            'id_unite': lease.unite.id_unite,
-                            'adresse_unite': lease.unite.adresse_unite,
-                            'type': lease.unite.type,
-                            'nbr_chambre': lease.unite.nbr_chambre,
-                            'nbr_salle_de_bain': lease.unite.nbr_salle_de_bain,
-                            'id_immeuble': lease.unite.id_immeuble
-                        }
+                    try:
+                        lease_dict = lease.to_dict()
                         
-                        # Ajouter les informations de l'immeuble
-                        if lease.unite.immeuble:
-                            unite_data['immeuble'] = {
-                                'id_immeuble': lease.unite.immeuble.id_immeuble,
-                                'nom_immeuble': lease.unite.immeuble.nom_immeuble,
-                                'adresse': lease.unite.immeuble.adresse
+                        # Ajouter les informations du locataire
+                        if lease.locataire:
+                            locataire_data = {
+                                'id_locataire': lease.locataire.id_locataire,
+                                'nom': lease.locataire.nom,
+                                'prenom': lease.locataire.prenom,
+                                'email': lease.locataire.email,
+                                'telephone': lease.locataire.telephone,
+                                'statut': lease.locataire.statut
                             }
+                            
+                            # Si le bail n'a pas encore id_unite (avant migration), utiliser l'unité du locataire
+                            if not lease.id_unite and lease.locataire.id_unite and lease.locataire.unite:
+                                # Fallback: utiliser l'unité du locataire temporairement
+                                unite_data = {
+                                    'id_unite': lease.locataire.unite.id_unite,
+                                    'adresse_unite': lease.locataire.unite.adresse_unite,
+                                    'type': lease.locataire.unite.type,
+                                    'nbr_chambre': lease.locataire.unite.nbr_chambre,
+                                    'nbr_salle_de_bain': lease.locataire.unite.nbr_salle_de_bain,
+                                    'id_immeuble': lease.locataire.unite.id_immeuble
+                                }
+                                if lease.locataire.unite.immeuble:
+                                    unite_data['immeuble'] = {
+                                        'id_immeuble': lease.locataire.unite.immeuble.id_immeuble,
+                                        'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
+                                        'adresse': lease.locataire.unite.immeuble.adresse
+                                    }
+                                locataire_data['unite'] = unite_data
+                                # Mettre à jour lease_dict pour inclure id_unite
+                                lease_dict['id_unite'] = lease.locataire.unite.id_unite
+                            
+                            lease_dict['locataire'] = locataire_data
                         
-                        # Ajouter l'unité dans le locataire pour compatibilité avec le frontend
-                        if lease_dict.get('locataire'):
-                            lease_dict['locataire']['unite'] = unite_data
-                        else:
-                            lease_dict['unite'] = unite_data
-                    
-                    result.append(lease_dict)
+                        # Ajouter les informations de l'unité directement depuis le bail (si la migration a été faite)
+                        if lease.id_unite:
+                            # Charger l'unité depuis le bail si elle existe
+                            if hasattr(lease, 'unite') and lease.unite:
+                                unite_data = {
+                                    'id_unite': lease.unite.id_unite,
+                                    'adresse_unite': lease.unite.adresse_unite,
+                                    'type': lease.unite.type,
+                                    'nbr_chambre': lease.unite.nbr_chambre,
+                                    'nbr_salle_de_bain': lease.unite.nbr_salle_de_bain,
+                                    'id_immeuble': lease.unite.id_immeuble
+                                }
+                                
+                                if lease.unite.immeuble:
+                                    unite_data['immeuble'] = {
+                                        'id_immeuble': lease.unite.immeuble.id_immeuble,
+                                        'nom_immeuble': lease.unite.immeuble.nom_immeuble,
+                                        'adresse': lease.unite.immeuble.adresse
+                                    }
+                                
+                                # Ajouter l'unité dans le locataire pour compatibilité avec le frontend
+                                if lease_dict.get('locataire'):
+                                    lease_dict['locataire']['unite'] = unite_data
+                                else:
+                                    lease_dict['unite'] = unite_data
+                            else:
+                                # Si l'unité n'est pas chargée, la charger manuellement
+                                unite = session.query(Unite).filter(Unite.id_unite == lease.id_unite).first()
+                                if unite:
+                                    unite_data = {
+                                        'id_unite': unite.id_unite,
+                                        'adresse_unite': unite.adresse_unite,
+                                        'type': unite.type,
+                                        'nbr_chambre': unite.nbr_chambre,
+                                        'nbr_salle_de_bain': unite.nbr_salle_de_bain,
+                                        'id_immeuble': unite.id_immeuble
+                                    }
+                                    if unite.immeuble:
+                                        unite_data['immeuble'] = {
+                                            'id_immeuble': unite.immeuble.id_immeuble,
+                                            'nom_immeuble': unite.immeuble.nom_immeuble,
+                                            'adresse': unite.immeuble.adresse
+                                        }
+                                    if lease_dict.get('locataire'):
+                                        lease_dict['locataire']['unite'] = unite_data
+                                    else:
+                                        lease_dict['unite'] = unite_data
+                        
+                        result.append(lease_dict)
+                    except Exception as lease_error:
+                        print(f"⚠️ Erreur lors du traitement du bail {lease.id_bail}: {lease_error}")
+                        import traceback
+                        traceback.print_exc()
+                        # Continuer avec les autres baux même si celui-ci échoue
+                        continue
                 
                 return result
         except Exception as e:
