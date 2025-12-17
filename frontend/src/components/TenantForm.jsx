@@ -9,77 +9,22 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     email: '',
     telephone: '',
     statut: TenantStatus.ACTIVE,
-    id_unite: '',
-    unitInfo: null,
     notes: ''
   })
 
   const [loading, setLoading] = useState(false)
-  const [availableUnits, setAvailableUnits] = useState([])
-  const [loadingUnits, setLoadingUnits] = useState(false)
-  const [unitSearchTerm, setUnitSearchTerm] = useState('')
-  const [filteredUnits, setFilteredUnits] = useState([])
 
-  // Charger les unités disponibles
-  useEffect(() => {
-    if (isOpen) {
-      loadUnits()
-    }
-  }, [isOpen])
-
-  // Filtrer les unités selon le terme de recherche
-  useEffect(() => {
-    if (unitSearchTerm.trim() === '') {
-      setFilteredUnits(availableUnits)
-    } else {
-      const filtered = availableUnits.filter(unit =>
-        unit.adresse_unite.toLowerCase().includes(unitSearchTerm.toLowerCase()) ||
-        unit.immeuble?.nom_immeuble?.toLowerCase().includes(unitSearchTerm.toLowerCase())
-      )
-      setFilteredUnits(filtered)
-    }
-  }, [unitSearchTerm, availableUnits])
-
-  // Charger les unités
-  const loadUnits = async () => {
-    setLoadingUnits(true)
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/units`)
-      if (response.ok) {
-        const data = await response.json()
-        setAvailableUnits(data.data || [])
-        setFilteredUnits(data.data || [])
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des unités:', error)
-    } finally {
-      setLoadingUnits(false)
-    }
-  }
-
-  // Initialiser le formulaire et charger l'unité si nécessaire
+  // Initialiser le formulaire
   useEffect(() => {
     if (tenant) {
-      const initialData = {
+      setFormData({
         nom: tenant.nom || '',
         prenom: tenant.prenom || '',
         email: tenant.email || '',
         telephone: tenant.telephone || '',
         statut: tenant.statut || TenantStatus.ACTIVE,
-        id_unite: tenant.id_unite || '',
-        unitInfo: tenant.unitInfo || null,
         notes: tenant.notes || ''
-      }
-      
-      // Si on a un id_unite mais pas d'unitInfo, chercher l'unité dans la liste
-      if (initialData.id_unite && !initialData.unitInfo && availableUnits.length > 0) {
-        const foundUnit = availableUnits.find(unit => unit.id_unite === initialData.id_unite)
-        if (foundUnit) {
-          initialData.unitInfo = foundUnit
-        }
-      }
-      
-      setFormData(initialData)
+      })
     } else {
       setFormData({
         nom: '',
@@ -87,12 +32,10 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         email: '',
         telephone: '',
         statut: TenantStatus.ACTIVE,
-        id_unite: '',
-        unitInfo: null,
         notes: ''
       })
     }
-  }, [tenant, isOpen, availableUnits])
+  }, [tenant, isOpen])
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -101,21 +44,6 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
     }))
   }
 
-  const handleUnitSelect = (unit) => {
-    setFormData(prev => ({
-      ...prev,
-      id_unite: unit.id_unite,
-      unitInfo: unit
-    }))
-  }
-
-  const handleUnitDeselect = () => {
-    setFormData(prev => ({
-      ...prev,
-      id_unite: '',
-      unitInfo: null
-    }))
-  }
 
   const validateForm = () => {
     const errors = {}
@@ -146,7 +74,7 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         email: formData.email.trim(),
         telephone: formData.telephone.trim(),
         statut: formData.statut,
-        id_unite: formData.id_unite ? parseInt(formData.id_unite) : null,
+        // id_unite supprimé - l'unité est assignée via le bail
         notes: formData.notes.trim()
       }
 
@@ -309,87 +237,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Sélection d'unité */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Home className="h-5 w-5 mr-2" />
-                Unité assignée
-              </h3>
-              {formData.id_unite && (
-                <button
-                  type="button"
-                  onClick={handleUnitDeselect}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium"
-                >
-                  Retirer l'unité
-                </button>
-              )}
-            </div>
-            
-            {formData.id_unite ? (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">{formData.unitInfo?.adresse_unite || 'Unité sélectionnée'}</p>
-                    <p className="text-sm text-gray-600">{formData.unitInfo?.immeuble?.nom_immeuble}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleUnitDeselect}
-                    className="text-red-600 hover:text-red-700"
-                    title="Retirer l'unité"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rechercher une unité
-                  </label>
-                  <input
-                    type="text"
-                    value={unitSearchTerm}
-                    onChange={(e) => setUnitSearchTerm(e.target.value)}
-                    placeholder="Tapez pour rechercher une unité..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-
-                {loadingUnits ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="text-sm text-gray-600 mt-2">Chargement des unités...</p>
-                  </div>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                    {filteredUnits.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500">
-                        Aucune unité trouvée
-                      </div>
-                    ) : (
-                      filteredUnits.map((unit) => (
-                        <div
-                          key={unit.id_unite}
-                          onClick={() => handleUnitSelect(unit)}
-                          className="p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900">{unit.adresse_unite}</p>
-                              <p className="text-sm text-gray-600">{unit.immeuble?.nom_immeuble}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+          {/* Note sur l'assignation d'unité */}
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Note :</strong> L'unité est assignée via le bail. Créez ou modifiez un bail pour assigner une unité à ce locataire.
+            </p>
           </div>
 
           {/* Notes */}

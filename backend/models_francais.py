@@ -90,7 +90,7 @@ class Unite(Base):
     
     # Relations
     immeuble = relationship("Immeuble", back_populates="unites", lazy="select")
-    locataires = relationship("Locataire", back_populates="unite", lazy="select")
+    # locataires a été supprimé - on trouve les locataires via les baux actifs
     baux = relationship("Bail", back_populates="unite", lazy="select", cascade="all, delete-orphan")
     
     def to_dict(self):
@@ -111,7 +111,7 @@ class Locataire(Base):
     __tablename__ = "locataires"
     
     id_locataire = Column(Integer, primary_key=True, index=True)
-    id_unite = Column(Integer, ForeignKey("unites.id_unite", ondelete="CASCADE"), nullable=True, index=True)
+    # id_unite a été supprimé - on trouve l'unité via le bail actif
     nom = Column(String(255), nullable=False, index=True)
     prenom = Column(String(255), nullable=True)
     email = Column(String(255), index=True)
@@ -122,14 +122,14 @@ class Locataire(Base):
     date_modification = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations
-    unite = relationship("Unite", back_populates="locataires", lazy="select")
+    # unite a été supprimé - on trouve l'unité via les baux
     baux = relationship("Bail", back_populates="locataire", lazy="select", cascade="all, delete-orphan")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
         return {
             "id_locataire": self.id_locataire,
-            "id_unite": self.id_unite,
+            # id_unite supprimé - trouver via le bail actif
             "nom": self.nom,
             "prenom": self.prenom,
             "email": self.email,

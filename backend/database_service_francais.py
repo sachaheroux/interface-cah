@@ -167,10 +167,13 @@ class DatabaseServiceFrancais:
     # ========================================
     
     def get_units(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
-        """Récupérer toutes les unités avec les informations des locataires"""
+        """Récupérer toutes les unités avec les informations des locataires via les baux actifs"""
         try:
             with self.get_session() as session:
                 units = session.query(Unite).offset(skip).limit(limit).all()
+                
+                # Récupérer la date actuelle pour trouver les baux actifs
+                today = date.today()
                 
                 result = []
                 for unit in units:
@@ -184,21 +187,26 @@ class DatabaseServiceFrancais:
                             'adresse': unit.immeuble.adresse
                         }
                     
-                    # Ajouter les informations des locataires
-                    if unit.locataires:
-                        unit_dict['locataires'] = []
-                        for locataire in unit.locataires:
+                    # Trouver les locataires via les baux actifs pour cette unité
+                    # Un bail est actif si date_debut <= today <= date_fin (ou date_fin est NULL)
+                    active_leases = session.query(Bail).filter(
+                        Bail.id_unite == unit.id_unite,
+                        Bail.date_debut <= today,
+                        or_(Bail.date_fin >= today, Bail.date_fin.is_(None))
+                    ).options(joinedload(Bail.locataire)).all()
+                    
+                    unit_dict['locataires'] = []
+                    for lease in active_leases:
+                        if lease.locataire:
                             locataire_info = {
-                                'id_locataire': locataire.id_locataire,
-                                'nom': locataire.nom,
-                                'prenom': locataire.prenom,
-                                'email': locataire.email,
-                                'telephone': locataire.telephone,
-                                'statut': locataire.statut
+                                'id_locataire': lease.locataire.id_locataire,
+                                'nom': lease.locataire.nom,
+                                'prenom': lease.locataire.prenom,
+                                'email': lease.locataire.email,
+                                'telephone': lease.locataire.telephone,
+                                'statut': lease.locataire.statut
                             }
                             unit_dict['locataires'].append(locataire_info)
-                    else:
-                        unit_dict['locataires'] = []
                     
                     result.append(unit_dict)
                 
@@ -324,8 +332,8 @@ class DatabaseServiceFrancais:
         try:
             with self.get_session() as session:
                 # Utiliser directement les données françaises du frontend
+                # id_unite n'est plus utilisé - l'unité est assignée via le bail
                 tenant = Locataire(
-                    id_unite=tenant_data.get('id_unite'),
                     nom=tenant_data.get('nom', ''),
                     prenom=tenant_data.get('prenom', ''),
                     email=tenant_data.get('email', ''),
@@ -365,9 +373,7 @@ class DatabaseServiceFrancais:
                     tenant.statut = update_data['statut']
                 if 'notes' in update_data:
                     tenant.notes = update_data['notes']
-                if 'id_unite' in update_data:
-                    # Permettre de mettre id_unite à None pour désélectionner l'unité
-                    tenant.id_unite = update_data['id_unite'] if update_data['id_unite'] else None
+                # id_unite n'est plus utilisé - l'unité est assignée via le bail
                 
                 tenant.date_modification = datetime.utcnow()
                 session.commit()

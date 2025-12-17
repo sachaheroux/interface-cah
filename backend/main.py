@@ -2356,6 +2356,46 @@ async def migrate_dette_restante():
 # ENDPOINT MIGRATION BAIL ID_UNITE
 # ==========================================
 
+@app.post("/api/migrate/remove-locataire-id-unite")
+async def migrate_remove_locataire_id_unite_endpoint():
+    """
+    Endpoint pour exécuter la migration : supprimer id_unite de la table locataires
+    Après la migration bail-add-id-unite, les baux ont maintenant id_unite directement.
+    Les locataires n'ont plus besoin de id_unite car on peut trouver leur unité via leur bail actif.
+    """
+    try:
+        from migrate_remove_locataire_id_unite import migrate_remove_locataire_id_unite
+        
+        print("\n" + "="*70)
+        print("🚀 DÉMARRAGE DE LA MIGRATION : Supprimer id_unite de locataires")
+        print("="*70)
+        
+        success = migrate_remove_locataire_id_unite()
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Migration réussie ! La colonne id_unite a été supprimée de locataires.",
+                "details": "Les locataires sont maintenant liés aux unités uniquement via leurs baux actifs."
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Migration échouée. Vérifiez les logs pour plus de détails.",
+                "details": "Une sauvegarde a été créée dans le répertoire de migrations."
+            }
+            
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Erreur lors de la migration: {e}")
+        print(error_details)
+        return {
+            "success": False,
+            "message": f"Erreur lors de la migration: {str(e)}",
+            "error": error_details
+        }
+
 @app.post("/api/migrate/bail-add-id-unite")
 async def migrate_bail_add_id_unite_endpoint():
     """

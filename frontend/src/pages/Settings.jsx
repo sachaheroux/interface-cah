@@ -540,15 +540,31 @@ export default function Settings() {
                 Gérez les sauvegardes et la restauration des données de votre application.
               </p>
               
-              {/* Migration Bail ID_Unite */}
+              {/* Migrations Base de Données */}
               <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
+                <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-3">
                   Migration Base de Données
                 </h4>
-                <p className="text-xs text-yellow-800 dark:text-yellow-400 mb-3">
-                  Migration : Ajouter id_unite à la table baux (pour garder l'historique des unités par bail)
-                </p>
-                <MigrationButton />
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-yellow-800 dark:text-yellow-400 mb-2">
+                      <strong>Étape 1 :</strong> Ajouter id_unite à la table baux (pour garder l'historique des unités par bail)
+                    </p>
+                    <MigrationButton 
+                      endpoint="/api/migrate/bail-add-id-unite"
+                      description="Cette migration ajoute la colonne id_unite à la table baux et migre les données depuis locataires."
+                    />
+                  </div>
+                  <div className="border-t border-yellow-300 dark:border-yellow-700 pt-4">
+                    <p className="text-xs text-yellow-800 dark:text-yellow-400 mb-2">
+                      <strong>Étape 2 :</strong> Supprimer id_unite de la table locataires (après l'étape 1)
+                    </p>
+                    <MigrationButton 
+                      endpoint="/api/migrate/remove-locataire-id-unite"
+                      description="Cette migration supprime la colonne id_unite de la table locataires. Les locataires seront liés aux unités uniquement via leurs baux actifs."
+                    />
+                  </div>
+                </div>
               </div>
               
               <div className="space-y-4">
@@ -770,12 +786,12 @@ function NotificationsHistory({ onClose, navigate }) {
 }
 
 // Composant pour le bouton de migration
-function MigrationButton() {
+function MigrationButton({ endpoint, description }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
   const handleMigration = async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir exécuter cette migration ?\n\nUne sauvegarde sera créée automatiquement avant la migration.')) {
+    if (!window.confirm(`Êtes-vous sûr de vouloir exécuter cette migration ?\n\n${description}\n\nUne sauvegarde sera créée automatiquement avant la migration.`)) {
       return
     }
 
@@ -784,7 +800,7 @@ function MigrationButton() {
 
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await api.post('/api/migrate/bail-add-id-unite', {}, {
+      const response = await api.post(endpoint, {}, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 300000 // 5 minutes
       })

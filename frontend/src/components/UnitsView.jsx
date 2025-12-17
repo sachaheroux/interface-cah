@@ -27,15 +27,60 @@ export default function UnitsView({ buildings, onBuildingUpdated }) {
   const [showAddUnitForm, setShowAddUnitForm] = useState(false)
   const [selectedBuildingForUnit, setSelectedBuildingForUnit] = useState(null)
 
-  // Charger les locataires depuis le backend
+  // Charger les baux actifs depuis le backend pour trouver les locataires par unité
   const loadTenants = async () => {
     try {
       setLoadingAssignments(true)
-      const response = await tenantsService.getTenants()
-      const tenantsData = response.data || []
-      setAssignments(tenantsData) // Utiliser les locataires comme "assignments"
+      // Récupérer les baux actifs pour trouver les locataires par unité
+      const today = new Date().toISOString().split('T')[0]
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leases`)
+      if (response.ok) {
+        const data = await response.json()
+        const leases = data.data || []
+        
+        // Filtrer les baux actifs (date_debut <= today <= date_fin ou date_fin est NULL)
+        const activeLeases = leases.filter(lease => {
+          if (!lease.date_debut) return false
+          const dateDebut = new Date(lease.date_debut)
+          const dateFin = lease.date_fin ? new Date(lease.date_fin) : null
+          const todayDate = new Date(today)
+          
+          return dateDebut <= todayDate && (dateFin === null || dateFin >= todayDate)
+        })
+        
+        // Créer un mapping unit -> locataires via les baux actifs
+        const unitTenantsMap = {}
+        activeLeases.forEach(lease => {
+          if (lease.id_unite && lease.locataire) {
+            if (!unitTenantsMap[lease.id_unite]) {
+              unitTenantsMap[lease.id_unite] = []
+            }
+            unitTenantsMap[lease.id_unite].push({
+              id_locataire: lease.locataire.id_locataire,
+              nom: lease.locataire.nom,
+              prenom: lease.locataire.prenom,
+              email: lease.locataire.email,
+              telephone: lease.locataire.telephone,
+              statut: lease.locataire.statut,
+              id_unite: lease.id_unite // Pour compatibilité avec le code existant
+            })
+          }
+        })
+        
+        // Convertir le mapping en liste pour compatibilité
+        const assignments = []
+        Object.keys(unitTenantsMap).forEach(id_unite => {
+          unitTenantsMap[id_unite].forEach(tenant => {
+            assignments.push(tenant)
+          })
+        })
+        
+        setAssignments(assignments)
+      } else {
+        setAssignments([])
+      }
     } catch (error) {
-      console.error('Error loading tenants:', error)
+      console.error('Error loading tenants from leases:', error)
       setAssignments([])
     } finally {
       setLoadingAssignments(false)
