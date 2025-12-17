@@ -198,6 +198,7 @@ class TransactionUpdateFrancais(BaseModel):
 
 class LeaseCreateFrancais(BaseModel):
     id_locataire: int
+    id_unite: int  # L'unité est maintenant directement sur le bail
     date_debut: str
     date_fin: str
     prix_loyer: float
@@ -206,6 +207,7 @@ class LeaseCreateFrancais(BaseModel):
 
 class LeaseUpdateFrancais(BaseModel):
     id_locataire: Optional[int] = None
+    id_unite: Optional[int] = None  # Permet de changer l'unité d'un bail
     date_debut: Optional[str] = None
     date_fin: Optional[str] = None
     prix_loyer: Optional[float] = None
