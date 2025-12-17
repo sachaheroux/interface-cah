@@ -19,6 +19,10 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
   const [filteredTenants, setFilteredTenants] = useState([])
   const [showTenantDropdown, setShowTenantDropdown] = useState(false)
   const [selectedTenant, setSelectedTenant] = useState(null)
+  const [unitSearchTerm, setUnitSearchTerm] = useState('')
+  const [filteredUnits, setFilteredUnits] = useState([])
+  const [showUnitDropdown, setShowUnitDropdown] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState(null)
 
   // Charger les données
   useEffect(() => {
@@ -42,11 +46,27 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     }
   }, [tenantSearchTerm, availableTenants])
 
+  // Filtrer les unités selon le terme de recherche
+  useEffect(() => {
+    if (unitSearchTerm.trim() === '') {
+      setFilteredUnits([])
+    } else {
+      const filtered = availableUnits.filter(unit =>
+        unit.adresse_unite?.toLowerCase().includes(unitSearchTerm.toLowerCase()) ||
+        unit.type?.toLowerCase().includes(unitSearchTerm.toLowerCase())
+      )
+      setFilteredUnits(filtered)
+    }
+  }, [unitSearchTerm, availableUnits])
+
   // Fermer le dropdown quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showTenantDropdown && !event.target.closest('.tenant-search-container')) {
         setShowTenantDropdown(false)
+      }
+      if (showUnitDropdown && !event.target.closest('.unit-search-container')) {
+        setShowUnitDropdown(false)
       }
     }
 
@@ -54,7 +74,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showTenantDropdown])
+  }, [showTenantDropdown, showUnitDropdown])
 
   // Initialiser le formulaire
   useEffect(() => {
@@ -77,6 +97,15 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
           setTenantSearchTerm(`${tenant.nom} ${tenant.prenom}`)
         }
       }
+      
+      // Trouver l'unité correspondante pour l'affichage
+      if (lease.id_unite && availableUnits.length > 0) {
+        const unit = availableUnits.find(u => u.id_unite === lease.id_unite)
+        if (unit) {
+          setSelectedUnit(unit)
+          setUnitSearchTerm(unit.adresse_unite)
+        }
+      }
     } else {
       setFormData({
         id_locataire: '',
@@ -89,8 +118,10 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
       })
       setSelectedTenant(null)
       setTenantSearchTerm('')
+      setSelectedUnit(null)
+      setUnitSearchTerm('')
     }
-  }, [lease, isOpen, availableTenants])
+  }, [lease, isOpen, availableTenants, availableUnits])
 
   const loadTenants = async () => {
     try {
@@ -222,6 +253,30 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
     }))
   }
 
+  const handleUnitSearch = (value) => {
+    setUnitSearchTerm(value)
+    setShowUnitDropdown(value.length > 0)
+  }
+
+  const handleUnitSelect = (unit) => {
+    setSelectedUnit(unit)
+    setUnitSearchTerm(unit.adresse_unite)
+    setFormData(prev => ({
+      ...prev,
+      id_unite: unit.id_unite
+    }))
+    setShowUnitDropdown(false)
+  }
+
+  const handleUnitClear = () => {
+    setSelectedUnit(null)
+    setUnitSearchTerm('')
+    setFormData(prev => ({
+      ...prev,
+      id_unite: ''
+    }))
+  }
+
   const validateForm = () => {
     const errors = {}
     
@@ -336,24 +391,70 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Sélection de l'unité */}
-          <div>
+          <div className="relative unit-search-container">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Home className="h-4 w-4 inline mr-2" />
               Unité *
             </label>
-            <select
-              value={formData.id_unite}
-              onChange={(e) => handleChange('id_unite', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              required
-            >
-              <option value="">Sélectionner une unité</option>
-              {availableUnits.map((unit) => (
-                <option key={unit.id_unite} value={unit.id_unite}>
-                  {unit.adresse_unite}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                value={unitSearchTerm}
+                onChange={(e) => handleUnitSearch(e.target.value)}
+                onFocus={() => setShowUnitDropdown(unitSearchTerm.length > 0)}
+                placeholder="Rechercher une unité par adresse..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
+              />
+              {selectedUnit && (
+                <button
+                  type="button"
+                  onClick={handleUnitClear}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Dropdown des résultats */}
+            {showUnitDropdown && filteredUnits.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredUnits.slice(0, 10).map((unit) => (
+                  <div
+                    key={unit.id_unite}
+                    onClick={() => handleUnitSelect(unit)}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {unit.adresse_unite}
+                        </p>
+                        {unit.type && (
+                          <p className="text-sm text-gray-600">
+                            {unit.type}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredUnits.length > 10 && (
+                  <div className="p-2 text-xs text-gray-500 text-center">
+                    ... et {filteredUnits.length - 10} autres résultats
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {showUnitDropdown && filteredUnits.length === 0 && unitSearchTerm.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
+                <p className="text-sm text-gray-500 text-center">
+                  Aucune unité trouvée pour "{unitSearchTerm}"
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Sélection du locataire */}

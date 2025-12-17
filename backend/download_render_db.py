@@ -67,7 +67,6 @@ def create_local_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS locataires (
             id_locataire INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_unite INTEGER NOT NULL,
             nom TEXT NOT NULL,
             prenom TEXT NOT NULL,
             email TEXT DEFAULT '',
@@ -75,8 +74,7 @@ def create_local_db():
             statut TEXT DEFAULT 'actif',
             notes TEXT DEFAULT '',
             date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-            date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (id_unite) REFERENCES unites (id_unite) ON DELETE CASCADE
+            date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
     
@@ -225,12 +223,11 @@ def fetch_and_insert_data():
             cursor.execute("DELETE FROM locataires")
             for tenant in tenants:
                 cursor.execute("""
-                    INSERT INTO locataires (id_locataire, id_unite, nom, prenom, email, 
+                    INSERT INTO locataires (id_locataire, nom, prenom, email, 
                                           telephone, statut, notes, date_creation, date_modification)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     tenant.get('id_locataire'),
-                    tenant.get('id_unite'),
                     tenant.get('nom', ''),
                     tenant.get('prenom', ''),
                     tenant.get('email', ''),
