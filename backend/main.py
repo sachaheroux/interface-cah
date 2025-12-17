@@ -1664,13 +1664,30 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                     
                     # Trouver le bail correspondant pour obtenir l'immeuble
                     lease = next((l for l in leases if l.id_bail == id_bail), None)
-                    if lease and lease.locataire and lease.locataire.unite:
-                        building_id = lease.locataire.unite.id_immeuble
+                    if lease:
+                        # Utiliser l'unité directement depuis le bail (nouvelle structure)
+                        building_id = None
+                        if hasattr(lease, 'unite') and lease.unite:
+                            building_id = lease.unite.id_immeuble
+                        elif hasattr(lease, 'id_unite') and lease.id_unite:
+                            # Fallback : chercher l'unité si la relation n'est pas chargée
+                            # Utiliser la session du service pour chercher l'unité
+                            try:
+                                from database_service_francais import DatabaseServiceFrancais
+                                temp_service = DatabaseServiceFrancais()
+                                with temp_service.get_session() as session:
+                                    from models_francais import Unite
+                                    unite = session.query(Unite).filter(Unite.id_unite == lease.id_unite).first()
+                                    if unite:
+                                        building_id = unite.id_immeuble
+                            except Exception as e:
+                                print(f"⚠️ Erreur lors de la récupération de l'unité: {e}")
+                                building_id = None
                         
                         if building_id and montant > 0:
                             month_key = f"{annee}-{mois:02d}"
                             
-                            # Ajouter le revenu
+                            # Ajouter le revenu (tous les paiements dans la table sont confirmés)
                             monthly_data[month_key]["revenue"] += montant
                             monthly_data[month_key]["netCashflow"] += montant
                             building_data[building_id]["revenue"] += montant
@@ -1678,7 +1695,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
                             
                             print(f"✅ Revenu ajouté: {month_key}, Immeuble {building_id}, Montant: {montant}$")
                     else:
-                        print(f"⚠️ Paiement ignoré - bail {id_bail} non trouvé ou sans immeuble")
+                        print(f"⚠️ Paiement ignoré - bail {id_bail} non trouvé")
                         
                 except Exception as e:
                     print(f"❌ Erreur traitement paiement: {e}")
@@ -1693,7 +1710,7 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
         for transaction in transactions:
             building_id = transaction.id_immeuble
             montant = float(transaction.montant or 0)
-            type_transaction = transaction.categorie
+            type_transaction = transaction.type  # Utiliser le type (revenu/depense) au lieu de la catégorie
             
             print(f"🔍 DEBUG - Transaction: Immeuble {building_id}, Montant: {montant}, Type: {type_transaction}")
             
@@ -1702,17 +1719,21 @@ def calculate_profitability_analysis(buildings, leases, transactions, start_date
             if transaction_date:
                 month_key = transaction_date.strftime("%Y-%m")
                 
-                # Déterminer si c'est un revenu ou une dépense basé sur la catégorie
-                if type_transaction and "loyer" in type_transaction.lower():
+                # Déterminer si c'est un revenu ou une dépense basé sur le type
+                if type_transaction and type_transaction.lower() == "revenu":
+                    # Revenu : montant positif
                     monthly_data[month_key]["revenue"] += abs(montant)
                     monthly_data[month_key]["netCashflow"] += abs(montant)
                     building_data[building_id]["revenue"] += abs(montant)
                     building_data[building_id]["netCashflow"] += abs(montant)
+                    print(f"✅ Revenu transaction ajouté: {month_key}, Immeuble {building_id}, Montant: {abs(montant)}$")
                 else:
+                    # Dépense : montant négatif
                     monthly_data[month_key]["expenses"] += abs(montant)
                     monthly_data[month_key]["netCashflow"] -= abs(montant)
                     building_data[building_id]["expenses"] += abs(montant)
                     building_data[building_id]["netCashflow"] -= abs(montant)
+                    print(f"✅ Dépense transaction ajoutée: {month_key}, Immeuble {building_id}, Montant: {abs(montant)}$")
         
         # Construire les données des immeubles
         print(f"🔍 DEBUG - Données finales par immeuble:")

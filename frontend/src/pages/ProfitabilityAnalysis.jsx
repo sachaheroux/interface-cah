@@ -27,6 +27,7 @@ export default function ProfitabilityAnalysis() {
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [buildingSearchTerm, setBuildingSearchTerm] = useState('')
   const [filteredBuildings, setFilteredBuildings] = useState([])
+  const [confirmedPaymentsOnly, setConfirmedPaymentsOnly] = useState(true)
 
   // Charger les immeubles au montage
   useEffect(() => {
@@ -105,7 +106,8 @@ export default function ProfitabilityAnalysis() {
           start_year: startYear,
           start_month: startMonth,
           end_year: endYear,
-          end_month: endMonth
+          end_month: endMonth,
+          confirmed_payments_only: confirmedPaymentsOnly
         }
       })
       
@@ -338,6 +340,21 @@ export default function ProfitabilityAnalysis() {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Option pour les paiements confirmés */}
+          <div className="mt-4">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmedPaymentsOnly}
+                onChange={(e) => setConfirmedPaymentsOnly(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Ne compter que les loyers confirmés (paiements enregistrés)
+              </span>
+            </label>
           </div>
         </div>
 
