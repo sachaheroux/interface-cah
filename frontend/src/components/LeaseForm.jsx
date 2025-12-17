@@ -350,7 +350,7 @@ export default function LeaseForm({ lease, isOpen, onClose, onSave }) {
               <option value="">Sélectionner une unité</option>
               {availableUnits.map((unit) => (
                 <option key={unit.id_unite} value={unit.id_unite}>
-                  {unit.adresse_unite} ({unit.type})
+                  {unit.adresse_unite}
                 </option>
               ))}
             </select>
