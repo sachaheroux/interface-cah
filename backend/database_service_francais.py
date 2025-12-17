@@ -619,6 +619,8 @@ class DatabaseServiceFrancais:
                                                     'adresse': unite.immeuble.adresse
                                                 }
                                             locataire_data['unite'] = unite_data
+                                            # Ajouter aussi l'unité directement dans lease_dict pour faciliter l'accès dans le frontend
+                                            lease_dict['unite'] = unite_data
                                 elif lease.locataire.id_unite and lease.locataire.unite:
                                     # Fallback : utiliser l'unité du locataire si le bail n'a pas encore id_unite
                                     unite_data = {
@@ -636,6 +638,8 @@ class DatabaseServiceFrancais:
                                             'adresse': lease.locataire.unite.immeuble.adresse
                                         }
                                     locataire_data['unite'] = unite_data
+                                    # Ajouter aussi l'unité directement dans lease_dict pour faciliter l'accès dans le frontend
+                                    lease_dict['unite'] = unite_data
                             else:
                                 # Ancienne méthode : utiliser l'unité du locataire
                                 if lease.locataire.id_unite and lease.locataire.unite:
@@ -653,7 +657,9 @@ class DatabaseServiceFrancais:
                                             'nom_immeuble': lease.locataire.unite.immeuble.nom_immeuble,
                                             'adresse': lease.locataire.unite.immeuble.adresse
                                         }
-                                    locataire_data['unite'] = unite_data
+                                        locataire_data['unite'] = unite_data
+                                        # Ajouter aussi l'unité directement dans lease_dict pour faciliter l'accès dans le frontend
+                                        lease_dict['unite'] = unite_data
                             
                             lease_dict['locataire'] = locataire_data
                         
