@@ -308,11 +308,33 @@ class DatabaseServiceFrancais:
     # ========================================
     
     def get_tenants(self) -> List[Dict[str, Any]]:
-        """Récupérer tous les locataires"""
+        """Récupérer tous les locataires avec leurs unités via les baux actifs"""
         try:
             with self.get_session() as session:
                 tenants = session.query(Locataire).all()
-                return [tenant.to_dict() for tenant in tenants]
+                today = date.today()
+                
+                result = []
+                for tenant in tenants:
+                    tenant_dict = tenant.to_dict()
+                    
+                    # Trouver le bail actif pour ce locataire
+                    active_lease = session.query(Bail).filter(
+                        Bail.id_locataire == tenant.id_locataire,
+                        Bail.date_debut <= today,
+                        or_(Bail.date_fin >= today, Bail.date_fin.is_(None))
+                    ).options(joinedload(Bail.unite).joinedload(Unite.immeuble)).first()
+                    
+                    # Ajouter les informations de l'unité et de l'immeuble si un bail actif existe
+                    if active_lease and active_lease.unite:
+                        tenant_dict['unit'] = active_lease.unite.adresse_unite
+                        tenant_dict['unit_type'] = active_lease.unite.type
+                        if active_lease.unite.immeuble:
+                            tenant_dict['building'] = active_lease.unite.immeuble.nom_immeuble
+                    
+                    result.append(tenant_dict)
+                
+                return result
         except Exception as e:
             print(f"❌ Erreur lors de la récupération des locataires: {e}")
             raise e
