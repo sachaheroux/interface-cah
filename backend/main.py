@@ -2362,6 +2362,9 @@ async def migrate_bail_add_id_unite_endpoint():
     Endpoint pour exécuter la migration : ajouter id_unite à la table baux
     Cette migration migre les données depuis locataires.id_unite vers baux.id_unite
     Exécute directement sur la base de données Render (disque persistant)
+    
+    IMPORTANT : Cette migration doit être exécutée manuellement une seule fois.
+    Elle est disponible dans Paramètres > Sauvegarde > Migration Base de Données
     """
     try:
         from migrate_bail_add_id_unite import migrate_bail_add_id_unite

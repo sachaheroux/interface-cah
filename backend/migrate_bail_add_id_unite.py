@@ -150,10 +150,9 @@ def migrate_bail_add_id_unite():
             baux_sans_unite = result.scalar()
             
             if baux_sans_unite > 0:
-                print(f"❌ ERREUR : {baux_sans_unite} baux ont un locataire sans unité assignée.")
-                print("   La migration ne peut pas continuer. Restauration de la sauvegarde...")
-                restore_backup(backup_file)
-                return False
+                print(f"⚠️ ATTENTION : {baux_sans_unite} baux ont un locataire sans unité assignée.")
+                print("   Ces baux ne pourront pas avoir d'id_unite. Continuation de la migration...")
+                print("   Vous devrez assigner une unité à ces locataires après la migration.")
             
             # ÉTAPE 3 : Ajouter la colonne id_unite à baux (si elle n'existe pas)
             if not id_unite_exists:
@@ -239,7 +238,7 @@ def migrate_bail_add_id_unite():
             connection.execute(create_table_sql)
             print("   ✅ Nouvelle table 'baux' créée avec contraintes.")
             
-            # 3. Copier les données
+            # 3. Copier les données (seulement les baux qui ont un id_unite)
             copy_data_sql = text("""
                 INSERT INTO baux (
                     id_bail, id_locataire, id_unite, date_debut, date_fin,
@@ -249,9 +248,17 @@ def migrate_bail_add_id_unite():
                     id_bail, id_locataire, id_unite, date_debut, date_fin,
                     prix_loyer, methode_paiement, pdf_bail, date_creation, date_modification
                 FROM old_baux
+                WHERE id_unite IS NOT NULL
             """)
-            connection.execute(copy_data_sql)
-            print("   ✅ Données copiées vers la nouvelle table.")
+            result = connection.execute(copy_data_sql)
+            copied_count = result.rowcount
+            print(f"   ✅ {copied_count} baux copiés vers la nouvelle table.")
+            
+            # Vérifier s'il y a des baux sans unité qui n'ont pas été copiés
+            result = connection.execute(text("SELECT COUNT(*) FROM old_baux WHERE id_unite IS NULL"))
+            skipped_count = result.scalar()
+            if skipped_count > 0:
+                print(f"   ⚠️ {skipped_count} baux sans unité n'ont pas été copiés (ils doivent avoir une unité assignée).")
             
             # 4. Recréer les index
             connection.execute(text("CREATE INDEX IF NOT EXISTS ix_baux_id_locataire ON baux(id_locataire)"))
