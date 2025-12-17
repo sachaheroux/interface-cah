@@ -98,6 +98,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         const result = await response.json()
         console.log('✅ Locataire mis à jour:', result)
         
+        // Déclencher l'événement pour recharger la liste des locataires après mise à jour
+        window.dispatchEvent(new CustomEvent('tenantUpdated', { 
+          detail: result.data || result 
+        }))
+        
       } else {
         // CRÉATION d'un nouveau locataire
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/tenants`, {
@@ -115,6 +120,11 @@ export default function TenantForm({ tenant, isOpen, onClose, onSave }) {
         
         const result = await response.json()
         console.log('✅ Locataire créé:', result)
+        
+        // Déclencher l'événement pour recharger la liste des locataires
+        window.dispatchEvent(new CustomEvent('tenantCreated', { 
+          detail: result.data || result 
+        }))
       }
       
       onSave()

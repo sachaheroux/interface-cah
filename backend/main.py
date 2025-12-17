@@ -164,7 +164,7 @@ class TenantCreateFrancais(BaseModel):
     notes: str = ""
 
 class TenantUpdate_transactionFrancais(BaseModel):
-    id_unite: Optional[int] = None
+    # id_unite supprimé - l'unité est maintenant assignée via le bail
     nom: Optional[str] = None
     prenom: Optional[str] = None
     email: Optional[str] = None
