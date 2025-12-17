@@ -2352,6 +2352,50 @@ async def migrate_dette_restante():
         print(f"Erreur lors de la migration dette_restante: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la migration: {str(e)}")
 
+# ==========================================
+# ENDPOINT MIGRATION BAIL ID_UNITE
+# ==========================================
+
+@app.post("/api/migrate/bail-add-id-unite")
+async def migrate_bail_add_id_unite_endpoint():
+    """
+    Endpoint pour exécuter la migration : ajouter id_unite à la table baux
+    Cette migration migre les données depuis locataires.id_unite vers baux.id_unite
+    Exécute directement sur la base de données Render (disque persistant)
+    """
+    try:
+        from migrate_bail_add_id_unite import migrate_bail_add_id_unite
+        
+        print("\n" + "="*70)
+        print("🚀 DÉMARRAGE DE LA MIGRATION BAIL ID_UNITE VIA API")
+        print("="*70)
+        
+        success = migrate_bail_add_id_unite()
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Migration réussie ! La colonne id_unite a été ajoutée à baux et les données ont été migrées.",
+                "details": "Tous les baux ont maintenant un id_unite lié directement à l'unité."
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Migration échouée. Vérifiez les logs pour plus de détails.",
+                "details": "Une sauvegarde a été créée dans le répertoire de migrations."
+            }
+            
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Erreur lors de la migration: {e}")
+        print(error_details)
+        return {
+            "success": False,
+            "message": f"Erreur lors de la migration: {str(e)}",
+            "error": error_details
+        }
+
 # ============================================================================
 # ENDPOINT TEMPORAIRE POUR SETUP AUTHENTIFICATION (À SUPPRIMER APRÈS USAGE)
 # ============================================================================

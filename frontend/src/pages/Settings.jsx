@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check, X, AlertCircle, DollarSign, FileText, Users, Calendar } from 'lucide-react'
+import { Shield, Bell, Database, Moon, Sun, Mail, Lock, Building2, Copy, Check, X, AlertCircle, DollarSign, FileText, Users, Calendar, Loader } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -539,6 +539,18 @@ export default function Settings() {
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Gérez les sauvegardes et la restauration des données de votre application.
               </p>
+              
+              {/* Migration Bail ID_Unite */}
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-2">
+                  Migration Base de Données
+                </h4>
+                <p className="text-xs text-yellow-800 dark:text-yellow-400 mb-3">
+                  Migration : Ajouter id_unite à la table baux (pour garder l'historique des unités par bail)
+                </p>
+                <MigrationButton />
+              </div>
+              
               <div className="space-y-4">
                 <button className="btn-primary w-full">
                   <Database className="h-4 w-4 mr-2" />
@@ -751,6 +763,98 @@ function NotificationsHistory({ onClose, navigate }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Composant pour le bouton de migration
+function MigrationButton() {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+
+  const handleMigration = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir exécuter cette migration ?\n\nUne sauvegarde sera créée automatiquement avant la migration.')) {
+      return
+    }
+
+    setLoading(true)
+    setResult(null)
+
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await api.post('/api/migrate/bail-add-id-unite', {}, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 300000 // 5 minutes
+      })
+
+      setResult({
+        success: response.data.success,
+        message: response.data.message,
+        details: response.data.details
+      })
+    } catch (error) {
+      console.error('Erreur migration:', error)
+      setResult({
+        success: false,
+        message: error.response?.data?.message || 'Erreur lors de la migration',
+        details: error.response?.data?.error || error.message
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleMigration}
+        disabled={loading}
+        className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 text-white rounded-lg font-medium flex items-center justify-center transition-colors"
+      >
+        {loading ? (
+          <>
+            <Loader className="h-4 w-4 mr-2 animate-spin" />
+            Migration en cours...
+          </>
+        ) : (
+          <>
+            <Database className="h-4 w-4 mr-2" />
+            Exécuter la migration
+          </>
+        )}
+      </button>
+
+      {result && (
+        <div className={`mt-3 p-3 rounded-lg ${
+          result.success 
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+        }`}>
+          <p className={`text-sm font-medium ${
+            result.success 
+              ? 'text-green-900 dark:text-green-300' 
+              : 'text-red-900 dark:text-red-300'
+          }`}>
+            {result.success ? '✅ Succès' : '❌ Erreur'}
+          </p>
+          <p className={`text-xs mt-1 ${
+            result.success 
+              ? 'text-green-800 dark:text-green-400' 
+              : 'text-red-800 dark:text-red-400'
+          }`}>
+            {result.message}
+          </p>
+          {result.details && (
+            <p className={`text-xs mt-1 ${
+              result.success 
+                ? 'text-green-700 dark:text-green-500' 
+                : 'text-red-700 dark:text-red-500'
+            }`}>
+              {result.details}
+            </p>
+          )}
         </div>
       )}
     </div>

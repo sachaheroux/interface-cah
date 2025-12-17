@@ -91,6 +91,7 @@ class Unite(Base):
     # Relations
     immeuble = relationship("Immeuble", back_populates="unites", lazy="select")
     locataires = relationship("Locataire", back_populates="unite", lazy="select")
+    baux = relationship("Bail", back_populates="unite", lazy="select", cascade="all, delete-orphan")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
@@ -145,6 +146,7 @@ class Bail(Base):
     
     id_bail = Column(Integer, primary_key=True, index=True)
     id_locataire = Column(Integer, ForeignKey("locataires.id_locataire", ondelete="CASCADE"), nullable=False, index=True)
+    id_unite = Column(Integer, ForeignKey("unites.id_unite", ondelete="CASCADE"), nullable=False, index=True)
     date_debut = Column(Date, nullable=False)
     date_fin = Column(Date, nullable=True)
     prix_loyer = Column(DECIMAL(10, 2), default=0)
@@ -155,12 +157,14 @@ class Bail(Base):
     
     # Relations
     locataire = relationship("Locataire", back_populates="baux", lazy="select")
+    unite = relationship("Unite", back_populates="baux", lazy="select")
     
     def to_dict(self):
         """Convertir en dictionnaire pour l'API"""
         return {
             "id_bail": self.id_bail,
             "id_locataire": self.id_locataire,
+            "id_unite": self.id_unite,
             "date_debut": self.date_debut.isoformat() if self.date_debut else None,
             "date_fin": self.date_fin.isoformat() if self.date_fin else None,
             "prix_loyer": float(self.prix_loyer) if self.prix_loyer else 0.0,
