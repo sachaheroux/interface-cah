@@ -544,13 +544,15 @@ class DatabaseServiceFrancais:
                             joinedload(Bail.locataire),
                             joinedload(Bail.unite).joinedload(Unite.immeuble)
                         ).all()
-                    except Exception:
+                    except Exception as e:
+                        print(f"⚠️ Erreur lors du chargement avec id_unite: {e}")
                         # Si la relation ne fonctionne pas, charger sans eager loading
                         leases = session.query(Bail).options(
                             joinedload(Bail.locataire)
                         ).all()
                 else:
                     # Ancienne méthode : utiliser l'unité du locataire
+                    # Ne pas charger la relation unite du bail car elle n'existe pas encore
                     leases = session.query(Bail).options(
                         joinedload(Bail.locataire).joinedload(Locataire.unite).joinedload(Unite.immeuble)
                     ).all()
